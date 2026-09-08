@@ -5,14 +5,14 @@ symbol fq=__local_3.heap kind=local vis=private flags=_ type=kotlin.time.Compara
 symbol fq=comparableTimeMarkProbe kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 file fstdlib_kotlin_time_ComparableTimeMark_ComparableTimeMark_n package=_
   decl comparableTimeMarkProbe fun comparableTimeMarkProbe sym=comparableTimeMarkProbe
-expr e@9:37 name(TimeSource) type=kotlin.time.TimeSource ref=kotlin.time.TimeSource
-expr e@9:37#1 memberCall recv=e@9:37 callee=Monotonic args=[] type=kotlin.time.TimeSource.Monotonic ref=kotlin.time.TimeSource.Monotonic
+expr e@9:37 name(TimeSource) type=kotlin.time.TimeSource ref=kotlin.time.TimeSource#0
+expr e@9:37#1 memberCall recv=e@9:37 callee=Monotonic args=[] type=kotlin.time.TimeSource.Monotonic ref=kotlin.time.TimeSource.Monotonic#0
 expr e@9:37#2 memberCall recv=e@9:37#1 callee=markNow args=[] type=kotlin.time.TimeSource.Monotonic.ValueTimeMark call=kotlin.time.TimeSource.Monotonic.markNow
 expr e@9:5 localDecl first mutable=0 type=ComparableTimeMark init=e@9:37#2 type=Unit ref=__local_0.first
 expr e@10:24 name(null) type=Nothing?
 expr e@10:5 localDecl absent mutable=0 type=Any? init=e@10:24 type=Unit ref=__local_1.absent
 expr e@11:39 name(first) type=kotlin.time.ComparableTimeMark ref=__local_0.first
-expr e@11:47 name(Duration) type=kotlin.time.Duration.Companion ref=kotlin.time.Duration
+expr e@11:47 name(Duration) type=kotlin.time.Duration.Companion ref=kotlin.time.Duration#0
 expr e@11:47#1 memberCall recv=e@11:47 callee=ZERO args=[] type=kotlin.time.Duration call=kotlin.time.ZERO.$get
 expr e@11:39#1 binary(add) lhs=e@11:39 rhs=e@11:47#1 type=kotlin.time.ComparableTimeMark call=kotlin.time.plus#0
 expr e@11:5 localDecl shifted mutable=0 type=ComparableTimeMark init=e@11:39#1 type=Unit ref=__local_2.shifted

@@ -7,17 +7,17 @@ file fdelegate_lazy_mode package=golden.sema
   decl golden.sema.pubProp property pubProp var=0 sym=golden.sema.pubProp
   decl golden.sema.noneProp property noneProp var=0 sym=golden.sema.noneProp
   decl golden.sema.main fun main sym=golden.sema.main
-expr e@8:30 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode
+expr e@8:30 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode#0
 expr e@8:30#1 memberCall recv=e@8:30 callee=SYNCHRONIZED args=[] type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode.SYNCHRONIZED
 expr e@9:5 string(synchronized) type=String
 expr e@8:65 lambda params=[] body=e@9:5 label=lazy type=() -> Any
 expr e@8:25 call callee=e@8:25#1 args=[_:e@8:30#1,_:e@8:65] type=kotlin.Lazy<String> call=kotlin.lazy#2 targs=[String]
-expr e@12:29 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode
+expr e@12:29 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode#0
 expr e@12:29#1 memberCall recv=e@12:29 callee=PUBLICATION args=[] type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode.PUBLICATION
 expr e@13:5 string(publication) type=String
 expr e@12:63 lambda params=[] body=e@13:5 label=lazy type=() -> Any
 expr e@12:24 call callee=e@12:24#1 args=[_:e@12:29#1,_:e@12:63] type=kotlin.Lazy<String> call=kotlin.lazy#2 targs=[String]
-expr e@16:30 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode
+expr e@16:30 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode#0
 expr e@16:30#1 memberCall recv=e@16:30 callee=NONE args=[] type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode.NONE
 expr e@17:5 string(none) type=String
 expr e@16:57 lambda params=[] body=e@17:5 label=lazy type=() -> Any

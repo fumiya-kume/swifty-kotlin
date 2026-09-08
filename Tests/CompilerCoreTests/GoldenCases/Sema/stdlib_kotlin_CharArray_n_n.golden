@@ -18,7 +18,7 @@ expr e@8:33 int(3) type=Int
 expr e@8:43 name(it) type=Int ref=s-0
 expr e@8:48 int(65) type=Int
 expr e@8:43#1 binary(add) lhs=e@8:43 rhs=e@8:48 type=Int
-expr e@8:38 call callee=e@8:38#1 args=[_:e@8:43#1] type=Char call=kotlin.Char#1
+expr e@8:38 call callee=e@8:38#1 args=[_:e@8:43#1] type=Char call=kotlin.Char#2
 expr e@8:36 lambda params=[] body=e@8:38 label=CharArray type=(Int) -> Char
 expr e@8:23 call callee=e@8:23#1 args=[_:e@8:33,_:e@8:36] type=kotlin.CharArray call=kotlin.CharArray#1
 expr e@8:5 localDecl initialized mutable=0 type=_ init=e@8:23 type=Unit ref=__local_1.initialized

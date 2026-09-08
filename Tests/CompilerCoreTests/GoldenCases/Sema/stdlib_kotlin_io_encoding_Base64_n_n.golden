@@ -5,10 +5,10 @@ file fstdlib_kotlin_io_encoding_Base64_n_n package=golden.sema
   decl golden.sema.defaultObject fun defaultObject sym=golden.sema.defaultObject
   decl golden.sema.base64Type fun base64Type sym=golden.sema.base64Type
   decl golden.sema.paddingEntries fun paddingEntries sym=golden.sema.paddingEntries
-expr e@8:39 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64
-expr e@8:39#1 memberCall recv=e@8:39 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default
-expr e@11:28 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64
-expr e@11:28#1 memberCall recv=e@11:28 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default
-expr e@14:59 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64
-expr e@14:59#1 memberCall recv=e@14:59 callee=PaddingOption args=[] type=kotlin.io.encoding.Base64.PaddingOption.Companion ref=kotlin.io.encoding.Base64.PaddingOption
+expr e@8:39 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64#0
+expr e@8:39#1 memberCall recv=e@8:39 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default#0
+expr e@11:28 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64#0
+expr e@11:28#1 memberCall recv=e@11:28 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default#0
+expr e@14:59 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64#0
+expr e@14:59#1 memberCall recv=e@14:59 callee=PaddingOption args=[] type=kotlin.io.encoding.Base64.PaddingOption.Companion ref=kotlin.io.encoding.Base64.PaddingOption#0
 expr e@14:59#2 memberCall recv=e@14:59#1 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.io.encoding.Base64.PaddingOption> ref=kotlin.io.encoding.Base64.PaddingOption.Companion.entries

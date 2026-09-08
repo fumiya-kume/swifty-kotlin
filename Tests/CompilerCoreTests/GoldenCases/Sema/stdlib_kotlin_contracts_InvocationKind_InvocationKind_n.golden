@@ -5,10 +5,10 @@ file fstdlib_kotlin_contracts_InvocationKind_InvocationKind_n package=golden.sem
   decl golden.sema.invocationKindEntries fun invocationKindEntries sym=golden.sema.invocationKindEntries
   decl golden.sema.invocationKindValueOf fun invocationKindValueOf sym=golden.sema.invocationKindValueOf
   decl golden.sema.invocationKindValues fun invocationKindValues sym=golden.sema.invocationKindValues
-expr e@8:5 name(InvocationKind) type=kotlin.contracts.InvocationKind ref=kotlin.contracts.InvocationKind
+expr e@8:5 name(InvocationKind) type=kotlin.contracts.InvocationKind ref=kotlin.contracts.InvocationKind#0
 expr e@8:5#1 memberCall recv=e@8:5 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.contracts.InvocationKind> call=kotlin.entries.$get#1
-expr e@12:5 name(InvocationKind) type=kotlin.contracts.InvocationKind ref=kotlin.contracts.InvocationKind
+expr e@12:5 name(InvocationKind) type=kotlin.contracts.InvocationKind ref=kotlin.contracts.InvocationKind#0
 expr e@12:28 string(EXACTLY_ONCE) type=String
 expr e@12:5#1 memberCall recv=e@12:5 callee=valueOf args=[_:e@12:28] type=kotlin.contracts.InvocationKind ref=kotlin.valueOf#1 call=kotlin.valueOf#1
-expr e@16:5 name(InvocationKind) type=kotlin.contracts.InvocationKind ref=kotlin.contracts.InvocationKind
+expr e@16:5 name(InvocationKind) type=kotlin.contracts.InvocationKind ref=kotlin.contracts.InvocationKind#0
 expr e@16:5#1 memberCall recv=e@16:5 callee=values args=[] type=kotlin.Array<kotlin.contracts.InvocationKind> ref=kotlin.values#1 call=kotlin.values#1

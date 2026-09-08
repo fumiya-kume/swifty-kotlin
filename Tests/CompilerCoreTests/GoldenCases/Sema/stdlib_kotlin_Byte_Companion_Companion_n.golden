@@ -16,45 +16,45 @@ symbol fq=__local_14.minIsByte kind=local vis=private flags=_ type=Boolean
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_Byte_Companion_Companion_n package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
-expr e@4:27 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte
+expr e@4:27 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte#0
 expr e@4:27#1 memberCall recv=e@4:27 callee=MAX_VALUE args=[] type=Byte call=kotlin.MAX_VALUE.$get#0
 expr e@4:5 localDecl directMax mutable=0 type=Byte init=e@4:27#1 type=Unit ref=__local_0.directMax
-expr e@5:27 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte
+expr e@5:27 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte#0
 expr e@5:27#1 memberCall recv=e@5:27 callee=MIN_VALUE args=[] type=Byte call=kotlin.MIN_VALUE.$get#0
 expr e@5:5 localDecl directMin mutable=0 type=Byte init=e@5:27#1 type=Unit ref=__local_1.directMin
-expr e@6:27 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte
+expr e@6:27 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte#0
 expr e@6:27#1 memberCall recv=e@6:27 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#0
 expr e@6:5 localDecl directBits mutable=0 type=Int init=e@6:27#1 type=Unit ref=__local_2.directBits
-expr e@7:28 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte
+expr e@7:28 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte#0
 expr e@7:28#1 memberCall recv=e@7:28 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#0
 expr e@7:5 localDecl directBytes mutable=0 type=Int init=e@7:28#1 type=Unit ref=__local_3.directBytes
-expr e@8:29 name(Byte) type=kotlin.Byte ref=kotlin.Byte
+expr e@8:29 name(Byte) type=kotlin.Byte ref=kotlin.Byte#0
 expr e@8:29#1 memberCall recv=e@8:29 callee=Companion args=[] type=kotlin.Byte.Companion ref=kotlin.Byte.Companion
 expr e@8:29#2 memberCall recv=e@8:29#1 callee=MAX_VALUE args=[] type=Byte call=kotlin.MAX_VALUE.$get#0
 expr e@8:5 localDecl explicitMax mutable=0 type=Byte init=e@8:29#2 type=Unit ref=__local_4.explicitMax
-expr e@9:29 name(Byte) type=kotlin.Byte ref=kotlin.Byte
+expr e@9:29 name(Byte) type=kotlin.Byte ref=kotlin.Byte#0
 expr e@9:29#1 memberCall recv=e@9:29 callee=Companion args=[] type=kotlin.Byte.Companion ref=kotlin.Byte.Companion
 expr e@9:29#2 memberCall recv=e@9:29#1 callee=MIN_VALUE args=[] type=Byte call=kotlin.MIN_VALUE.$get#0
 expr e@9:5 localDecl explicitMin mutable=0 type=Byte init=e@9:29#2 type=Unit ref=__local_5.explicitMin
-expr e@10:29 name(Byte) type=kotlin.Byte ref=kotlin.Byte
+expr e@10:29 name(Byte) type=kotlin.Byte ref=kotlin.Byte#0
 expr e@10:29#1 memberCall recv=e@10:29 callee=Companion args=[] type=kotlin.Byte.Companion ref=kotlin.Byte.Companion
 expr e@10:29#2 memberCall recv=e@10:29#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#0
 expr e@10:5 localDecl explicitBits mutable=0 type=Int init=e@10:29#2 type=Unit ref=__local_6.explicitBits
-expr e@11:30 name(Byte) type=kotlin.Byte ref=kotlin.Byte
+expr e@11:30 name(Byte) type=kotlin.Byte ref=kotlin.Byte#0
 expr e@11:30#1 memberCall recv=e@11:30 callee=Companion args=[] type=kotlin.Byte.Companion ref=kotlin.Byte.Companion
 expr e@11:30#2 memberCall recv=e@11:30#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#0
 expr e@11:5 localDecl explicitBytes mutable=0 type=Int init=e@11:30#2 type=Unit ref=__local_7.explicitBytes
-expr e@12:30 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte
+expr e@12:30 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte#0
 expr e@12:30#1 memberCall recv=e@12:30 callee=MAX_VALUE args=[] type=Byte call=kotlin.MAX_VALUE.$get#0
 expr e@12:30#2 memberCall recv=e@12:30#1 callee=toByte args=[] type=Byte
 expr e@12:5 localDecl maxRoundTrip mutable=0 type=Byte init=e@12:30#2 type=Unit ref=__local_8.maxRoundTrip
-expr e@13:30 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte
+expr e@13:30 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte#0
 expr e@13:30#1 memberCall recv=e@13:30 callee=MIN_VALUE args=[] type=Byte call=kotlin.MIN_VALUE.$get#0
 expr e@13:30#2 memberCall recv=e@13:30#1 callee=toByte args=[] type=Byte
 expr e@13:5 localDecl minRoundTrip mutable=0 type=Byte init=e@13:30#2 type=Unit ref=__local_9.minRoundTrip
-expr e@14:27 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte
+expr e@14:27 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte#0
 expr e@14:27#1 memberCall recv=e@14:27 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#0
-expr e@14:44 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte
+expr e@14:44 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte#0
 expr e@14:44#1 memberCall recv=e@14:44 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#0
 expr e@14:27#2 binary(multiply) lhs=e@14:27#1 rhs=e@14:44#1 type=Int
 expr e@14:5 localDecl bitProduct mutable=0 type=Int init=e@14:27#2 type=Unit ref=__local_10.bitProduct

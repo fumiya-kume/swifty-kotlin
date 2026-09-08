@@ -4,7 +4,7 @@ symbol fq=useRandomNextLongRange kind=function vis=public flags=_ sig=recv=_ par
 file frandom_nextlong_range package=_
   decl useRandomNextLongRange fun useRandomNextLongRange sym=useRandomNextLongRange
 expr e@4:20 int(42) type=Int
-expr e@4:13 call callee=e@4:13#1 args=[_:e@4:20] type=kotlin.random.Random call=kotlin.random.Random#1
+expr e@4:13 call callee=e@4:13#1 args=[_:e@4:20] type=kotlin.random.Random call=kotlin.random.Random#2
 expr e@4:5 localDecl r mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.r
 expr e@5:13 name(r) type=kotlin.random.Random ref=__local_0.r
 expr e@5:24 long(10) type=Long

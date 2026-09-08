@@ -5,7 +5,7 @@ symbol fq=useRandomLongSeed kind=function vis=public flags=_ sig=recv=_ params=[
 file frandom_long_seed package=_
   decl useRandomLongSeed fun useRandomLongSeed sym=useRandomLongSeed
 expr e@4:20 long(42) type=Long
-expr e@4:13 call callee=e@4:13#1 args=[_:e@4:20] type=kotlin.random.Random call=kotlin.random.Random#2
+expr e@4:13 call callee=e@4:13#1 args=[_:e@4:20] type=kotlin.random.Random call=kotlin.random.Random#3
 expr e@4:5 localDecl r mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.r
 expr e@5:13 name(r) type=kotlin.random.Random ref=__local_0.r
 expr e@5:13#1 memberCall recv=e@5:13 callee=nextInt args=[] type=Int call=kotlin.random.Random.nextInt#0

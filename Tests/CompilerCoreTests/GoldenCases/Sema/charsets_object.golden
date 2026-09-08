@@ -17,17 +17,17 @@ expr e@6:14 name(bytes) type=kotlin.ByteArray ref=__local_0.bytes
 expr e@6:14#1 memberCall recv=e@6:14 callee=decodeToString args=[] type=String call=kotlin.text.decodeToString#0
 expr e@6:5 localDecl s1 mutable=0 type=_ init=e@6:14#1 type=Unit ref=__local_1.s1
 expr e@7:14 name(bytes) type=kotlin.ByteArray ref=__local_0.bytes
-expr e@7:35 name(Charsets) type=kotlin.text.Charsets ref=kotlin.text.Charsets
+expr e@7:35 name(Charsets) type=kotlin.text.Charsets ref=kotlin.text.Charsets#0
 expr e@7:35#1 memberCall recv=e@7:35 callee=UTF_8 args=[] type=kotlin.text.Charset ref=kotlin.text.Charsets.UTF_8
 expr e@7:14#1 memberCall recv=e@7:14 callee=decodeToString args=[_:e@7:35#1] type=String call=kotlin.text.decodeToString#3
 expr e@7:5 localDecl s2 mutable=0 type=_ init=e@7:14#1 type=Unit ref=__local_2.s2
 expr e@8:14 name(bytes) type=kotlin.ByteArray ref=__local_0.bytes
-expr e@8:35 name(Charsets) type=kotlin.text.Charsets ref=kotlin.text.Charsets
+expr e@8:35 name(Charsets) type=kotlin.text.Charsets ref=kotlin.text.Charsets#0
 expr e@8:35#1 memberCall recv=e@8:35 callee=ISO_8859_1 args=[] type=kotlin.text.Charset ref=kotlin.text.Charsets.ISO_8859_1
 expr e@8:14#1 memberCall recv=e@8:14 callee=decodeToString args=[_:e@8:35#1] type=String call=kotlin.text.decodeToString#3
 expr e@8:5 localDecl s3 mutable=0 type=_ init=e@8:14#1 type=Unit ref=__local_3.s3
 expr e@9:14 name(bytes) type=kotlin.ByteArray ref=__local_0.bytes
-expr e@9:35 name(Charsets) type=kotlin.text.Charsets ref=kotlin.text.Charsets
+expr e@9:35 name(Charsets) type=kotlin.text.Charsets ref=kotlin.text.Charsets#0
 expr e@9:35#1 memberCall recv=e@9:35 callee=US_ASCII args=[] type=kotlin.text.Charset ref=kotlin.text.Charsets.US_ASCII
 expr e@9:14#1 memberCall recv=e@9:14 callee=decodeToString args=[_:e@9:35#1] type=String call=kotlin.text.decodeToString#3
 expr e@9:5 localDecl s4 mutable=0 type=_ init=e@9:14#1 type=Unit ref=__local_4.s4

@@ -16,7 +16,7 @@ expr e@4:41 int(4) type=Int
 expr e@4:18#1 memberCall recv=e@4:18 callee=encodeToByteArray args=[_:e@4:38,_:e@4:41] type=kotlin.ByteArray call=kotlin.text.encodeToByteArray#1
 expr e@4:5 localDecl bytes2 mutable=0 type=_ init=e@4:18#1 type=Unit ref=__local_2.bytes2
 expr e@5:18 name(s) type=String ref=__local_0.s
-expr e@5:38 name(Charsets) type=kotlin.text.Charsets ref=kotlin.text.Charsets
+expr e@5:38 name(Charsets) type=kotlin.text.Charsets ref=kotlin.text.Charsets#0
 expr e@5:38#1 memberCall recv=e@5:38 callee=UTF_8 args=[] type=kotlin.text.Charset ref=kotlin.text.Charsets.UTF_8
 expr e@5:18#1 memberCall recv=e@5:18 callee=encodeToByteArray args=[_:e@5:38#1] type=kotlin.ByteArray call=kotlin.text.encodeToByteArray#2
 expr e@5:5 localDecl bytes3 mutable=0 type=_ init=e@5:18#1 type=Unit ref=__local_3.bytes3

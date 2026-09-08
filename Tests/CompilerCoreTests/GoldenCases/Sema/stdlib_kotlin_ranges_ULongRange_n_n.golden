@@ -20,5 +20,5 @@ expr e@4:5 call callee=e@4:5#1 args=[_:e@4:16,_:e@4:23] type=kotlin.ranges.ULong
 expr e@6:69 bool(true) type=Boolean
 expr e@8:71 bool(true) type=Boolean
 expr e@10:58 bool(true) type=Boolean
-expr e@12:37 name(ULongRange) type=kotlin.ranges.ULongRange ref=kotlin.ranges.ULongRange
+expr e@12:37 name(ULongRange) type=kotlin.ranges.ULongRange ref=kotlin.ranges.ULongRange#0
 expr e@12:37#1 memberCall recv=e@12:37 callee=Companion args=[] type=kotlin.ranges.ULongRange.Companion ref=kotlin.ranges.ULongRange.Companion

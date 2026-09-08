@@ -3,7 +3,7 @@ symbol fq=golden.sema.name kind=property vis=public flags=mutable type=String
 file fdelegate_observable package=golden.sema
   decl golden.sema.name property name var=1 sym=golden.sema.name
   decl golden.sema.main fun main sym=golden.sema.main
-expr e@5:21 name(Delegates) type=kotlin.properties.Delegates ref=kotlin.properties.Delegates
+expr e@5:21 name(Delegates) type=kotlin.properties.Delegates ref=kotlin.properties.Delegates#0
 expr e@5:42 string(initial) type=String
 expr e@6:28 name(old) type=String ref=s-0
 expr e@6:36 name(new) type=String ref=s-1

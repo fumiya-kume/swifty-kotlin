@@ -7,13 +7,13 @@ file fstdlib_kotlin_native_concurrent_FutureState_FutureState_n package=golden.s
   decl golden.sema.futureStateValue fun futureStateValue sym=golden.sema.futureStateValue
   decl golden.sema.futureStateValueOf fun futureStateValueOf sym=golden.sema.futureStateValueOf
   decl golden.sema.futureStateValues fun futureStateValues sym=golden.sema.futureStateValues
-expr e@7:67 name(FutureState) type=kotlin.native.concurrent.FutureState.Companion ref=kotlin.native.concurrent.FutureState
+expr e@7:67 name(FutureState) type=kotlin.native.concurrent.FutureState.Companion ref=kotlin.native.concurrent.FutureState#0
 expr e@7:67#1 memberCall recv=e@7:67 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.native.concurrent.FutureState> ref=kotlin.native.concurrent.FutureState.Companion.entries
-expr e@8:31 name(FutureState) type=kotlin.native.concurrent.FutureState ref=kotlin.native.concurrent.FutureState
+expr e@8:31 name(FutureState) type=kotlin.native.concurrent.FutureState ref=kotlin.native.concurrent.FutureState#0
 expr e@8:31#1 memberCall recv=e@8:31 callee=COMPUTED args=[] type=kotlin.native.concurrent.FutureState ref=kotlin.native.concurrent.FutureState.COMPUTED
 expr e@8:31#2 memberCall recv=e@8:31#1 callee=value args=[] type=Int ref=kotlin.native.concurrent.FutureState.value
-expr e@9:41 name(FutureState) type=kotlin.native.concurrent.FutureState.Companion ref=kotlin.native.concurrent.FutureState
+expr e@9:41 name(FutureState) type=kotlin.native.concurrent.FutureState.Companion ref=kotlin.native.concurrent.FutureState#0
 expr e@9:61 string(THROWN) type=String
 expr e@9:41#1 memberCall recv=e@9:41 callee=valueOf args=[_:e@9:61] type=kotlin.native.concurrent.FutureState call=kotlin.native.concurrent.FutureState.Companion.valueOf
-expr e@10:47 name(FutureState) type=kotlin.native.concurrent.FutureState ref=kotlin.native.concurrent.FutureState
+expr e@10:47 name(FutureState) type=kotlin.native.concurrent.FutureState ref=kotlin.native.concurrent.FutureState#0
 expr e@10:47#1 memberCall recv=e@10:47 callee=values args=[] type=kotlin.Array<kotlin.native.concurrent.FutureState> ref=kotlin.native.concurrent.FutureState.values call=kotlin.native.concurrent.FutureState.values

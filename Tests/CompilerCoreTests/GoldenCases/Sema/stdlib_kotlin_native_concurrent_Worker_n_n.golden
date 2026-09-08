@@ -4,6 +4,6 @@ symbol fq=workerCompanionType kind=function vis=public flags=_ sig=recv=_ params
 file fstdlib_kotlin_native_concurrent_Worker_n_n package=_ annotations=[@file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class)]
   decl workerCompanionType fun workerCompanionType sym=workerCompanionType
   decl passWorker fun passWorker sym=passWorker
-expr e@5:47 name(Worker) type=kotlin.native.concurrent.Worker ref=kotlin.native.concurrent.Worker
+expr e@5:47 name(Worker) type=kotlin.native.concurrent.Worker ref=kotlin.native.concurrent.Worker#0
 expr e@5:47#1 memberCall recv=e@5:47 callee=Companion args=[] type=kotlin.native.concurrent.Worker.Companion ref=kotlin.native.concurrent.Worker.Companion
 expr e@7:42 name(worker) type=kotlin.native.concurrent.Worker ref=passWorker.$0.worker

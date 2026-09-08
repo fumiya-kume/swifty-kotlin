@@ -5,10 +5,10 @@ file fstdlib_kotlin_text_RegexOption_RegexOption_n package=golden.sema
   decl golden.sema.entries fun entries sym=golden.sema.entries
   decl golden.sema.valueOf fun valueOf sym=golden.sema.valueOf
   decl golden.sema.values fun values sym=golden.sema.values
-expr e@5:56 name(RegexOption) type=kotlin.text.RegexOption.Companion ref=kotlin.text.RegexOption
+expr e@5:56 name(RegexOption) type=kotlin.text.RegexOption.Companion ref=kotlin.text.RegexOption#0
 expr e@5:56#1 memberCall recv=e@5:56 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.text.RegexOption> ref=kotlin.text.RegexOption.Companion.entries
-expr e@7:30 name(RegexOption) type=kotlin.text.RegexOption.Companion ref=kotlin.text.RegexOption
+expr e@7:30 name(RegexOption) type=kotlin.text.RegexOption.Companion ref=kotlin.text.RegexOption#0
 expr e@7:50 string(CANON_EQ) type=String
 expr e@7:30#1 memberCall recv=e@7:30 callee=valueOf args=[_:e@7:50] type=kotlin.text.RegexOption call=kotlin.text.RegexOption.Companion.valueOf
-expr e@9:36 name(RegexOption) type=kotlin.text.RegexOption ref=kotlin.text.RegexOption
+expr e@9:36 name(RegexOption) type=kotlin.text.RegexOption ref=kotlin.text.RegexOption#0
 expr e@9:36#1 memberCall recv=e@9:36 callee=values args=[] type=kotlin.Array<kotlin.text.RegexOption> ref=kotlin.text.RegexOption.values call=kotlin.text.RegexOption.values

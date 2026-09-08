@@ -11,45 +11,45 @@ symbol fq=__local_9.cleanersChecker kind=local vis=private flags=_ type=Boolean
 symbol fq=platformContract kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_native_Platform_Platform_n package=_ annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class),@file:Suppress("DEPRECATION")]
   decl platformContract fun platformContract sym=platformContract
-expr e@7:30 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@7:30 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@7:30#1 memberCall recv=e@7:30 callee=canAccessUnaligned args=[] type=Boolean ref=kotlin.native.Platform.canAccessUnaligned
 expr e@7:5 localDecl unaligned mutable=0 type=Boolean init=e@7:30#1 type=Unit ref=__local_0.unaligned
-expr e@8:33 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@8:33 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@8:33#1 memberCall recv=e@8:33 callee=isLittleEndian args=[] type=Boolean ref=kotlin.native.Platform.isLittleEndian
 expr e@8:5 localDecl littleEndian mutable=0 type=Boolean init=e@8:33#1 type=Unit ref=__local_1.littleEndian
-expr e@9:20 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@9:20 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@9:20#1 memberCall recv=e@9:20 callee=osFamily args=[] type=kotlin.native.OsFamily ref=kotlin.native.Platform.osFamily
 expr e@9:5 localDecl osFamily mutable=0 type=_ init=e@9:20#1 type=Unit ref=__local_2.osFamily
-expr e@10:27 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@10:27 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@10:27#1 memberCall recv=e@10:27 callee=cpuArchitecture args=[] type=kotlin.native.CpuArchitecture ref=kotlin.native.Platform.cpuArchitecture
 expr e@10:5 localDecl cpuArchitecture mutable=0 type=_ init=e@10:27#1 type=Unit ref=__local_3.cpuArchitecture
-expr e@11:23 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@11:23 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@11:23#1 memberCall recv=e@11:23 callee=memoryModel args=[] type=kotlin.native.MemoryModel ref=kotlin.native.Platform.memoryModel
 expr e@11:5 localDecl memoryModel mutable=0 type=_ init=e@11:23#1 type=Unit ref=__local_4.memoryModel
-expr e@12:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@12:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@12:32#1 memberCall recv=e@12:32 callee=isDebugBinary args=[] type=Boolean ref=kotlin.native.Platform.isDebugBinary
 expr e@12:5 localDecl debugBinary mutable=0 type=Boolean init=e@12:32#1 type=Unit ref=__local_5.debugBinary
-expr e@13:36 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@13:36 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@13:36#1 memberCall recv=e@13:36 callee=isFreezingEnabled args=[] type=Boolean ref=kotlin.native.Platform.isFreezingEnabled
 expr e@13:5 localDecl freezingEnabled mutable=0 type=Boolean init=e@13:36#1 type=Unit ref=__local_6.freezingEnabled
-expr e@14:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@14:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@14:32#1 memberCall recv=e@14:32 callee=programName args=[] type=String? ref=kotlin.native.Platform.programName
 expr e@14:5 localDecl programName mutable=0 type=String? init=e@14:32#1 type=Unit ref=__local_7.programName
-expr e@15:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@15:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@15:32#1 memberCall recv=e@15:32 callee=isMemoryLeakCheckerActive args=[] type=Boolean ref=kotlin.native.Platform.isMemoryLeakCheckerActive
 expr e@15:5 localDecl leakChecker mutable=0 type=Boolean init=e@15:32#1 type=Unit ref=__local_8.leakChecker
-expr e@16:5 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@16:5 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@16:43 name(leakChecker) type=Boolean ref=__local_8.leakChecker
 expr e@16:42 unary(not) operand=e@16:43 type=Boolean
 expr e@16:5#1 memberAssign recv=e@16:5 callee=isMemoryLeakCheckerActive value=e@16:42 type=Unit ref=kotlin.native.Platform.isMemoryLeakCheckerActive
-expr e@17:36 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@17:36 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@17:36#1 memberCall recv=e@17:36 callee=isCleanersLeakCheckerActive args=[] type=Boolean ref=kotlin.native.Platform.isCleanersLeakCheckerActive
 expr e@17:5 localDecl cleanersChecker mutable=0 type=Boolean init=e@17:36#1 type=Unit ref=__local_9.cleanersChecker
-expr e@18:5 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@18:5 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@18:45 name(cleanersChecker) type=Boolean ref=__local_9.cleanersChecker
 expr e@18:44 unary(not) operand=e@18:45 type=Boolean
 expr e@18:5#1 memberAssign recv=e@18:5 callee=isCleanersLeakCheckerActive value=e@18:44 type=Unit ref=kotlin.native.Platform.isCleanersLeakCheckerActive
-expr e@19:12 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
+expr e@19:12 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform#0
 expr e@19:12#1 memberCall recv=e@19:12 callee=getAvailableProcessors args=[] type=Int call=kotlin.native.Platform.getAvailableProcessors
 expr e@20:13 name(unaligned) type=Boolean ref=__local_0.unaligned
 expr e@20:26 name(littleEndian) type=Boolean ref=__local_1.littleEndian

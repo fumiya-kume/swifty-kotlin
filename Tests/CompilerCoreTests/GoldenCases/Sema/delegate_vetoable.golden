@@ -3,7 +3,7 @@ symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[]
 file fdelegate_vetoable package=golden.sema
   decl golden.sema.age property age var=1 sym=golden.sema.age
   decl golden.sema.main fun main sym=golden.sema.main
-expr e@5:17 name(Delegates) type=kotlin.properties.Delegates ref=kotlin.properties.Delegates
+expr e@5:17 name(Delegates) type=kotlin.properties.Delegates ref=kotlin.properties.Delegates#0
 expr e@5:36 int(0) type=Int
 expr e@6:5 name(new) type=Int ref=s-0
 expr e@6:12 int(0) type=Int

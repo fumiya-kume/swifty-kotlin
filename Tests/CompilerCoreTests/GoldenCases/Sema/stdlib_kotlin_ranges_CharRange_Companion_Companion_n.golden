@@ -3,10 +3,10 @@ symbol fq=__local_1.explicit kind=local vis=private flags=_ type=kotlin.ranges.C
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_ranges_CharRange_Companion_Companion_n package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
-expr e@4:29 name(CharRange) type=kotlin.ranges.CharRange.Companion ref=kotlin.ranges.CharRange
+expr e@4:29 name(CharRange) type=kotlin.ranges.CharRange.Companion ref=kotlin.ranges.CharRange#0
 expr e@4:29#1 memberCall recv=e@4:29 callee=EMPTY args=[] type=kotlin.ranges.CharRange call=kotlin.ranges.EMPTY.$get
 expr e@4:5 localDecl direct mutable=0 type=CharRange init=e@4:29#1 type=Unit ref=__local_0.direct
-expr e@5:31 name(CharRange) type=kotlin.ranges.CharRange ref=kotlin.ranges.CharRange
+expr e@5:31 name(CharRange) type=kotlin.ranges.CharRange ref=kotlin.ranges.CharRange#0
 expr e@5:31#1 memberCall recv=e@5:31 callee=Companion args=[] type=kotlin.ranges.CharRange.Companion ref=kotlin.ranges.CharRange.Companion
 expr e@5:31#2 memberCall recv=e@5:31#1 callee=EMPTY args=[] type=kotlin.ranges.CharRange call=kotlin.ranges.EMPTY.$get
 expr e@5:5 localDecl explicit mutable=0 type=CharRange init=e@5:31#2 type=Unit ref=__local_1.explicit

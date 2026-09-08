@@ -7,13 +7,13 @@ file fstdlib_kotlin_native_concurrent_TransferMode_TransferMode_n package=golden
   decl golden.sema.transferModeValue fun transferModeValue sym=golden.sema.transferModeValue
   decl golden.sema.transferModeValueOf fun transferModeValueOf sym=golden.sema.transferModeValueOf
   decl golden.sema.transferModeValues fun transferModeValues sym=golden.sema.transferModeValues
-expr e@7:69 name(TransferMode) type=kotlin.native.concurrent.TransferMode.Companion ref=kotlin.native.concurrent.TransferMode
+expr e@7:69 name(TransferMode) type=kotlin.native.concurrent.TransferMode.Companion ref=kotlin.native.concurrent.TransferMode#0
 expr e@7:69#1 memberCall recv=e@7:69 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.native.concurrent.TransferMode> ref=kotlin.native.concurrent.TransferMode.Companion.entries
-expr e@8:32 name(TransferMode) type=kotlin.native.concurrent.TransferMode ref=kotlin.native.concurrent.TransferMode
+expr e@8:32 name(TransferMode) type=kotlin.native.concurrent.TransferMode ref=kotlin.native.concurrent.TransferMode#0
 expr e@8:32#1 memberCall recv=e@8:32 callee=SAFE args=[] type=kotlin.native.concurrent.TransferMode ref=kotlin.native.concurrent.TransferMode.SAFE
 expr e@8:32#2 memberCall recv=e@8:32#1 callee=value args=[] type=Int ref=kotlin.native.concurrent.TransferMode.value
-expr e@9:43 name(TransferMode) type=kotlin.native.concurrent.TransferMode.Companion ref=kotlin.native.concurrent.TransferMode
+expr e@9:43 name(TransferMode) type=kotlin.native.concurrent.TransferMode.Companion ref=kotlin.native.concurrent.TransferMode#0
 expr e@9:64 string(UNSAFE) type=String
 expr e@9:43#1 memberCall recv=e@9:43 callee=valueOf args=[_:e@9:64] type=kotlin.native.concurrent.TransferMode call=kotlin.native.concurrent.TransferMode.Companion.valueOf
-expr e@10:49 name(TransferMode) type=kotlin.native.concurrent.TransferMode ref=kotlin.native.concurrent.TransferMode
+expr e@10:49 name(TransferMode) type=kotlin.native.concurrent.TransferMode ref=kotlin.native.concurrent.TransferMode#0
 expr e@10:49#1 memberCall recv=e@10:49 callee=values args=[] type=kotlin.Array<kotlin.native.concurrent.TransferMode> ref=kotlin.native.concurrent.TransferMode.values call=kotlin.native.concurrent.TransferMode.values

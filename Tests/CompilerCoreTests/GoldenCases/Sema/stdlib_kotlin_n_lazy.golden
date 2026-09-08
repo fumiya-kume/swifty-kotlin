@@ -14,7 +14,7 @@ expr e@5:44 name(null) type=Nothing?
 expr e@5:52 string(locked) type=String
 expr e@5:50 lambda params=[] body=e@5:52 label=lazy type=() -> String
 expr e@5:39 call callee=e@5:39#1 args=[_:e@5:44,_:e@5:50] type=kotlin.Lazy<String> call=kotlin.lazy#1 targs=[String]
-expr e@7:41 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode
+expr e@7:41 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode#0
 expr e@7:41#1 memberCall recv=e@7:41 callee=NONE args=[] type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode.NONE
 expr e@7:70 int(2) type=Int
 expr e@7:68 lambda params=[] body=e@7:70 label=lazy type=() -> Any

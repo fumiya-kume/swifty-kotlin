@@ -5,4 +5,4 @@ file fstdlib_kotlin_n_Unit package=golden.sema
   decl golden.sema.acceptUnit fun acceptUnit sym=golden.sema.acceptUnit
   decl golden.sema.exposeUnitObject fun exposeUnitObject sym=golden.sema.exposeUnitObject
 expr e@3:37 name(value) type=Unit ref=golden.sema.acceptUnit.$0.value
-expr e@5:31 name(Unit) type=Unit ref=kotlin.Unit
+expr e@5:31 name(Unit) type=Unit ref=kotlin.Unit#0

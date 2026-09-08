@@ -5,7 +5,7 @@ symbol fq=useRandomDefault kind=function vis=public flags=_ sig=recv=_ params=[]
 file frandom_default package=_
   decl useRandomDefault fun useRandomDefault sym=useRandomDefault
 expr e@4:15 name(Random) type=kotlin.random.Random ref=kotlin.random.Random#0
-expr e@4:15#1 memberCall recv=e@4:15 callee=Default args=[] type=kotlin.random.Random.Default ref=kotlin.random.Random.Default
+expr e@4:15#1 memberCall recv=e@4:15 callee=Default args=[] type=kotlin.random.Random.Default ref=kotlin.random.Random.Default#0
 expr e@4:5 localDecl rng mutable=0 type=_ init=e@4:15#1 type=Unit ref=__local_0.rng
 expr e@5:13 name(rng) type=kotlin.random.Random.Default ref=__local_0.rng
 expr e@5:13#1 memberCall recv=e@5:13 callee=nextInt args=[] type=Int call=kotlin.random.Random.Default.nextInt#0

@@ -7,12 +7,12 @@ symbol fq=__try_0_catch_0._ kind=local vis=internal flags=_ type=kotlin.IllegalA
 symbol fq=valueTimeMarkProbe kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 file fstdlib_kotlin_time_TimeSource_Monotonic_ValueTimeMark_ValueTimeMark_n package=_
   decl valueTimeMarkProbe fun valueTimeMarkProbe sym=valueTimeMarkProbe
-expr e@9:16 name(TimeSource) type=kotlin.time.TimeSource ref=kotlin.time.TimeSource
-expr e@9:16#1 memberCall recv=e@9:16 callee=Monotonic args=[] type=kotlin.time.TimeSource.Monotonic ref=kotlin.time.TimeSource.Monotonic
+expr e@9:16 name(TimeSource) type=kotlin.time.TimeSource ref=kotlin.time.TimeSource#0
+expr e@9:16#1 memberCall recv=e@9:16 callee=Monotonic args=[] type=kotlin.time.TimeSource.Monotonic ref=kotlin.time.TimeSource.Monotonic#0
 expr e@9:16#2 memberCall recv=e@9:16#1 callee=markNow args=[] type=kotlin.time.TimeSource.Monotonic.ValueTimeMark call=kotlin.time.TimeSource.Monotonic.markNow
 expr e@9:5 localDecl mark mutable=0 type=_ init=e@9:16#2 type=Unit ref=__local_0.mark
 expr e@10:16 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark
-expr e@10:23 name(Duration) type=kotlin.time.Duration.Companion ref=kotlin.time.Duration
+expr e@10:23 name(Duration) type=kotlin.time.Duration.Companion ref=kotlin.time.Duration#0
 expr e@10:23#1 memberCall recv=e@10:23 callee=ZERO args=[] type=kotlin.time.Duration call=kotlin.time.ZERO.$get
 expr e@10:16#1 binary(add) lhs=e@10:16 rhs=e@10:23#1 type=kotlin.time.TimeSource.Monotonic.ValueTimeMark call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.plus
 expr e@10:5 localDecl copy mutable=0 type=_ init=e@10:16#1 type=Unit ref=__local_1.copy

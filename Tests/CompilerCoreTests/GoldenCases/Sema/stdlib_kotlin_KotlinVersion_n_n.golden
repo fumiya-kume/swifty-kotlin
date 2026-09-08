@@ -16,9 +16,9 @@ expr e@5:47 int(2) type=Int
 expr e@5:50 int(1) type=Int
 expr e@5:53 int(20) type=Int
 expr e@5:33 call callee=e@5:33#1 args=[_:e@5:47,_:e@5:50,_:e@5:53] type=kotlin.KotlinVersion call=kotlin.KotlinVersion.<init>#1
-expr e@7:32 name(KotlinVersion) type=kotlin.KotlinVersion.Companion ref=kotlin.KotlinVersion
+expr e@7:32 name(KotlinVersion) type=kotlin.KotlinVersion.Companion ref=kotlin.KotlinVersion#0
 expr e@7:32#1 memberCall recv=e@7:32 callee=CURRENT args=[] type=kotlin.KotlinVersion ref=kotlin.KotlinVersion.Companion.CURRENT
-expr e@9:27 name(KotlinVersion) type=kotlin.KotlinVersion.Companion ref=kotlin.KotlinVersion
+expr e@9:27 name(KotlinVersion) type=kotlin.KotlinVersion.Companion ref=kotlin.KotlinVersion#0
 expr e@9:27#1 memberCall recv=e@9:27 callee=MAX_COMPONENT_VALUE args=[] type=Int ref=kotlin.KotlinVersion.Companion.MAX_COMPONENT_VALUE
 expr e@12:13 call callee=e@12:13#1 args=[] type=kotlin.KotlinVersion call=golden.sema.makeShort
 expr e@12:13#2 memberCall recv=e@12:13 callee=toString args=[] type=String call=kotlin.KotlinVersion.toString

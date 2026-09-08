@@ -13,7 +13,7 @@ file fstdlib_kotlin_annotation_n_n package=golden.sema
   decl golden.sema.AnnotatedAlias typealias AnnotatedAlias sym=golden.sema.AnnotatedAlias
   decl golden.sema.annotationRetentionSurface fun annotationRetentionSurface sym=golden.sema.annotationRetentionSurface
   decl golden.sema.annotationTargetSurface fun annotationTargetSurface sym=golden.sema.annotationTargetSurface
-expr e@25:57 name(AnnotationRetention) type=kotlin.annotation.AnnotationRetention ref=kotlin.annotation.AnnotationRetention
+expr e@25:57 name(AnnotationRetention) type=kotlin.annotation.AnnotationRetention ref=kotlin.annotation.AnnotationRetention#0
 expr e@25:57#1 memberCall recv=e@25:57 callee=RUNTIME args=[] type=kotlin.annotation.AnnotationRetention ref=kotlin.annotation.AnnotationRetention.RUNTIME
-expr e@27:51 name(AnnotationTarget) type=kotlin.annotation.AnnotationTarget ref=kotlin.annotation.AnnotationTarget
+expr e@27:51 name(AnnotationTarget) type=kotlin.annotation.AnnotationTarget ref=kotlin.annotation.AnnotationTarget#0
 expr e@27:51#1 memberCall recv=e@27:51 callee=TYPEALIAS args=[] type=kotlin.annotation.AnnotationTarget ref=kotlin.annotation.AnnotationTarget.TYPEALIAS

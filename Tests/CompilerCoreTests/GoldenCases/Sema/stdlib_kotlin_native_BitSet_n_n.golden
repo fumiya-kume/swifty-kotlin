@@ -35,9 +35,9 @@ expr e@12:5 localDecl initialized mutable=0 type=_ init=e@12:23 type=Unit ref=__
 expr e@16:24 int(5) type=Int
 expr e@16:17 call callee=e@16:17#1 args=[_:e@16:24] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>#0
 expr e@16:5 localDecl sized mutable=0 type=_ init=e@16:17 type=Unit ref=__local_5.sized
-expr e@18:9 name(BitSet) type=kotlin.native.BitSet ref=kotlin.native.BitSet
+expr e@18:9 name(BitSet) type=kotlin.native.BitSet ref=kotlin.native.BitSet#0
 expr e@18:9#1 memberCall recv=e@18:9 callee=Companion args=[] type=kotlin.native.BitSet.Companion ref=kotlin.native.BitSet.Companion
-expr e@18:30 name(BitSet) type=kotlin.native.BitSet ref=kotlin.native.BitSet
+expr e@18:30 name(BitSet) type=kotlin.native.BitSet ref=kotlin.native.BitSet#0
 expr e@18:30#1 memberCall recv=e@18:30 callee=Companion args=[] type=kotlin.native.BitSet.Companion ref=kotlin.native.BitSet.Companion
 expr e@18:9#2 binary(identityEqual) lhs=e@18:9#1 rhs=e@18:30#1 type=Boolean
 expr e@19:9 name(empty) type=kotlin.native.BitSet ref=__local_1.empty

@@ -5,7 +5,7 @@ file fdelegate_observable_vetoable package=golden.sema
   decl golden.sema.name property name var=1 sym=golden.sema.name
   decl golden.sema.age property age var=1 sym=golden.sema.age
   decl golden.sema.main fun main sym=golden.sema.main
-expr e@5:21 name(Delegates) type=kotlin.properties.Delegates ref=kotlin.properties.Delegates
+expr e@5:21 name(Delegates) type=kotlin.properties.Delegates ref=kotlin.properties.Delegates#0
 expr e@5:42 string(initial) type=String
 expr e@6:28 name(old) type=String ref=s-0
 expr e@6:36 name(new) type=String ref=s-1
@@ -13,7 +13,7 @@ expr e@6:13 stringTemplate[lit(changed from ),expr(e@6:28),lit( to ),expr(e@6:36
 expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println#2
 expr e@5:53 lambda params=[prop,old,new] body=e@6:5 label=observable type=(kotlin.reflect.KProperty<*>, String, String) -> Unit
 expr e@5:21#1 memberCall recv=e@5:21 callee=observable args=[_:e@5:42,_:e@5:53] type=kotlin.properties.ReadWriteProperty<Any?, String> call=kotlin.properties.Delegates.observable targs=[String]
-expr e@9:17 name(Delegates) type=kotlin.properties.Delegates ref=kotlin.properties.Delegates
+expr e@9:17 name(Delegates) type=kotlin.properties.Delegates ref=kotlin.properties.Delegates#0
 expr e@9:36 int(0) type=Int
 expr e@10:5 name(new) type=Int ref=s-2
 expr e@10:12 int(0) type=Int

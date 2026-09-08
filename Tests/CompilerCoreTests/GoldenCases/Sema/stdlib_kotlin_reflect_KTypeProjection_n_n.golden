@@ -8,5 +8,5 @@ file fstdlib_kotlin_reflect_KTypeProjection_n_n package=golden.sema
 expr e@8:21 name(variance) type=kotlin.reflect.KVariance? ref=golden.sema.constructProjection.$0.variance
 expr e@8:31 name(type) type=kotlin.reflect.KType? ref=golden.sema.constructProjection.$0.type
 expr e@8:5 call callee=e@8:5#1 args=[_:e@8:21,_:e@8:31] type=kotlin.reflect.KTypeProjection call=kotlin.reflect.KTypeProjection.<init>
-expr e@10:56 name(KTypeProjection) type=kotlin.reflect.KTypeProjection ref=kotlin.reflect.KTypeProjection
+expr e@10:56 name(KTypeProjection) type=kotlin.reflect.KTypeProjection ref=kotlin.reflect.KTypeProjection#0
 expr e@10:56#1 memberCall recv=e@10:56 callee=Companion args=[] type=kotlin.reflect.KTypeProjection.Companion ref=kotlin.reflect.KTypeProjection.Companion
