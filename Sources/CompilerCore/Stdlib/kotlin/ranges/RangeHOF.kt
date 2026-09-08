@@ -541,6 +541,22 @@ public fun <R> IntProgression.foldIndexed(initial: R, operation: (Int, R, Int) -
 public fun IntProgression.find(predicate: (Int) -> Boolean): Int? = firstOrNull(predicate)
 public fun IntProgression.findLast(predicate: (Int) -> Boolean): Int? = lastOrNull(predicate)
 
+private fun intProgressionDescription(progression: IntProgression): String {
+    val step = progression.step
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun IntProgression.first(): Int {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${intProgressionDescription(this)} is empty.")
+    return this.first
+}
+
 public fun IntProgression.first(predicate: (Int) -> Boolean): Int {
     for (element in this) if (predicate(element)) return element
     throw NoSuchElementException("No element found matching predicate.")
@@ -550,6 +566,13 @@ public fun IntProgression.firstOrNull(): Int? = if (isEmpty()) null else first
 public fun IntProgression.firstOrNull(predicate: (Int) -> Boolean): Int? {
     for (element in this) if (predicate(element)) return element
     return null
+}
+
+@SinceKotlin("1.7")
+public fun IntProgression.last(): Int {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${intProgressionDescription(this)} is empty.")
+    return this.last
 }
 
 @NoInline

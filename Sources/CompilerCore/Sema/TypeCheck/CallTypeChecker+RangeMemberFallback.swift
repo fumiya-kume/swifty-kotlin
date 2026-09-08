@@ -331,7 +331,7 @@ extension CallTypeChecker {
 
     private func isIntRangeSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
         if memberName == "first" || memberName == "last" {
-            return argCount > 0
+            return argCount == 0 || argCount == 1
         }
         let sourceBacked: Set<String> = [
             "toList", "toIntArray", "average", "sorted",
