@@ -56,7 +56,7 @@ public class StringBuilder : Appendable, CharSequence {
         __kk_string_builder_append_obj(value.toString())
 
     fun append(value: Any?): StringBuilder =
-        __kk_string_builder_append_obj(value)
+        __kk_string_builder_append_obj(value.toString())
 
     fun append(value: Byte): StringBuilder =
         __kk_string_builder_append_obj(value.toString())
@@ -89,26 +89,59 @@ public class StringBuilder : Appendable, CharSequence {
         return this
     }
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
     inline fun appendLine(value: Boolean): StringBuilder = append(value).appendLine()
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
     inline fun appendLine(value: Byte): StringBuilder = append(value.toInt()).appendLine()
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
     inline fun appendLine(value: Char): StringBuilder = append(value).appendLine()
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
     inline fun appendLine(value: CharArray): StringBuilder = append(value).appendLine()
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
     inline fun appendLine(value: CharSequence?): StringBuilder = append(value).appendLine()
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
     inline fun appendLine(value: Double): StringBuilder = append(value).appendLine()
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
     inline fun appendLine(value: Float): StringBuilder = append(value).appendLine()
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
     inline fun appendLine(value: Int): StringBuilder = append(value).appendLine()
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
     inline fun appendLine(value: Long): StringBuilder = append(value).appendLine()
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
     inline fun appendLine(value: Short): StringBuilder = append(value.toInt()).appendLine()
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
     inline fun appendLine(value: String?): StringBuilder = append(value).appendLine()
 
     fun appendLine(): StringBuilder {
