@@ -488,13 +488,19 @@ extension CallTypeChecker {
             sema: sema,
             interner: interner
         ) ?? receiverType
-        let scopedRangeUserCandidates = collectScopedRangeUserExtensionCandidates(
-            named: calleeName,
-            receiverType: sourceLookupReceiverType,
-            ctx: ctx,
-            sema: sema,
-            interner: interner
-        )
+        let scopedRangeUserCandidates: [SymbolID] = if memberName == "contains", rangeKind == .intRange {
+            collectScopedRangeUserExtensionCandidates(
+                named: calleeName,
+                receiverType: sourceLookupReceiverType,
+                ctx: ctx,
+                sema: sema,
+                interner: interner
+            ).filter {
+                isIntRangeCrossTypeContainsCandidate($0, sema: sema)
+            }
+        } else {
+            []
+        }
         guard isSourceBackedRangeCall,
               let sourceSymbol = sourceRangeHOFSymbol(
                   memberName: memberName,
@@ -613,6 +619,37 @@ extension CallTypeChecker {
         let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
+    }
+
+    func hasIntRangeSourceBackedContainsCandidate(
+        receiverType: TypeID,
+        argumentType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        collectRangeSourceExtensionCandidates(
+            named: interner.intern("contains"),
+            receiverType: receiverType,
+            sema: sema,
+            interner: interner
+        ).contains { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate),
+                  signature.parameterTypes.count == 1
+            else {
+                return false
+            }
+            return signature.parameterTypes[0] == argumentType
+        }
+    }
+
+    func isIntRangeCrossTypeContainsCandidate(_ candidate: SymbolID, sema: SemaModule) -> Bool {
+        guard let signature = sema.symbols.functionSignature(for: candidate),
+              signature.parameterTypes.count == 1
+        else {
+            return false
+        }
+        return [sema.types.byteType, sema.types.longType, sema.types.shortType]
+            .contains(signature.parameterTypes[0])
     }
 
     private func sourceRangeHOFSymbol(
