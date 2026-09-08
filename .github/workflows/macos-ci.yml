@@ -54,6 +54,7 @@ jobs:
           include_dir="$llvm_prefix/include"
           lib_dir="$llvm_prefix/lib"
           llvm_dylib="$lib_dir/libLLVM.dylib"
+          sdk_path="$(xcrun --sdk macosx --show-sdk-path)"
 
           if [[ ! -f "$llvm_dylib" ]]; then
             llvm_dylib="$(find "$lib_dir" -maxdepth 1 -type f -name 'libLLVM*.dylib' -print | sort | head -n 1)"
@@ -69,8 +70,9 @@ jobs:
             echo "LIBRARY_PATH=$lib_dir"
             echo "DYLD_LIBRARY_PATH=$lib_dir${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
             echo "KSWIFTK_LLVM_DYLIB=$llvm_dylib"
+            echo "SDKROOT=$sdk_path"
           } >> "$GITHUB_ENV"
-          echo "LLVM $("$llvm_prefix/bin/llvm-config" --version) include=$include_dir lib=$lib_dir dylib=$llvm_dylib"
+          echo "LLVM $("$llvm_prefix/bin/llvm-config" --version) include=$include_dir lib=$lib_dir dylib=$llvm_dylib sdk=$sdk_path"
 
       - name: Show macOS toolchain
         run: |
