@@ -16,7 +16,17 @@ cat >"$FIXTURE" <<'SWIFT'
     case "commentedOut"
     let ignored: Set<String> = ["commentedOut"]
 */
-let prose = "case \"inside a string\""
+let condition = true
+let rawTrailing = #"trailing slash \"#
+let normal = "normal \(condition ? "case fake" : "set fake")"
+let rawInterpolated = #"raw \#(condition ? "case fake" : "set fake")"#
+let rawTwoHashes = ##"raw \##(condition ? "case fake" : "set fake")"##
+let multiline = """
+multiline \(condition ? "case fake" : "set fake")
+"""
+let rawMultiline = #"""
+raw multiline \#(condition ? "case fake" : "set fake")
+"""#
 
 private let names: Set<
     String
@@ -41,6 +51,15 @@ func classify(_ name: String) -> Int {
     }
 }
 SWIFT
+
+if ! command -v swiftc >/dev/null 2>&1; then
+  echo "FAIL: swiftc is required to validate the Swift scanner fixture" >&2
+  exit 1
+fi
+if ! swiftc -parse "$FIXTURE"; then
+  echo "FAIL: scanner fixture is not valid Swift" >&2
+  exit 1
+fi
 
 assert_equal() {
   local expected="$1"
@@ -69,5 +88,15 @@ for metric in \
     exit 1
   fi
 done
+
+if PYTHON_BIN="$TEMP_DIR/missing-python" "$SCRIPT_DIR/loc_report.sh" \
+  >"$TEMP_DIR/failure.out" 2>"$TEMP_DIR/failure.err"; then
+  echo "FAIL: loc_report.sh succeeded when its Python scanner was unavailable" >&2
+  exit 1
+fi
+if ! grep -q 'failed to compute typecheck_string_literal_switch_case_count' "$TEMP_DIR/failure.err"; then
+  echo "FAIL: loc_report.sh did not report a scanner failure" >&2
+  exit 1
+fi
 
 echo "OK: loc_report.sh dispatch metrics scan Swift syntax and emit numeric repository values"

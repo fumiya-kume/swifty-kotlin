@@ -70,6 +70,11 @@ with:
 bash Scripts/loc_report.sh
 ```
 
+The scanner honors the hash count in extended string delimiters and skips
+quoted strings nested inside interpolation expressions, so string contents do
+not create false `case` or table-entry matches. The fixture is parsed with
+`swiftc -parse` before its metric assertions run.
+
 The scanner regression fixture covers nested comments, string contents,
 multiline type formatting, inline comments, multiple table entries, and a
 non-string switch case:
@@ -77,6 +82,9 @@ non-string switch case:
 ```bash
 bash Scripts/test_loc_report.sh
 ```
+
+If the Python scanner cannot run, `loc_report.sh` exits nonzero instead of
+emitting a successful-looking metric row.
 
 CI publishes the same TSV from the `refactoring-metrics` job as artifact `refactoring-metrics-${run_id}` and mirrors it into the job summary.
 

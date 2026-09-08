@@ -24,6 +24,68 @@ def _is_identifier_continue(character: str) -> bool:
     return _is_identifier_start(character) or character.isdigit()
 
 
+def _is_string_start(source: str, start: int) -> bool:
+    if start >= len(source):
+        return False
+    if source[start] == '"':
+        return True
+    if source[start] != "#":
+        return False
+    index = start
+    while index < len(source) and source[index] == "#":
+        index += 1
+    return index < len(source) and source[index] == '"'
+
+
+def _consume_block_comment(source: str, start: int) -> int:
+    """Return the first index after a nested block comment."""
+    source_length = len(source)
+    depth = 1
+    index = start + 2
+    while index < source_length and depth:
+        if source.startswith("/*", index):
+            depth += 1
+            index += 2
+        elif source.startswith("*/", index):
+            depth -= 1
+            index += 2
+        else:
+            index += 1
+    return index
+
+
+def _consume_interpolation(source: str, start: int) -> int:
+    """Return the first index after an interpolation's closing parenthesis."""
+    source_length = len(source)
+    parenthesis_depth = 1
+    index = start
+    while index < source_length:
+        if source.startswith("//", index):
+            newline = source.find("\n", index + 2)
+            index = source_length if newline < 0 else newline + 1
+            continue
+        if source.startswith("/*", index):
+            index = _consume_block_comment(source, index)
+            continue
+        if _is_string_start(source, index):
+            index = _consume_string(source, index)
+            continue
+        if source[index] == "`":
+            identifier_end = source.find("`", index + 1)
+            index = source_length if identifier_end < 0 else identifier_end + 1
+            continue
+
+        character = source[index]
+        if character == "(":
+            parenthesis_depth += 1
+        elif character == ")":
+            parenthesis_depth -= 1
+            if parenthesis_depth == 0:
+                return index + 1
+        index += 1
+    return source_length
+
+
 def _consume_string(source: str, start: int) -> int:
     """Return the first index after a normal, raw, or multiline string."""
     source_length = len(source)
@@ -37,16 +99,33 @@ def _consume_string(source: str, start: int) -> int:
 
     multiline = source.startswith('"""', quote_index)
     opening_length = 3 if multiline else 1
-    terminator = ('"""' if multiline else '"') + ("#" * hash_count)
+    hash_marks = "#" * hash_count
+    terminator = ('"""' if multiline else '"') + hash_marks
     index = quote_index + opening_length
     while index < source_length:
         if source.startswith(terminator, index):
             return index + len(terminator)
-        if source[index] == "\\":
-            # This also skips escaped delimiters in raw strings.
-            index += 2
-        else:
+        if source[index] != "\\":
             index += 1
+            continue
+
+        if hash_count == 0:
+            if source.startswith("\\(", index):
+                index = _consume_interpolation(source, index + 2)
+            else:
+                # A normal string escape consumes the escaped character.
+                index += 2
+            continue
+
+        # Extended delimiters only treat a backslash followed by the same
+        # number of hash marks as an escape. A bare backslash is literal.
+        hash_end = index + 1 + hash_count
+        if source[index + 1 : hash_end] != hash_marks or hash_end >= source_length:
+            index += 1
+        elif source[hash_end] == "(":
+            index = _consume_interpolation(source, hash_end + 1)
+        else:
+            index = hash_end + 1
     return source_length
 
 
@@ -81,12 +160,11 @@ def tokenize(source: str) -> List[Token]:
             block_comment_depth = 1
             index += 2
             continue
-        if character == '"' or character == "#":
+        if _is_string_start(source, index):
             string_end = _consume_string(source, index)
-            if string_end != index + 1 or character == '"':
-                tokens.append(Token("string", source[index:string_end]))
-                index = string_end
-                continue
+            tokens.append(Token("string", source[index:string_end]))
+            index = string_end
+            continue
         if character == "`":
             identifier_end = source.find("`", index + 1)
             if identifier_end >= 0:

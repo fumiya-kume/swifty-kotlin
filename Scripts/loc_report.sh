@@ -98,12 +98,18 @@ count_unique_regex_matches() {
   grep_matches "$pattern" "$@" | LC_ALL=C sort -u | awk 'END { print NR + 0 }'
 }
 
-count_typecheck_string_switch_cases() {
-  "$PYTHON_BIN" "$LOC_REPORT_METRICS" string-switch-cases "$@"
-}
+emit_typecheck_metric() {
+  local metric="$1"
+  local scope="$2"
+  local scanner_metric="$3"
+  shift 3
 
-count_typecheck_inline_string_set_entries() {
-  "$PYTHON_BIN" "$LOC_REPORT_METRICS" inline-string-set-entries "$@"
+  local value
+  if ! value=$("$PYTHON_BIN" "$LOC_REPORT_METRICS" "$scanner_metric" "$@"); then
+    printf 'loc_report: failed to compute %s\n' "$metric" >&2
+    return 1
+  fi
+  printf '%s\t%s\t%s\n' "$metric" "$scope" "$value"
 }
 
 emit_directory_loc() {
@@ -203,7 +209,13 @@ printf 'interner_resolve_literal_comparison_count\tSwift sources\t%s\n' \
   "$(count_regex_occurrences 'interner\.resolve[^=]*==[[:space:]]*"[^"]+"' "${SWIFT_FILES[@]}")"
 printf 'typecheck_interner_resolve_literal_comparison_count\tSources/CompilerCore/Sema/TypeCheck\t%s\n' \
   "$(count_regex_occurrences 'interner\.resolve[^=]*==[[:space:]]*"[^"]+"' "${SEMA_TYPECHECK_FILES[@]}")"
-printf 'typecheck_string_literal_switch_case_count\tSources/CompilerCore/Sema/TypeCheck/*.swift\t%s\n' \
-  "$(count_typecheck_string_switch_cases "${SEMA_TYPECHECK_FILES[@]}")"
-printf 'typecheck_inline_string_set_entry_count\tSources/CompilerCore/Sema/TypeCheck/*.swift\t%s\n' \
-  "$(count_typecheck_inline_string_set_entries "${SEMA_TYPECHECK_FILES[@]}")"
+emit_typecheck_metric \
+  typecheck_string_literal_switch_case_count \
+  'Sources/CompilerCore/Sema/TypeCheck/*.swift' \
+  string-switch-cases \
+  "${SEMA_TYPECHECK_FILES[@]}"
+emit_typecheck_metric \
+  typecheck_inline_string_set_entry_count \
+  'Sources/CompilerCore/Sema/TypeCheck/*.swift' \
+  inline-string-set-entries \
+  "${SEMA_TYPECHECK_FILES[@]}"
