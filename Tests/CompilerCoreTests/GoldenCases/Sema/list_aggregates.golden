@@ -13,4 +13,4 @@ expr e@2:5#1 memberCall recv=e@2:5 callee=sumOf args=[_:e@2:18] type=Int call=ko
 expr e@3:5 name(values) type=kotlin.collections.List<Int> ref=aggregate.$0.values
 expr e@3:5#1 memberCall recv=e@3:5 callee=maxOrNull args=[] type=Int? call=kotlin.collections.maxOrNull#3 targs=[Int]
 expr e@4:5 name(values) type=kotlin.collections.List<Int> ref=aggregate.$0.values
-expr e@4:5#1 memberCall recv=e@4:5 callee=minOrNull args=[] type=Int? call=kotlin.collections.minOrNull#0 targs=[Int]
+expr e@4:5#1 memberCall recv=e@4:5 callee=minOrNull args=[] type=Int? call=kotlin.collections.minOrNull#3 targs=[Int]

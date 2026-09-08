@@ -409,18 +409,69 @@ extension CallTypeChecker {
         @discardableResult
         func bindBundledIterableSourceFunction(
             typeArguments: [TypeID],
+            matchingParameterTypes: [TypeID]? = nil,
+            enforceTypeParameterCount: Bool = false,
+            matchingReceiverElementType: TypeID? = nil,
+            allowNominalIterableReceiver: Bool = false,
             receiverElementType: TypeID? = nil
         ) -> Bool {
             guard !isSequenceReceiver,
                   isCollectionReceiver
-                  || (isIterableReceiver && (calleeStr == "drop"
-                      || calleeStr == "dropWhile"
-                      || calleeStr == "runningReduce"
-                      || calleeStr == "runningReduceIndexed"
-                      || isIterableFilterFamilyHOF))
-                    || (isIterableIndexReceiver && isIterableIndexFamilyHOF)
+                      || (allowNominalIterableReceiver && isIterableReceiver)
+                      || (isIterableReceiver && (calleeStr == "drop"
+                          || calleeStr == "dropWhile"
+                          || calleeStr == "runningReduce"
+                          || calleeStr == "runningReduceIndexed"
+                          || isIterableFilterFamilyHOF))
+                      || (isIterableIndexReceiver && isIterableIndexFamilyHOF)
             else {
                 return false
+            }
+
+            func typeArgMatches(_ lhs: TypeArg, _ rhs: TypeArg) -> Bool {
+                switch (lhs, rhs) {
+                case let (.invariant(l), .invariant(r)),
+                     let (.out(l), .out(r)),
+                     let (.in(l), .in(r)):
+                    return typeMatches(l, r)
+                case (.star, .star):
+                    return true
+                default:
+                    return false
+                }
+            }
+            func typeMatches(_ lhs: TypeID, _ rhs: TypeID) -> Bool {
+                let lhsKind = sema.types.kind(of: lhs)
+                let rhsKind = sema.types.kind(of: rhs)
+                switch (lhsKind, rhsKind) {
+                case let (.classType(l), .classType(r)):
+                    return l.classSymbol == r.classSymbol
+                        && l.nullability == r.nullability
+                        && l.args.count == r.args.count
+                        && zip(l.args, r.args).allSatisfy(typeArgMatches)
+                case let (.functionType(l), .functionType(r)):
+                    return l.nullability == r.nullability
+                        && l.isSuspend == r.isSuspend
+                        && l.params.count == r.params.count
+                        && zip(l.params, r.params).allSatisfy(typeMatches)
+                        && typeMatches(l.returnType, r.returnType)
+                        && l.receiver == r.receiver
+                        && l.throws == r.throws
+                case let (.typeParam(l), .typeParam(r)):
+                    return l.symbol == r.symbol && l.nullability == r.nullability
+                case let (.kClassType(l), .kClassType(r)):
+                    return l.nullability == r.nullability && typeMatches(l.argument, r.argument)
+                case let (.primitive(l, lNullability), .primitive(r, rNullability)):
+                    return l == r && lNullability == rNullability
+                case let (.nothing(lNullability), .nothing(rNullability)),
+                     let (.any(lNullability), .any(rNullability)),
+                     let (.stringStruct(lNullability), .stringStruct(rNullability)):
+                    return lNullability == rNullability
+                case (.error, .error), (.unit, .unit):
+                    return true
+                default:
+                    return false
+                }
             }
             let sourceFQName = [
                 interner.intern("kotlin"),
@@ -441,6 +492,58 @@ extension CallTypeChecker {
                       let signatureReceiver = signature.receiverType
                 else {
                     return false
+                }
+                if enforceTypeParameterCount,
+                   signature.typeParameterSymbols.count != typeArguments.count
+                {
+                    return false
+                }
+                let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+                let substitution = Dictionary(uniqueKeysWithValues: typeArguments.enumerated().map {
+                    (TypeVarID(rawValue: Int32($0.offset)), $0.element)
+                })
+                if let matchingParameterTypes,
+                   matchingParameterTypes.count == signature.parameterTypes.count,
+                   !signature.typeParameterSymbols.isEmpty
+                {
+                    for (parameterType, matchingType) in zip(signature.parameterTypes, matchingParameterTypes) {
+                        let substitutedParameterType = sema.types.substituteTypeParameters(
+                            in: parameterType,
+                            substitution: substitution,
+                            typeVarBySymbol: typeVarBySymbol
+                        )
+                        guard typeMatches(substitutedParameterType, matchingType) else {
+                            return false
+                        }
+                    }
+                }
+                if let matchingReceiverElementType,
+                   let (receiverClassType, _) = resolveClassTypeSymbol(
+                       sema.types.substituteTypeParameters(
+                           in: signatureReceiver,
+                           substitution: substitution,
+                           typeVarBySymbol: typeVarBySymbol
+                       ),
+                       sema: sema
+                   ),
+                   let receiverArgument = receiverClassType.args.first
+                {
+                    let receiverElementType: TypeID = switch receiverArgument {
+                    case let .invariant(type), let .out(type), let .in(type): type
+                    case .star: sema.types.anyType
+                    }
+                    if !typeMatches(receiverElementType, matchingReceiverElementType) {
+                        // Source signatures retain their receiver type parameter
+                        // in this fast path. The call-site type argument is the
+                        // authoritative substitution for the exact Iterable
+                        // owner when the structural TypeID substitution above
+                        // cannot rewrite that receiver slot.
+                        guard typeArguments.first == matchingReceiverElementType,
+                              case .typeParam = sema.types.kind(of: receiverElementType)
+                        else {
+                            return false
+                        }
+                    }
                 }
                 if let receiverElementType,
                    getCollectionElementType(signatureReceiver, sema: sema, interner: interner) != receiverElementType {
@@ -1873,6 +1976,8 @@ extension CallTypeChecker {
             }
 
             var sourceBackedSequenceAggregateTypeArguments: [TypeID]?
+            var sourceBackedIterableAggregateTypeArguments: [TypeID]?
+            var sourceBackedIterableAggregateMatchingParameterTypes: [TypeID]?
             let resultType: TypeID
             let listResultType: TypeID = if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner) {
                 sema.types.make(.classType(ClassType(
@@ -3900,6 +4005,9 @@ extension CallTypeChecker {
                         sema.bindings.unmarkCollectionHOFLambdaExpr(args[0].expr)
                     }
                 }
+                if calleeStr == "minWith" || calleeStr == "minWithOrNull" {
+                    sourceBackedIterableAggregateTypeArguments = [collectionElementType]
+                }
                 resultType = (calleeStr == "maxWithOrNull" || calleeStr == "minWithOrNull")
                     ? sema.types.makeNullable(collectionElementType)
                     : collectionElementType
@@ -3930,10 +4038,15 @@ extension CallTypeChecker {
                     sema.types.anyType
                 }
                 let comparatorFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Comparator")]
+                let usesIterableMinComparator = (calleeStr == "minOfWith" || calleeStr == "minOfWithOrNull")
+                    && !isSequenceReceiver
+                    && !isMapReceiver
+                    && !receiverClassifier.isConcreteListLikeType(receiverType)
+                    && !isListFactoryReceiver
                 let comparatorExpectedType: TypeID? = if let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName) {
                     sema.types.make(.classType(ClassType(
                         classSymbol: comparatorSymbol,
-                        args: [.invariant(selectorResultType)],
+                        args: [usesIterableMinComparator ? .in(selectorResultType) : .invariant(selectorResultType)],
                         nullability: .nonNull
                     )))
                 } else {
@@ -3959,6 +4072,9 @@ extension CallTypeChecker {
                     if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
                         sema.bindings.unmarkCollectionHOFLambdaExpr(args[0].expr)
                     }
+                }
+                if calleeStr == "minOfWith" || calleeStr == "minOfWithOrNull" {
+                    sourceBackedIterableAggregateTypeArguments = [collectionElementType, selectorResultType]
                 }
                 resultType = (calleeStr == "maxOfWithOrNull" || calleeStr == "minOfWithOrNull")
                     ? sema.types.makeNullable(selectorResultType)
@@ -4410,6 +4526,13 @@ extension CallTypeChecker {
                     }
                 }
                 _ = bindBundledListSourceFunction(typeArguments: [collectionElementType])
+                if calleeStr == "min" || calleeStr == "minOrNull" {
+                    sourceBackedIterableAggregateTypeArguments = if collectionElementType == sema.types.doubleType || collectionElementType == sema.types.floatType {
+                        []
+                    } else {
+                        [collectionElementType]
+                    }
+                }
                 resultType = (calleeStr == "max" || calleeStr == "min")
                     ? collectionElementType
                     : sema.types.makeNullable(collectionElementType)
@@ -4496,6 +4619,9 @@ extension CallTypeChecker {
                 if isMapReceiver, calleeStr == "maxByOrNull" || calleeStr == "minByOrNull" {
                     _ = bindBundledMapSourceFunction()
                 }
+                if calleeStr == "minBy" || calleeStr == "minByOrNull" {
+                    sourceBackedIterableAggregateTypeArguments = [collectionElementType, selectorType]
+                }
 
             case "maxOf", "minOf":
                 guard args.count == 1 else {
@@ -4529,6 +4655,16 @@ extension CallTypeChecker {
                     if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
                         sema.bindings.unmarkCollectionHOFLambdaExpr(args[0].expr)
                     }
+                }
+                if calleeStr == "minOf" {
+                    let sourceTypeArguments = selectorType == sema.types.doubleType || selectorType == sema.types.floatType
+                        ? [collectionElementType]
+                        : [collectionElementType, selectorType]
+                    sourceBackedIterableAggregateTypeArguments = sourceTypeArguments
+                    sourceBackedIterableAggregateMatchingParameterTypes = [sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: selectorType
+                    )))]
                 }
                 resultType = selectorType
 
@@ -4608,6 +4744,16 @@ extension CallTypeChecker {
                     if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
                         sema.bindings.unmarkCollectionHOFLambdaExpr(args[0].expr)
                     }
+                }
+                if calleeStr == "minOfOrNull" {
+                    let sourceTypeArguments = selectorType == sema.types.doubleType || selectorType == sema.types.floatType
+                        ? [collectionElementType]
+                        : [collectionElementType, selectorType]
+                    sourceBackedIterableAggregateTypeArguments = sourceTypeArguments
+                    sourceBackedIterableAggregateMatchingParameterTypes = [sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: selectorType
+                    )))]
                 }
 
             case "binarySearch":
@@ -5008,6 +5154,26 @@ extension CallTypeChecker {
                     if let lambdaExpr = ast.arena.expr(arg.expr), lambdaExpr.isLambdaOrCallableRef {
                         sema.bindings.unmarkCollectionHOFLambdaExpr(arg.expr)
                     }
+                }
+            }
+
+            // KSP-984: bind only the exact source-backed Iterable min-family
+            // declarations after List/Set-specific ownership has had priority.
+            // The selector parameter match keeps minOf/minOfOrNull's
+            // Comparable/Double/Float overloads distinct at the call site.
+            if sema.bindings.callBindings[id] == nil,
+               let sourceBackedIterableAggregateTypeArguments,
+               bindBundledIterableSourceFunction(
+                   typeArguments: sourceBackedIterableAggregateTypeArguments,
+                   matchingParameterTypes: sourceBackedIterableAggregateMatchingParameterTypes,
+                   enforceTypeParameterCount: true,
+                   matchingReceiverElementType: collectionElementType,
+                   allowNominalIterableReceiver: true
+               )
+            {
+                for argument in args
+                where ast.arena.expr(argument.expr)?.isLambdaOrCallableRef == true {
+                    sema.bindings.unmarkCollectionHOFLambdaExpr(argument.expr)
                 }
             }
 

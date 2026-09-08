@@ -34,6 +34,8 @@ extension CallLowerer {
         "all", "any", "firstNotNullOf", "firstNotNullOfOrNull", "joinTo", "joinToString",
         "containsAll", "count", "isNotEmpty", "intersect", "last", "lastIndexOf", "lastOrNull",
         "minus", "minusElement", "plus", "plusElement", "random", "randomOrNull",
+        "min", "minBy", "minByOrNull", "minOf", "minOfOrNull", "minOfWith",
+        "minOfWithOrNull", "minOrNull", "minWith", "minWithOrNull",
         "requireNoNulls", "reduceRight", "reduceRightIndexed", "reduceRightIndexedOrNull",
         "reduceRightOrNull", "sumBy", "sumByDouble", "subtract", "toCollection", "toHashSet",
         "toBooleanArray", "toByteArray", "toCharArray", "toDoubleArray", "toFloatArray", "toIntArray",
