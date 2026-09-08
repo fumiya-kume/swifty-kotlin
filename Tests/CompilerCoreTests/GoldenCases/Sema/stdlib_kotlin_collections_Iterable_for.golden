@@ -1,0 +1,84 @@
+symbol fq=golden.sema.CustomIterable kind=class vis=public flags=_
+symbol fq=golden.sema.CustomIterable.$class0.T kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.CustomIterable.values kind=property vis=public flags=_ type=kotlin.collections.List<golden.sema.CustomIterable.$class0.T>
+symbol fq=golden.sema.customIterableForEach kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.CustomIterable<Int>] ret=Unit
+symbol fq=golden.sema.customIterableForEach.$0.values kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableForEach kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>] ret=Unit
+symbol fq=golden.sema.iterableForEach.$1.values kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.receiverResolution kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>,kotlin.Array<Int>,kotlin.collections.Map<String, Int>,kotlin.sequences.Sequence<Int>,kotlin.collections.Iterator<Int>,kotlin.IntArray] ret=Unit
+symbol fq=golden.sema.receiverResolution.$2.array kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.receiverResolution.$2.iterator kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.receiverResolution.$2.list kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.receiverResolution.$2.map kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.receiverResolution.$2.primitiveArray kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.receiverResolution.$2.sequence kind=valueParameter vis=private flags=_
+symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.IntArray#0 kind=class vis=public flags=synthetic
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
+symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+file fstdlib_kotlin_collections_Iterable_for package=golden.sema
+  decl golden.sema.CustomIterable class CustomIterable sym=golden.sema.CustomIterable
+  decl golden.sema.iterableForEach fun iterableForEach sym=golden.sema.iterableForEach
+  decl golden.sema.customIterableForEach fun customIterableForEach sym=golden.sema.customIterableForEach
+  decl golden.sema.receiverResolution fun receiverResolution sym=golden.sema.receiverResolution
+expr e@4:44 name(values) type=kotlin.collections.List<golden.sema.CustomIterable.$class0.T> ref=golden.sema.CustomIterable.values
+expr e@4:44#1 memberCall recv=e@4:44 callee=iterator args=[] type=kotlin.collections.Iterator<out golden.sema.CustomIterable.$class0.T> call=kotlin.collections.Collection.iterator
+expr e@8:5 name(values) type=kotlin.collections.Iterable<String?> ref=golden.sema.iterableForEach.$1.values
+expr e@9:17 name(value) type=String? ref=s-0
+expr e@9:26 string(null) type=String
+expr e@9:17#1 binary(elvis) lhs=e@9:17 rhs=e@9:26 type=String
+expr e@9:9 call callee=e@9:9#1 args=[_:e@9:17#1] type=Unit call=kotlin.io.println#2
+expr e@8:20 lambda params=[value] body=e@9:9 label=forEach type=(String?) -> Unit
+expr e@8:5#1 memberCall recv=e@8:5 callee=forEach args=[_:e@8:20] type=Unit call=kotlin.collections.forEach#13 targs=[String?]
+expr e@14:5 name(values) type=golden.sema.CustomIterable<Int> ref=golden.sema.customIterableForEach.$0.values
+expr e@15:17 name(value) type=Int ref=s-1
+expr e@15:25 int(1) type=Int
+expr e@15:17#1 binary(add) lhs=e@15:17 rhs=e@15:25 type=Int
+expr e@15:9 call callee=e@15:9#1 args=[_:e@15:17#1] type=Unit call=kotlin.io.println#1
+expr e@14:20 lambda params=[value] body=e@15:9 label=forEach type=(Int) -> Unit
+expr e@14:5#1 memberCall recv=e@14:5 callee=forEach args=[_:e@14:20] type=Unit call=kotlin.collections.forEach#13 targs=[Int]
+expr e@27:5 name(list) type=kotlin.collections.List<Int> ref=golden.sema.receiverResolution.$2.list
+expr e@27:28 name(it) type=Int ref=s-2
+expr e@27:20 call callee=e@27:20#1 args=[_:e@27:28] type=Unit call=kotlin.io.println#1
+expr e@27:18 lambda params=[] body=e@27:20 label=forEach type=(Int) -> Unit
+expr e@27:5#1 memberCall recv=e@27:5 callee=forEach args=[_:e@27:18] type=Unit
+expr e@28:5 name(array) type=kotlin.Array<Int> ref=golden.sema.receiverResolution.$2.array
+expr e@28:29 name(it) type=Int ref=s-3
+expr e@28:21 call callee=e@28:21#1 args=[_:e@28:29] type=Unit call=kotlin.io.println#1
+expr e@28:19 lambda params=[] body=e@28:21 label=forEach type=(Int) -> Unit
+expr e@28:5#1 memberCall recv=e@28:5 callee=forEach args=[_:e@28:19] type=Unit call=kotlin.collections.forEach#0 targs=[Int]
+expr e@29:5 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.receiverResolution.$2.map
+expr e@29:41 name(key) type=Any ref=s-4
+expr e@29:47 name(value) type=Any ref=s-5
+expr e@29:41#1 binary(add) lhs=e@29:41 rhs=e@29:47 type=Int
+expr e@29:33 call callee=e@29:33#1 args=[_:e@29:41#1] type=Unit call=kotlin.io.println#1
+expr e@29:17 lambda params=[key,value] body=e@29:33 label=forEach type=(kotlin.collections.Map.Entry<out String, out Int>) -> Unit
+expr e@29:5#1 memberCall recv=e@29:5 callee=forEach args=[_:e@29:17] type=Unit call=kotlin.collections.forEach#15 targs=[String,Int]
+expr e@30:5 name(sequence) type=kotlin.sequences.Sequence<Int> ref=golden.sema.receiverResolution.$2.sequence
+expr e@30:32 name(it) type=Int ref=s-6
+expr e@30:24 call callee=e@30:24#1 args=[_:e@30:32] type=Unit call=kotlin.io.println#1
+expr e@30:22 lambda params=[] body=e@30:24 label=forEach type=(Int) -> Unit
+expr e@30:5#1 memberCall recv=e@30:5 callee=forEach args=[_:e@30:22] type=Unit call=kotlin.sequences.forEach targs=[Int]
+expr e@31:5 name(iterator) type=kotlin.collections.Iterator<Int> ref=golden.sema.receiverResolution.$2.iterator
+expr e@31:32 name(it) type=Int ref=s-7
+expr e@31:24 call callee=e@31:24#1 args=[_:e@31:32] type=Unit call=kotlin.io.println#1
+expr e@31:22 lambda params=[] body=e@31:24 label=forEach type=(Int) -> Unit
+expr e@31:5#1 memberCall recv=e@31:5 callee=forEach args=[_:e@31:22] type=Unit call=kotlin.collections.forEach#14 targs=[Int]
+expr e@32:5 name(list) type=kotlin.collections.List<Int> ref=golden.sema.receiverResolution.$2.list
+expr e@32:51 name(index) type=Int ref=s-8
+expr e@32:59 name(value) type=Int ref=s-9
+expr e@32:51#1 binary(add) lhs=e@32:51 rhs=e@32:59 type=Int
+expr e@32:43 call callee=e@32:43#1 args=[_:e@32:51#1] type=Unit call=kotlin.io.println#1
+expr e@32:25 lambda params=[index,value] body=e@32:43 label=forEachIndexed type=(Int, Int) -> Unit
+expr e@32:5#1 memberCall recv=e@32:5 callee=forEachIndexed args=[_:e@32:25] type=Unit call=kotlin.collections.forEachIndexed targs=[Int]
+expr e@33:5 name(primitiveArray) type=kotlin.IntArray ref=golden.sema.receiverResolution.$2.primitiveArray
+expr e@33:38 name(it) type=Int ref=s-10
+expr e@33:30 call callee=e@33:30#1 args=[_:e@33:38] type=Unit call=kotlin.io.println#1
+expr e@33:28 lambda params=[] body=e@33:30 label=forEach type=(Int) -> Unit
+expr e@33:5#1 memberCall recv=e@33:5 callee=forEach args=[_:e@33:28] type=Unit call=kotlin.collections.forEach#6

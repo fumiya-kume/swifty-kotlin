@@ -25,7 +25,7 @@ expr e@2:20 name(__destructured_0) type=kotlin.collections.Map.Entry<out String,
 expr e@2:20#1 destructuringDecl names=[key,value] mutable=0 init=e@2:20 type=Unit
 expr e@2:20#2 blockExpr stmts=[e@2:20#1] trailing=e@3:9#2 type=Unit
 expr e@2:20#3 lambda params=[__destructured_0] body=e@2:20#2 label=forEach type=(kotlin.collections.Map.Entry<out String, out Int>) -> Unit
-expr e@2:5#1 memberCall recv=e@2:5 callee=forEach args=[_:e@2:20#3] type=Unit call=kotlin.collections.forEach#14 targs=[String,Int]
+expr e@2:5#1 memberCall recv=e@2:5 callee=forEach args=[_:e@2:20#3] type=Unit call=kotlin.collections.forEach#15 targs=[String,Int]
 expr e@6:13 name(values) type=kotlin.collections.Map<String, Int> ref=render.$0.values
 expr e@6:42 name(key) type=String ref=__destructuring_1.key
 expr e@6:42#1 memberCall recv=e@6:42 callee=length args=[] type=Int call=kotlin.length.$get

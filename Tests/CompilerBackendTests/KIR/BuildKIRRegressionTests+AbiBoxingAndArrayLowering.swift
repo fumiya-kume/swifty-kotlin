@@ -225,6 +225,58 @@ struct BuildKIRCodegenRegressionTests {
         }
     }
 
+    /// KSP-977: only exact/custom Iterable receivers bind to the bundled
+    /// Iterable.forEach declaration; receiver-specific forEach families keep
+    /// their existing lowering paths.
+    @Test
+    func testBuildKIRLowersIterableForEachWithoutHijackingOtherReceivers() throws {
+        let source = """
+        class CustomIterable<T>(private val values: List<T>) : Iterable<T> {
+            override fun iterator(): Iterator<T> = values.iterator()
+        }
+
+        fun main(values: Iterable<Int>, custom: CustomIterable<Int>) {
+            values.forEach { println(it) }
+            custom.forEach { println(it) }
+        }
+
+        fun receiverFamilies(
+            list: List<Int>,
+            sequence: Sequence<Int>,
+            iterator: Iterator<Int>,
+            array: Array<Int>,
+            primitiveArray: IntArray
+        ) {
+            list.forEach { println(it) }
+            sequence.forEach { println(it) }
+            iterator.forEach { println(it) }
+            array.forEach { println(it) }
+            primitiveArray.forEach { println(it) }
+            list.forEachIndexed { index, value -> println(index + value) }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = try makeArtifactCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try #require(ctx.kir)
+            let iterableBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let iterableCallees = extractCallees(from: iterableBody, interner: ctx.interner)
+            #expect(containsKotlinCallee("forEach", in: iterableCallees))
+            #expect(!(iterableCallees.contains("kk_list_forEach")))
+            #expect(!(iterableCallees.contains("kk_sequence_forEach")))
+
+            let familyBody = try findKIRFunctionBody(named: "receiverFamilies", in: module, interner: ctx.interner)
+            let familyCallees = extractCallees(from: familyBody, interner: ctx.interner)
+            #expect(familyCallees.contains("kk_list_forEach"))
+            #expect(familyCallees.contains("kk_sequence_forEach"))
+            #expect(containsKotlinCallee("forEach", in: familyCallees))
+            #expect(containsKotlinCallee("forEachIndexed", in: familyCallees))
+            #expect(!(familyCallees.contains("kk_list_forEachIndexed")))
+        }
+    }
+
     @Test
     func testBuildKIRLowersListZipToPrivateBridge() throws {
         let source = """
