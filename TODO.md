@@ -4634,13 +4634,14 @@
   - 未実装シンボル一覧:
     - `kotlin.text.regionMatches` — fun CharSequence.regionMatches(Int, CharSequence, Int, Int, Boolean): Boolean  -- `final fun (kotlin/CharSequence).kotlin.text/regionMatches(kotlin/Int, kotlin/CharSequence, kotlin/Int, kotlin/Int, kotlin/Boolean = ...): kotlin/Boolean`
 
-- [ ] KSP-1393: kotlin.text.CharSequence.remove-family の未実装 stdlib API を実装する（6 件）
+- [~] KSP-1393: kotlin.text.CharSequence.remove-family の未実装 stdlib API を実装する（6 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `remove`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringPrefixSuffix.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_text_CharSequence_remove.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_text_CharSequence_remove.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_text_CharSequence_remove.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 実装状況: KSP-1393 の `CharSequence.removeRange(Int, Int)` と `CharSequence.removeRange(IntRange)` を `StringPrefixSuffix.kt` に source-backed 実装済み。String/StringBuilder/custom の非空範囲、UTF-16 index、逆順、`IntRange.endInclusive + 1` overflow は focused 検証済み。一方、custom `CharSequence` の空範囲は現行 KSP-724 の `subSequence` extension が override を dispatch しないため Kotlin 2.3.10 と不一致で、CharSequence interface/itable の別 Core 前提が必要。共通 G も未完了のため完了根拠にしない。
   - 未実装シンボル一覧:
     - `kotlin.text.removePrefix` — fun CharSequence.removePrefix(CharSequence): CharSequence  -- `final fun (kotlin/CharSequence).kotlin.text/removePrefix(kotlin/CharSequence): kotlin/CharSequence`
     - `kotlin.text.removeRange` — fun CharSequence.removeRange(IntRange): CharSequence  -- `final fun (kotlin/CharSequence).kotlin.text/removeRange(kotlin.ranges/IntRange): kotlin/CharSequence`
