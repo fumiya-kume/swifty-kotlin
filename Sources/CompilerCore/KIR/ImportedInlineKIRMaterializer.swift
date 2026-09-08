@@ -37,7 +37,12 @@ enum ImportedInlineKIRMaterializer {
                 if let existing = sourceToConsumer[source] {
                     return existing
                 }
-                let consumer = arena.appendTemporary()
+                // Imported bodies may carry exception-slot IDs that are only
+                // observed by an implicit throw check and have no defining
+                // instruction in the lowered body.  Keep their historical
+                // unresolved-value fallback at zero while still giving every
+                // ID a consumer-arena entry for type recovery and remapping.
+                let consumer = arena.appendExpr(.temporary(0))
                 sourceToConsumer[source] = consumer
                 return consumer
             }
