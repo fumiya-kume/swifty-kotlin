@@ -482,6 +482,19 @@ extension CallTypeChecker {
         } else {
             nil
         }
+        let sourceLookupReceiverType = sourceLevelRangeMemberLookupType(
+            receiverExpr: receiverID,
+            receiverType: receiverType,
+            sema: sema,
+            interner: interner
+        ) ?? receiverType
+        let scopedRangeUserCandidates = collectScopedRangeUserExtensionCandidates(
+            named: calleeName,
+            receiverType: sourceLookupReceiverType,
+            ctx: ctx,
+            sema: sema,
+            interner: interner
+        )
         guard isSourceBackedRangeCall,
               let sourceSymbol = sourceRangeHOFSymbol(
                   memberName: memberName,
@@ -489,6 +502,7 @@ extension CallTypeChecker {
                   argCount: args.count,
                   argumentTypes: argumentTypesForSourceLookup,
                   argumentLabels: argumentLabelsForSourceLookup,
+                  preferredCandidates: Set(scopedRangeUserCandidates),
                   sema: sema,
                   interner: interner
               ),
@@ -607,6 +621,7 @@ extension CallTypeChecker {
         argCount: Int,
         argumentTypes: [TypeID]? = nil,
         argumentLabels: [InternedString?]? = nil,
+        preferredCandidates: Set<SymbolID> = [],
         sema: SemaModule,
         interner: StringInterner
     ) -> SymbolID? {
@@ -670,6 +685,9 @@ extension CallTypeChecker {
             return !linkName.isEmpty
         }
 
+        if let preferred = candidates.first(where: { preferredCandidates.contains($0) }) {
+            return preferred
+        }
         return candidates.first { hasLink($0) } ?? candidates.first
     }
 

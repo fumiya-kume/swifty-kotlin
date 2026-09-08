@@ -519,6 +519,7 @@ final class ExprTypeChecker {
             // Resolve operator fun contains on the RHS (container) type for custom classes (STDLIB-OP-032)
             inferContainsCallBinding(
                 exprID: id,
+                containerExpr: rhsID,
                 elementType: lhsType,
                 containerType: rhsType,
                 range: range,
@@ -533,6 +534,7 @@ final class ExprTypeChecker {
             // Resolve operator fun contains on the RHS (container) type for custom classes (STDLIB-OP-032)
             inferContainsCallBinding(
                 exprID: id,
+                containerExpr: rhsID,
                 elementType: lhsType,
                 containerType: rhsType,
                 range: range,
@@ -554,6 +556,7 @@ final class ExprTypeChecker {
     /// generic kk_op_contains runtime stub.
     private func inferContainsCallBinding(
         exprID: ExprID,
+        containerExpr: ExprID,
         elementType: TypeID,
         containerType: TypeID,
         range: SourceRange,
@@ -562,6 +565,91 @@ final class ExprTypeChecker {
         let sema = ctx.sema
         let interner = ctx.interner
         let containsName = interner.intern("contains")
+
+        // Range expressions carry an Int lowering type until their member call
+        // is resolved. If a user operator extension is in scope, recover the
+        // source-level IntRange receiver before the primitive fast path can
+        // route `in` to the generic runtime helper.
+        if let rangeSourceReceiverType = driver.callChecker.sourceLevelRangeMemberLookupType(
+            receiverExpr: containerExpr,
+            receiverType: containerType,
+            sema: sema,
+            interner: interner
+        ) {
+            let scopedRangeUserCandidates = driver.callChecker
+                .collectScopedRangeUserExtensionCandidates(
+                    named: containsName,
+                    receiverType: rangeSourceReceiverType,
+                    ctx: ctx,
+                    sema: sema,
+                    interner: interner
+                )
+                .filter { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate),
+                          symbol.flags.contains(SymbolFlags.operatorFunction),
+                          let signature = sema.symbols.functionSignature(for: candidate)
+                    else {
+                        return false
+                    }
+                    return signature.parameterTypes.count == 1
+                }
+            if !scopedRangeUserCandidates.isEmpty {
+                let resolved = ctx.resolver.resolveCall(
+                    candidates: scopedRangeUserCandidates,
+                    call: CallExpr(
+                        range: range,
+                        calleeName: containsName,
+                        args: [CallArg(type: elementType)]
+                    ),
+                    expectedType: nil,
+                    implicitReceiverType: rangeSourceReceiverType,
+                    ctx: ctx.semaCtx
+                )
+                if let chosen = resolved.chosenCallee {
+                    sema.bindings.bindCall(
+                        exprID,
+                        binding: CallBinding(
+                            chosenCallee: chosen,
+                            substitutedTypeArguments: resolved.substitutedTypeArguments
+                                .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                                .map { _, value in value },
+                            parameterMapping: resolved.parameterMapping
+                        )
+                    )
+                    return
+                }
+                let hasBundledRangeCandidate = sema.symbols.lookupByShortName(containsName).contains { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate),
+                          symbol.kind == .function,
+                          symbol.flags.contains(SymbolFlags.operatorFunction),
+                          sema.symbols.isSourceBackedSymbol(candidate),
+                          let parentID = sema.symbols.parentSymbol(for: candidate),
+                          let parent = sema.symbols.symbol(parentID),
+                          parent.fqName == [
+                              interner.intern("kotlin"),
+                              interner.intern("ranges"),
+                          ],
+                          let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.parameterTypes.count == 1,
+                          signature.parameterTypes[0] == sema.types.makeNonNullable(elementType),
+                          let declaredReceiver = signature.receiverType
+                    else {
+                        return false
+                    }
+                    return driver.callChecker.extensionSyntheticFallbackReceiverMatches(
+                        callSiteReceiver: rangeSourceReceiverType,
+                        declaredReceiver: declaredReceiver,
+                        sema: sema
+                    )
+                }
+                if !hasBundledRangeCandidate,
+                   let diagnostic = resolved.diagnostic
+                {
+                    ctx.semaCtx.diagnostics.emit(diagnostic)
+                    return
+                }
+            }
+        }
 
         // Skip primitive and range types — they are handled by kk_op_contains at runtime.
         // String is `.stringStruct`, not `.classType` (KSWIFTK-INTERNAL-0001), but it does
