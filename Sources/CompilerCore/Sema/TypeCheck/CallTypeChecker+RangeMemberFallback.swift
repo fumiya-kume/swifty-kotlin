@@ -478,10 +478,30 @@ extension CallTypeChecker {
                 && (rangeKind == .longRange || rangeKind == .charRange
                     || rangeKind == .uintRange || rangeKind == .ulongRange))
 
-        let argumentTypesForSourceLookup: [TypeID]? = if memberName == "contains" {
-            args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
-        } else {
-            nil
+        var argumentTypesForSourceLookup: [TypeID]?
+        if memberName == "contains" {
+            var types: [TypeID] = []
+            types.reserveCapacity(args.count)
+            for argument in args {
+                if rangeKind == .longRange,
+                   isContextualizableIntegerLiteral(argument.expr, ast: ctx.ast)
+                {
+                    // Kotlin gives an unsuffixed literal the Long context of
+                    // LongRange.contains(Long), even when an Int extension is
+                    // also visible at the call site.
+                    types.append(
+                        driver.inferExpr(
+                            argument.expr,
+                            ctx: ctx,
+                            locals: &locals,
+                            expectedType: sema.types.longType
+                        )
+                    )
+                } else {
+                    types.append(driver.inferExpr(argument.expr, ctx: ctx, locals: &locals))
+                }
+            }
+            argumentTypesForSourceLookup = types
         }
         let argumentLabelsForSourceLookup: [InternedString?]? = if memberName == "contains" {
             args.map(\.label)
@@ -495,7 +515,10 @@ extension CallTypeChecker {
             interner: interner
         ) ?? receiverType
         let scopedRangeUserCandidates: [SymbolID] = if memberName == "contains",
-                                                          rangeKind == .intRange || rangeKind == .longRange {
+                                                          rangeKind == .intRange || rangeKind == .longRange,
+                                                          !(rangeKind == .longRange
+                                                            && args.count == 1
+                                                            && isContextualizableIntegerLiteral(args[0].expr, ast: ctx.ast)) {
             collectScopedRangeUserExtensionCandidates(
                 named: calleeName,
                 receiverType: sourceLookupReceiverType,
@@ -659,7 +682,26 @@ extension CallTypeChecker {
             .contains(signature.parameterTypes[0])
     }
 
-    private func sourceRangeHOFSymbol(
+    /// Returns true for a bare signed integer literal that Kotlin can
+    /// contextualize to a range element type. Unary +/- is kept in the same
+    /// category because the parser represents it as a wrapper expression.
+    func isContextualizableIntegerLiteral(_ exprID: ExprID, ast: ASTModule) -> Bool {
+        guard let expr = ast.arena.expr(exprID) else { return false }
+        switch expr {
+        case .intLiteral:
+            return true
+        case let .unaryExpr(op, operand, _):
+            guard op == .unaryPlus || op == .unaryMinus else { return false }
+            if case .intLiteral = ast.arena.expr(operand) {
+                return true
+            }
+            return false
+        default:
+            return false
+        }
+    }
+
+    func sourceRangeHOFSymbol(
         memberName: String,
         rangeKind: MemberDispatchReceiverKind,
         argCount: Int,

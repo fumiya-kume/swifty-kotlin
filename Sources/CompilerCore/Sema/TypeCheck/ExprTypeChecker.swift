@@ -519,11 +519,13 @@ final class ExprTypeChecker {
             // Resolve operator fun contains on the RHS (container) type for custom classes (STDLIB-OP-032)
             inferContainsCallBinding(
                 exprID: id,
+                elementExpr: lhsID,
                 containerExpr: rhsID,
                 elementType: lhsType,
                 containerType: rhsType,
                 range: range,
-                ctx: ctx
+                ctx: ctx,
+                locals: &locals
             )
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
@@ -534,11 +536,13 @@ final class ExprTypeChecker {
             // Resolve operator fun contains on the RHS (container) type for custom classes (STDLIB-OP-032)
             inferContainsCallBinding(
                 exprID: id,
+                elementExpr: lhsID,
                 containerExpr: rhsID,
                 elementType: lhsType,
                 containerType: rhsType,
                 range: range,
-                ctx: ctx
+                ctx: ctx,
+                locals: &locals
             )
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
@@ -556,11 +560,13 @@ final class ExprTypeChecker {
     /// generic kk_op_contains runtime stub.
     private func inferContainsCallBinding(
         exprID: ExprID,
+        elementExpr: ExprID,
         containerExpr: ExprID,
         elementType: TypeID,
         containerType: TypeID,
         range: SourceRange,
-        ctx: TypeInferenceContext
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
     ) {
         let sema = ctx.sema
         let interner = ctx.interner
@@ -583,7 +589,31 @@ final class ExprTypeChecker {
             interner: interner
         ),
         rangeReceiverKind == .intRange || rangeReceiverKind == .longRange {
-            let scopedRangeUserCandidates = driver.callChecker
+            // Kotlin gives a bare integer literal the Long context required by
+            // LongRange.contains(Long). An explicitly typed Int remains an Int
+            // and can therefore select a user LongRange.contains(Int)
+            // extension. Re-infer only the literal form so these two cases do
+            // not collapse to the same overload.
+            let isLongRangeLiteral = rangeReceiverKind == .longRange
+                && driver.callChecker.isContextualizableIntegerLiteral(
+                    elementExpr,
+                    ast: ctx.ast
+                )
+            let resolvedElementType: TypeID = if isLongRangeLiteral {
+                driver.inferExpr(
+                    elementExpr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: sema.types.longType
+                )
+            } else {
+                elementType
+            }
+
+            let scopedRangeUserCandidates: [SymbolID] = if isLongRangeLiteral {
+                []
+            } else {
+                driver.callChecker
                 .collectScopedRangeUserExtensionCandidates(
                     named: containsName,
                     receiverType: rangeSourceReceiverType,
@@ -605,13 +635,14 @@ final class ExprTypeChecker {
                     }
                     return true
                 }
+            }
             if !scopedRangeUserCandidates.isEmpty {
                 let resolved = ctx.resolver.resolveCall(
                     candidates: scopedRangeUserCandidates,
                     call: CallExpr(
                         range: range,
                         calleeName: containsName,
-                        args: [CallArg(type: elementType)]
+                        args: [CallArg(type: resolvedElementType)]
                     ),
                     expectedType: nil,
                     implicitReceiverType: rangeSourceReceiverType,
@@ -630,45 +661,50 @@ final class ExprTypeChecker {
                     )
                     return
                 }
-                let hasBundledRangeCandidate = driver.callChecker
-                    .hasIntRangeSourceBackedContainsCandidate(
-                        receiverType: rangeSourceReceiverType,
-                        argumentType: sema.types.makeNonNullable(elementType),
-                        sema: sema,
-                        interner: interner
-                    )
-                let rangeMemberCandidates = driver.helpers
-                    .collectMemberFunctionCandidates(
-                        named: containsName,
-                        receiverType: rangeSourceReceiverType,
-                        sema: sema,
-                        interner: interner
-                    )
-                    .filter { candidate in
-                        guard let symbol = sema.symbols.symbol(candidate),
-                              symbol.flags.contains(SymbolFlags.operatorFunction),
-                              let signature = sema.symbols.functionSignature(for: candidate)
-                        else {
-                            return false
-                        }
-                        return signature.parameterTypes.count == 1
-                    }
-                let hasApplicableRangeMember = ctx.resolver.resolveCall(
-                    candidates: rangeMemberCandidates,
+            }
+
+            // Resolve the source-backed range overload by its exact element
+            // type before falling back to synthetic member candidates. The
+            // source wrappers for LongRange/IntRange cross-type contains are
+            // not always returned by nominal member collection because their
+            // lowered range receiver has a different type identity.
+            let isCrossTypeRangeElement: Bool = if rangeReceiverKind == .longRange {
+                [sema.types.byteType, sema.types.intType, sema.types.shortType].contains(resolvedElementType)
+            } else {
+                [sema.types.byteType, sema.types.longType, sema.types.shortType].contains(resolvedElementType)
+            }
+            if isCrossTypeRangeElement,
+               let sourceSymbol = driver.callChecker.sourceRangeHOFSymbol(
+                memberName: "contains",
+                rangeKind: rangeReceiverKind,
+                argCount: 1,
+                argumentTypes: [resolvedElementType],
+                argumentLabels: [nil],
+                sema: sema,
+                interner: interner
+            ) {
+                let sourceResolved = ctx.resolver.resolveCall(
+                    candidates: [sourceSymbol],
                     call: CallExpr(
                         range: range,
                         calleeName: containsName,
-                        args: [CallArg(type: elementType)]
+                        args: [CallArg(type: resolvedElementType)]
                     ),
                     expectedType: nil,
                     implicitReceiverType: rangeSourceReceiverType,
                     ctx: ctx.semaCtx
-                ).chosenCallee != nil
-                if !hasBundledRangeCandidate,
-                   !hasApplicableRangeMember,
-                   let diagnostic = resolved.diagnostic
-                {
-                    ctx.semaCtx.diagnostics.emit(diagnostic)
+                )
+                if let chosen = sourceResolved.chosenCallee {
+                    sema.bindings.bindCall(
+                        exprID,
+                        binding: CallBinding(
+                            chosenCallee: chosen,
+                            substitutedTypeArguments: sourceResolved.substitutedTypeArguments
+                                .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                                .map { _, value in value },
+                            parameterMapping: sourceResolved.parameterMapping
+                        )
+                    )
                     return
                 }
             }
@@ -1111,11 +1147,17 @@ final class ExprTypeChecker {
     /// Resolves the type of an unsuffixed integer literal given the expected
     /// type at its use site. Kotlin widens such literals to `Long`/`UInt`/`ULong`
     /// when that is the expected type (e.g. a value class field declared `Long`
-    /// receiving a plain `1500`); any other expected type falls back to `Int`.
+    /// receiving a plain `1500`). A literal outside the signed 32-bit range is
+    /// Long by default, matching Kotlin's unsuffixed literal typing.
     /// `literalValue` is used to reject out-of-range constants for `Byte`/`Short`
     /// and negative constants for unsigned types.
     private func intLiteralType(expectedType: TypeID?, sema: SemaModule, defaultType: TypeID, literalValue: Int64 = 0) -> TypeID {
-        guard let expectedType else { return defaultType }
+        guard let expectedType else {
+            if literalValue < Int64(Int32.min) || literalValue > Int64(Int32.max) {
+                return sema.types.longType
+            }
+            return defaultType
+        }
         let nonNullExpected = sema.types.makeNonNullable(expectedType)
         guard case let .primitive(primitive, _) = sema.types.kind(of: nonNullExpected) else {
             return defaultType
