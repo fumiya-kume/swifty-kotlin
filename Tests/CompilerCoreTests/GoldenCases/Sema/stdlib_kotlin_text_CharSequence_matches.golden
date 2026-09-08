@@ -1,0 +1,37 @@
+symbol fq=golden.sema.charSequenceMatches kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.text.Regex] ret=Boolean
+symbol fq=golden.sema.charSequenceMatches.$0.regex kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceMatches.$0.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceMatchesInfix kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.text.Regex] ret=Boolean
+symbol fq=golden.sema.charSequenceMatchesInfix.$1.regex kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceMatchesInfix.$1.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceMatchesNamed kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.charSequenceMatchesNamed.$2.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringBuilderMatches kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder,kotlin.text.Regex] ret=Boolean
+symbol fq=golden.sema.stringBuilderMatches.$3.regex kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringBuilderMatches.$3.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringMatches kind=function vis=public flags=_ sig=recv=_ params=[String,kotlin.text.Regex] ret=Boolean
+symbol fq=golden.sema.stringMatches.$4.regex kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringMatches.$4.value kind=valueParameter vis=private flags=_
+symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+file fstdlib_kotlin_text_CharSequence_matches package=golden.sema
+  decl golden.sema.charSequenceMatches fun charSequenceMatches sym=golden.sema.charSequenceMatches
+  decl golden.sema.charSequenceMatchesInfix fun charSequenceMatchesInfix sym=golden.sema.charSequenceMatchesInfix
+  decl golden.sema.charSequenceMatchesNamed fun charSequenceMatchesNamed sym=golden.sema.charSequenceMatchesNamed
+  decl golden.sema.stringMatches fun stringMatches sym=golden.sema.stringMatches
+  decl golden.sema.stringBuilderMatches fun stringBuilderMatches sym=golden.sema.stringBuilderMatches
+expr e@4:5 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceMatches.$0.value
+expr e@4:19 name(regex) type=kotlin.text.Regex ref=golden.sema.charSequenceMatches.$0.regex
+expr e@4:5#1 memberCall recv=e@4:5 callee=matches args=[_:e@4:19] type=Boolean call=kotlin.text.matches#1
+expr e@7:5 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceMatchesInfix.$1.value
+expr e@7:19 name(regex) type=kotlin.text.Regex ref=golden.sema.charSequenceMatchesInfix.$1.regex
+expr e@7:5#1 memberCall recv=e@7:5 callee=matches args=[_:e@7:19] type=Boolean call=kotlin.text.matches#1
+expr e@10:5 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceMatchesNamed.$2.value
+expr e@10:33 string(^alpha$) type=String
+expr e@10:27 call callee=e@10:27#1 args=[_:e@10:33] type=kotlin.text.Regex call=kotlin.text.Regex.<init>#0
+expr e@10:5#1 memberCall recv=e@10:5 callee=matches args=[regex:e@10:27] type=Boolean call=kotlin.text.matches#1
+expr e@13:5 name(value) type=String ref=golden.sema.stringMatches.$4.value
+expr e@13:19 name(regex) type=kotlin.text.Regex ref=golden.sema.stringMatches.$4.regex
+expr e@13:5#1 memberCall recv=e@13:5 callee=matches args=[_:e@13:19] type=Boolean call=kotlin.text.matches#0
+expr e@16:5 name(value) type=kotlin.text.StringBuilder ref=golden.sema.stringBuilderMatches.$3.value
+expr e@16:19 name(regex) type=kotlin.text.Regex ref=golden.sema.stringBuilderMatches.$3.regex
+expr e@16:5#1 memberCall recv=e@16:5 callee=matches args=[_:e@16:19] type=Boolean call=kotlin.text.matches#1
