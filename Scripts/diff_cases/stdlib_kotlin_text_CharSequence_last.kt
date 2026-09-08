@@ -32,6 +32,14 @@ private fun nonLocalLast(source: CharSequence): Char {
     }
 }
 
+private fun nonLocalLastOrNull(source: CharSequence): Char {
+    source.lastOrNull {
+        if (it == 'x') return '!'
+        false
+    }
+    return '?'
+}
+
 private fun capturedNonLocalLast(source: CharSequence, captured: Char): Char {
     source.last {
         return captured
@@ -84,6 +92,8 @@ fun main() {
 
     println(capturedLast(source).code)
     println(nonLocalLast("ax").code)
+    println(nonLocalLastOrNull("xa").code)
+    println(nonLocalLastOrNull("ab").code)
     println(capturedNonLocalLast("ax", '!').code)
     println(nullableCapturedLast("ax", '!').code)
     println(nullableCapturedLast(null, '!').code)
