@@ -509,6 +509,8 @@ extension DeclTypeChecker {
         var functionCtx = ctx.copying(
             scope: functionScope,
             implicitReceiverType: effectiveReceiverType,
+            lambdaDepth: 0,
+            enclosingFunctionReturnType: signature.returnType,
             currentDeclSymbol: symbol
         )
         // Propagate suppression flag so that individual `return` statements inside
