@@ -106,6 +106,15 @@ private fun charSequenceContains(
 
     var start = 0
     val lastStart = selfLength - otherLength
+    if (selfChars == null && otherChars == null) {
+        while (start <= lastStart) {
+            if (self.regionMatches(start, other, 0, otherLength, ignoreCase)) return true
+            start++
+        }
+        return false
+    }
+
+    start = 0
     while (start <= lastStart) {
         var offset = 0
         var matched = true
