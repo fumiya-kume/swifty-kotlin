@@ -167,37 +167,12 @@ public fun CharSequence.removeRange(startIndex: Int, endIndex: Int): CharSequenc
         return this.subSequence(0, length)
     }
 
-    // Match the Kotlin implementation's capacity calculation and length
-    // evaluation order while avoiding the bundled StringBuilder bridge's
-    // String-only cast for custom CharSequence receivers.
+    // Use StringBuilder's CharSequence-aware appendRange so custom receivers
+    // retain indexed UTF-16 dispatch and the stable bridge's range checks.
     val sb = StringBuilder(length - (endIndex - startIndex))
-    val prefixLength = length
-    appendCharSequenceRange(sb, this, 0, startIndex, prefixLength)
-    val suffixEnd = length
-    val suffixLength = length
-    appendCharSequenceRange(sb, this, endIndex, suffixEnd, suffixLength)
+    sb.appendRange(this, 0, startIndex)
+    sb.appendRange(this, endIndex, length)
     return sb
-}
-
-private fun appendCharSequenceRange(
-    destination: StringBuilder,
-    source: CharSequence,
-    startIndex: Int,
-    endIndex: Int,
-    sourceLength: Int
-): StringBuilder {
-    if (startIndex < 0 || endIndex > sourceLength || startIndex > endIndex) {
-        throw IndexOutOfBoundsException(
-            "Range [$startIndex, $endIndex) out of bounds for length $sourceLength"
-        )
-    }
-
-    var index = startIndex
-    while (index < endIndex) {
-        destination.append(source[index])
-        index += 1
-    }
-    return destination
 }
 
 public fun CharSequence.removeRange(range: IntRange): CharSequence =

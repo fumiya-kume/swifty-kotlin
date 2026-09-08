@@ -64,9 +64,9 @@ fun main() {
         try {
             println("$label:ok:${action()}")
         } catch (e: NegativeArraySizeException) {
-            println("$label:negative:${e.message}")
+            println("$label:negative")
         } catch (e: IndexOutOfBoundsException) {
-            println("$label:index:${e.message}")
+            println("$label:index")
         }
     }
 
