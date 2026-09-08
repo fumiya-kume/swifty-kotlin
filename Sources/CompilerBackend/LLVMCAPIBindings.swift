@@ -15,6 +15,18 @@ final class LLVMCAPIBindings {
     typealias LLVMTargetRef = OpaquePointer
     typealias LLVMTargetMachineRef = OpaquePointer
     typealias LLVMTargetDataRef = OpaquePointer
+    typealias LLVMPassBuilderOptionsRef = OpaquePointer
+    typealias LLVMErrorRef = OpaquePointer
+    typealias LLVMRunPassesFn = @convention(c) (
+        LLVMModuleRef?, UnsafePointer<CChar>?, LLVMTargetMachineRef?, LLVMPassBuilderOptionsRef?
+    ) -> LLVMErrorRef?
+    typealias LLVMCreatePassBuilderOptionsFn = @convention(c) () -> LLVMPassBuilderOptionsRef?
+    typealias LLVMDisposePassBuilderOptionsFn = @convention(c) (LLVMPassBuilderOptionsRef?) -> Void
+    typealias LLVMGetErrorMessageFn = @convention(c) (LLVMErrorRef?) -> UnsafeMutablePointer<CChar>?
+    typealias LLVMDisposeErrorMessageFn = @convention(c) (UnsafeMutablePointer<CChar>?) -> Void
+    typealias LLVMVerifyModuleFn = @convention(c) (
+        LLVMModuleRef?, UInt32, UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
+    ) -> Int32
     typealias LLVMBool = Int32
     typealias LLVMContextCreateFn = @convention(c) () -> LLVMContextRef?
     typealias LLVMContextDisposeFn = @convention(c) (LLVMContextRef?) -> Void
@@ -240,6 +252,12 @@ final class LLVMCAPIBindings {
         UnsafeMutablePointer<UInt64>?, Int
     ) -> LLVMMetadataRef?
     private let handle: UnsafeMutableRawPointer
+    let runPassesFn: LLVMRunPassesFn?
+    let createPassBuilderOptionsFn: LLVMCreatePassBuilderOptionsFn?
+    let disposePassBuilderOptionsFn: LLVMDisposePassBuilderOptionsFn?
+    let getErrorMessageFn: LLVMGetErrorMessageFn?
+    let disposeErrorMessageFn: LLVMDisposeErrorMessageFn?
+    let verifyModuleFn: LLVMVerifyModuleFn?
     let contextCreateFn: LLVMContextCreateFn
     let contextDisposeFn: LLVMContextDisposeFn
     let moduleCreateFn: LLVMModuleCreateWithNameInContextFn
@@ -346,6 +364,12 @@ final class LLVMCAPIBindings {
     let diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn?
     init(
         handle: UnsafeMutableRawPointer,
+        runPassesFn: LLVMRunPassesFn? = nil,
+        createPassBuilderOptionsFn: LLVMCreatePassBuilderOptionsFn? = nil,
+        disposePassBuilderOptionsFn: LLVMDisposePassBuilderOptionsFn? = nil,
+        getErrorMessageFn: LLVMGetErrorMessageFn? = nil,
+        disposeErrorMessageFn: LLVMDisposeErrorMessageFn? = nil,
+        verifyModuleFn: LLVMVerifyModuleFn? = nil,
         contextCreateFn: @escaping LLVMContextCreateFn,
         contextDisposeFn: @escaping LLVMContextDisposeFn,
         moduleCreateFn: @escaping LLVMModuleCreateWithNameInContextFn,
@@ -452,6 +476,12 @@ final class LLVMCAPIBindings {
         diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn? = nil
     ) {
         self.handle = handle
+        self.runPassesFn = runPassesFn
+        self.createPassBuilderOptionsFn = createPassBuilderOptionsFn
+        self.disposePassBuilderOptionsFn = disposePassBuilderOptionsFn
+        self.getErrorMessageFn = getErrorMessageFn
+        self.disposeErrorMessageFn = disposeErrorMessageFn
+        self.verifyModuleFn = verifyModuleFn
         self.contextCreateFn = contextCreateFn
         self.contextDisposeFn = contextDisposeFn
         self.moduleCreateFn = moduleCreateFn

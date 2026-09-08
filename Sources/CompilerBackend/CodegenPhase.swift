@@ -129,8 +129,10 @@ public final class CodegenPhase: CompilerPhase {
         try fm.createDirectory(atPath: inlineDir, withIntermediateDirectories: true)
 
         let objectPath = objectsDir + "/\(ctx.options.moduleName)_0.o"
-        // Bundled stdlib functions appear in every compilation unit. Use linkonce_odr so the
-        // linker deduplicates them when the library object is linked with an app object.
+        // Bundled stdlib functions appear in every source-backed compilation unit. Use
+        // linkonce_odr there so the linker can deduplicate them. A stdlib artifact is the
+        // provider of those symbols, however; keeping its definitions externally visible
+        // prevents an O2 global-DCE pass from removing entry points that only consumers call.
         let bundledFileIDs = Set(ctx.sourceManager.fileIDs()
             .filter { ctx.sourceManager.origin(of: $0)?.isBundledStdlib == true }
             .map(\.rawValue))
@@ -152,7 +154,7 @@ public final class CodegenPhase: CompilerPhase {
             fileFacadeNamesByFileID: CodegenSymbolSupport.fileFacadeNames(from: ctx.ast),
             reflectionMetadataRecords: reflectionMetadataRecords,
             reflectionMetadataSymbolPrefix: reflectionMetadataSymbolPrefix,
-            linkOnceODRSymbols: bundledSymbolIDs
+            linkOnceODRSymbols: ctx.options.stdlibOnly ? [] : bundledSymbolIDs
         )
         ctx.storeGeneratedObjectPath(objectPath)
 
