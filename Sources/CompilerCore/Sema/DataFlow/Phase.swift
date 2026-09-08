@@ -107,6 +107,13 @@ final class DataFlowSemaPhase: CompilerPhase {
             sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
             interner: ctx.interner, into: &predeclaredEarlyHeaders
         )
+        // KSP-1269: make the source-backed RootSetStatistics nominal available
+        // before NativeRuntime residual stubs register its remaining members.
+        predeclareBundledRootSetStatisticsHeaders(
+            ast: ast, fileScopes: fileScopes, symbols: symbols,
+            sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
+            interner: ctx.interner, into: &predeclaredEarlyHeaders
+        )
 
         if let stdlibLibraryPath = ctx.options.stdlibLibraryPath {
             bundledIndex = mergeImportedStdlibSymbolsIntoBundledIndex(

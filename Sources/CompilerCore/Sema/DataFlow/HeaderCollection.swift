@@ -646,6 +646,45 @@ extension DataFlowSemaPhase {
         }
     }
 
+    /// KSP-1269: forward-declares the source-backed RootSetStatistics nominal
+    /// before the NativeRuntime residual stubs resolve its constructor and
+    /// property owners.
+    func predeclareBundledRootSetStatisticsHeaders(
+        ast: ASTModule,
+        fileScopes: [Int32: FileScope],
+        symbols: SymbolTable,
+        sourceManager: SourceManager,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        into predeclared: inout [DeclID: SymbolID]
+    ) {
+        let packageFQName = [
+            interner.intern("kotlin"),
+            interner.intern("native"),
+            interner.intern("runtime"),
+        ]
+        let targetName = interner.intern("RootSetStatistics")
+        for file in ast.sortedFiles where file.packageFQName == packageFQName {
+            let declaresTarget = file.topLevelDecls.contains { declID in
+                guard let decl = ast.arena.decl(declID) else { return false }
+                switch decl {
+                case .classDecl, .interfaceDecl, .objectDecl, .typeAliasDecl:
+                    return topLevelDeclarationDescriptor(for: decl, diagnostics: nil)?.name == targetName
+                case .funDecl, .propertyDecl, .enumEntryDecl:
+                    return false
+                }
+            }
+            guard declaresTarget,
+                  let fileScope = fileScopes[file.fileID.rawValue]
+            else { continue }
+            predeclareNominalTypeHeaders(
+                file: file, ast: ast, symbols: symbols, scope: fileScope,
+                sourceManager: sourceManager, diagnostics: diagnostics,
+                interner: interner, into: &predeclared
+            )
+        }
+    }
+
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func collectHeader(
         declID: DeclID,
@@ -1585,6 +1624,7 @@ extension DataFlowSemaPhase {
         // for their value-class and enum metadata.
         let resolvedFQName = fqName.map(interner.resolve)
         return resolvedFQName == ["kotlin", "native", "ref", "WeakReference"]
+            || resolvedFQName == ["kotlin", "native", "runtime", "RootSetStatistics"]
             || resolvedFQName == ["kotlin", "ranges", "IntProgression"]
             || resolvedFQName == ["kotlin", "time", "Duration"]
             || resolvedFQName == ["kotlin", "time", "DurationUnit"]

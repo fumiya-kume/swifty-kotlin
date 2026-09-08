@@ -1,0 +1,12 @@
+symbol fq=golden.sema.makeRootSetStatistics kind=function vis=public flags=_ sig=recv=_ params=[Long,Long,Long,Long] ret=kotlin.native.runtime.RootSetStatistics
+symbol fq=golden.sema.makeRootSetStatistics.$0.globalReferences kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeRootSetStatistics.$0.stableReferences kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeRootSetStatistics.$0.stackReferences kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeRootSetStatistics.$0.threadLocalReferences kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_native_runtime_RootSetStatistics_n_n package=golden.sema
+  decl golden.sema.makeRootSetStatistics fun makeRootSetStatistics sym=golden.sema.makeRootSetStatistics
+expr e@13:5 name(threadLocalReferences) type=Long ref=golden.sema.makeRootSetStatistics.$0.threadLocalReferences
+expr e@14:5 name(stackReferences) type=Long ref=golden.sema.makeRootSetStatistics.$0.stackReferences
+expr e@15:5 name(globalReferences) type=Long ref=golden.sema.makeRootSetStatistics.$0.globalReferences
+expr e@16:5 name(stableReferences) type=Long ref=golden.sema.makeRootSetStatistics.$0.stableReferences
+expr e@12:24 call callee=e@12:24#1 args=[_:e@13:5,_:e@14:5,_:e@15:5,_:e@16:5] type=kotlin.native.runtime.RootSetStatistics call=kotlin.native.runtime.RootSetStatistics.<init>

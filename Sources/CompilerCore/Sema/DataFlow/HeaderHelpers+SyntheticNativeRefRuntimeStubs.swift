@@ -395,14 +395,19 @@ extension DataFlowSemaPhase {
             ownerFQName: classFQName,
             parentSymbol: classSymbol
         )
-        registerSyntheticConstructorStubs(
-            [SyntheticNativeRefRuntimeSurfaceSpec.rootSetStatisticsConstructor],
-            ownerType: SyntheticNativeRefRuntimeSurfaceSpec.rootSetStatisticsType,
-            context: classContext,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
+        // The bundled source declaration owns the constructor once its nominal
+        // header has been predeclared. Keep the residual property stubs below,
+        // but do not create a duplicate constructor before header collection.
+        if !symbols.isSourceBackedSymbol(classSymbol) {
+            registerSyntheticConstructorStubs(
+                [SyntheticNativeRefRuntimeSurfaceSpec.rootSetStatisticsConstructor],
+                ownerType: SyntheticNativeRefRuntimeSurfaceSpec.rootSetStatisticsType,
+                context: classContext,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
         registerSyntheticPropertyStubs(
             SyntheticNativeRefRuntimeSurfaceSpec.rootSetStatisticsProperties,
             context: classContext,
