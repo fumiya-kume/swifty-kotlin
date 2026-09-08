@@ -681,29 +681,43 @@ public extension RuntimeABISpec {
             p("producerClosureRaw", .intptr),
             p("jobFnPtr", .intptr),
             p("jobClosureRaw", .intptr),
-        ]),
+        ], isThrowing: false),
+        abiParitySpec("kk_worker_as_cpointer", parameters: [
+            p("workerHandle", .intptr),
+        ], isThrowing: false),
         abiParitySpec("kk_worker_execute_after", parameters: [
             p("workerHandle", .intptr),
-            p("delayNs", .intptr),
+            p("afterMicroseconds", .intptr),
             p("fnPtr", .intptr),
             p("closureRaw", .intptr),
-        ]),
+        ], isThrowing: false),
         abiParitySpec("kk_worker_id", parameters: [
             p("workerHandle", .intptr),
-        ]),
+        ], isThrowing: false),
         abiParitySpec("kk_worker_is_terminated", parameters: [
             p("workerHandle", .intptr),
         ]),
         abiParitySpec("kk_worker_name", parameters: [
             p("workerHandle", .intptr),
-        ]),
+        ], isThrowing: false),
         abiParitySpec("kk_worker_new", parameters: [
             p("nameRaw", .intptr),
         ]),
+        abiParitySpec("kk_worker_park", parameters: [
+            p("workerHandle", .intptr),
+            p("timeoutMicroseconds", .intptr),
+            p("processRaw", .intptr),
+        ], isThrowing: false),
+        abiParitySpec("kk_worker_platform_thread_id", parameters: [
+            p("workerHandle", .intptr),
+        ], isThrowing: false),
+        abiParitySpec("kk_worker_process_queue", parameters: [
+            p("workerHandle", .intptr),
+        ], isThrowing: false),
         abiParitySpec("kk_worker_request_termination", parameters: [
             p("workerHandle", .intptr),
             p("processScheduledRaw", .intptr),
-        ]),
+        ], isThrowing: false),
     ]
 }
 

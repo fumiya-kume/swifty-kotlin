@@ -323,6 +323,40 @@ extension CallLowerer {
         }
 
         if let chosenCallee {
+            if sema.symbols.isSourceBackedSymbol(chosenCallee),
+               let signature = sema.symbols.functionSignature(for: chosenCallee),
+               let receiverType = signature.receiverType,
+               let (_, receiverSymbol) = resolveClassTypeSymbol(
+                   sema.types.makeNonNullable(receiverType),
+                   sema: sema
+               ),
+               receiverSymbol.fqName.map(interner.resolve) == [
+                   "kotlin", "native", "concurrent", "Worker",
+               ]
+            {
+                // Worker receiver APIs are declared in bundled Kotlin source,
+                // but their implementation boundary is the native runtime ABI.
+                // Keep source-level resolution and lower the runtime-backed
+                // operations to the existing ABI names.
+                switch fallbackName {
+                case "asCPointer":
+                    return interner.intern("kk_worker_as_cpointer")
+                case "execute":
+                    return interner.intern("kk_worker_execute")
+                case "executeAfter":
+                    return interner.intern("kk_worker_execute_after")
+                case "park":
+                    return interner.intern("kk_worker_park")
+                case "platformThreadId":
+                    return interner.intern("kk_worker_platform_thread_id")
+                case "processQueue":
+                    return interner.intern("kk_worker_process_queue")
+                case "requestTermination":
+                    return interner.intern("kk_worker_request_termination")
+                default:
+                    break
+                }
+            }
             if let setMember = runtimeBackedSetMemberCallee(
                 memberName: fallbackName,
                 receiverType: receiverType,

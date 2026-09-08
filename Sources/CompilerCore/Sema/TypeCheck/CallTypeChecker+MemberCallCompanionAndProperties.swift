@@ -96,6 +96,16 @@ extension CallTypeChecker {
                 collectGetterCandidate(from: candidate, requireSynthetic: true)
             }
         }
+        // Bundled stdlib source extension properties are not necessarily in the
+        // consumer file scope. Recover their accessors by short name as well;
+        // the receiver check above keeps this fallback type-directed.
+        if getterCandidates.isEmpty {
+            for candidate in sema.symbols.lookupByShortName(calleeName)
+                where sema.symbols.isSourceBackedSymbol(candidate)
+            {
+                collectGetterCandidate(from: candidate, requireSynthetic: false)
+            }
+        }
         guard !getterCandidates.isEmpty else {
             return nil
         }

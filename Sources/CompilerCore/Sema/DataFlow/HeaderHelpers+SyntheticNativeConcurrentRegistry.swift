@@ -655,7 +655,8 @@ extension DataFlowSemaPhase {
     }
 }
 
-/// Synthetic stdlib stubs for `kotlin.native.concurrent`: Worker class with Companion.start, member functions, and properties.
+/// Synthetic stdlib stubs for `kotlin.native.concurrent`: Worker nominal shell
+/// with Companion.start and the retained isTerminated compatibility property.
 ///
 /// Consolidated into the RF-STUB-004 NativeConcurrent registry.
 extension DataFlowSemaPhase {
@@ -748,77 +749,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // Worker.execute(mode: TransferMode, producer: () -> T1, job: (T1) -> T2): Future<T2>
-        let executeName = interner.intern("execute")
-        let executeFQName = workerFQName + [executeName]
-        let executeT1Symbol = nativeConcurrentSyntheticTypeParameter(
-            named: "T1",
-            ownerFQName: executeFQName,
-            symbols: symbols,
-            interner: interner
-        )
-        let executeT2Symbol = nativeConcurrentSyntheticTypeParameter(
-            named: "T2",
-            ownerFQName: executeFQName,
-            symbols: symbols,
-            interner: interner
-        )
-        let executeT1Type = types.make(.typeParam(TypeParamType(
-            symbol: executeT1Symbol,
-            nullability: .nonNull
-        )))
-        let executeT2Type = types.make(.typeParam(TypeParamType(
-            symbol: executeT2Symbol,
-            nullability: .nonNull
-        )))
-        let executeProducerType = types.make(.functionType(FunctionType(
-            params: [],
-            returnType: executeT1Type
-        )))
-        let executeJobType = types.make(.functionType(FunctionType(
-            params: [executeT1Type],
-            returnType: executeT2Type
-        )))
-        registerNativeConcurrentMemberFunction(
-            ownerSymbol: workerSymbol,
-            ownerType: workerType,
-            name: "execute",
-            externalLinkName: "kk_worker_execute",
-            returnType: nativeConcurrentFutureType(
-                elementType: executeT2Type,
-                symbols: symbols,
-                types: types,
-                interner: interner
-            ),
-            parameters: [
-                (name: "mode", type: transferModeType),
-                (name: "producer", type: executeProducerType),
-                (name: "job", type: executeJobType),
-            ],
-            defaultValues: [false, false, false],
-            typeParameterSymbols: [executeT1Symbol, executeT2Symbol],
-            symbols: symbols,
-            interner: interner
-        )
-
-        // Worker.requestTermination(processScheduled: Boolean = true): Future<Boolean>
-        registerNativeConcurrentMemberFunction(
-            ownerSymbol: workerSymbol,
-            ownerType: workerType,
-            name: "requestTermination",
-            externalLinkName: "kk_worker_request_termination",
-            returnType: nativeConcurrentFutureType(
-                elementType: types.booleanType,
-                symbols: symbols,
-                types: types,
-                interner: interner
-            ),
-            parameters: [(name: "processScheduled", type: types.booleanType)],
-            defaultValues: [true],
-            symbols: symbols,
-            interner: interner
-        )
-
         // Worker.isTerminated: Boolean (property)
         registerNativeConcurrentReadOnlyProperty(
             ownerSymbol: workerSymbol,
@@ -829,15 +759,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // Worker.name: String (property)
-        registerNativeConcurrentReadOnlyProperty(
-            ownerSymbol: workerSymbol,
-            name: "name",
-            propertyType: types.stringType,
-            getterLinkName: "kk_worker_name",
-            symbols: symbols,
-            interner: interner
-        )
     }
 
     private func registerNativeConcurrentWorkerConstructor(

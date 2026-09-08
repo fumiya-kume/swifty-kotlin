@@ -10,7 +10,8 @@ import Testing
 //
 // Implemented APIs (tested here):
 //   - Worker: kk_worker_new / kk_worker_execute / kk_worker_request_termination /
-//             kk_worker_is_terminated / kk_worker_name
+//             kk_worker_is_terminated / kk_worker_name / kk_worker_process_queue /
+//             kk_worker_park / kk_worker_platform_thread_id / kk_worker_as_cpointer
 //   - Worker.id: kk_worker_id (STDLIB-NATIVE-CONCURRENT-ABI-001)
 //   - Future<T>: kk_future_new / kk_future_complete / kk_future_result / kk_future_consume /
 //               kk_future_is_ready (STDLIB-NATIVE-CONCURRENT-ABI-002)
@@ -53,6 +54,10 @@ private let workerExecuteJobThunk: @convention(c) (Int, Int, UnsafeMutablePointe
     return value * 2
 }
 
+private let workerExecuteAfterNoopThunk: @convention(c) (Int) -> Int = { _ in
+    0
+}
+
 // ---------------------------------------------------------------------------
 // MARK: - Worker Tests
 // ---------------------------------------------------------------------------
@@ -77,7 +82,8 @@ struct RuntimeWorkerTests {
     }
 
     @Test func workerAnonymousCreationWhenNameHandleIsZero() {
-        // Passing 0 as the name handle should not crash; an anonymous name is generated.
+        // Passing 0 as the name handle should create an anonymous Worker; the
+        // Kotlin source wrapper supplies the public fallback name on access.
         let handle = kk_worker_new(0)
         #expect(handle != 0)
     }
@@ -382,6 +388,46 @@ struct RuntimeWorkerIDTests {
 
     @Test func workerIDForInvalidHandleReturnsNegative() {
         #expect(kk_worker_id(0) == -1, "Invalid handle must return -1")
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MARK: - Worker receiver helpers (STDLIB-NATIVE-CONCURRENT-ABI-007)
+// ---------------------------------------------------------------------------
+
+@Suite(.runtimeIsolation(.gcAndThreadLocal))
+struct RuntimeWorkerReceiverTests {
+
+    @Test func workerAsCPointerContainsStableWorkerID() {
+        let handle = kk_worker_new(0)
+        let id = kk_worker_id(handle)
+        let pointerHandle = kk_worker_as_cpointer(handle)
+
+        #expect(pointerHandle != 0)
+        #expect(kk_copaque_pointer_address(pointerHandle) == id)
+    }
+
+    @Test func workerPlatformThreadIDIsAvailable() {
+        let handle = kk_worker_new(0)
+        #expect(kk_worker_platform_thread_id(handle) > 0)
+    }
+
+    @Test func workerQueueHelpersValidateHandles() {
+        #expect(kk_worker_process_queue(0) == 0)
+        #expect(kk_worker_park(0, 0, 0) == 0)
+
+        let handle = kk_worker_new(0)
+        #expect(kk_worker_process_queue(handle) == 0)
+        #expect(kk_worker_park(handle, 0, 0) == 0)
+    }
+
+    @Test func workerExecuteAfterAcceptsMicrosecondTimeout() {
+        let handle = kk_worker_new(0)
+        defer { _ = kk_worker_request_termination(handle, 1) }
+        let fnPtr = unsafeBitCast(workerExecuteAfterNoopThunk, to: Int.self)
+
+        #expect(kk_worker_execute_after(handle, 1_000, fnPtr, 0) == 1)
+        _ = kk_worker_process_queue(handle)
     }
 }
 

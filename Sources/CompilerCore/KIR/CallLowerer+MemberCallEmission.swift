@@ -386,6 +386,20 @@ extension CallLowerer {
             )
             finalArguments = [finalArguments[0], finalArguments[1]] + producerArgs + jobArgs
         }
+        if loweredCallee == interner.intern("kk_worker_execute_after"),
+           finalArguments.count == 3,
+           sourceArgExprs.count == 2
+        {
+            let operationArgs = makeClosureThunkExpandedArguments(
+                loweredArgID: finalArguments[2],
+                argExprID: sourceArgExprs[1],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], finalArguments[1]] + operationArgs
+        }
         let isComparatorBinarySearch: Bool = {
             guard loweredCallee == interner.intern("binarySearch"),
                   let chosenCallee,

@@ -1,0 +1,92 @@
+symbol fq=__local_0.id kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.name kind=local vis=private flags=_ type=String
+symbol fq=__local_2.equal kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_3.hash kind=local vis=private flags=_ type=Int
+symbol fq=__local_4.text kind=local vis=private flags=_ type=String
+symbol fq=__local_5.pointer kind=local vis=private flags=_ type=kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>?
+symbol fq=__local_6.future kind=local vis=private flags=_ type=kotlin.native.concurrent.Future<Int>
+symbol fq=__local_7.termination kind=local vis=private flags=_ type=kotlin.native.concurrent.Future<Unit>
+symbol fq=__local_8.processed kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_9.parked kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_10.platformThread kind=local vis=private flags=_ type=ULong
+symbol fq=kotlin.native.concurrent.Future kind=class vis=public flags=synthetic|valueType type=kotlin.native.concurrent.Future<kotlin.native.concurrent.Future.T>
+symbol fq=kotlin.native.concurrent.Future.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.native.concurrent.Future.result kind=property vis=public flags=synthetic type=kotlin.native.concurrent.Future.T
+symbol fq=kotlin.native.concurrent.Worker kind=class vis=public flags=synthetic|valueType type=kotlin.native.concurrent.Worker
+symbol fq=kotlinx.cinterop.CPointed kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CPointed
+symbol fq=kotlinx.cinterop.CPointer kind=class vis=public flags=synthetic type=kotlinx.cinterop.CPointer<kotlinx.cinterop.CPointer.T>
+symbol fq=kotlinx.cinterop.CPointer.T kind=typeParameter vis=private flags=_
+symbol fq=workerReceiverSurface kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Worker,Any?] ret=Any?
+symbol fq=workerReceiverSurface.$0.other kind=valueParameter vis=private flags=_
+symbol fq=workerReceiverSurface.$0.worker kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_native_concurrent_Worker_Worker_n package=_ annotations=[@file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class,kotlin.ExperimentalStdlibApi::class)]
+  decl workerReceiverSurface fun workerReceiverSurface sym=workerReceiverSurface
+expr e@12:19 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@12:19#1 memberCall recv=e@12:19 callee=id args=[] type=Int call=kotlin.native.concurrent.id.$get
+expr e@12:5 localDecl id mutable=0 type=Int init=e@12:19#1 type=Unit ref=__local_0.id
+expr e@13:24 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@13:24#1 memberCall recv=e@13:24 callee=name args=[] type=String call=kotlin.native.concurrent.name.$get
+expr e@13:5 localDecl name mutable=0 type=String init=e@13:24#1 type=Unit ref=__local_1.name
+expr e@14:26 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@14:40 name(other) type=Any? ref=workerReceiverSurface.$0.other
+expr e@14:26#1 memberCall recv=e@14:26 callee=equals args=[_:e@14:40] type=Boolean call=kotlin.native.concurrent.equals
+expr e@14:5 localDecl equal mutable=0 type=Boolean init=e@14:26#1 type=Unit ref=__local_2.equal
+expr e@15:21 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@15:21#1 memberCall recv=e@15:21 callee=hashCode args=[] type=Int call=kotlin.native.concurrent.hashCode
+expr e@15:5 localDecl hash mutable=0 type=Int init=e@15:21#1 type=Unit ref=__local_3.hash
+expr e@16:24 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@16:24#1 memberCall recv=e@16:24 callee=toString args=[] type=String call=kotlin.native.concurrent.toString
+expr e@16:5 localDecl text mutable=0 type=String init=e@16:24#1 type=Unit ref=__local_4.text
+expr e@17:36 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@17:36#1 memberCall recv=e@17:36 callee=asCPointer args=[] type=kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? call=kotlin.native.concurrent.asCPointer
+expr e@17:5 localDecl pointer mutable=0 type=COpaquePointer? init=e@17:36#1 type=Unit ref=__local_5.pointer
+expr e@18:31 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@18:46 name(TransferMode) type=kotlin.native.concurrent.TransferMode ref=kotlin.native.concurrent.TransferMode
+expr e@18:46#1 memberCall recv=e@18:46 callee=SAFE args=[] type=kotlin.native.concurrent.TransferMode ref=kotlin.native.concurrent.TransferMode.SAFE
+expr e@18:67 name(id) type=Int ref=__local_0.id
+expr e@18:65 lambda params=[] body=e@18:67 label=execute type=() -> Int
+expr e@18:75 name(it) type=Int ref=s-0
+expr e@18:80 name(hash) type=Int ref=__local_3.hash
+expr e@18:75#1 binary(add) lhs=e@18:75 rhs=e@18:80 type=Int
+expr e@18:73 lambda params=[] body=e@18:75#1 label=execute type=(Int) -> Int
+expr e@18:31#1 memberCall recv=e@18:31 callee=execute args=[_:e@18:46#1,_:e@18:65,_:e@18:73] type=kotlin.native.concurrent.Future<Int> call=kotlin.native.concurrent.execute targs=[Int,Int]
+expr e@18:5 localDecl future mutable=0 type=Future<Int> init=e@18:31#1 type=Unit ref=__local_6.future
+expr e@19:37 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@19:63 bool(false) type=Boolean
+expr e@19:37#1 memberCall recv=e@19:37 callee=requestTermination args=[_:e@19:63] type=kotlin.native.concurrent.Future<Unit> call=kotlin.native.concurrent.requestTermination
+expr e@19:5 localDecl termination mutable=0 type=Future<Unit> init=e@19:37#1 type=Unit ref=__local_7.termination
+expr e@20:5 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@20:26 blockExpr stmts=[] trailing=_ type=Unit
+expr e@20:25 lambda params=[] body=e@20:26 label=executeAfter type=() -> Unit
+expr e@20:5#1 memberCall recv=e@20:5 callee=executeAfter args=[_:e@20:25] type=Unit call=kotlin.native.concurrent.executeAfter
+expr e@21:30 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@21:30#1 memberCall recv=e@21:30 callee=processQueue args=[] type=Boolean call=kotlin.native.concurrent.processQueue
+expr e@21:5 localDecl processed mutable=0 type=Boolean init=e@21:30#1 type=Unit ref=__local_8.processed
+expr e@22:27 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@22:39 long(0) type=Long
+expr e@22:27#1 memberCall recv=e@22:27 callee=park args=[_:e@22:39] type=Boolean call=kotlin.native.concurrent.park
+expr e@22:5 localDecl parked mutable=0 type=Boolean init=e@22:27#1 type=Unit ref=__local_9.parked
+expr e@23:33 name(worker) type=kotlin.native.concurrent.Worker ref=workerReceiverSurface.$0.worker
+expr e@23:33#1 memberCall recv=e@23:33 callee=platformThreadId args=[] type=ULong call=kotlin.native.concurrent.platformThreadId.$get
+expr e@23:5 localDecl platformThread mutable=0 type=ULong init=e@23:33#1 type=Unit ref=__local_10.platformThread
+expr e@24:16 name(equal) type=Boolean ref=__local_2.equal
+expr e@24:25 name(processed) type=Boolean ref=__local_8.processed
+expr e@24:16#1 binary(logicalOr) lhs=e@24:16 rhs=e@24:25 type=Boolean
+expr e@24:38 name(parked) type=Boolean ref=__local_9.parked
+expr e@24:16#2 binary(logicalOr) lhs=e@24:16#1 rhs=e@24:38 type=Boolean
+expr e@24:48 name(platformThread) type=ULong ref=__local_10.platformThread
+expr e@24:66 ulong(0) type=ULong
+expr e@24:48#1 binary(notEqual) lhs=e@24:48 rhs=e@24:66 type=Boolean
+expr e@24:16#3 binary(logicalOr) lhs=e@24:16#2 rhs=e@24:48#1 type=Boolean
+expr e@25:9 name(pointer) type=kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? ref=__local_5.pointer
+expr e@25:20 name(text) type=String ref=__local_4.text
+expr e@25:9#1 binary(elvis) lhs=e@25:9 rhs=e@25:20 type=Any
+expr e@24:71 blockExpr stmts=[] trailing=e@25:9#1 type=Any
+expr e@27:9 name(future) type=kotlin.native.concurrent.Future<Int> ref=__local_6.future
+expr e@27:9#1 memberCall recv=e@27:9 callee=result args=[] type=Int ref=kotlin.native.concurrent.Future.result
+expr e@28:9 name(termination) type=kotlin.native.concurrent.Future<Unit> ref=__local_7.termination
+expr e@28:9#1 memberCall recv=e@28:9 callee=result args=[] type=Unit ref=kotlin.native.concurrent.Future.result
+expr e@29:9 name(name) type=String ref=__local_1.name
+expr e@26:12 blockExpr stmts=[e@27:9#1,e@28:9#1] trailing=e@29:9 type=String
+expr e@24:12 if cond=e@24:16#3 then=e@24:71 else=e@26:12 type=Any
+expr e@24:5 return value=e@24:12 type=Nothing

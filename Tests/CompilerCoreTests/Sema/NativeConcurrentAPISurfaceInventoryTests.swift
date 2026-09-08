@@ -26,9 +26,21 @@ struct NativeConcurrentAPISurfaceInventoryTests {
         TopLevelEntry(name: "ThreadLocal", kind: .annotationClass, todo: nil),
         TopLevelEntry(name: "TransferMode", kind: .enumClass, todo: nil),
         TopLevelEntry(name: "Worker", kind: .class, todo: nil),
+        TopLevelEntry(name: "asCPointer", kind: .function, todo: nil),
         TopLevelEntry(name: "callContinuation0", kind: .function, todo: nil),
         TopLevelEntry(name: "callContinuation1", kind: .function, todo: nil),
         TopLevelEntry(name: "callContinuation2", kind: .function, todo: nil),
+        TopLevelEntry(name: "equals", kind: .function, todo: nil),
+        TopLevelEntry(name: "execute", kind: .function, todo: nil),
+        TopLevelEntry(name: "executeAfter", kind: .function, todo: nil),
+        TopLevelEntry(name: "hashCode", kind: .function, todo: nil),
+        TopLevelEntry(name: "id", kind: .property, todo: nil),
+        TopLevelEntry(name: "name", kind: .property, todo: nil),
+        TopLevelEntry(name: "park", kind: .function, todo: nil),
+        TopLevelEntry(name: "platformThreadId", kind: .property, todo: nil),
+        TopLevelEntry(name: "processQueue", kind: .function, todo: nil),
+        TopLevelEntry(name: "requestTermination", kind: .function, todo: nil),
+        TopLevelEntry(name: "toString", kind: .function, todo: nil),
     ]
 
     private static let knownGapTopLevelEntries: Set<TopLevelEntry> = []
@@ -60,8 +72,8 @@ struct NativeConcurrentAPISurfaceInventoryTests {
 
         // Each TopLevelEntry must have a unique name (no two entries share a `name`).
         #expect(targetEntries.count == targetNames.count)
-        #expect(targetEntries.count == 16)
-        #expect(Self.implementedTopLevelEntries.count == 16)
+        #expect(targetEntries.count == 28)
+        #expect(Self.implementedTopLevelEntries.count == 28)
         #expect(Self.knownGapTopLevelEntries.count == 0)
     }
 
@@ -90,6 +102,7 @@ struct NativeConcurrentAPISurfaceInventoryTests {
         let currentNames = Set(sema.symbols.allSymbols().compactMap { symbol -> String? in
             guard symbol.fqName.count == package.count + 1,
                   Array(symbol.fqName.prefix(package.count)) == package,
+                  symbol.visibility == .public,
                   symbol.kind != .package
             else {
                 return nil

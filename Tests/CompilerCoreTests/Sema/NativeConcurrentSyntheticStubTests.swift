@@ -691,11 +691,16 @@ struct NativeConcurrentSyntheticStubTests {
             interner: interner
         )
 
-        let methodFQName = workerFQName + [interner.intern("execute")]
+        let methodFQName = [
+            interner.intern("kotlin"),
+            interner.intern("native"),
+            interner.intern("concurrent"),
+            interner.intern("execute"),
+        ]
         let methods = sema.symbols.lookupAll(fqName: methodFQName)
-        #expect(!methods.isEmpty, "Expected Worker.execute to be registered")
+        #expect(!methods.isEmpty, "Expected source-backed Worker.execute to be registered")
 
-        let method = try #require(methods.first)
+        let method = try #require(methods.first(where: { sema.symbols.isSourceBackedSymbol($0) }))
         let signature = try #require(sema.symbols.functionSignature(for: method))
         #expect(signature.typeParameterSymbols.count == 2)
 
@@ -726,7 +731,8 @@ struct NativeConcurrentSyntheticStubTests {
         #expect(signature.parameterTypes == [transferModeType, producerType, jobType])
         #expect(signature.returnType == futureT2Type)
         #expect(signature.valueParameterHasDefaultValues == [false, false, false])
-        #expect(sema.symbols.externalLinkName(for: method) == "kk_worker_execute")
+        #expect(sema.symbols.isSourceBackedSymbol(method))
+        #expect(sema.symbols.externalLinkName(for: method) == nil)
     }
 
     @Test
@@ -736,37 +742,49 @@ struct NativeConcurrentSyntheticStubTests {
         let workerFQName = ["kotlin", "native", "concurrent", "Worker"].map { interner.intern($0) }
         let workerSymbol = try #require(sema.symbols.lookup(fqName: workerFQName))
 
-        let methodFQName = workerFQName + [interner.intern("requestTermination")]
+        let methodFQName = [
+            interner.intern("kotlin"),
+            interner.intern("native"),
+            interner.intern("concurrent"),
+            interner.intern("requestTermination"),
+        ]
         let methods = sema.symbols.lookupAll(fqName: methodFQName)
-        #expect(!methods.isEmpty, "Expected Worker.requestTermination to be registered")
+        #expect(!methods.isEmpty, "Expected source-backed Worker.requestTermination to be registered")
 
-        let method = try #require(methods.first)
+        let method = try #require(methods.first(where: { sema.symbols.isSourceBackedSymbol($0) }))
         let sig = try #require(sema.symbols.functionSignature(for: method))
         #expect(sig.parameterTypes == [sema.types.booleanType])
-        let futureBooleanType = try classType(
+        let futureUnitType = try classType(
             ["kotlin", "native", "concurrent", "Future"],
             sema: sema,
             interner: interner,
-            args: [.invariant(sema.types.booleanType)]
+            args: [.invariant(sema.types.unitType)]
         )
-        #expect(sig.returnType == futureBooleanType)
+        #expect(sig.returnType == futureUnitType)
         #expect(sig.valueParameterHasDefaultValues == [true])
+        #expect(sig.valueParameterSymbols.count == 1)
+        #expect(sema.symbols.symbol(sig.valueParameterSymbols[0])?.name == interner.intern("processScheduledJobs"))
 
         let workerType = try #require(sema.symbols.propertyType(for: workerSymbol))
         #expect(sig.receiverType == workerType)
-        #expect(sema.symbols.externalLinkName(for: method) == "kk_worker_request_termination")
+        #expect(sema.symbols.isSourceBackedSymbol(method))
+        #expect(sema.symbols.externalLinkName(for: method) == nil)
     }
 
     @Test
     func testWorkerExecuteAndRequestTerminationResolveInSource() {
         let source = """
+        @file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class)
+
+        import kotlin.native.concurrent.Future
         import kotlin.native.concurrent.TransferMode
         import kotlin.native.concurrent.Worker
 
         fun probe(worker: Worker): Int {
-            val future = worker.execute(TransferMode.SAFE, { 21 }) { it * 2 }
-            val stopped: Boolean = worker.requestTermination(false).result
-            return if (stopped) future.result else 0
+            val future: Future<Int> = worker.execute(TransferMode.SAFE, { 21 }) { it * 2 }
+            val stopped: Unit = worker.requestTermination(false).result
+            stopped
+            return future.result
         }
         """
 
@@ -795,13 +813,123 @@ struct NativeConcurrentSyntheticStubTests {
         let (sema, interner) = try sharedSema()
 
         let workerFQName = ["kotlin", "native", "concurrent", "Worker"].map { interner.intern($0) }
-        let propFQName = workerFQName + [interner.intern("name")]
+        let workerSymbol = try #require(sema.symbols.lookup(fqName: workerFQName))
+        let propFQName = [
+            interner.intern("kotlin"),
+            interner.intern("native"),
+            interner.intern("concurrent"),
+            interner.intern("name"),
+        ]
         let propSymbol = try #require(
-            sema.symbols.lookup(fqName: propFQName),
-            "Expected Worker.name property"
+            sema.symbols.lookupAll(fqName: propFQName).first(where: { sema.symbols.isSourceBackedSymbol($0) }),
+            "Expected source-backed Worker.name property"
         )
         #expect(sema.symbols.propertyType(for: propSymbol) == sema.types.stringType)
-        #expect(sema.symbols.externalLinkName(for: propSymbol) == "kk_worker_name")
+        #expect(sema.symbols.extensionPropertyReceiverType(for: propSymbol) == sema.symbols.propertyType(for: workerSymbol))
+        #expect(sema.symbols.isSourceBackedSymbol(propSymbol))
+        #expect(sema.symbols.externalLinkName(for: propSymbol) == nil)
+    }
+
+    @Test
+    func testWorkerReceiverSurfaceIsSourceBacked() throws {
+        let (sema, interner) = try sharedSema()
+        let workerSymbol = try symbol(
+            ["kotlin", "native", "concurrent", "Worker"],
+            sema: sema,
+            interner: interner
+        )
+        let workerType = try #require(sema.symbols.propertyType(for: workerSymbol))
+
+        let functionCases: [(name: String, arity: Int)] = [
+            ("asCPointer", 0),
+            ("equals", 1),
+            ("execute", 3),
+            ("executeAfter", 2),
+            ("hashCode", 0),
+            ("park", 2),
+            ("processQueue", 0),
+            ("requestTermination", 1),
+            ("toString", 0),
+        ]
+        for (name, arity) in functionCases {
+            let fqName = [
+                interner.intern("kotlin"),
+                interner.intern("native"),
+                interner.intern("concurrent"),
+                interner.intern(name),
+            ]
+            let candidate = try #require(
+                sema.symbols.lookupAll(fqName: fqName).first { candidate in
+                    guard sema.symbols.isSourceBackedSymbol(candidate),
+                          let signature = sema.symbols.functionSignature(for: candidate)
+                    else {
+                        return false
+                    }
+                    return signature.receiverType == workerType
+                        && signature.parameterTypes.count == arity
+                },
+                "Expected source-backed Worker.(name)"
+            )
+            #expect(sema.symbols.externalLinkName(for: candidate) == nil)
+        }
+
+        for name in ["id", "name", "platformThreadId"] {
+            let fqName = [
+                interner.intern("kotlin"),
+                interner.intern("native"),
+                interner.intern("concurrent"),
+                interner.intern(name),
+            ]
+            let candidate = try #require(
+                sema.symbols.lookupAll(fqName: fqName).first { candidate in
+                    sema.symbols.isSourceBackedSymbol(candidate)
+                        && sema.symbols.extensionPropertyReceiverType(for: candidate) == workerType
+                },
+                "Expected source-backed Worker.(name) property"
+            )
+            #expect(sema.symbols.externalLinkName(for: candidate) == nil)
+        }
+    }
+
+    @Test
+    func testWorkerReceiverSurfaceResolvesInSource() {
+        let source = """
+        @file:OptIn(
+            kotlin.native.concurrent.ObsoleteWorkersApi::class,
+            kotlin.ExperimentalStdlibApi::class
+        )
+
+        import kotlinx.cinterop.COpaquePointer
+        import kotlin.native.concurrent.Future
+        import kotlin.native.concurrent.TransferMode
+        import kotlin.native.concurrent.Worker
+
+        fun probeWorkerReceiverSurface(worker: Worker, other: Any?): Any? {
+            val id: Int = worker.id
+            val name: String = worker.name
+            val equal: Boolean = worker.equals(other)
+            val hash: Int = worker.hashCode()
+            val text: String = worker.toString()
+            val scheduled: Unit = worker.executeAfter { }
+            val processed: Boolean = worker.processQueue()
+            val parked: Boolean = worker.park(0L)
+            val platformThread: ULong = worker.platformThreadId
+            val pointer: COpaquePointer? = worker.asCPointer()
+            val future: Future<Int> = worker.execute(TransferMode.SAFE, { id }) { it + hash }
+            val termination: Future<Unit> = worker.requestTermination(false)
+            return if (equal || processed || parked || platformThread != 0UL) {
+                pointer ?: text
+            } else {
+                future.result
+                termination.result
+                scheduled
+                name
+            }
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        #expect(!ctx.diagnostics.hasError, "Expected all Worker receiver APIs to resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))")
     }
 
     @Test

@@ -1,9 +1,9 @@
 import Dispatch
 import Foundation
 
-// MARK: - Native Concurrent ABI (STDLIB-NATIVE-CONCURRENT-ABI-001..006)
+// MARK: - Native Concurrent ABI (STDLIB-NATIVE-CONCURRENT-ABI-001..007)
 //
-// Implements the six runtime entry-points required by the Kotlin/Native
+// Implements the runtime entry-points required by the Kotlin/Native
 // concurrent standard library:
 //
 //   ABI-001  Worker.id              — kk_worker_id
@@ -13,6 +13,9 @@ import Foundation
 //   ABI-003  TransferMode           — kk_transfer_object  (SAFE freezes; UNSAFE is pass-through)
 //   ABI-004  FreezableAtomicReference<T> — kk_freezable_atomic_ref_create / _load / _store / _is_frozen
 //   ABI-005  Worker.executeAfter    — kk_worker_execute_after
+//   ABI-006  Worker receiver helpers — kk_worker_process_queue / kk_worker_park /
+//                                      kk_worker_platform_thread_id /
+//                                      kk_worker_as_cpointer
 //
 // Deferred / known limitations:
 //   • TransferMode SAFE: full cycle-detection DFS over the managed object graph
@@ -349,23 +352,78 @@ public func kk_freezable_atomic_ref_is_frozen(_ refHandle: Int) -> Int {
     return box.isFrozen ? 1 : 0
 }
 
-// MARK: - ABI-005  Worker.executeAfter(delayNs, op)
+// MARK: - Worker receiver helpers
 
-/// Schedule a closure to run on a Worker after `delayNs` nanoseconds.
+/// Process jobs already queued for a Worker.
+@_cdecl("kk_worker_process_queue")
+public func kk_worker_process_queue(_ workerHandle: Int) -> Int {
+    guard workerHandle != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: workerHandle),
+          let worker = tryCast(ptr, to: RuntimeWorkerBox.self)
+    else {
+        return 0
+    }
+    return worker.processQueue() ? 1 : 0
+}
+
+/// Park the current Worker thread for a timeout in microseconds.
+@_cdecl("kk_worker_park")
+public func kk_worker_park(
+    _ workerHandle: Int,
+    _ timeoutMicroseconds: Int,
+    _ processRaw: Int
+) -> Int {
+    guard workerHandle != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: workerHandle),
+          let worker = tryCast(ptr, to: RuntimeWorkerBox.self)
+    else {
+        return 0
+    }
+    return worker.park(
+        timeoutMicroseconds: timeoutMicroseconds,
+        process: processRaw != 0
+    ) ? 1 : 0
+}
+
+/// Return the platform thread ID servicing the Worker queue.
+@_cdecl("kk_worker_platform_thread_id")
+public func kk_worker_platform_thread_id(_ workerHandle: Int) -> Int {
+    guard workerHandle != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: workerHandle),
+          let worker = tryCast(ptr, to: RuntimeWorkerBox.self)
+    else {
+        return 0
+    }
+    return Int(truncatingIfNeeded: worker.platformThreadID())
+}
+
+/// Return a COpaquePointer whose address is the Worker's stable ID.
+@_cdecl("kk_worker_as_cpointer")
+public func kk_worker_as_cpointer(_ workerHandle: Int) -> Int {
+    let workerID = kk_worker_id(workerHandle)
+    guard workerID > 0 else {
+        return 0
+    }
+    return kk_copaque_pointer_new(workerID)
+}
+
+// MARK: - ABI-006  Worker.executeAfter(afterMicroseconds, operation)
+
+/// Schedule a closure to run on a Worker after `afterMicroseconds` microseconds.
 ///
 /// Uses `DispatchQueue.asyncAfter` on the Worker's underlying serial queue.
 /// The closure is represented by the legacy delayed-worker `(fnPtr, closureRaw)` ABI.
 ///
 /// - Parameters:
 ///   - workerHandle: handle produced by `kk_worker_new`.
-///   - delayNs:      delay in nanoseconds (0 means "as soon as possible").
+///   - afterMicroseconds: delay in microseconds (0 means "as soon as possible").
 ///   - fnPtr:        C function pointer `(Int) -> Int` for the closure body.
 ///   - closureRaw:   opaque closure capture handle passed to `fnPtr`.
 /// - Returns: 1 if scheduled, 0 if the worker is terminated or `fnPtr` is null.
 @_cdecl("kk_worker_execute_after")
 public func kk_worker_execute_after(
     _ workerHandle: Int,
-    _ delayNs: Int,
+    _ afterMicroseconds: Int,
     _ fnPtr: Int,
     _ closureRaw: Int
 ) -> Int {
@@ -381,11 +439,14 @@ public func kk_worker_execute_after(
     guard fnPtr != 0 else {
         return 0
     }
+    guard afterMicroseconds >= 0 else {
+        return 0
+    }
     typealias WorkFn = @convention(c) (Int) -> Int
     let fn = unsafeBitCast(UnsafeRawPointer(bitPattern: fnPtr)!, to: WorkFn.self)
     let captured = closureRaw
-    let deadline: DispatchTime = delayNs > 0
-        ? DispatchTime.now() + .nanoseconds(delayNs)
+    let deadline: DispatchTime = afterMicroseconds > 0
+        ? DispatchTime.now() + .microseconds(afterMicroseconds)
         : .now()
     let submitted = worker.executeAfter(deadline: deadline) {
         _ = fn(captured)
