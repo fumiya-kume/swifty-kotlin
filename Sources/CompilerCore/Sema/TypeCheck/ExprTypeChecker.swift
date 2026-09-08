@@ -575,7 +575,13 @@ final class ExprTypeChecker {
             receiverType: containerType,
             sema: sema,
             interner: interner
-        ) {
+        ),
+        MemberRuntimeDispatch.rangeReceiverKind(
+            receiverExpr: containerExpr,
+            receiverType: containerType,
+            sema: sema,
+            interner: interner
+        ) == .intRange {
             let scopedRangeUserCandidates = driver.callChecker
                 .collectScopedRangeUserExtensionCandidates(
                     named: containsName,
@@ -586,12 +592,14 @@ final class ExprTypeChecker {
                 )
                 .filter { candidate in
                     guard let symbol = sema.symbols.symbol(candidate),
-                          symbol.flags.contains(SymbolFlags.operatorFunction),
-                          let signature = sema.symbols.functionSignature(for: candidate)
+                          symbol.flags.contains(SymbolFlags.operatorFunction)
                     else {
                         return false
                     }
-                    return signature.parameterTypes.count == 1
+                    return driver.callChecker.isIntRangeCrossTypeContainsCandidate(
+                        candidate,
+                        sema: sema
+                    )
                 }
             if !scopedRangeUserCandidates.isEmpty {
                 let resolved = ctx.resolver.resolveCall(
@@ -618,31 +626,42 @@ final class ExprTypeChecker {
                     )
                     return
                 }
-                let hasBundledRangeCandidate = sema.symbols.lookupByShortName(containsName).contains { candidate in
-                    guard let symbol = sema.symbols.symbol(candidate),
-                          symbol.kind == .function,
-                          symbol.flags.contains(SymbolFlags.operatorFunction),
-                          sema.symbols.isSourceBackedSymbol(candidate),
-                          let parentID = sema.symbols.parentSymbol(for: candidate),
-                          let parent = sema.symbols.symbol(parentID),
-                          parent.fqName == [
-                              interner.intern("kotlin"),
-                              interner.intern("ranges"),
-                          ],
-                          let signature = sema.symbols.functionSignature(for: candidate),
-                          signature.parameterTypes.count == 1,
-                          signature.parameterTypes[0] == sema.types.makeNonNullable(elementType),
-                          let declaredReceiver = signature.receiverType
-                    else {
-                        return false
-                    }
-                    return driver.callChecker.extensionSyntheticFallbackReceiverMatches(
-                        callSiteReceiver: rangeSourceReceiverType,
-                        declaredReceiver: declaredReceiver,
-                        sema: sema
+                let hasBundledRangeCandidate = driver.callChecker
+                    .hasIntRangeSourceBackedContainsCandidate(
+                        receiverType: rangeSourceReceiverType,
+                        argumentType: sema.types.makeNonNullable(elementType),
+                        sema: sema,
+                        interner: interner
                     )
-                }
+                let rangeMemberCandidates = driver.helpers
+                    .collectMemberFunctionCandidates(
+                        named: containsName,
+                        receiverType: rangeSourceReceiverType,
+                        sema: sema,
+                        interner: interner
+                    )
+                    .filter { candidate in
+                        guard let symbol = sema.symbols.symbol(candidate),
+                              symbol.flags.contains(SymbolFlags.operatorFunction),
+                              let signature = sema.symbols.functionSignature(for: candidate)
+                        else {
+                            return false
+                        }
+                        return signature.parameterTypes.count == 1
+                    }
+                let hasApplicableRangeMember = ctx.resolver.resolveCall(
+                    candidates: rangeMemberCandidates,
+                    call: CallExpr(
+                        range: range,
+                        calleeName: containsName,
+                        args: [CallArg(type: elementType)]
+                    ),
+                    expectedType: nil,
+                    implicitReceiverType: rangeSourceReceiverType,
+                    ctx: ctx.semaCtx
+                ).chosenCallee != nil
                 if !hasBundledRangeCandidate,
+                   !hasApplicableRangeMember,
                    let diagnostic = resolved.diagnostic
                 {
                     ctx.semaCtx.diagnostics.emit(diagnostic)

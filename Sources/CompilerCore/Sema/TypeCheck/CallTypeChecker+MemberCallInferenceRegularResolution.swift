@@ -802,15 +802,41 @@ extension CallTypeChecker {
             // active Kotlin scope still has normal overload priority, though;
             // keep it ahead of the bundled candidates so a user declaration
             // is not silently replaced by the stdlib fallback.
-            let scopedRangeUserCandidates = rangeSourceMemberLookupType.map {
+            let scopedRangeUserCandidates: [SymbolID] = if interner.resolve(calleeName) == "contains",
+                                                               let rangeSourceMemberLookupType,
+                                                               MemberRuntimeDispatch.rangeReceiverKind(
+                                                                   receiverExpr: receiverID,
+                                                                   receiverType: lookupReceiverType,
+                                                                   sema: sema,
+                                                                   interner: interner
+                                                               ) == .intRange
+            {
                 collectScopedRangeUserExtensionCandidates(
                     named: calleeName,
-                    receiverType: $0,
+                    receiverType: rangeSourceMemberLookupType,
                     ctx: ctx,
                     sema: sema,
                     interner: interner
-                )
-            } ?? []
+                ).filter { candidate in
+                    guard isIntRangeCrossTypeContainsCandidate(candidate, sema: sema),
+                          args.count == 1,
+                          argTypes.count == 1,
+                          let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.parameterTypes[0] == argTypes[0]
+                    else {
+                        return false
+                    }
+                    guard let label = args[0].label else { return true }
+                    guard signature.valueParameterSymbols.count == 1,
+                          let parameter = sema.symbols.symbol(signature.valueParameterSymbols[0])
+                    else {
+                        return false
+                    }
+                    return parameter.name == label
+                }
+            } else {
+                []
+            }
             let atomicSourceCandidates: [SymbolID] = if rangeSourceCandidates.isEmpty,
                 isBundledAtomicSourceMember(calleeName, interner: interner),
                 isBundledAtomicSourceReceiver(memberLookupType, sema: sema, interner: interner)
@@ -2203,7 +2229,7 @@ extension CallTypeChecker {
         return nil
     }
 
-    private func collectRangeSourceExtensionCandidates(
+    func collectRangeSourceExtensionCandidates(
         named calleeName: InternedString,
         receiverType: TypeID,
         sema: SemaModule,
