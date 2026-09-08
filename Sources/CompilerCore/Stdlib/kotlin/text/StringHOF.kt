@@ -42,6 +42,12 @@ package kotlin.text
 // CharSequence classes. Other CharSequence operations retain their own
 // runtime/itable contracts.
 
+/**
+ * Returns the range of valid character indices for this char sequence.
+ */
+public val CharSequence.indices: IntRange
+    get() = 0..length - 1
+
 public fun String.filter(predicate: (Char) -> Boolean): String {
     val sb = StringBuilder()
     var i = 0
