@@ -100,6 +100,54 @@ struct CharSequenceSubSequenceSourceMigrationTests {
     }
 
     @Test
+    func concreteCharSequenceSubtypesUseRangeSourceFallback() throws {
+        let source = """
+        class PlainSequence(private val value: String): CharSequence {
+            override val length: Int get() = value.length
+            override fun get(index: Int): Char = value[index]
+            override fun subSequence(startIndex: Int, endIndex: Int): CharSequence =
+                value.substring(startIndex, endIndex)
+        }
+
+        fun probe(plain: PlainSequence, builder: StringBuilder): CharSequence {
+            val plainRange = plain.subSequence(0..1)
+            val builderRange = builder.subSequence(0..1)
+            return plainRange
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+        #expect(!ctx.diagnostics.hasError, Comment(rawValue: diagnosticSummary(in: ctx)))
+
+        let ast = try #require(ctx.ast)
+        let sema = try #require(ctx.sema)
+        let userFileID = try #require(ctx.sourceManager.fileIDs().first {
+            ctx.sourceManager.origin(of: $0) == .user
+        })
+        var chosen: [SymbolID] = []
+        for index in ast.arena.exprs.indices {
+            let exprID = ExprID(rawValue: Int32(index))
+            guard case let .memberCall(_, callee, _, args, range) = ast.arena.expr(exprID),
+                  range.start.file == userFileID,
+                  ctx.interner.resolve(callee) == "subSequence",
+                  args.count == 1,
+                  let binding = sema.bindings.callBinding(for: exprID)
+            else {
+                continue
+            }
+            let signature = try #require(sema.symbols.functionSignature(for: binding.chosenCallee))
+            #expect(signature.parameterTypes.count == 1)
+            #expect(sema.symbols.isSourceBackedSymbol(binding.chosenCallee))
+            #expect(!sema.symbols.symbol(binding.chosenCallee)!.flags.contains(.synthetic))
+            #expect(ctx.sourceManager.path(of: sema.symbols.sourceFileID(for: binding.chosenCallee) ?? .invalid) == sourcePath)
+            chosen.append(binding.chosenCallee)
+        }
+
+        #expect(chosen.count == 2, "Concrete CharSequence subtype calls should use the source-backed IntRange overload")
+        #expect(Set(chosen).count == 1)
+    }
+
+    @Test
     func visibleUserRangeExtensionWinsOverSyntheticFallback() throws {
         let source = """
         fun CharSequence.subSequence(range: IntRange): CharSequence = "user"
