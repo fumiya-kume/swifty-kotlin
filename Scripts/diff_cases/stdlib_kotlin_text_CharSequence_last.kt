@@ -27,9 +27,22 @@ private fun capturedLast(source: CharSequence): Char {
 
 private fun nonLocalLast(source: CharSequence): Char {
     return source.last {
-        if (it == 'x') return it
+        if (it == 'x') return '!'
         false
     }
+}
+
+private fun capturedNonLocalLast(source: CharSequence, captured: Char): Char {
+    source.last {
+        return captured
+    }
+    return '?'
+}
+
+private fun nullableCapturedLast(source: CharSequence?, captured: Char): Char {
+    return source?.lastOrNull {
+        return captured
+    } ?: '?'
 }
 
 fun main() {
@@ -71,6 +84,9 @@ fun main() {
 
     println(capturedLast(source).code)
     println(nonLocalLast("ax").code)
+    println(capturedNonLocalLast("ax", '!').code)
+    println(nullableCapturedLast("ax", '!').code)
+    println(nullableCapturedLast(null, '!').code)
 
     val utf16: CharSequence = TrackingCharSequence("A\uD83D\uDE00B")
     println(utf16.last().code)

@@ -1,25 +1,31 @@
 symbol fq=__local_0.expected kind=local vis=private flags=_ type=Char
 symbol fq=golden.sema.capturedLast kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
 symbol fq=golden.sema.capturedLast.$0.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.capturedNonLocalLast kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Char] ret=Char
+symbol fq=golden.sema.capturedNonLocalLast.$1.captured kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.capturedNonLocalLast.$1.source kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.charSequenceLast kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
-symbol fq=golden.sema.charSequenceLast.$1.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceLast.$2.source kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.charSequenceLastIndex kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Int
-symbol fq=golden.sema.charSequenceLastIndex.$2.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceLastIndex.$3.source kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.charSequenceLastOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char?
-symbol fq=golden.sema.charSequenceLastOrNull.$3.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceLastOrNull.$4.source kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.charSequenceLastOrNullPredicate kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char?
-symbol fq=golden.sema.charSequenceLastOrNullPredicate.$4.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceLastOrNullPredicate.$5.source kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.charSequenceLastPredicate kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
-symbol fq=golden.sema.charSequenceLastPredicate.$5.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceLastPredicate.$6.source kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.nonLocalLast kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Char] ret=Char
-symbol fq=golden.sema.nonLocalLast.$6.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.nonLocalLast.$6.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.nonLocalLast.$7.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.nonLocalLast.$7.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.nullableCapturedLast kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence?,Char] ret=Char
+symbol fq=golden.sema.nullableCapturedLast.$8.captured kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.nullableCapturedLast.$8.source kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.stringBuilderLast kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder] ret=Char
-symbol fq=golden.sema.stringBuilderLast.$7.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringBuilderLast.$9.source kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.stringBuilderLastIndex kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder] ret=Int
-symbol fq=golden.sema.stringBuilderLastIndex.$8.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringBuilderLastIndex.$10.source kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.stringBuilderLastOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder] ret=Char?
-symbol fq=golden.sema.stringBuilderLastOrNull.$9.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringBuilderLastOrNull.$11.source kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.stringLast kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char
 symbol fq=golden.sema.stringLastOrNull kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char?
 symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
@@ -36,33 +42,35 @@ file fstdlib_kotlin_text_CharSequence_last package=golden.sema
   decl golden.sema.stringBuilderLastIndex fun stringBuilderLastIndex sym=golden.sema.stringBuilderLastIndex
   decl golden.sema.capturedLast fun capturedLast sym=golden.sema.capturedLast
   decl golden.sema.nonLocalLast fun nonLocalLast sym=golden.sema.nonLocalLast
-expr e@3:52 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceLast.$1.source
+  decl golden.sema.capturedNonLocalLast fun capturedNonLocalLast sym=golden.sema.capturedNonLocalLast
+  decl golden.sema.nullableCapturedLast fun nullableCapturedLast sym=golden.sema.nullableCapturedLast
+expr e@3:52 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceLast.$2.source
 expr e@3:52#1 memberCall recv=e@3:52 callee=last args=[] type=Char call=kotlin.text.last#2
-expr e@5:61 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceLastPredicate.$5.source
+expr e@5:61 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceLastPredicate.$6.source
 expr e@5:75 name(it) type=Char ref=s-0
 expr e@5:81 char(120) type=Char
 expr e@5:75#1 binary(equal) lhs=e@5:75 rhs=e@5:81 type=Boolean
 expr e@5:73 lambda params=[] body=e@5:75#1 label=last type=(Char) -> Boolean
 expr e@5:61#1 memberCall recv=e@5:61 callee=last args=[_:e@5:73] type=Char call=kotlin.text.last#3
-expr e@7:59 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceLastOrNull.$3.source
+expr e@7:59 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceLastOrNull.$4.source
 expr e@7:59#1 memberCall recv=e@7:59 callee=lastOrNull args=[] type=Char? call=kotlin.text.lastOrNull#2
-expr e@10:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceLastOrNullPredicate.$4.source
+expr e@10:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceLastOrNullPredicate.$5.source
 expr e@10:25 name(it) type=Char ref=s-1
 expr e@10:31 char(120) type=Char
 expr e@10:25#1 binary(equal) lhs=e@10:25 rhs=e@10:31 type=Boolean
 expr e@10:23 lambda params=[] body=e@10:25#1 label=lastOrNull type=(Char) -> Boolean
 expr e@10:5#1 memberCall recv=e@10:5 callee=lastOrNull args=[_:e@10:23] type=Char? call=kotlin.text.lastOrNull#3
-expr e@12:56 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceLastIndex.$2.source
+expr e@12:56 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceLastIndex.$3.source
 expr e@12:56#1 memberCall recv=e@12:56 callee=lastIndex args=[] type=Int call=kotlin.text.lastIndex.$get
 expr e@14:26 string(x) type=String
 expr e@14:26#1 memberCall recv=e@14:26 callee=last args=[] type=Char call=kotlin.text.last#0
 expr e@16:33 string() type=String
 expr e@16:33#1 memberCall recv=e@16:33 callee=lastOrNull args=[] type=Char? call=kotlin.text.lastOrNull#0
-expr e@18:54 name(source) type=kotlin.text.StringBuilder ref=golden.sema.stringBuilderLast.$7.source
+expr e@18:54 name(source) type=kotlin.text.StringBuilder ref=golden.sema.stringBuilderLast.$9.source
 expr e@18:54#1 memberCall recv=e@18:54 callee=last args=[] type=Char call=kotlin.text.last#2
-expr e@20:61 name(source) type=kotlin.text.StringBuilder ref=golden.sema.stringBuilderLastOrNull.$9.source
+expr e@20:61 name(source) type=kotlin.text.StringBuilder ref=golden.sema.stringBuilderLastOrNull.$11.source
 expr e@20:61#1 memberCall recv=e@20:61 callee=lastOrNull args=[] type=Char? call=kotlin.text.lastOrNull#2
-expr e@22:58 name(source) type=kotlin.text.StringBuilder ref=golden.sema.stringBuilderLastIndex.$8.source
+expr e@22:58 name(source) type=kotlin.text.StringBuilder ref=golden.sema.stringBuilderLastIndex.$10.source
 expr e@22:58#1 memberCall recv=e@22:58 callee=lastIndex args=[] type=Int call=kotlin.text.lastIndex.$get
 expr e@25:20 char(120) type=Char
 expr e@25:5 localDecl expected mutable=0 type=_ init=e@25:20 type=Unit ref=__local_0.expected
@@ -73,11 +81,11 @@ expr e@26:26#1 binary(equal) lhs=e@26:26 rhs=e@26:32 type=Boolean
 expr e@26:24 lambda params=[] body=e@26:26#1 label=last type=(Char) -> Boolean
 expr e@26:12#1 memberCall recv=e@26:12 callee=last args=[_:e@26:24] type=Char call=kotlin.text.last#3
 expr e@26:5 return value=e@26:12#1 type=Nothing
-expr e@30:5 name(source) type=kotlin.CharSequence ref=golden.sema.nonLocalLast.$6.source
+expr e@30:5 name(source) type=kotlin.CharSequence ref=golden.sema.nonLocalLast.$7.source
 expr e@31:13 name(it) type=Char ref=s-3
 expr e@31:19 char(120) type=Char
 expr e@31:13#1 binary(equal) lhs=e@31:13 rhs=e@31:19 type=Boolean
-expr e@31:31 name(value) type=Char ref=golden.sema.nonLocalLast.$6.value
+expr e@31:31 name(value) type=Char ref=golden.sema.nonLocalLast.$7.value
 expr e@31:24 return value=e@31:31 type=Nothing
 expr e@31:9 if cond=e@31:13#1 then=e@31:24 else=_ type=Unit
 expr e@32:9 bool(false) type=Boolean
@@ -86,3 +94,18 @@ expr e@30:17 lambda params=[] body=e@31:9#1 label=last type=(Char) -> Boolean
 expr e@30:5#1 memberCall recv=e@30:5 callee=last args=[_:e@30:17] type=Char call=kotlin.text.last#3
 expr e@34:12 char(63) type=Char
 expr e@34:5 return value=e@34:12 type=Nothing
+expr e@38:5 name(source) type=kotlin.CharSequence ref=golden.sema.capturedNonLocalLast.$1.source
+expr e@39:16 name(captured) type=Char ref=golden.sema.capturedNonLocalLast.$1.captured
+expr e@39:9 return value=e@39:16 type=Nothing
+expr e@38:17 lambda params=[] body=e@39:9 label=last type=(Char) -> Boolean
+expr e@38:5#1 memberCall recv=e@38:5 callee=last args=[_:e@38:17] type=Char call=kotlin.text.last#3
+expr e@41:12 char(63) type=Char
+expr e@41:5 return value=e@41:12 type=Nothing
+expr e@45:12 name(source) type=kotlin.CharSequence? ref=golden.sema.nullableCapturedLast.$8.source
+expr e@46:16 name(captured) type=Char ref=golden.sema.nullableCapturedLast.$8.captured
+expr e@46:9 return value=e@46:16 type=Nothing
+expr e@45:31 lambda params=[] body=e@46:9 label=lastOrNull type=(Char) -> Boolean
+expr e@45:12#1 safeMemberCall recv=e@45:12 callee=lastOrNull args=[_:e@45:31] type=Char? call=kotlin.text.lastOrNull#3
+expr e@47:10 char(63) type=Char
+expr e@45:12#2 binary(elvis) lhs=e@45:12#1 rhs=e@47:10 type=Char
+expr e@45:5 return value=e@45:12#2 type=Nothing

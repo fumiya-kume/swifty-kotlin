@@ -33,3 +33,16 @@ fun nonLocalLast(source: CharSequence, value: Char): Char {
     }
     return '?'
 }
+
+fun capturedNonLocalLast(source: CharSequence, captured: Char): Char {
+    source.last {
+        return captured
+    }
+    return '?'
+}
+
+fun nullableCapturedLast(source: CharSequence?, captured: Char): Char {
+    return source?.lastOrNull {
+        return captured
+    } ?: '?'
+}
