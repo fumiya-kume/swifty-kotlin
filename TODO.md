@@ -4395,9 +4395,11 @@
     - `kotlin.text.elementAtOrElse` — fun CharSequence.elementAtOrElse(Int, Function1): Char  -- `final inline fun (kotlin/CharSequence).kotlin.text/elementAtOrElse(kotlin/Int, kotlin/Function1<kotlin/Int, kotlin/Char>): kotlin/Char`
     - `kotlin.text.elementAtOrNull` — fun CharSequence.elementAtOrNull(Int): Char  -- `final inline fun (kotlin/CharSequence).kotlin.text/elementAtOrNull(kotlin/Int): kotlin/Char?`
 
-- [ ] KSP-1374: kotlin.text.CharSequence.first-family の未実装 stdlib API を実装する（6 件）
+- [~] KSP-1374: kotlin.text.CharSequence.first-family の未実装 stdlib API を実装する（6 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `first`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
+  - 実装済み（ゲート保留）: `first()` / `first(predicate)` / `firstOrNull()` / `firstOrNull(predicate)` の4 APIをKotlin 2.3.10 source contractに沿って追加。`firstNotNullOf` / `firstNotNullOfOrNull` は既存実装を確認し、重複追加しない。CharSequence predicate loopはcustom receiverの`get` dispatchと反復中のlength再評価を保持する。
+  - 検証保留: bundled stdlib inline predicate の non-local return は既存 `Iterable.first` と同じく現行 compiler の precompiled-inline lowering 制約（最小 probe で reference `120` / candidate `97`）に当たり、KSP-1372 の既存修正範囲外のため別修正へ切り分ける。captured predicate と通常 predicate の順序・値は PASS。
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_text_CharSequence_first.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_text_CharSequence_first.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_text_CharSequence_first.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
