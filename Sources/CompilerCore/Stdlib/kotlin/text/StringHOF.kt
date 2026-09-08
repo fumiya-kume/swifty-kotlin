@@ -476,6 +476,42 @@ public fun <R> CharSequence.foldRightIndexed(initial: R, operation: (index: Int,
     return accumulator
 }
 
+public fun CharSequence.drop(n: Int): CharSequence {
+    require(n >= 0) { "Requested character count $n is less than zero." }
+    return this.subSequence(n.coerceAtMost(length), length)
+}
+
+public fun CharSequence.dropLast(n: Int): CharSequence {
+    require(n >= 0) { "Requested character count $n is less than zero." }
+    val count = (length - n).coerceAtLeast(0)
+    return this.subSequence(0, count.coerceAtMost(length))
+}
+
+public inline fun CharSequence.dropLastWhile(predicate: (Char) -> Boolean): CharSequence {
+    var index = this.length - 1
+    while (index >= 0) {
+        val shouldDrop = predicate(this[index])
+        if (shouldDrop == false) {
+            return this.subSequence(0, index + 1)
+        }
+        index--
+    }
+    return ""
+}
+
+public inline fun CharSequence.dropWhile(predicate: (Char) -> Boolean): CharSequence {
+    var index = 0
+    val endIndex = this.length
+    while (index < endIndex) {
+        val shouldDrop = predicate(this[index])
+        if (shouldDrop == false) {
+            return this.subSequence(index, this.length)
+        }
+        index++
+    }
+    return ""
+}
+
 public fun CharSequence.padStart(length: Int, padChar: Char = ' '): CharSequence {
     if (length < 0)
         throw IllegalArgumentException("Desired length $length is less than zero.")

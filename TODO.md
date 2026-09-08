@@ -4365,7 +4365,7 @@
   - 未実装シンボル一覧:
     - `kotlin.text.count` — fun CharSequence.count(): Int  -- `final inline fun (kotlin/CharSequence).kotlin.text/count(): kotlin/Int`
 
-- [ ] KSP-1371: kotlin.text.CharSequence.drop-family の未実装 stdlib API を実装する（4 件）
+- [~] KSP-1371: kotlin.text.CharSequence.drop-family の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `drop`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
