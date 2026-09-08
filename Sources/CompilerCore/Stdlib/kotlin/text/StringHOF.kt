@@ -609,3 +609,94 @@ public inline fun <V, M : MutableMap<in Char, in V>> CharSequence.associateWithT
     }
     return destination
 }
+
+// KSP-1379: CharSequence grouping functions are source-backed. The explicit
+// index walk preserves the source receiver contract while avoiding iterator
+// inference gaps in the bundled compiler.
+public inline fun <K> CharSequence.groupBy(keySelector: (Char) -> K): Map<K, List<Char>> {
+    val result = mutableMapOf<K, MutableList<Char>>()
+    var i = 0
+    while (i < this.length) {
+        val element: Char = this[i]
+        val key = keySelector(element)
+        val existing = result[key]
+        if (existing == null) {
+            val bucket = mutableListOf<Char>()
+            bucket.add(element)
+            result[key] = bucket
+        } else {
+            existing.add(element)
+        }
+        i++
+    }
+    return result as Map<K, List<Char>>
+}
+
+public inline fun <K, V> CharSequence.groupBy(
+    keySelector: (Char) -> K,
+    valueTransform: (Char) -> V
+): Map<K, List<V>> {
+    val result = mutableMapOf<K, MutableList<V>>()
+    var i = 0
+    while (i < this.length) {
+        val element: Char = this[i]
+        val key = keySelector(element)
+        val value = valueTransform(element)
+        val existing = result[key]
+        if (existing == null) {
+            val bucket = mutableListOf<V>()
+            bucket.add(value)
+            result[key] = bucket
+        } else {
+            existing.add(value)
+        }
+        i++
+    }
+    return result as Map<K, List<V>>
+}
+
+@IgnorableReturnValue
+public inline fun <K, M : MutableMap<in K, MutableList<Char>>> CharSequence.groupByTo(
+    destination: M,
+    keySelector: (Char) -> K
+): M {
+    var i = 0
+    while (i < this.length) {
+        val element: Char = this[i]
+        val key = keySelector(element)
+        val existing = destination[key]
+        if (existing == null) {
+            val bucket = mutableListOf<Char>()
+            bucket.add(element)
+            destination[key] = bucket
+        } else {
+            existing.add(element)
+        }
+        i++
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <K, V, M : MutableMap<in K, MutableList<V>>> CharSequence.groupByTo(
+    destination: M,
+    keySelector: (Char) -> K,
+    valueTransform: (Char) -> V
+): M {
+    var i = 0
+    while (i < this.length) {
+        val element: Char = this[i]
+        val key = keySelector(element)
+        val value = valueTransform(element)
+        val existing = destination[key]
+        if (existing == null) {
+            val bucket = mutableListOf<V>()
+            bucket.add(value)
+            destination[key] = bucket
+        } else {
+            existing.add(value)
+        }
+        i++
+    }
+    return destination
+}
