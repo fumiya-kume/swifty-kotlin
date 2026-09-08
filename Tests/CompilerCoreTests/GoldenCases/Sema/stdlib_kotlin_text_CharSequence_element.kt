@@ -1,0 +1,12 @@
+package golden.sema
+
+fun elementAt(source: CharSequence, index: Int): Char = source.elementAt(index)
+
+fun elementAtOrElse(source: CharSequence, index: Int): Char =
+    source.elementAtOrElse(index) { requested -> if (requested < 0) '-' else '+' }
+
+fun elementAtOrNull(source: CharSequence, index: Int): Char? = source.elementAtOrNull(index)
+
+fun nonLocalDefault(source: CharSequence): Char {
+    return source.elementAtOrElse(-1) { return 'x' }
+}

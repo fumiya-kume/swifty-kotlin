@@ -515,7 +515,8 @@ final class LambdaLowerer {
         // own launcher-continuation rewrite (BUG-049), which expects to resolve
         // the raw lambda symbol directly rather than a kk_function_create_N
         // boxed closure -- see the coroutineLauncherLambdaExprIDs doc comment.
-        if !captureArgs.isEmpty,
+        if !hasNonLocalReturn,
+           !captureArgs.isEmpty,
            !needsClosureParam,
            !isSamConversion,
            !sema.bindings.isCoroutineLauncherLambdaExpr(exprID),

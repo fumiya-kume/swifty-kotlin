@@ -1,0 +1,41 @@
+symbol fq=golden.sema.elementAt kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=Char
+symbol fq=golden.sema.elementAt.$0.index kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.elementAt.$0.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.elementAtOrElse kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=Char
+symbol fq=golden.sema.elementAtOrElse.$1.index kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.elementAtOrElse.$1.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.elementAtOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=Char?
+symbol fq=golden.sema.elementAtOrNull.$2.index kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.elementAtOrNull.$2.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.nonLocalDefault kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
+symbol fq=golden.sema.nonLocalDefault.$3.source kind=valueParameter vis=private flags=_
+symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+file fstdlib_kotlin_text_CharSequence_element package=golden.sema
+  decl golden.sema.elementAt fun elementAt sym=golden.sema.elementAt
+  decl golden.sema.elementAtOrElse fun elementAtOrElse sym=golden.sema.elementAtOrElse
+  decl golden.sema.elementAtOrNull fun elementAtOrNull sym=golden.sema.elementAtOrNull
+  decl golden.sema.nonLocalDefault fun nonLocalDefault sym=golden.sema.nonLocalDefault
+expr e@3:57 name(source) type=kotlin.CharSequence ref=golden.sema.elementAt.$0.source
+expr e@3:74 name(index) type=Int ref=golden.sema.elementAt.$0.index
+expr e@3:57#1 memberCall recv=e@3:57 callee=elementAt args=[_:e@3:74] type=Char call=kotlin.text.elementAt
+expr e@6:5 name(source) type=kotlin.CharSequence ref=golden.sema.elementAtOrElse.$1.source
+expr e@6:28 name(index) type=Int ref=golden.sema.elementAtOrElse.$1.index
+expr e@6:54 name(requested) type=Int ref=s-0
+expr e@6:66 int(0) type=Int
+expr e@6:54#1 binary(lessThan) lhs=e@6:54 rhs=e@6:66 type=Boolean
+expr e@6:69 char(45) type=Char
+expr e@6:78 char(43) type=Char
+expr e@6:50 if cond=e@6:54#1 then=e@6:69 else=e@6:78 type=Char
+expr e@6:35 lambda params=[requested] body=e@6:50 label=elementAtOrElse type=(Int) -> Char
+expr e@6:5#1 memberCall recv=e@6:5 callee=elementAtOrElse args=[_:e@6:28,_:e@6:35] type=Char call=kotlin.text.elementAtOrElse
+expr e@8:64 name(source) type=kotlin.CharSequence ref=golden.sema.elementAtOrNull.$2.source
+expr e@8:87 name(index) type=Int ref=golden.sema.elementAtOrNull.$2.index
+expr e@8:64#1 memberCall recv=e@8:64 callee=elementAtOrNull args=[_:e@8:87] type=Char? call=kotlin.text.elementAtOrNull
+expr e@11:12 name(source) type=kotlin.CharSequence ref=golden.sema.nonLocalDefault.$3.source
+expr e@11:36 int(1) type=Int
+expr e@11:35 unary(unaryMinus) operand=e@11:36 type=Int
+expr e@11:48 char(120) type=Char
+expr e@11:41 return value=e@11:48 type=Nothing
+expr e@11:39 lambda params=[] body=e@11:41 label=elementAtOrElse type=(Int) -> Char
+expr e@11:12#1 memberCall recv=e@11:12 callee=elementAtOrElse args=[_:e@11:35,_:e@11:39] type=Char call=kotlin.text.elementAtOrElse
+expr e@11:5 return value=e@11:12#1 type=Nothing

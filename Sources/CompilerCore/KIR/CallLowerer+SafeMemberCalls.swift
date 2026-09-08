@@ -805,8 +805,18 @@ extension CallLowerer {
         }
 
         // Lower arguments only on the non-null path.
-        let loweredArgIDs = args.map { argument in
-            driver.lowerExpr(
+        let loweredArgIDs = args.enumerated().map { argumentIndex, argument in
+            let previousAllowance = driver.ctx.pendingLambdaNonLocalReturnAllowance
+            driver.ctx.pendingLambdaNonLocalReturnAllowance = allowsNonLocalReturn(
+                argumentExpr: argument.expr,
+                argumentIndex: argumentIndex,
+                ast: ast,
+                sema: sema,
+                callBinding: callBinding,
+                chosen: chosen
+            )
+            defer { driver.ctx.pendingLambdaNonLocalReturnAllowance = previousAllowance }
+            return driver.lowerExpr(
                 argument.expr,
                 shared: shared, emit: &instructions
             )

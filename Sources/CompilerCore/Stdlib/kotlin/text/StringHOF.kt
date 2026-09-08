@@ -1,5 +1,8 @@
 package kotlin.text
 
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
+
 // MIGRATION-TEXT-008 / KSP-410
 // String higher-order functions migrated from Swift runtime (RuntimeStringHOF.swift).
 //
@@ -192,6 +195,22 @@ public fun <R : Any> CharSequence.mapNotNull(transform: (Char) -> R?): List<R> {
     }
     return result
 }
+
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.elementAt(index: Int): Char = get(index)
+
+@kotlin.internal.InlineOnly
+@OptIn(kotlin.contracts.ExperimentalContracts::class)
+public inline fun CharSequence.elementAtOrElse(index: Int, defaultValue: (Int) -> Char): Char {
+    contract {
+        callsInPlace(defaultValue, InvocationKind.AT_MOST_ONCE)
+    }
+    return if (index >= 0 && index < length) get(index) else defaultValue(index)
+}
+
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.elementAtOrNull(index: Int): Char? =
+    if (index >= 0 && index < length) get(index) else null
 
 public fun <R : Any> CharSequence.firstNotNullOf(transform: (Char) -> R?): R {
     var i = 0
