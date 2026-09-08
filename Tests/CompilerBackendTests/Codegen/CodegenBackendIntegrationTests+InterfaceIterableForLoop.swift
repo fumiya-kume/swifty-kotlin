@@ -223,12 +223,12 @@ struct CodegenBackendInterfaceIterableForLoopTests {
         let body = try findKIRFunctionBody(named: "f", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
         #expect(
-            callees.contains("kk_iterator_hasNext"),
-            "Iterable for-loop should call kk_iterator_hasNext, got: \(callees)"
+            callees.contains("kk_iterator_hasNext") || callees.contains("hasNext"),
+            "Iterable for-loop should use Iterator.hasNext dispatch, got: \(callees)"
         )
         #expect(
-            callees.contains("kk_iterator_next"),
-            "Iterable for-loop should call kk_iterator_next, got: \(callees)"
+            callees.contains("kk_iterator_next") || callees.contains("next"),
+            "Iterable for-loop should use Iterator.next dispatch, got: \(callees)"
         )
         #expect(
             !callees.contains("kk_range_hasNext"),

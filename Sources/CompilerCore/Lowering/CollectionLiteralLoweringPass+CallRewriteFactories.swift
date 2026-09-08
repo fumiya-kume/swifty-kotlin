@@ -17,6 +17,22 @@ extension CollectionLiteralConstructionLoweringPass {
         state: inout CollectionRewriteState,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
+        if rewriteSequenceBuilderCall(
+            symbol: symbol,
+            callee: callee,
+            arguments: arguments,
+            result: result,
+            canThrow: canThrow,
+            thrownResult: thrownResult,
+            module: module,
+            ctx: ctx,
+            lookup: lookup,
+            state: &state,
+            loweredBody: &loweredBody
+        ) {
+            return true
+        }
+
         // --- Rewrite list factories to runtime helpers. ---
         // Keep the Kotlin-source declarations visible to sema, but preserve the
         // runtime lowering path for primitive boxing and tracked collection IDs.

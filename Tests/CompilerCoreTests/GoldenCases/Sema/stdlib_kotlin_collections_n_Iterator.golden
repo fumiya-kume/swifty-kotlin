@@ -1,0 +1,38 @@
+symbol fq=__local_0.value kind=local vis=private flags=_ type=String?
+symbol fq=golden.sema.NullableIterator kind=class vis=public flags=_
+symbol fq=golden.sema.NullableIterator.hasNext kind=function vis=public flags=overrideMember sig=recv=golden.sema.NullableIterator params=[] ret=Boolean
+symbol fq=golden.sema.NullableIterator.index kind=property vis=private flags=mutable type=Int
+symbol fq=golden.sema.NullableIterator.values kind=property vis=public flags=_ type=kotlin.collections.List<String?>
+symbol fq=golden.sema.consume kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterator<String?>] ret=String?
+symbol fq=golden.sema.consume.$0.iterator kind=valueParameter vis=private flags=_
+symbol fq=kotlin.collections.Iterator.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.List.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[Int] ret=kotlin.collections.List.E
+file fstdlib_kotlin_collections_n_Iterator package=golden.sema
+  decl golden.sema.NullableIterator class NullableIterator sym=golden.sema.NullableIterator
+  decl golden.sema.consume fun consume sym=golden.sema.consume
+expr e@4:25 int(0) type=Int
+expr e@6:39 name(index) type=Int ref=golden.sema.NullableIterator.index
+expr e@6:47 name(values) type=kotlin.collections.List<String?> ref=golden.sema.NullableIterator.values
+expr e@6:47#1 memberCall recv=e@6:47 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@6:39#1 binary(lessThan) lhs=e@6:39 rhs=e@6:47#1 type=Boolean
+expr e@9:14 call callee=e@9:14#1 args=[] type=Boolean call=golden.sema.NullableIterator.hasNext
+expr e@9:13 unary(not) operand=e@9:14 type=Boolean
+expr e@9:31 call callee=e@9:31#1 args=[] type=kotlin.NoSuchElementException call=kotlin.NoSuchElementException.<init>#0
+expr e@9:25 throw value=e@9:31 type=Nothing
+expr e@9:9 if cond=e@9:13 then=e@9:25 else=_ type=Unit
+expr e@10:21 name(values) type=kotlin.collections.List<String?> ref=golden.sema.NullableIterator.values
+expr e@10:28 name(index) type=Int ref=golden.sema.NullableIterator.index
+expr e@10:21#1 indexedAccess receiver=e@10:21 indices=[e@10:28] type=String? call=kotlin.collections.List.get targs=[String?]
+expr e@10:9 localDecl value mutable=0 type=_ init=e@10:21#1 type=Unit ref=__local_0.value
+expr e@11:14 int(1) type=Int
+expr e@11:9 compoundAssign(plusAssign) name=index value=e@11:14 type=Unit ref=golden.sema.NullableIterator.index
+expr e@12:16 name(value) type=String? ref=__local_0.value
+expr e@12:9 return value=e@12:16 type=Nothing
+expr e@17:9 name(iterator) type=kotlin.collections.Iterator<String?> ref=golden.sema.consume.$0.iterator
+expr e@17:9#1 memberCall recv=e@17:9 callee=hasNext args=[] type=Boolean call=kotlin.collections.Iterator.hasNext targs=[String?]
+expr e@17:29 name(iterator) type=kotlin.collections.Iterator<String?> ref=golden.sema.consume.$0.iterator
+expr e@17:29#1 memberCall recv=e@17:29 callee=next args=[] type=String? call=kotlin.collections.Iterator.next targs=[String?]
+expr e@17:50 name(null) type=Nothing?
+expr e@17:5 if cond=e@17:9#1 then=e@17:29#1 else=e@17:50 type=String?

@@ -607,7 +607,15 @@ extension CallLowerer {
         if (loweredCallee == calleeName && !isRuntimeBridgedCallee)
             || listIteratorInheritedDispatch
             || isImportedLibraryLink
-            || chosenCallee.map({ isClockRuntimeVirtualBridge($0, sema: sema) }) == true,
+            || chosenCallee.map({ isClockRuntimeVirtualBridge($0, sema: sema) }) == true
+            || chosenCallee.map({
+                isIteratorRuntimeVirtualBridge(
+                    $0,
+                    receiverTypeID: sema.bindings.exprTypes[receiver.expr],
+                    sema: sema,
+                    interner: interner
+                )
+            }) == true,
            let inst = tryEmitVirtualDispatch(
                chosenCallee: chosenCallee, calleeName: loweredCallee,
                receiverExpr: receiver.expr, loweredReceiverID: receiver.loweredID,

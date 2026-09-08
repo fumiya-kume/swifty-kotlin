@@ -985,9 +985,19 @@ extension CallLowerer {
             }
             let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
             let hasExternalLink = chosen.map { kirIsRuntimeBridgedCallee($0, sema: sema) } ?? false
+            let usesIteratorRuntimeVirtualBridge = chosen.map {
+                isIteratorRuntimeVirtualBridge(
+                    $0,
+                    receiverTypeID: receiverTypeForDispatch,
+                    sema: sema,
+                    interner: interner
+                )
+            } ?? false
             if !isSuperCall,
                let chosen,
-               (!hasExternalLink || isClockRuntimeVirtualBridge(chosen, sema: sema)),
+               (!hasExternalLink
+                   || isClockRuntimeVirtualBridge(chosen, sema: sema)
+                   || usesIteratorRuntimeVirtualBridge),
                let dispatchKind = resolveVirtualDispatch(callee: chosen, receiverTypeID: receiverTypeForDispatch, sema: sema, interner: interner)
             {
                 var vcArguments = finalArguments
@@ -997,9 +1007,12 @@ extension CallLowerer {
                 {
                     vcArguments.removeFirst()
                 }
+                let virtualCalleeName = usesIteratorRuntimeVirtualBridge
+                    ? (sema.symbols.symbol(chosen)?.name ?? resolvedCalleeName)
+                    : resolvedCalleeName
                 instructions.append(.virtualCall(
                     symbol: chosen,
-                    callee: resolvedCalleeName,
+                    callee: virtualCalleeName,
                     receiver: loweredReceiverID,
                     arguments: vcArguments,
                     result: result,
@@ -1041,6 +1054,30 @@ extension CallLowerer {
         guard sema.symbols.externalLinkName(for: callee) == "kk_clock_now",
               let parentID = sema.symbols.parentSymbol(for: callee),
               sema.symbols.symbol(parentID)?.kind == .interface
+        else { return false }
+        return true
+    }
+
+    /// Iterator's runtime links also back the source-declared Iterator
+    /// interface. A source-backed class receiver still needs its itable so an
+    /// override such as CharSequenceCharIterator.hasNext() is not bypassed.
+    /// Runtime collection iterator boxes keep the direct bridge because their
+    /// static receiver type is the Iterator interface or a type parameter.
+    func isIteratorRuntimeVirtualBridge(
+        _ callee: SymbolID,
+        receiverTypeID: TypeID?,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard let linkName = sema.symbols.externalLinkName(for: callee),
+              linkName == "kk_iterator_hasNext" || linkName == "kk_iterator_next",
+              let parentID = sema.symbols.parentSymbol(for: callee),
+              let parentSymbol = sema.symbols.symbol(parentID),
+              parentSymbol.kind == .interface,
+              parentSymbol.fqName.map(interner.resolve) == ["kotlin", "collections", "Iterator"],
+              let receiverTypeID,
+              case let .classType(receiverClassType) = sema.types.kind(of: sema.types.makeNonNullable(receiverTypeID)),
+              sema.symbols.symbol(receiverClassType.classSymbol)?.kind == .class
         else { return false }
         return true
     }

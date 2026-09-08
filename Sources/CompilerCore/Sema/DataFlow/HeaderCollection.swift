@@ -1584,7 +1584,8 @@ extension DataFlowSemaPhase {
         // KSP-683 needs the migrated Duration nominals to remain source-backed
         // for their value-class and enum metadata.
         let resolvedFQName = fqName.map(interner.resolve)
-        return resolvedFQName == ["kotlin", "native", "ref", "WeakReference"]
+        return resolvedFQName == ["kotlin", "collections", "Iterator"]
+            || resolvedFQName == ["kotlin", "native", "ref", "WeakReference"]
             || resolvedFQName == ["kotlin", "ranges", "IntProgression"]
             || resolvedFQName == ["kotlin", "time", "Duration"]
             || resolvedFQName == ["kotlin", "time", "DurationUnit"]

@@ -5,10 +5,7 @@ symbol fq=__local_3.projectedIterator kind=local vis=private flags=_ type=kotlin
 symbol fq=__local_4.projectedEntry kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<Any?, kotlin.Number?>
 symbol fq=inspect kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Unit
 symbol fq=inspect.$0.map kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Iterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.hasNext kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
-symbol fq=kotlin.collections.Iterator.next kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K

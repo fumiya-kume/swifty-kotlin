@@ -49,10 +49,9 @@ final class ControlFlowLowerer {
             return
         }
         let calleeName = resolvedLoopCallee(for: callBinding, sema: sema, interner: interner, fallback: fallback)
-        // Virtual dispatch is only possible when we have a source expression
-        // whose static type can be used to resolve an itable/vtable slot.
-        // hasNext()/next() on the stdlib Iterator use runtime itable lookup,
-        // so they continue to use a direct .call when there is no receiver expr.
+        // The lowered receiver ID supplies the static type when a for-loop
+        // member call has no source receiver expression (for example,
+        // hasNext()/next() on the materialized iterator temporary).
         //
         // Member functions (class/interface/object) receive their `this` through
         // the virtual call receiver; extension functions receive it as the first
@@ -267,25 +266,27 @@ final class ControlFlowLowerer {
             interner: interner
         )
 
-        let iteratorID = arena.appendTemporary(type: sema.types.anyType)
+        // Preserve the iterator() return type so hasNext()/next() can resolve
+        // source-backed Iterator dispatch from the lowered temporary.
+        let iteratorID = arena.appendTemporary(
+            type: customIterator?.iteratorType ?? sema.types.anyType
+        )
         if let customIter = customIterator {
-            let calleeName: InternedString = if let linkName = sema.symbols.externalLinkName(for: customIter.iteratorSymbol),
-                                                !linkName.isEmpty
-            {
-                interner.intern(linkName)
-            } else if let sym = sema.symbols.symbol(customIter.iteratorSymbol) {
-                sym.name
-            } else {
-                interner.intern("iterator")
-            }
-            instructions.append(.call(
-                symbol: customIter.iteratorSymbol,
-                callee: calleeName,
-                arguments: [iterableID],
+            emitForLoopMemberCall(
+                callBinding: CallBinding(
+                    chosenCallee: customIter.iteratorSymbol,
+                    substitutedTypeArguments: [],
+                    parameterMapping: [:]
+                ),
+                fallback: "iterator",
+                receiverExpr: iterableExpr,
+                receiverID: iterableID,
                 result: iteratorID,
-                canThrow: false,
-                thrownResult: nil
-            ))
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         } else {
             instructions.append(.call(
                 symbol: nil,
@@ -305,23 +306,21 @@ final class ControlFlowLowerer {
 
         let hasNextID = arena.appendTemporary(type: boolType)
         if let customIter = customIterator {
-            let hasNextCallee: InternedString = if let linkName = sema.symbols.externalLinkName(for: customIter.hasNextSymbol),
-                                                   !linkName.isEmpty
-            {
-                interner.intern(linkName)
-            } else if let sym = sema.symbols.symbol(customIter.hasNextSymbol) {
-                sym.name
-            } else {
-                interner.intern("hasNext")
-            }
-            instructions.append(.call(
-                symbol: customIter.hasNextSymbol,
-                callee: hasNextCallee,
-                arguments: [iteratorID],
+            emitForLoopMemberCall(
+                callBinding: CallBinding(
+                    chosenCallee: customIter.hasNextSymbol,
+                    substitutedTypeArguments: [],
+                    parameterMapping: [:]
+                ),
+                fallback: "hasNext",
+                receiverExpr: nil,
+                receiverID: iteratorID,
                 result: hasNextID,
-                canThrow: false,
-                thrownResult: nil
-            ))
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         } else {
             instructions.append(.call(
                 symbol: nil,
@@ -345,23 +344,21 @@ final class ControlFlowLowerer {
             ?? sema.types.anyType
         let nextValueID = arena.appendTemporary(type: loopVarType)
         if let customIter = customIterator {
-            let nextCallee: InternedString = if let linkName = sema.symbols.externalLinkName(for: customIter.nextSymbol),
-                                                !linkName.isEmpty
-            {
-                interner.intern(linkName)
-            } else if let sym = sema.symbols.symbol(customIter.nextSymbol) {
-                sym.name
-            } else {
-                interner.intern("next")
-            }
-            instructions.append(.call(
-                symbol: customIter.nextSymbol,
-                callee: nextCallee,
-                arguments: [iteratorID],
+            emitForLoopMemberCall(
+                callBinding: CallBinding(
+                    chosenCallee: customIter.nextSymbol,
+                    substitutedTypeArguments: [],
+                    parameterMapping: [:]
+                ),
+                fallback: "next",
+                receiverExpr: nil,
+                receiverID: iteratorID,
                 result: nextValueID,
-                canThrow: false,
-                thrownResult: nil
-            ))
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         } else {
             instructions.append(.call(
                 symbol: nil,
@@ -1225,6 +1222,7 @@ final class ControlFlowLowerer {
     /// Resolved custom iterator operator chain: iterator(), hasNext(), next().
     private struct CustomIteratorResolution {
         let iteratorSymbol: SymbolID
+        let iteratorType: TypeID
         let hasNextSymbol: SymbolID
         let nextSymbol: SymbolID
     }
@@ -1501,6 +1499,7 @@ final class ControlFlowLowerer {
 
         return CustomIteratorResolution(
             iteratorSymbol: iteratorSymbol,
+            iteratorType: iteratorReturnType,
             hasNextSymbol: hasNextSymbol,
             nextSymbol: nextSymbol
         )
@@ -2349,25 +2348,27 @@ final class ControlFlowLowerer {
         let dynamicIterator = customIterator == nil
             && usesDynamicIteratorDispatch(iterableType, sema: sema, interner: interner)
 
-        let iteratorID = arena.appendTemporary(type: sema.types.anyType)
+        // Preserve the iterator() return type so hasNext()/next() can resolve
+        // source-backed Iterator dispatch from the lowered temporary.
+        let iteratorID = arena.appendTemporary(
+            type: customIterator?.iteratorType ?? sema.types.anyType
+        )
         if let customIter = customIterator {
-            let calleeName: InternedString = if let linkName = sema.symbols.externalLinkName(for: customIter.iteratorSymbol),
-                                                !linkName.isEmpty
-            {
-                interner.intern(linkName)
-            } else if let sym = sema.symbols.symbol(customIter.iteratorSymbol) {
-                sym.name
-            } else {
-                interner.intern("iterator")
-            }
-            instructions.append(.call(
-                symbol: customIter.iteratorSymbol,
-                callee: calleeName,
-                arguments: [iterableID],
+            emitForLoopMemberCall(
+                callBinding: CallBinding(
+                    chosenCallee: customIter.iteratorSymbol,
+                    substitutedTypeArguments: [],
+                    parameterMapping: [:]
+                ),
+                fallback: "iterator",
+                receiverExpr: iterableExpr,
+                receiverID: iterableID,
                 result: iteratorID,
-                canThrow: false,
-                thrownResult: nil
-            ))
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         } else {
             instructions.append(.call(
                 symbol: nil,
@@ -2385,23 +2386,21 @@ final class ControlFlowLowerer {
 
         let hasNextID = arena.appendTemporary(type: boolType)
         if let customIter = customIterator {
-            let hasNextCallee: InternedString = if let linkName = sema.symbols.externalLinkName(for: customIter.hasNextSymbol),
-                                                   !linkName.isEmpty
-            {
-                interner.intern(linkName)
-            } else if let sym = sema.symbols.symbol(customIter.hasNextSymbol) {
-                sym.name
-            } else {
-                interner.intern("hasNext")
-            }
-            instructions.append(.call(
-                symbol: customIter.hasNextSymbol,
-                callee: hasNextCallee,
-                arguments: [iteratorID],
+            emitForLoopMemberCall(
+                callBinding: CallBinding(
+                    chosenCallee: customIter.hasNextSymbol,
+                    substitutedTypeArguments: [],
+                    parameterMapping: [:]
+                ),
+                fallback: "hasNext",
+                receiverExpr: nil,
+                receiverID: iteratorID,
                 result: hasNextID,
-                canThrow: false,
-                thrownResult: nil
-            ))
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         } else {
             instructions.append(.call(
                 symbol: nil,
@@ -2419,23 +2418,21 @@ final class ControlFlowLowerer {
         // Get next element
         let nextValueID = arena.appendTemporary(type: sema.types.anyType)
         if let customIter = customIterator {
-            let nextCallee: InternedString = if let linkName = sema.symbols.externalLinkName(for: customIter.nextSymbol),
-                                                !linkName.isEmpty
-            {
-                interner.intern(linkName)
-            } else if let sym = sema.symbols.symbol(customIter.nextSymbol) {
-                sym.name
-            } else {
-                interner.intern("next")
-            }
-            instructions.append(.call(
-                symbol: customIter.nextSymbol,
-                callee: nextCallee,
-                arguments: [iteratorID],
+            emitForLoopMemberCall(
+                callBinding: CallBinding(
+                    chosenCallee: customIter.nextSymbol,
+                    substitutedTypeArguments: [],
+                    parameterMapping: [:]
+                ),
+                fallback: "next",
+                receiverExpr: nil,
+                receiverID: iteratorID,
                 result: nextValueID,
-                canThrow: false,
-                thrownResult: nil
-            ))
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         } else {
             instructions.append(.call(
                 symbol: nil,

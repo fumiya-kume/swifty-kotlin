@@ -8,9 +8,7 @@ symbol fq=inspect.$0.other kind=valueParameter vis=private flags=_
 symbol fq=inspect.$0.values kind=valueParameter vis=private flags=_
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Iterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.hasNext kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
 file fstdlib_kotlin_collections_n_Collection package=_
   decl inspect fun inspect sym=inspect
 expr e@4:16 name(values) type=kotlin.collections.Collection<Int> ref=inspect.$0.values

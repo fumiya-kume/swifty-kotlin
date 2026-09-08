@@ -1,8 +1,6 @@
 symbol fq=__local_0.value kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
 symbol fq=__local_1.iterator kind=local vis=private flags=_ type=kotlin.collections.Iterator<out Int>
-symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Iterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.next kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence.T kind=typeParameter vis=private flags=_
 symbol fq=normalize kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int>?] ret=Int

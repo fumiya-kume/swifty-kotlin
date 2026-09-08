@@ -1119,15 +1119,14 @@
     - `kotlin.collections.Iterable` — interface kotlin.collections.Iterable  -- `abstract interface <#A: out kotlin/Any?> kotlin.collections/Iterable {`
     - `kotlin.collections.Iterable` — fun Iterable(Function0): Iterable  -- `final inline fun <#A: kotlin/Any?> kotlin.collections/Iterable(crossinline kotlin/Function0<kotlin.collections/Iterator<#A>>): kotlin.collections/Iterable<#A>`
 
-- [ ] KSP-938: kotlin.collections.Iterator-family の未実装 stdlib API を実装する（1 件）
+- [x] KSP-938: kotlin.collections.Iterator-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections` / top-level / family `Iterator`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractIterator.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_n_Iterator.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_n_Iterator.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_n_Iterator.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
-  - 未実装シンボル一覧:
-    - `kotlin.collections.Iterator` — interface kotlin.collections.Iterator  -- `abstract interface <#A: out kotlin/Any?> kotlin.collections/Iterator {`
+  - 完了根拠: `Iterator<out T>` と `hasNext` / `next` を `AbstractIterator.kt` のsource declarationとして登録し、synthetic fallbackは非bundled context向けに保持。`SequenceInterfaceSyntheticTests`でsource-backed、variance、operator、interface dispatchを検証し、Golden/diff/KIR/Backend回帰を追加・更新。
 
 - [ ] KSP-939: kotlin.collections.List-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.collections` / top-level / family `List`

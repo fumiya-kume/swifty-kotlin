@@ -38,12 +38,27 @@ struct SequenceInterfaceSyntheticTests {
             fqName: collectionsPackage + [interner.intern("Iterator")]
         ))
         let sequenceInfo = try #require(sema.symbols.symbol(sequenceSymbol))
+        let iteratorInfo = try #require(sema.symbols.symbol(iteratorSymbol))
         #expect(sequenceInfo.kind == .interface)
         #expect(!sequenceInfo.flags.contains(.synthetic))
+        #expect(iteratorInfo.kind == .interface)
+        #expect(!iteratorInfo.flags.contains(.synthetic))
+        #expect(sema.symbols.isSourceBackedSymbol(iteratorSymbol))
 
         let typeParams = sema.types.nominalTypeParameterSymbols(for: sequenceSymbol)
         #expect(typeParams.count == 1)
         #expect(sema.types.nominalTypeParameterVariances(for: sequenceSymbol) == [.out])
+        #expect(sema.types.nominalTypeParameterSymbols(for: iteratorSymbol).count == 1)
+        #expect(sema.types.nominalTypeParameterVariances(for: iteratorSymbol) == [.out])
+
+        for memberName in ["hasNext", "next"] {
+            let member = try #require(sema.symbols.lookup(
+                fqName: collectionsPackage + [interner.intern("Iterator"), interner.intern(memberName)]
+            ))
+            #expect(sema.symbols.symbol(member)?.flags.contains(.operatorFunction) == true)
+            #expect(sema.symbols.isSourceBackedSymbol(member))
+            #expect(sema.symbols.externalLinkName(for: member) == "kk_iterator_\(memberName)")
+        }
 
         let elementType = sema.types.make(.typeParam(TypeParamType(
             symbol: typeParams[0],
