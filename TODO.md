@@ -4512,7 +4512,8 @@
   - 未実装シンボル一覧:
     - `kotlin.text.iterator` — fun CharSequence.iterator(): CharIterator  -- `final fun (kotlin/CharSequence).kotlin.text/iterator(): kotlin.collections/CharIterator`
 
-- [ ] KSP-1384: kotlin.text.CharSequence.last-family の未実装 stdlib API を実装する（5 件）
+- [~] KSP-1384: kotlin.text.CharSequence.last-family の未実装 stdlib API を実装する（5 件）
+  - 実装中: CharSequence の last / lastOrNull（predicate を含む）と lastIndex を Kotlin source に追加。#6690 の source-backed inline/member return 配線を基点とし、全体 G はこの PR head で未完了。
   - 対象: `kotlin.text` / receiver `CharSequence` / family `last`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringIndexOf.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。

@@ -77,6 +77,42 @@ public fun String.lastOrNull(predicate: (Char) -> Boolean): Char? {
     return null
 }
 
+// KSP-1384: CharSequence last-family APIs are source-backed. Keep the
+// String-specific bridge overloads above because unrelated String callers
+// still use their runtime-backed no-predicate implementations.
+public fun CharSequence.last(): Char {
+    if (isEmpty())
+        throw NoSuchElementException("Char sequence is empty.")
+    return this[lastIndex]
+}
+
+public inline fun CharSequence.last(predicate: (Char) -> Boolean): Char {
+    var index = length - 1
+    while (index >= 0) {
+        val element = this[index]
+        if (predicate(element)) return element
+        index--
+    }
+    throw NoSuchElementException("Char sequence contains no character matching the predicate.")
+}
+
+public val CharSequence.lastIndex: Int
+    get() = this.length - 1
+
+public fun CharSequence.lastOrNull(): Char? {
+    return if (isEmpty()) null else this[length - 1]
+}
+
+public inline fun CharSequence.lastOrNull(predicate: (Char) -> Boolean): Char? {
+    var index = length - 1
+    while (index >= 0) {
+        val element = this[index]
+        if (predicate(element)) return element
+        index--
+    }
+    return null
+}
+
 public fun String.single(): Char {
     return this.__kk_string_single()
 }
