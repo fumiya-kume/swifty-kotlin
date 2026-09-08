@@ -4447,7 +4447,8 @@
     - `kotlin.text.forEach` — fun CharSequence.forEach(Function1): Unit  -- `final inline fun (kotlin/CharSequence).kotlin.text/forEach(kotlin/Function1<kotlin/Char, kotlin/Unit>)`
     - `kotlin.text.forEachIndexed` — fun CharSequence.forEachIndexed(Function2): Unit  -- `final inline fun (kotlin/CharSequence).kotlin.text/forEachIndexed(kotlin/Function2<kotlin/Int, kotlin/Char, kotlin/Unit>)`
 
-- [ ] KSP-1378: kotlin.text.CharSequence.get-family の未実装 stdlib API を実装する（2 件）
+- [~] KSP-1378: kotlin.text.CharSequence.get-family の未実装 stdlib API を実装する（2 件）
+  - 実装中: CharSequence の getOrElse / getOrNull を Kotlin source に追加。#6690 の inline/member return 修正を基点とし、全体 G はこの PR head で未完了。
   - 対象: `kotlin.text` / receiver `CharSequence` / family `get`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。

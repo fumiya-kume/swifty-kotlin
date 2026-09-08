@@ -1,5 +1,9 @@
 package kotlin.text
 
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
+
 // KSP-402
 // String query helpers migrated from Swift runtime entry points.
 
@@ -125,3 +129,13 @@ public fun String.singleOrNull(predicate: (Char) -> Boolean): Char? {
 public fun String.getOrNull(index: Int): Char? {
     return this.__kk_string_getOrNull(index)
 }
+
+@kotlin.internal.InlineOnly
+@OptIn(ExperimentalContracts::class)
+public inline fun CharSequence.getOrElse(index: Int, defaultValue: (Int) -> Char): Char {
+    contract { callsInPlace(defaultValue, InvocationKind.AT_MOST_ONCE) }
+    return if (index >= 0 && index < length) get(index) else defaultValue(index)
+}
+
+public fun CharSequence.getOrNull(index: Int): Char? =
+    if (index >= 0 && index < length) get(index) else null
