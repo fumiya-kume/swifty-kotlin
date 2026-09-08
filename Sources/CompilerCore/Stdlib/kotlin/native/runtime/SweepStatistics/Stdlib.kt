@@ -7,12 +7,10 @@
 
 package kotlin.native.runtime
 
-// KSP-1271: The public constructor is source-backed here. The sweptCount and
-// keptCount receiver properties remain synthetic/runtime-backed for KSP-1272,
-// so the constructor parameters intentionally do not use `val`.
+// KSP-1272: Keep both native GC sweep counters source-backed and immutable.
 @NativeRuntimeApi
 @SinceKotlin("1.9")
 public class SweepStatistics(
-    sweptCount: Long,
-    keptCount: Long,
+    public val sweptCount: Long,
+    public val keptCount: Long,
 )

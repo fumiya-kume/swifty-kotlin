@@ -565,7 +565,11 @@ struct NativeRefRuntimeSemaTests {
             let propertySymbol = try #require(
                 sema.symbols.lookup(fqName: classFQName + [interner.intern(property)])
             )
-            #expect(sema.symbols.symbol(propertySymbol)?.flags.contains(.synthetic) == true)
+            let propertyInfo = try #require(sema.symbols.symbol(propertySymbol))
+            #expect(!propertyInfo.flags.contains(.synthetic))
+            #expect(!propertyInfo.flags.contains(.mutable))
+            #expect(sema.symbols.isSourceBackedSymbol(propertySymbol))
+            #expect(sema.symbols.externalLinkName(for: propertySymbol) == nil)
         }
     }
 
