@@ -831,9 +831,19 @@ extension CallLowerer {
         var finalArguments = safeNormalized.arguments
         if let chosen,
            let signature = sema.symbols.functionSignature(for: chosen),
-           signature.receiverType != nil
+           let declaredReceiverType = signature.receiverType
         {
-            finalArguments.insert(loweredReceiverID, at: 0)
+            var receiverArgument = loweredReceiverID
+            if safeReceiverType != nonNullSafeReceiverType,
+               case .primitive(_, .nonNull) = sema.types.kind(of: declaredReceiverType)
+            {
+                // The null branch has exited. ABI argument adaptation skips
+                // the receiver slot, so expose this boundary as a typed copy
+                // to unbox nullable primitives before calling their member.
+                receiverArgument = arena.appendTemporary(type: declaredReceiverType)
+                instructions.append(.copy(from: loweredReceiverID, to: receiverArgument))
+            }
+            finalArguments.insert(receiverArgument, at: 0)
         } else if chosen == nil {
             let calleeStr = interner.resolve(effectiveCalleeName)
             if Self.unresolvedCoroutineHandleMemberNames.contains(calleeStr), isCoroutineReceiver {

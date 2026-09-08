@@ -57,6 +57,29 @@ struct CodegenBackendCharExecutionTests {
     }
 
     @Test
+    func testNullableCharCodeUnboxesTheReceiverAndBoxesTheIntResult() throws {
+        try assertKotlinOutput(
+            """
+            fun code(value: Char?): Int? = value?.code
+            fun main() {
+                val value: Char? = 'a'
+                val erased: Any? = value?.code
+                println(erased is Int)
+                println(erased)
+                println(code('\\u0000'))
+                println(code('\\uD83D'))
+                println(code('\\uDE00'))
+                println(code('\\uFFFF'))
+                println(code(null))
+                println(value?.code == 97)
+            }
+            """,
+            moduleName: "NullableCharCode",
+            expected: "true\n97\n0\n55357\n56832\n65535\nnull\ntrue\n"
+        )
+    }
+
+    @Test
     func testCodegenCharIsISOControlBoundaries() throws {
         let source = """
         fun main() {
