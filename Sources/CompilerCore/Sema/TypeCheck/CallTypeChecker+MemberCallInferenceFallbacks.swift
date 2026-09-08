@@ -143,6 +143,50 @@ extension CallTypeChecker {
         return finalType
     }
 
+    /// Bind the CharSequence.subSequence(IntRange) source overload when the
+    /// nominal two-argument member has already won member lookup. Inline range
+    /// expressions carry their scalar element type, so use the same source-level
+    /// range classification as regular candidate preparation before resolving.
+    func tryBindSyntheticStringRangeSubSequenceFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        argTypes: [TypeID],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        safeCall: Bool
+    ) -> TypeID? {
+        guard ctx.interner.resolve(calleeName) == "subSequence",
+              args.count == 1,
+              isSyntheticStringLikeType(receiverType, sema: ctx.sema),
+              let rangeType = sourceLevelRangeMemberLookupType(
+                  receiverExpr: args[0].expr,
+                  receiverType: argTypes[0],
+                  sema: ctx.sema,
+                  interner: ctx.interner
+              )
+        else {
+            return nil
+        }
+        var refinedArgTypes = argTypes
+        refinedArgTypes[0] = rangeType
+        return tryBindSyntheticStringMemberFallback(
+            id,
+            calleeName: calleeName,
+            receiverType: receiverType,
+            args: args,
+            argTypes: refinedArgTypes,
+            range: range,
+            ctx: ctx,
+            expectedType: expectedType,
+            explicitTypeArgs: explicitTypeArgs,
+            safeCall: safeCall
+        )
+    }
+
     func isSyntheticStringMemberCandidate(
         _ symbolID: SymbolID,
         named calleeName: InternedString,

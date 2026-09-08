@@ -43,6 +43,9 @@ public fun String.subSequence(startIndex: Int, endIndex: Int): String =
 public fun CharSequence.subSequence(startIndex: Int, endIndex: Int): CharSequence =
     this.toString().substring(startIndex, endIndex)
 
+public fun CharSequence.subSequence(range: IntRange): CharSequence =
+    this.subSequence(range.start, range.endInclusive + 1)
+
 public fun String.slice(indices: IntRange): String {
     if (indices.isEmpty()) return ""
     return this.substring(indices.first, indices.last + 1)

@@ -1208,6 +1208,25 @@ extension CallTypeChecker {
             }
         }
 
+        // KSP-1402: the nominal CharSequence.subSequence(Int, Int) candidate
+        // shadows the source-backed IntRange extension during member lookup.
+        // Resolve the range overload before the nominal candidate resolver sees
+        // the scalar representation of an inline range literal.
+        if let boundType = tryBindSyntheticStringRangeSubSequenceFallback(
+            id,
+            calleeName: calleeName,
+            receiverType: lookupReceiverType,
+            args: args,
+            argTypes: argTypes,
+            range: range,
+            ctx: ctx,
+            expectedType: expectedType,
+            explicitTypeArgs: explicitTypeArgs,
+            safeCall: safeCall
+        ) {
+            return boundType
+        }
+
         let (visible, invisible) = ctx.filterByVisibility(allCandidates)
         var candidates = preferMostSpecificMemberReceiverCandidates(
             visible,
