@@ -491,7 +491,9 @@ extension CallTypeChecker {
             sema: sema,
             interner: interner
         ) ?? receiverType
-        let scopedRangeUserCandidates: [SymbolID] = if memberName == "contains", rangeKind == .intRange {
+        let scopedRangeUserCandidates: [SymbolID] = if memberName == "contains",
+                                                          rangeKind == .intRange || rangeKind == .uintRange
+        {
             collectScopedRangeUserExtensionCandidates(
                 named: calleeName,
                 receiverType: sourceLookupReceiverType,
@@ -499,7 +501,7 @@ extension CallTypeChecker {
                 sema: sema,
                 interner: interner
             ).filter {
-                isIntRangeCrossTypeContainsCandidate($0, sema: sema)
+                isRangeCrossTypeContainsCandidate($0, rangeKind: rangeKind, sema: sema)
             }
         } else {
             []
@@ -624,7 +626,7 @@ extension CallTypeChecker {
         return finalType
     }
 
-    func hasIntRangeSourceBackedContainsCandidate(
+    func hasRangeSourceBackedContainsCandidate(
         receiverType: TypeID,
         argumentType: TypeID,
         sema: SemaModule,
@@ -645,13 +647,44 @@ extension CallTypeChecker {
         }
     }
 
+    func hasIntRangeSourceBackedContainsCandidate(
+        receiverType: TypeID,
+        argumentType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        hasRangeSourceBackedContainsCandidate(
+            receiverType: receiverType,
+            argumentType: argumentType,
+            sema: sema,
+            interner: interner
+        )
+    }
+
     func isIntRangeCrossTypeContainsCandidate(_ candidate: SymbolID, sema: SemaModule) -> Bool {
+        isRangeCrossTypeContainsCandidate(candidate, rangeKind: .intRange, sema: sema)
+    }
+
+    func isRangeCrossTypeContainsCandidate(
+        _ candidate: SymbolID,
+        rangeKind: MemberDispatchReceiverKind,
+        sema: SemaModule
+    ) -> Bool {
         guard let signature = sema.symbols.functionSignature(for: candidate),
               signature.parameterTypes.count == 1
         else {
             return false
         }
-        return [sema.types.byteType, sema.types.longType, sema.types.shortType]
+        let crossTypeCandidates: [TypeID]
+        switch rangeKind {
+        case .intRange:
+            crossTypeCandidates = [sema.types.byteType, sema.types.longType, sema.types.shortType]
+        case .uintRange:
+            crossTypeCandidates = [sema.types.ubyteType, sema.types.ulongType, sema.types.ushortType]
+        default:
+            return false
+        }
+        return crossTypeCandidates
             .contains(signature.parameterTypes[0])
     }
 

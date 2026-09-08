@@ -566,9 +566,9 @@ final class ExprTypeChecker {
         let interner = ctx.interner
         let containsName = interner.intern("contains")
 
-        // Range expressions carry an Int lowering type until their member call
-        // is resolved. If a user operator extension is in scope, recover the
-        // source-level IntRange receiver before the primitive fast path can
+        // Range expressions carry a primitive lowering type until their member
+        // call is resolved. If a user operator extension is in scope, recover
+        // the source-level range receiver before the primitive fast path can
         // route `in` to the generic runtime helper.
         if let rangeSourceReceiverType = driver.callChecker.sourceLevelRangeMemberLookupType(
             receiverExpr: containerExpr,
@@ -576,12 +576,13 @@ final class ExprTypeChecker {
             sema: sema,
             interner: interner
         ),
-        MemberRuntimeDispatch.rangeReceiverKind(
+        let rangeKind = MemberRuntimeDispatch.rangeReceiverKind(
             receiverExpr: containerExpr,
             receiverType: containerType,
             sema: sema,
             interner: interner
-        ) == .intRange {
+        ),
+        rangeKind == .intRange || rangeKind == .uintRange {
             let scopedRangeUserCandidates = driver.callChecker
                 .collectScopedRangeUserExtensionCandidates(
                     named: containsName,
@@ -596,8 +597,9 @@ final class ExprTypeChecker {
                     else {
                         return false
                     }
-                    return driver.callChecker.isIntRangeCrossTypeContainsCandidate(
+                    return driver.callChecker.isRangeCrossTypeContainsCandidate(
                         candidate,
+                        rangeKind: rangeKind,
                         sema: sema
                     )
                 }
@@ -627,7 +629,7 @@ final class ExprTypeChecker {
                     return
                 }
                 let hasBundledRangeCandidate = driver.callChecker
-                    .hasIntRangeSourceBackedContainsCandidate(
+                    .hasRangeSourceBackedContainsCandidate(
                         receiverType: rangeSourceReceiverType,
                         argumentType: sema.types.makeNonNullable(elementType),
                         sema: sema,

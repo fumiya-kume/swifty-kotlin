@@ -802,14 +802,17 @@ extension CallTypeChecker {
             // active Kotlin scope still has normal overload priority, though;
             // keep it ahead of the bundled candidates so a user declaration
             // is not silently replaced by the stdlib fallback.
+            let rangeSourceReceiverKind = MemberRuntimeDispatch.rangeReceiverKind(
+                receiverExpr: receiverID,
+                receiverType: lookupReceiverType,
+                sema: sema,
+                interner: interner
+            )
             let scopedRangeUserCandidates: [SymbolID] = if interner.resolve(calleeName) == "contains",
                                                                let rangeSourceMemberLookupType,
-                                                               MemberRuntimeDispatch.rangeReceiverKind(
-                                                                   receiverExpr: receiverID,
-                                                                   receiverType: lookupReceiverType,
-                                                                   sema: sema,
-                                                                   interner: interner
-                                                               ) == .intRange
+                                                               let rangeSourceReceiverKind,
+                                                               rangeSourceReceiverKind == .intRange
+                                                                   || rangeSourceReceiverKind == .uintRange
             {
                 collectScopedRangeUserExtensionCandidates(
                     named: calleeName,
@@ -818,7 +821,11 @@ extension CallTypeChecker {
                     sema: sema,
                     interner: interner
                 ).filter { candidate in
-                    guard isIntRangeCrossTypeContainsCandidate(candidate, sema: sema),
+                    guard isRangeCrossTypeContainsCandidate(
+                              candidate,
+                              rangeKind: rangeSourceReceiverKind,
+                              sema: sema
+                          ),
                           args.count == 1,
                           argTypes.count == 1,
                           let signature = sema.symbols.functionSignature(for: candidate),
