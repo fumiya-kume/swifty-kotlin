@@ -670,6 +670,42 @@ final class ExprTypeChecker {
             }
         }
 
+        // ULongRange cross-type contains overloads are source-backed extensions.
+        // Reuse the same receiver and argument matching as direct member calls
+        // so `value in range` selects the Kotlin widening overload instead of
+        // passing a narrower unsigned value to the raw runtime bridge.
+        if driver.callChecker.sourceLevelRangeMemberLookupType(
+            receiverExpr: containerExpr,
+            receiverType: containerType,
+            sema: sema,
+            interner: interner
+        ) != nil,
+        MemberRuntimeDispatch.rangeReceiverKind(
+            receiverExpr: containerExpr,
+            receiverType: containerType,
+            sema: sema,
+            interner: interner
+        ) == .ulongRange,
+        let sourceSymbol = driver.callChecker.sourceRangeHOFSymbol(
+            memberName: "contains",
+            rangeKind: .ulongRange,
+            argCount: 1,
+            argumentTypes: [sema.types.makeNonNullable(elementType)],
+            argumentLabels: [nil],
+            sema: sema,
+            interner: interner
+        ) {
+            sema.bindings.bindCall(
+                exprID,
+                binding: CallBinding(
+                    chosenCallee: sourceSymbol,
+                    substitutedTypeArguments: [],
+                    parameterMapping: [0: 0]
+                )
+            )
+            return
+        }
+
         // Skip primitive and range types — they are handled by kk_op_contains at runtime.
         // String is `.stringStruct`, not `.classType` (KSWIFTK-INTERNAL-0001), but it does
         // have a bundled-Kotlin-source `contains` to dispatch to (KSP-408), so it must not

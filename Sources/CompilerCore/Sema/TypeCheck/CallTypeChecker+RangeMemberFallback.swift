@@ -55,6 +55,19 @@ extension CallTypeChecker {
             }
             return receiverKind == .intRange
         }()
+        let isTypedULongRangeReceiver: Bool = {
+            guard let receiverType,
+                  let receiverKind = MemberRuntimeDispatch.rangeReceiverKind(
+                      receiverExpr: receiverID,
+                      receiverType: receiverType,
+                      sema: sema,
+                      interner: interner
+                  )
+            else {
+                return false
+            }
+            return receiverKind == .ulongRange
+        }()
         let isSyntacticRangeExpression = ControlFlowTypeChecker.isRangeExpression(receiverID, ast: ctx.ast)
         guard !isClassNameReceiver,
               (sema.bindings.isRangeExpr(receiverID)
@@ -62,6 +75,8 @@ extension CallTypeChecker {
                   || isSyntacticRangeExpression
                   || (isTypedIntRangeReceiver
                       && isIntRangeSourceBackedHOF(memberName, argCount: args.count))
+                  || (isTypedULongRangeReceiver
+                      && isULongRangeSourceBackedHOF(memberName, argCount: args.count))
                   || (isTypedUIntRangeReceiver && isUIntRangeSourceMigrationMember))
         else {
             return nil
@@ -436,6 +451,23 @@ extension CallTypeChecker {
         ].contains(memberName)
     }
 
+    private func isULongRangeSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
+        memberName == "contains" && argCount == 1
+    }
+
+    private func isULongRangeCrossTypeContains(
+        _ argumentTypes: [TypeID]?,
+        sema: SemaModule
+    ) -> Bool {
+        guard let argumentTypes, argumentTypes.count == 1 else {
+            return false
+        }
+        let argumentType = sema.types.makeNonNullable(argumentTypes[0])
+        return argumentType == sema.types.ubyteType
+            || argumentType == sema.types.uintType
+            || argumentType == sema.types.ushortType
+    }
+
     private func bindSourceRangeHOFCall(
         _ id: ExprID,
         memberName: String,
@@ -459,19 +491,6 @@ extension CallTypeChecker {
             return nil
         }
 
-        let isSourceBackedRangeCall =
-            ((rangeKind == .intRange || rangeKind == .intProgression)
-                && isIntRangeSourceBackedHOF(memberName, argCount: args.count))
-            || (rangeKind == .uintRange
-                && isUIntRangeSourceBackedHOF(memberName, argCount: args.count))
-            || (rangeKind == .uintProgression
-                && isUIntProgressionSourceBackedHOF(memberName, argCount: args.count))
-            || (rangeKind == .charProgression
-                && isCharProgressionSourceBackedHOF(memberName, argCount: args.count))
-            || ((memberName == "random" || memberName == "randomOrNull")
-                && (rangeKind == .longRange || rangeKind == .charRange
-                    || rangeKind == .uintRange || rangeKind == .ulongRange))
-
         let argumentTypesForSourceLookup: [TypeID]? = if memberName == "contains" {
             args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
         } else {
@@ -482,6 +501,23 @@ extension CallTypeChecker {
         } else {
             nil
         }
+
+        let isSourceBackedRangeCall =
+            ((rangeKind == .intRange || rangeKind == .intProgression)
+                && isIntRangeSourceBackedHOF(memberName, argCount: args.count))
+            || (rangeKind == .uintRange
+                && isUIntRangeSourceBackedHOF(memberName, argCount: args.count))
+            || (rangeKind == .uintProgression
+                && isUIntProgressionSourceBackedHOF(memberName, argCount: args.count))
+            || (rangeKind == .charProgression
+                && isCharProgressionSourceBackedHOF(memberName, argCount: args.count))
+            || (rangeKind == .ulongRange
+                && isULongRangeSourceBackedHOF(memberName, argCount: args.count)
+                && isULongRangeCrossTypeContains(argumentTypesForSourceLookup, sema: sema))
+            || ((memberName == "random" || memberName == "randomOrNull")
+                && (rangeKind == .longRange || rangeKind == .charRange
+                    || rangeKind == .uintRange || rangeKind == .ulongRange))
+
         let sourceLookupReceiverType = sourceLevelRangeMemberLookupType(
             receiverExpr: receiverID,
             receiverType: receiverType,
@@ -652,7 +688,7 @@ extension CallTypeChecker {
             .contains(signature.parameterTypes[0])
     }
 
-    private func sourceRangeHOFSymbol(
+    func sourceRangeHOFSymbol(
         memberName: String,
         rangeKind: MemberDispatchReceiverKind,
         argCount: Int,

@@ -1,0 +1,89 @@
+symbol fq=__local_0.directUByte kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_1.directUInt kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_2.directUShort kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_3.ordinaryULong kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_4.inOperator kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_5.emptyRange kind=local vis=private flags=_ type=ULong
+symbol fq=__local_6.emptyCross kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_7.fullRange kind=local vis=private flags=_ type=ULong
+symbol fq=__local_8.unsignedBoundaries kind=local vis=private flags=_ type=Boolean
+symbol fq=golden.sema.ulongRangeCrossContains kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.ULongRange,UByte,UInt,UShort] ret=Boolean
+symbol fq=golden.sema.ulongRangeCrossContains.$0.byteValue kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.ulongRangeCrossContains.$0.range kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.ulongRangeCrossContains.$0.shortValue kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.ulongRangeCrossContains.$0.uintValue kind=valueParameter vis=private flags=_
+symbol fq=kotlin.UByte#0 kind=class vis=public flags=synthetic
+symbol fq=kotlin.UByte.Companion kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.UInt#0 kind=class vis=public flags=synthetic
+symbol fq=kotlin.UInt.Companion kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.ULong#0 kind=class vis=public flags=synthetic
+symbol fq=kotlin.ULong.Companion kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.UShort#0 kind=class vis=public flags=synthetic
+symbol fq=kotlin.UShort.Companion kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.ranges.ULongRange kind=class vis=public flags=_
+symbol fq=kotlin.ranges.ULongRange.contains kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.ranges.ULongRange params=[ULong] ret=Boolean
+file fstdlib_kotlin_ranges_ULongRange_n package=golden.sema
+  decl golden.sema.ulongRangeCrossContains fun ulongRangeCrossContains sym=golden.sema.ulongRangeCrossContains
+expr e@9:23 name(range) type=kotlin.ranges.ULongRange ref=golden.sema.ulongRangeCrossContains.$0.range
+expr e@9:46 name(byteValue) type=UByte ref=golden.sema.ulongRangeCrossContains.$0.byteValue
+expr e@9:23#1 memberCall recv=e@9:23 callee=contains args=[value:e@9:46] type=Boolean call=kotlin.ranges.contains#25
+expr e@9:5 localDecl directUByte mutable=0 type=_ init=e@9:23#1 type=Unit ref=__local_0.directUByte
+expr e@10:22 name(range) type=kotlin.ranges.ULongRange ref=golden.sema.ulongRangeCrossContains.$0.range
+expr e@10:45 name(uintValue) type=UInt ref=golden.sema.ulongRangeCrossContains.$0.uintValue
+expr e@10:22#1 memberCall recv=e@10:22 callee=contains args=[value:e@10:45] type=Boolean call=kotlin.ranges.contains#26
+expr e@10:5 localDecl directUInt mutable=0 type=_ init=e@10:22#1 type=Unit ref=__local_1.directUInt
+expr e@11:24 name(range) type=kotlin.ranges.ULongRange ref=golden.sema.ulongRangeCrossContains.$0.range
+expr e@11:47 name(shortValue) type=UShort ref=golden.sema.ulongRangeCrossContains.$0.shortValue
+expr e@11:24#1 memberCall recv=e@11:24 callee=contains args=[value:e@11:47] type=Boolean call=kotlin.ranges.contains#28
+expr e@11:5 localDecl directUShort mutable=0 type=_ init=e@11:24#1 type=Unit ref=__local_2.directUShort
+expr e@12:25 name(range) type=kotlin.ranges.ULongRange ref=golden.sema.ulongRangeCrossContains.$0.range
+expr e@12:48 ulong(5) type=ULong
+expr e@12:25#1 memberCall recv=e@12:25 callee=contains args=[value:e@12:48] type=Boolean call=kotlin.ranges.ULongRange.contains
+expr e@12:5 localDecl ordinaryULong mutable=0 type=_ init=e@12:25#1 type=Unit ref=__local_3.ordinaryULong
+expr e@13:22 name(byteValue) type=UByte ref=golden.sema.ulongRangeCrossContains.$0.byteValue
+expr e@13:35 name(range) type=kotlin.ranges.ULongRange ref=golden.sema.ulongRangeCrossContains.$0.range
+expr e@13:22#1 inExpr lhs=e@13:22 rhs=e@13:35 type=Boolean call=kotlin.ranges.contains#25
+expr e@13:5 localDecl inOperator mutable=0 type=_ init=e@13:22#1 type=Unit ref=__local_4.inOperator
+expr e@14:22 ulong(10) type=ULong
+expr e@14:28 ulong(5) type=ULong
+expr e@14:22#1 binary(rangeTo) lhs=e@14:22 rhs=e@14:28 type=ULong
+expr e@14:5 localDecl emptyRange mutable=0 type=_ init=e@14:22#1 type=Unit ref=__local_5.emptyRange
+expr e@15:22 name(uintValue) type=UInt ref=golden.sema.ulongRangeCrossContains.$0.uintValue
+expr e@15:35 name(emptyRange) type=ULong ref=__local_5.emptyRange
+expr e@15:22#1 inExpr lhs=e@15:22 rhs=e@15:35 type=Boolean call=kotlin.ranges.contains#26
+expr e@15:5 localDecl emptyCross mutable=0 type=_ init=e@15:22#1 type=Unit ref=__local_6.emptyCross
+expr e@16:21 ulong(0) type=ULong
+expr e@16:26 name(ULong) type=kotlin.ULong.Companion ref=kotlin.ULong#0
+expr e@16:26#1 memberCall recv=e@16:26 callee=MAX_VALUE args=[] type=ULong call=kotlin.MAX_VALUE.$get#6
+expr e@16:21#1 binary(rangeTo) lhs=e@16:21 rhs=e@16:26#1 type=ULong
+expr e@16:5 localDecl fullRange mutable=0 type=_ init=e@16:21#1 type=Unit ref=__local_7.fullRange
+expr e@18:9 name(UByte) type=kotlin.UByte.Companion ref=kotlin.UByte#0
+expr e@18:9#1 memberCall recv=e@18:9 callee=MAX_VALUE args=[] type=UByte call=kotlin.MAX_VALUE.$get#4
+expr e@18:28 name(fullRange) type=ULong ref=__local_7.fullRange
+expr e@18:9#2 inExpr lhs=e@18:9#1 rhs=e@18:28 type=Boolean call=kotlin.ranges.contains#25
+expr e@19:13 name(UInt) type=kotlin.UInt.Companion ref=kotlin.UInt#0
+expr e@19:13#1 memberCall recv=e@19:13 callee=MAX_VALUE args=[] type=UInt call=kotlin.MAX_VALUE.$get#5
+expr e@19:31 name(fullRange) type=ULong ref=__local_7.fullRange
+expr e@19:13#2 inExpr lhs=e@19:13#1 rhs=e@19:31 type=Boolean call=kotlin.ranges.contains#26
+expr e@18:9#3 binary(logicalAnd) lhs=e@18:9#2 rhs=e@19:13#2 type=Boolean
+expr e@20:13 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort#0
+expr e@20:13#1 memberCall recv=e@20:13 callee=MAX_VALUE args=[] type=UShort call=kotlin.MAX_VALUE.$get#7
+expr e@20:33 name(fullRange) type=ULong ref=__local_7.fullRange
+expr e@20:13#2 inExpr lhs=e@20:13#1 rhs=e@20:33 type=Boolean call=kotlin.ranges.contains#28
+expr e@18:9#4 binary(logicalAnd) lhs=e@18:9#3 rhs=e@20:13#2 type=Boolean
+expr e@17:5 localDecl unsignedBoundaries mutable=0 type=_ init=e@18:9#4 type=Unit ref=__local_8.unsignedBoundaries
+expr e@21:12 name(directUByte) type=Boolean ref=__local_0.directUByte
+expr e@21:27 name(directUInt) type=Boolean ref=__local_1.directUInt
+expr e@21:12#1 binary(logicalAnd) lhs=e@21:12 rhs=e@21:27 type=Boolean
+expr e@21:41 name(directUShort) type=Boolean ref=__local_2.directUShort
+expr e@21:12#2 binary(logicalAnd) lhs=e@21:12#1 rhs=e@21:41 type=Boolean
+expr e@21:57 name(ordinaryULong) type=Boolean ref=__local_3.ordinaryULong
+expr e@21:12#3 binary(logicalAnd) lhs=e@21:12#2 rhs=e@21:57 type=Boolean
+expr e@22:9 name(inOperator) type=Boolean ref=__local_4.inOperator
+expr e@21:12#4 binary(logicalAnd) lhs=e@21:12#3 rhs=e@22:9 type=Boolean
+expr e@22:24 name(emptyCross) type=Boolean ref=__local_6.emptyCross
+expr e@22:23 unary(not) operand=e@22:24 type=Boolean
+expr e@21:12#5 binary(logicalAnd) lhs=e@21:12#4 rhs=e@22:23 type=Boolean
+expr e@22:38 name(unsignedBoundaries) type=Boolean ref=__local_8.unsignedBoundaries
+expr e@21:12#6 binary(logicalAnd) lhs=e@21:12#5 rhs=e@22:38 type=Boolean
+expr e@21:5 return value=e@21:12#6 type=Nothing
