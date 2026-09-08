@@ -16,6 +16,13 @@ private class TrackedText(private val chars: CharArray) : CharSequence {
     override fun toString(): String = "wrong-rendering"
 }
 
+private fun conditionalReturn(source: CharSequence): String {
+    return source.trim {
+        if (it == 'x') return "!"
+        false
+    }.toString()
+}
+
 private fun inspect(chars: CharArray, mode: Int) {
     val source = TrackedText(chars)
     var calls = ""
@@ -43,6 +50,9 @@ private fun nullableNonLocal(source: CharSequence?, captured: String): String {
 }
 
 fun main() {
+    println(conditionalReturn("axb"))
+    println(conditionalReturn("xab"))
+    println(conditionalReturn("abx"))
     for (mode in 0..2) {
         inspect(charArrayOf('_', 'x', '_'), mode)
         inspect(charArrayOf('_', '_'), mode)
