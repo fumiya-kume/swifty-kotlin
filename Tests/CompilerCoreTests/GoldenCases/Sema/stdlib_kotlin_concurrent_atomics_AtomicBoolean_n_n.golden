@@ -1,0 +1,19 @@
+symbol fq=__local_0.falseValue kind=local vis=private flags=_ type=kotlin.concurrent.AtomicBoolean
+symbol fq=__local_1.trueValue kind=local vis=private flags=_ type=kotlin.concurrent.AtomicBoolean
+symbol fq=golden.sema.atomicBooleanConstructorSemantics kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=kotlin.concurrent.AtomicBoolean kind=class vis=public flags=synthetic type=kotlin.concurrent.AtomicBoolean
+symbol fq=kotlin.concurrent.AtomicBoolean.load kind=function vis=public flags=synthetic sig=recv=kotlin.concurrent.AtomicBoolean params=[] ret=Boolean
+file fstdlib_kotlin_concurrent_atomics_AtomicBoolean_n_n package=golden.sema annotations=[@file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)]
+  decl golden.sema.atomicBooleanConstructorSemantics fun atomicBooleanConstructorSemantics sym=golden.sema.atomicBooleanConstructorSemantics
+expr e@8:36 bool(false) type=Boolean
+expr e@8:22 call callee=e@8:22#1 args=[_:e@8:36] type=kotlin.concurrent.AtomicBoolean call=kotlin.concurrent.atomics.AtomicBoolean#1
+expr e@8:5 localDecl falseValue mutable=0 type=_ init=e@8:22 type=Unit ref=__local_0.falseValue
+expr e@9:35 bool(true) type=Boolean
+expr e@9:21 call callee=e@9:21#1 args=[_:e@9:35] type=kotlin.concurrent.AtomicBoolean call=kotlin.concurrent.atomics.AtomicBoolean#1
+expr e@9:5 localDecl trueValue mutable=0 type=_ init=e@9:21 type=Unit ref=__local_1.trueValue
+expr e@10:12 name(falseValue) type=kotlin.concurrent.AtomicBoolean ref=__local_0.falseValue
+expr e@10:12#1 memberCall recv=e@10:12 callee=load args=[] type=Boolean call=kotlin.concurrent.AtomicBoolean.load
+expr e@10:33 name(trueValue) type=kotlin.concurrent.AtomicBoolean ref=__local_1.trueValue
+expr e@10:33#1 memberCall recv=e@10:33 callee=load args=[] type=Boolean call=kotlin.concurrent.AtomicBoolean.load
+expr e@10:12#2 binary(logicalOr) lhs=e@10:12#1 rhs=e@10:33#1 type=Boolean
+expr e@10:5 return value=e@10:12#2 type=Nothing

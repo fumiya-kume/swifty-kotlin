@@ -1917,6 +1917,23 @@ public func kk_object_register_vtable_method(
     return 0
 }
 
+@_cdecl("kk_object_register_any_to_string")
+public func kk_object_register_any_to_string(
+    _ objectRaw: Int,
+    _ functionRaw: Int
+) -> Int {
+    guard functionRaw != 0,
+          let objectPtr = UnsafeMutableRawPointer(bitPattern: objectRaw)
+    else {
+        return 0
+    }
+    let objectKey = UInt(bitPattern: objectPtr)
+    runtimeStorage.withMetadataLock { state in
+        state.objectAnyToStringMethods[objectKey] = functionRaw
+    }
+    return 0
+}
+
 @_cdecl("kk_array_get")
 public func kk_array_get(_ arrayRaw: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -1960,6 +1977,30 @@ public func kk_array_set(_ arrayRaw: Int, _ index: Int, _ value: Int, _ outThrow
         return 0
     }
     array[index] = value
+    return value
+}
+
+/// Stores an object field together with its static Any-fallback type tag.
+/// Generated data-class constructors use this non-throwing entry point after
+/// the normal inbounds layout checks have been performed by lowering.
+@_cdecl("kk_array_set_typed")
+public func kk_array_set_typed(
+    _ arrayRaw: Int,
+    _ index: Int,
+    _ value: Int,
+    _ anyFallbackTag: Int
+) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw),
+          index >= 0,
+          index < array.count
+    else {
+        return 0
+    }
+    array.setValue(
+        value,
+        at: index,
+        anyFallbackTag: Int32(truncatingIfNeeded: anyFallbackTag)
+    )
     return value
 }
 
