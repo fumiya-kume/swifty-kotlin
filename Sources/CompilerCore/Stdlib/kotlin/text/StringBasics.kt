@@ -16,6 +16,35 @@ public fun String.reversed(): String {
     return sb.toString()
 }
 
+public fun CharSequence.reversed(): CharSequence {
+    val sb = StringBuilder()
+    var i = this.length - 1
+    while (i >= 0) {
+        val current = this[i]
+        if (i > 0 && (current.isLowSurrogate() || current.isHighSurrogate())) {
+            val previous = this[i - 1]
+            if (current.isLowSurrogate() && previous.isHighSurrogate()) {
+                val pair = CharArray(2)
+                pair[0] = previous
+                pair[1] = current
+                sb.append(pair)
+                i -= 2
+                continue
+            } else if (current.isHighSurrogate() && previous.isLowSurrogate()) {
+                val pair = CharArray(2)
+                pair[0] = current
+                pair[1] = previous
+                sb.append(pair)
+                i -= 2
+                continue
+            }
+        }
+        sb.append(current)
+        i -= 1
+    }
+    return sb
+}
+
 public fun String.padStart(length: Int, padChar: Char = ' '): String {
     val padding = length - this.length
     if (padding <= 0) return this
