@@ -142,6 +142,14 @@ extension CallTypeChecker {
             sema: sema,
             interner: interner
         ) != nil
+        let isULongProgressionFirstLastCall = MemberRuntimeDispatch.rangeReceiverKind(
+            receiverExpr: receiverID,
+            receiverType: receiverType,
+            sema: sema,
+            interner: interner
+        ) == .ulongProgression
+            && args.isEmpty
+            && ["first", "firstOrNull", "last", "lastOrNull"].contains(interner.resolve(calleeName))
         var activeCollectionHOFNames = collectionHOFNames
         if !isMutableListReceiver {
             activeCollectionHOFNames.subtract(mutableListOnlyCollectionHOFNames)
@@ -200,6 +208,7 @@ extension CallTypeChecker {
                 || (isIterableFilterFamilyHOF && isIterableReceiver)
                 || (calleeStr == "asSequence" && isIterableReceiver)
                 || ((calleeStr == "runningReduce" || calleeStr == "runningReduceIndexed") && isIterableReceiver))
+            && !isULongProgressionFirstLastCall
             && !(calleeStr == "binarySearch"
                 && isArrayReceiver)
 
