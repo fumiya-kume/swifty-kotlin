@@ -4,7 +4,7 @@ symbol fq=golden.sema.readMap.$0.values kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Any kind=class vis=public flags=synthetic
 symbol fq=kotlin.Any.hashCode kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=Int
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_

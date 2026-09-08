@@ -8,6 +8,11 @@ import kotlin.contracts.contract
 @KsSymbolName("kk_map_is_empty")
 private external fun <K, V> __kkMapIsEmpty(map: Map<out K, V>): Boolean
 
+// KSP-941: the read-only Map nominal declaration is source-backed here. Its
+// query members and nested Entry surface remain compiler/runtime residuals
+// until their dedicated migration tasks land.
+public interface Map<K, out V>
+
 private external fun kk_max_float(a: Float, b: Float): Float
 private external fun kk_max_double(a: Double, b: Double): Double
 private external fun kk_unbox_float(value: Float): Float

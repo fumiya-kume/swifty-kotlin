@@ -11,7 +11,7 @@ symbol fq=__local_4.boxedKeys kind=local vis=private flags=_ type=kotlin.collect
 symbol fq=customMapContains kind=function vis=private flags=_ sig=recv=_ params=[CustomMap] ret=Boolean
 symbol fq=customMapContains.$2.custom kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_Map_contains package=_
   decl EqualKey class EqualKey sym=EqualKey

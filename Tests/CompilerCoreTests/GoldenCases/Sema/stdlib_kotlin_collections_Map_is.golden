@@ -22,7 +22,7 @@ symbol fq=golden.sema.useMapIsFamily.$4.empty kind=valueParameter vis=private fl
 symbol fq=golden.sema.useMapIsFamily.$4.nullable kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.useMapIsFamily.$4.projected kind=valueParameter vis=private flags=_
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Map_is package=golden.sema
   decl golden.sema.mapIsNotEmpty fun mapIsNotEmpty sym=golden.sema.mapIsNotEmpty
   decl golden.sema.mapIsNullOrEmpty fun mapIsNullOrEmpty sym=golden.sema.mapIsNullOrEmpty
