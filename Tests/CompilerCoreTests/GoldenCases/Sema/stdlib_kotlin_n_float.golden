@@ -1,6 +1,8 @@
 symbol fq=__local_0.empty kind=local vis=private flags=_ type=kotlin.FloatArray
 symbol fq=__local_1.values kind=local vis=private flags=_ type=kotlin.FloatArray
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.Float kind=class vis=public flags=synthetic
+symbol fq=kotlin.Float.Companion kind=object vis=public flags=synthetic|static
 symbol fq=kotlin.FloatArray#0 kind=class vis=public flags=synthetic
 file fstdlib_kotlin_n_float package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
@@ -38,11 +40,13 @@ expr e@11:5 call callee=e@11:5#1 args=[_:e@11:14#1] type=Unit call=kotlin.io.pri
 expr e@12:13 float(2147483648.0) type=Float
 expr e@12:13#1 memberCall recv=e@12:13 callee=toUInt args=[] type=UInt call=kotlin.toUInt#1
 expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
-expr e@13:13 memberCall recv=e@13:13#1 callee=POSITIVE_INFINITY args=[] type=Float
-expr e@13:13#2 memberCall recv=e@13:13 callee=toUInt args=[] type=UInt call=kotlin.toUInt#1
+expr e@13:13 name(Float) type=kotlin.Float.Companion ref=kotlin.Float
+expr e@13:13#1 memberCall recv=e@13:13 callee=POSITIVE_INFINITY args=[] type=Float call=kotlin.POSITIVE_INFINITY.$get
+expr e@13:13#2 memberCall recv=e@13:13#1 callee=toUInt args=[] type=UInt call=kotlin.toUInt#1
 expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#2] type=Unit call=kotlin.io.println#1
-expr e@14:13 memberCall recv=e@14:13#1 callee=NaN args=[] type=Float
-expr e@14:13#2 memberCall recv=e@14:13 callee=toULong args=[] type=ULong call=kotlin.toULong#1
+expr e@14:13 name(Float) type=kotlin.Float.Companion ref=kotlin.Float
+expr e@14:13#1 memberCall recv=e@14:13 callee=NaN args=[] type=Float call=kotlin.NaN.$get
+expr e@14:13#2 memberCall recv=e@14:13#1 callee=toULong args=[] type=ULong call=kotlin.toULong#1
 expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#2] type=Unit call=kotlin.io.println#1
 expr e@15:13 float(3.14) type=Float
 expr e@15:13#1 memberCall recv=e@15:13 callee=toULong args=[] type=ULong call=kotlin.toULong#1
@@ -50,6 +54,7 @@ expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.pri
 expr e@16:13 float(9.223372036854776e+18) type=Float
 expr e@16:13#1 memberCall recv=e@16:13 callee=toULong args=[] type=ULong call=kotlin.toULong#1
 expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println#1
-expr e@17:13 memberCall recv=e@17:13#1 callee=POSITIVE_INFINITY args=[] type=Float
-expr e@17:13#2 memberCall recv=e@17:13 callee=toULong args=[] type=ULong call=kotlin.toULong#1
+expr e@17:13 name(Float) type=kotlin.Float.Companion ref=kotlin.Float
+expr e@17:13#1 memberCall recv=e@17:13 callee=POSITIVE_INFINITY args=[] type=Float call=kotlin.POSITIVE_INFINITY.$get
+expr e@17:13#2 memberCall recv=e@17:13#1 callee=toULong args=[] type=ULong call=kotlin.toULong#1
 expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#2] type=Unit call=kotlin.io.println#1

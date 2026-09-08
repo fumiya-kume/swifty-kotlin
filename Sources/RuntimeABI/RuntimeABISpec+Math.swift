@@ -667,11 +667,5 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_double_nan", parameters: [], returnType: .intptr, section: "Math"),
         RuntimeABIFunctionSpec(name: "kk_double_max_value", parameters: [], returnType: .intptr, section: "Math"),
         RuntimeABIFunctionSpec(name: "kk_double_min_value", parameters: [], returnType: .intptr, section: "Math"),
-        // STDLIB-MATH-112: numeric constants — Float special values
-        RuntimeABIFunctionSpec(name: "kk_float_positive_infinity", parameters: [], returnType: .intptr, section: "Math"),
-        RuntimeABIFunctionSpec(name: "kk_float_negative_infinity", parameters: [], returnType: .intptr, section: "Math"),
-        RuntimeABIFunctionSpec(name: "kk_float_nan", parameters: [], returnType: .intptr, section: "Math"),
-        RuntimeABIFunctionSpec(name: "kk_float_max_value", parameters: [], returnType: .intptr, section: "Math"),
-        RuntimeABIFunctionSpec(name: "kk_float_min_value", parameters: [], returnType: .intptr, section: "Math"),
     ]
 }

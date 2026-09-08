@@ -254,28 +254,6 @@ struct RuntimeMathTests {
         #expect(doubleFromBits(kk_double_min_value()) == Double.leastNonzeroMagnitude)
     }
 
-    @Test func testFloatPositiveInfinity() {
-        #expect(floatFromBits(kk_float_positive_infinity()).isInfinite)
-        #expect(floatFromBits(kk_float_positive_infinity()) > 0)
-    }
-
-    @Test func testFloatNegativeInfinity() {
-        #expect(floatFromBits(kk_float_negative_infinity()).isInfinite)
-        #expect(floatFromBits(kk_float_negative_infinity()) < 0)
-    }
-
-    @Test func testFloatNaN() {
-        #expect(floatFromBits(kk_float_nan()).isNaN)
-    }
-
-    @Test func testFloatMaxValue() {
-        #expect(floatFromBits(kk_float_max_value()) == Float.greatestFiniteMagnitude)
-    }
-
-    @Test func testFloatMinValue() {
-        #expect(floatFromBits(kk_float_min_value()) == Float.leastNonzeroMagnitude)
-    }
-
     // MARK: - roundToInt / roundToLong (STDLIB-510..511)
 
     @Test func testFloatRoundToInt() {
