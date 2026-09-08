@@ -4590,7 +4590,7 @@
     - `kotlin.text.minWith` — fun CharSequence.minWith(Comparator): Char  -- `final fun (kotlin/CharSequence).kotlin.text/minWith(kotlin/Comparator<in kotlin/Char>): kotlin/Char`
     - `kotlin.text.minWithOrNull` — fun CharSequence.minWithOrNull(Comparator): Char  -- `final fun (kotlin/CharSequence).kotlin.text/minWithOrNull(kotlin/Comparator<in kotlin/Char>): kotlin/Char?`
 
-- [ ] KSP-1389: kotlin.text.CharSequence.none-family の未実装 stdlib API を実装する（1 件）
+- [~] KSP-1389: kotlin.text.CharSequence.none-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `none`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
