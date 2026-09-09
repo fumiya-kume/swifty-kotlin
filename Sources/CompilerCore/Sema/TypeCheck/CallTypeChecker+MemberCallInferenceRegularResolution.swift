@@ -1434,6 +1434,10 @@ extension CallTypeChecker {
         let memberNameText = interner.resolve(calleeName)
         let isMutableMapIteratorSource = memberNameText == "iterator"
             && ReceiverClassifier(sema: sema, interner: interner).isMutableMapType(memberLookupType)
+        // MutableSet inherits independent Set.iterator and MutableIterable.iterator
+        // candidates. Keep the mutable-aware collection fallback when lookup is
+        // ambiguous, while a unique source member retains normal dispatch.
+        let isUniqueIteratorSource = memberNameText == "iterator" && candidates.count == 1
         // KSP-687 resolves Array.joinToString through the dedicated primitive
         // and generic-array source candidates. KSP-429's broad trailing-lambda
         // gate is for List/Iterable source calls; applying it to Array receivers
@@ -1443,6 +1447,7 @@ extension CallTypeChecker {
         let isSourceBackedMemberName = sourceBackedCollectionMemberNames.contains(memberNameText)
             || (sourceBackedTrailingLambdaMemberNames.contains(memberNameText) && !isArrayJoinToString)
             || isMutableMapIteratorSource
+            || isUniqueIteratorSource
         let hasSourceBackedCandidate = isSourceBackedMemberName
             && (!sourceBackedCollectionMemberNames.contains(memberNameText) || !hasTrailingLambdaArg)
             && candidates.contains { candidateID in

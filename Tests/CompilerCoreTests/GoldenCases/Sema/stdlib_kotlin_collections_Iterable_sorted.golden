@@ -11,7 +11,6 @@ symbol fq=golden.sema.useSortedWith[kind=fun;params=kotlin.collections.Iterable<
 symbol fq=golden.sema.useSorted[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.List<Int>
 symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.Comparator[kind=iface;gen=1] kind=interface vis=public flags=funInterface
 symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_sorted package=golden.sema

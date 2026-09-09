@@ -493,23 +493,13 @@ final class ConsolePrintLoweringPass: LoweringPass, ParallelLoweringPass {
         }
 
         // Data classes and classes with an overriding toString() have a symbol
-        // in the class scope; resolve it and emit a direct call.
+        // in the class hierarchy; resolve it and emit a direct or virtual call.
         let toStringName = interner.intern("toString")
-        let toStringFQName = classSymbol.fqName + [toStringName]
-        let toStringSymbol: SymbolID? = sema.symbols.lookupAll(fqName: toStringFQName).first { id in
-            guard let sym = sema.symbols.symbol(id),
-                  sym.kind == .function
-            else {
-                return false
-            }
-            let sig = sema.symbols.functionSignature(for: id)
-            return sig?.parameterTypes.isEmpty ?? true
-        }
-
-        guard let toStringSym = toStringSymbol,
-              let sym = sema.symbols.symbol(toStringSym),
-              !isSyntheticAnyToString(sym, interner: interner)
-        else {
+        guard let toStringSym = resolveClassToStringSymbol(
+            for: classSymbol.id,
+            sema: sema,
+            interner: interner
+        ) else {
             return nil
         }
 
@@ -550,12 +540,6 @@ final class ConsolePrintLoweringPass: LoweringPass, ParallelLoweringPass {
             ))
         }
         return KIRExprWithInstructions(value: toStringResult, instructions: instructions)
-    }
-
-    private static func isSyntheticAnyToString(_ sym: SemanticSymbol, interner: StringInterner) -> Bool {
-        guard sym.flags.contains(.synthetic) else { return false }
-        let anyToStringFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Any"), interner.intern("toString")]
-        return sym.fqName == anyToStringFQName
     }
 
     private static func enumNameHelperSymbol(

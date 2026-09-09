@@ -1,18 +1,19 @@
-fun main() {
-    println(listOf(listOf(1, 2), listOf(3, 4)).flatten())
+// RF-FIXTURE-011: Iterable<Iterable<T>>.flatten() — element type propagation
+// and explicit type arguments on empty input. Empty / single / multiple /
+// large-input values and ordering are executed by
+// Scripts/diff_cases/flatten_core_test.kt.
 
-    println(emptyList<List<Int>>().flatten())
-    println(listOf(listOf<Int>()).flatten())
-    println(listOf(listOf<Int>(), listOf<Int>()).flatten())
+fun flattenInts(lists: List<List<Int>>) {
+    val flattened = lists.flatten()
+    val checked: List<Int> = flattened
+}
 
-    println(listOf(listOf<Int>(), listOf(1), listOf<Int>()).flatten())
+fun flattenStrings(lists: List<List<String>>) {
+    val flattened = lists.flatten()
+    val checked: List<String> = flattened
+}
 
-    println(listOf(listOf(42)).flatten())
-
-    println(listOf(listOf("a", "b"), listOf("c")).flatten())
-    println(listOf(listOf<String>(), listOf("x")).flatten())
-
-    val large = (1..10).map { listOf(it) }
-    println(large.flatten().size)
-    println(large.flatten().take(3))
+fun flattenEmpty() {
+    val flattened = emptyList<List<Int>>().flatten()
+    val checked: List<Int> = flattened
 }
