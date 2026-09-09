@@ -1,0 +1,26 @@
+symbol fq=__local_0.continuation kind=local vis=private flags=_ type=kotlin.coroutines.Continuation<Int>
+symbol fq=__local_1.safe kind=local vis=private flags=_ type=kotlin.coroutines.SafeContinuation<Int>
+symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.Result kind=class vis=public flags=_ type=kotlin.Result<kotlin.Result.T>
+symbol fq=kotlin.Result.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.coroutines.Continuation#0 kind=interface vis=public flags=synthetic type=kotlin.coroutines.Continuation<kotlin.coroutines.Continuation.T>
+symbol fq=kotlin.coroutines.Continuation#1 kind=function vis=public flags=synthetic sig=recv=_ params=[kotlin.coroutines.CoroutineContext,(kotlin.Result<kotlin.coroutines.Continuation.$factory.T>) -> Unit] ret=kotlin.coroutines.Continuation<kotlin.coroutines.Continuation.$factory.T>
+symbol fq=kotlin.coroutines.Continuation.$factory.T kind=typeParameter vis=private flags=synthetic
+symbol fq=kotlin.coroutines.Continuation.$factoryContext kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.coroutines.Continuation.$factoryResumeWith kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.coroutines.Continuation.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.coroutines.CoroutineContext kind=interface vis=public flags=synthetic type=kotlin.coroutines.CoroutineContext
+symbol fq=kotlin.coroutines.EmptyCoroutineContext kind=object vis=public flags=synthetic type=kotlin.coroutines.EmptyCoroutineContext
+file fstdlib_kotlin_coroutines_SafeContinuation_n_n package=golden.sema annotations=[@file:Suppress("INVISIBLE_MEMBER","INVISIBLE_REFERENCE")]
+  decl golden.sema.main fun main sym=golden.sema.main
+expr e@11:27 name(EmptyCoroutineContext) type=kotlin.coroutines.EmptyCoroutineContext ref=kotlin.coroutines.EmptyCoroutineContext
+expr e@11:51 blockExpr stmts=[] trailing=_ type=Unit
+expr e@11:50 lambda params=[_] body=e@11:51 label=Continuation type=(kotlin.Result<Int>) -> Unit
+expr e@11:9 call callee=e@11:9#1 args=[_:e@11:27,_:e@11:50] type=kotlin.coroutines.Continuation<Int> call=kotlin.coroutines.Continuation#1 targs=[Int]
+expr e@10:5 localDecl continuation mutable=0 type=Continuation<Int> init=e@11:9 type=Unit ref=__local_0.continuation
+expr e@12:56 name(continuation) type=kotlin.coroutines.Continuation<Int> ref=__local_0.continuation
+expr e@12:39 call callee=e@12:39#1 args=[_:e@12:56] type=kotlin.coroutines.SafeContinuation<Int> call=kotlin.coroutines.SafeContinuation.<init> targs=[Int]
+expr e@12:5 localDecl safe mutable=0 type=SafeContinuation<Int> init=e@12:39 type=Unit ref=__local_1.safe
+expr e@13:13 name(safe) type=kotlin.coroutines.SafeContinuation<Int> ref=__local_1.safe
+expr e@13:13#1 isCheck expr=e@13:13 type=kotlin.coroutines.SafeContinuation<*> type=Boolean
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println#1

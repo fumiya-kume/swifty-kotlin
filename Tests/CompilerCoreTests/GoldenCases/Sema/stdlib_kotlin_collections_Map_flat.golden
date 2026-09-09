@@ -23,16 +23,16 @@ symbol fq=__try_0_catch_0.exception kind=local vis=internal flags=_ type=kotlin.
 symbol fq=kotlin.Pair kind=class vis=public flags=_
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
 symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
 symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence.constrainOnce kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.constrainOnce.$0.T> params=[] ret=kotlin.sequences.Sequence<kotlin.sequences.constrainOnce.$0.T>
@@ -176,7 +176,7 @@ expr e@48:13 localAssign iterableUsed value=e@48:28 type=Unit ref=__local_14.ite
 expr e@49:33 string(custom) type=String
 expr e@49:43 name(null) type=Nothing?
 expr e@49:20 call callee=e@49:20#1 args=[_:e@49:33,_:e@49:43] type=kotlin.collections.List<out Any?> call=kotlin.collections.listOf#1 targs=[Any?]
-expr e@49:20#2 memberCall recv=e@49:20 callee=iterator args=[] type=kotlin.collections.Iterator<out Any?> call=kotlin.collections.Collection.iterator
+expr e@49:20#2 memberCall recv=e@49:20 callee=iterator args=[] type=kotlin.collections.Iterator<Any?> call=kotlin.collections.Collection.iterator targs=[Any?]
 expr e@49:13 return value=e@49:20#2 type=Nothing
 expr e@45:27 objectLiteral supers=[Iterable<Any?>] type=__ObjectLiteral_0_1781_2040
 expr e@45:5 localDecl oneShotIterable mutable=0 type=_ init=e@45:27 type=Unit ref=__local_15.oneShotIterable

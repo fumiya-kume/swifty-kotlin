@@ -85,6 +85,25 @@ struct RuntimeNumericHashCodeTests {
         #expect(kk_any_hashCode(negativeZero, 0) == -2_147_483_648)
     }
 
+    @Test
+    func testDataClassObjectHashCodeUsesTypedFieldsAnd32BitFolding() {
+        let classID = 0x51_232
+        _ = kk_runtime_register_data_class(classID)
+        let object = kk_object_new(6, classID)
+
+        _ = kk_array_set_typed(object, 2, 1_099_511_627_776, 8) // Long: 1L shl 40
+        _ = kk_array_set_typed(object, 3, kk_float_to_bits(-2.5), 5)
+        _ = kk_array_set_typed(object, 4, kk_double_to_bits(-2.5), 6)
+        _ = kk_array_set_typed(object, 5, 1_099_511_627_776, 7) // ULong: 1uL shl 40
+
+        // The two header slots are excluded, and every combine step wraps as
+        // Kotlin Int rather than accumulating in the host Int width.
+        #expect(kk_any_hashCode(object, 0) == 2_031_116_288)
+
+        _ = kk_array_set(object, 2, 1_099_511_627_776, nil)
+        #expect(kk_any_hashCode(object, 0) == 2_031_116_288)
+    }
+
     // MARK: - List/Set/Map (structural hash over boxed elements)
 
     @Test

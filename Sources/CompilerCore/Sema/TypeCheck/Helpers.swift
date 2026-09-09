@@ -843,27 +843,6 @@ struct TypeCheckHelpers {
                         nullability: nullability
                     )))
                 }
-                let stringBuilderName = interner.intern("StringBuilder")
-                let kotlinTextStringBuilderFQName = [
-                    interner.intern("kotlin"),
-                    interner.intern("text"),
-                    stringBuilderName,
-                ]
-                if (path.count == 1 && shortName == stringBuilderName) || path == kotlinTextStringBuilderFQName {
-                    let stringBuilderSymbol = ensureKotlinTextStringBuilderSymbol(
-                        symbols: sema.symbols,
-                        interner: interner
-                    )
-                    let resolvedArgs = resolveTypeArgRefsForTypeCheck(
-                        argRefs, ast: ast, sema: sema, interner: interner,
-                        scope: scope, diagnostics: diagnostics
-                    )
-                    return sema.types.make(.classType(ClassType(
-                        classSymbol: stringBuilderSymbol,
-                        args: resolvedArgs,
-                        nullability: nullability
-                    )))
-                }
                 diagnostics?.error(
                     "KSWIFTK-SEMA-0025",
                     "Unresolved type '\(interner.resolve(shortName))'.",

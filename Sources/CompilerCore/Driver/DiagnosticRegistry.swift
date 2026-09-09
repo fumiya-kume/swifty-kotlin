@@ -724,7 +724,7 @@ enum DiagnosticRegistry {
             code: "KSWIFTK-KIR-0002",
             pass: "KIR",
             defaultSeverity: .error,
-            summary: "emitCustomDelegateInit called for a property without a delegate expression."
+            summary: "emitDelegateInit called for a property without a delegate expression."
         ),
     ]
 
