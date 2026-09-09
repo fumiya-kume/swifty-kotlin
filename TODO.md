@@ -4310,7 +4310,7 @@
     - `kotlin.text.asIterable` — fun CharSequence.asIterable(): Iterable  -- `final fun (kotlin/CharSequence).kotlin.text/asIterable(): kotlin.collections/Iterable<kotlin/Char>`
     - `kotlin.text.asSequence` — fun CharSequence.asSequence(): Sequence  -- `final fun (kotlin/CharSequence).kotlin.text/asSequence(): kotlin.sequences/Sequence<kotlin/Char>`
 
-- [ ] KSP-1366: kotlin.text.CharSequence.associate-family の未実装 stdlib API を実装する（8 件）
+- [~] KSP-1366: kotlin.text.CharSequence.associate-family の実装・focused検証済み（8 件、全体G待ち）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `associate`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -4458,7 +4458,7 @@
     - `kotlin.text.getOrElse` — fun CharSequence.getOrElse(Int, Function1): Char  -- `final inline fun (kotlin/CharSequence).kotlin.text/getOrElse(kotlin/Int, kotlin/Function1<kotlin/Int, kotlin/Char>): kotlin/Char`
     - `kotlin.text.getOrNull` — fun CharSequence.getOrNull(Int): Char  -- `final fun (kotlin/CharSequence).kotlin.text/getOrNull(kotlin/Int): kotlin/Char?`
 
-- [ ] KSP-1379: kotlin.text.CharSequence.group-family の未実装 stdlib API を実装する（4 件）
+- [~] KSP-1379: kotlin.text.CharSequence.group-family の実装・focused検証済み（4 件、全体G待ち）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `group`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
