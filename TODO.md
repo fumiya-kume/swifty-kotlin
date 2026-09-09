@@ -1243,7 +1243,7 @@
   - 完了根拠（2026-09-04）: Kotlin 2.3.10 の `libraries/stdlib/src/kotlin/collections/Maps.kt` に一致する `@kotlin.internal.InlineOnly` の `component1` / `component2` / `toPair` を `Entry.kt` に source-backed 実装し、Map.Entry receiver の型・順序・Pair 生成契約を保持した。Map.Entry の component1/component2 synthetic alias は bundled declaration index で source-backed extension を優先するよう抑止し、専用 `kk_map_entry_to_pair` runtime export と ABI parity 登録を削除した。`__kk_pair_first` / `__kk_pair_second` は Map.Entry.key/value と Pair の共有 bridge のため維持した。
   - 回帰: 専用 Sema 回帰で3 call binding が package-level bundled source（外部リンクなし）になり nested synthetic alias が残らないこと、Golden で型と call routing、`diff_kotlinc` で実行結果を固定した。
 
-- [ ] KSP-962: kotlin.collections.Grouping の未実装 stdlib API を実装する（5 件）
+- [x] KSP-962: kotlin.collections.Grouping の未実装 stdlib API を実装する（5 件）
   - 対象: `kotlin.collections` / receiver `Grouping`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/Grouping.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1256,6 +1256,8 @@
     - `kotlin.collections.foldTo` — fun Grouping.foldTo(, , Function2): #D  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin/Any?, #D: kotlin.collections/MutableMap<in #B, #C>> (kotlin.collections/Grouping<#A, #B>).kotlin.collections/foldTo(#D, #C, kotlin/Function2<#C, #A, #C>): #D`
     - `kotlin.collections.foldTo` — fun Grouping.foldTo(, Function2, Function3): #D  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin/Any?, #D: kotlin.collections/MutableMap<in #B, #C>> (kotlin.collections/Grouping<#A, #B>).kotlin.collections/foldTo(#D, kotlin/Function2<#B, #A, #C>, kotlin/Function3<#B, #C, #A, #C>): #D`
     - `kotlin.collections.reduceTo` — fun Grouping.reduceTo(, Function3): #D  -- `final inline fun <#A: kotlin/Any?, #B: #A, #C: kotlin/Any?, #D: kotlin.collections/MutableMap<in #C, #A>> (kotlin.collections/Grouping<#B, #C>).kotlin.collections/reduceTo(#D, kotlin/Function3<#C, #A, #B, #A>): #D`
+  - 完了（2026-09-04）: Kotlin 2.3.10 の `Grouping` 契約に合わせ、`Grouping.kt` の `aggregateTo` / `eachCountTo` / 2種の `foldTo` / `reduceTo` を source-backed 実装として完成。destination の型パラメータ `M : MutableMap<in K, ...>`、`reduceTo` の `S`/`T : S`、`inline` 要件と destination identity を保持した。destination から依存上限をたどる Sema 推論も追加した。KSP-434（PR #5480）で既に撤去済みだった Grouping 専用 synthetic/runtime/ABI 経路は再追加せず、現行実装の重複もないことを確認した。
+  - 検証（2026-09-04）: 専用 Sema Golden 3件（3 checked / 0 mismatched）と Kotlin 2.3.10 対比用 diff ケースを追加。専用 `diff_kotlinc`（既存 `grouping_basic.kt` を含む）、直接 `kswiftc` 実行、既存の `reduceTo` コード生成テスト、上限境界 Sema 回帰、`check_todo_ids.sh`、`validate_runtime_abi_links.sh`、`git diff --check` を実施。
 
 - [x] KSP-964: kotlin.collections.Iterable.associate-family の未実装 stdlib API を実装する（8 件）
   - 対象: `kotlin.collections` / receiver `Iterable` / family `associate`
