@@ -3453,7 +3453,7 @@
     - `kotlin.ranges.first` — fun IntProgression.first(): Int  -- `final fun (kotlin.ranges/IntProgression).kotlin.ranges/first(): kotlin/Int`
     - `kotlin.ranges.last` — fun IntProgression.last(): Int  -- `final fun (kotlin.ranges/IntProgression).kotlin.ranges/last(): kotlin/Int`
 
-- [~] KSP-1285: kotlin.ranges.IntRange の未実装 stdlib API を実装する（3 件）
+- [x] KSP-1285: kotlin.ranges.IntRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `IntRange`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3464,7 +3464,7 @@
     - `kotlin.ranges.contains` — fun IntRange.contains(Byte): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Byte): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun IntRange.contains(Long): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Long): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun IntRange.contains(Short): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Short): kotlin/Boolean`
-  - 実装済み（ゲート保留）: `RangeHOF.kt` に Byte/Long/Short の exact overload と Long の Int 範囲外 guard を追加。Sema の source-backed contains routing は exact 引数型・`value` ラベルを照合し、direct/`in` と nullable/wrong-label 回帰を追加した。対象 fixture と diff artifact は focused PASS。全 Golden は既存 `stdlib_kotlin_ranges_OpenEndRange_n.golden` の contains overload 番号更新が必要なため未完了。
+  - 完了根拠: `RangeHOF.kt` に Byte/Long/Short の exact overload と Long の Int 範囲外 guard を追加。Sema の source-backed contains routing は exact 引数型・`value` ラベルを照合し、direct/`in` と nullable/wrong-label 回帰を追加した。既存 `stdlib_kotlin_ranges_OpenEndRange_n.golden` の contains overload 番号更新（+3）を反映し、全 Golden テストが green。
 
 - [ ] KSP-1286: kotlin.ranges.LongProgression の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.ranges` / receiver `LongProgression`
