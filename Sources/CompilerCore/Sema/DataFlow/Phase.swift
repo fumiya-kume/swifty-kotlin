@@ -116,6 +116,11 @@ final class DataFlowSemaPhase: CompilerPhase {
             sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
             interner: ctx.interner, into: &predeclaredEarlyHeaders
         )
+        predeclareBundledGCInfoHeaders(
+            ast: ast, fileScopes: fileScopes, symbols: symbols,
+            sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
+            interner: ctx.interner, into: &predeclaredEarlyHeaders
+        )
 
         if let stdlibLibraryPath = ctx.options.stdlibLibraryPath {
             bundledIndex = mergeImportedStdlibSymbolsIntoBundledIndex(
