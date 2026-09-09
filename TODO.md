@@ -4530,9 +4530,12 @@
     - `kotlin.text.lastOrNull` — fun CharSequence.lastOrNull(): Char  -- `final fun (kotlin/CharSequence).kotlin.text/lastOrNull(): kotlin/Char?`
     - `kotlin.text.lastOrNull` — fun CharSequence.lastOrNull(Function1): Char  -- `final inline fun (kotlin/CharSequence).kotlin.text/lastOrNull(kotlin/Function1<kotlin/Char, kotlin/Boolean>): kotlin/Char?`
 
-- [ ] KSP-1385: kotlin.text.CharSequence.map-family の未実装 stdlib API を実装する（5 件）
+- [~] KSP-1385: kotlin.text.CharSequence.map-family の未実装 stdlib API を実装する（5 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `map`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
+  - 実装済み（ゲート保留）: Kotlin 2.3.10 source contractに合わせ、`mapIndexedNotNull` / `mapIndexedNotNullTo` / `mapIndexedTo` / `mapNotNullTo` / `mapTo` を追加。custom CharSequenceのindexed `get` dispatch・反復中の`length`再評価、callback順序、destination同一性、nullable/primitive結果を回帰する。
+  - 実装境界: upstreamの`for` / `forEach`を、KSP-1377の未統合APIに依存しないindexed loopへ展開し、destinationへ要素単位で`add`する。既存のmap/mapIndexed/mapNotNull実装、synthetic bridge、Runtime ABIは変更しない。
+  - 検証保留: #6702 の共通Sema修正を親祖先としてnon-local transformを確認する。全体Golden / 全diff / ABIゲートはこのPR headでは未実行。
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_text_CharSequence_map.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_text_CharSequence_map.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_text_CharSequence_map.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
