@@ -1997,7 +1997,7 @@
     - `kotlin.collections.MutableMap.remove` — fun MutableMap.remove(): #B  -- `abstract fun remove(#A): #B?`
     - `kotlin.collections.MutableMap.values` — val MutableMap.values: MutableCollection  -- `abstract val values`
 
-- [ ] KSP-1076: kotlin.collections.MutableMap.MutableEntry.MutableEntry の未実装 stdlib API を実装する（1 件）
+- [x] KSP-1076: kotlin.collections.MutableMap.MutableEntry.MutableEntry の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections.MutableMap.MutableEntry` / receiver `MutableEntry`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/MutableMap/MutableEntry/MutableEntry.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -2006,6 +2006,9 @@
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.collections.MutableMap.MutableEntry.setValue` — fun MutableEntry.setValue(): #B1  -- `abstract fun setValue(#B1): #B1`
+
+  - 完了根拠: `Sources/CompilerCore/Stdlib/kotlin/collections/MutableMap/MutableEntry/MutableEntry.kt` に本家準拠の `MutableEntry.setValue` source extension を追加し、既存の `__kk_mutable_map_entry_setValue` runtime bridge に接続した。対応する synthetic member は bundled source の宣言を優先して登録を抑止し、runtime / RuntimeABI の共有 bridge は保持した。
+  - 回帰: `MutableMapEntrySourceMigrationTests` で bundled source resolution、receiver/signature、synthetic stub 非生成を固定し、Sema golden と `Scripts/diff_cases/stdlib_kotlin_collections_MutableMap_MutableEntry_MutableEntry_n.kt` で戻り値と map 更新を検証した。
 
 - [ ] KSP-1077: kotlin.collections.MutableSet.MutableSet の未実装 stdlib API を実装する（7 件）
   - 対象: `kotlin.collections.MutableSet` / receiver `MutableSet`
