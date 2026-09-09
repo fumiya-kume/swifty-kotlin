@@ -1486,6 +1486,23 @@ public fun ULongRange.toList(): List<ULong> {
     return result
 }
 
+// KSP-1292: Kotlin 2.3.10 widens unsigned values before using the native
+// ULong overload, preserving the exact range membership and boundary rules.
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UByte): Boolean {
+    return contains(value.toULong())
+}
+
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UInt): Boolean {
+    return contains(value.toULong())
+}
+
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UShort): Boolean {
+    return contains(value.toULong())
+}
+
 @KsSymbolName("__kk_range_count")
 public fun ULongRange.count(): Int {
     val count: ULong = if (step > 0) {

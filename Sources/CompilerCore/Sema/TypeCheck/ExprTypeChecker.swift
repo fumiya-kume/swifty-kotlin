@@ -519,11 +519,13 @@ final class ExprTypeChecker {
             // Resolve operator fun contains on the RHS (container) type for custom classes (STDLIB-OP-032)
             inferContainsCallBinding(
                 exprID: id,
+                elementExpr: lhsID,
                 containerExpr: rhsID,
                 elementType: lhsType,
                 containerType: rhsType,
                 range: range,
-                ctx: ctx
+                ctx: ctx,
+                locals: &locals
             )
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
@@ -534,11 +536,13 @@ final class ExprTypeChecker {
             // Resolve operator fun contains on the RHS (container) type for custom classes (STDLIB-OP-032)
             inferContainsCallBinding(
                 exprID: id,
+                elementExpr: lhsID,
                 containerExpr: rhsID,
                 elementType: lhsType,
                 containerType: rhsType,
                 range: range,
-                ctx: ctx
+                ctx: ctx,
+                locals: &locals
             )
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
@@ -556,11 +560,13 @@ final class ExprTypeChecker {
     /// generic kk_op_contains runtime stub.
     private func inferContainsCallBinding(
         exprID: ExprID,
+        elementExpr: ExprID,
         containerExpr: ExprID,
         elementType: TypeID,
         containerType: TypeID,
         range: SourceRange,
-        ctx: TypeInferenceContext
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
     ) {
         let sema = ctx.sema
         let interner = ctx.interner
@@ -667,6 +673,79 @@ final class ExprTypeChecker {
                     ctx.semaCtx.diagnostics.emit(diagnostic)
                     return
                 }
+            }
+        }
+
+        // ULongRange.contains(ULong) is the actual member selected for a bare
+        // suffixed literal. Re-infer that literal with the member's expected
+        // ULong type so the source-backed UInt widening extension cannot take
+        // precedence merely because the parser initially reports UInt.
+        if driver.callChecker.sourceLevelRangeMemberLookupType(
+            receiverExpr: containerExpr,
+            receiverType: containerType,
+            sema: sema,
+            interner: interner
+        ) != nil,
+        MemberRuntimeDispatch.rangeReceiverKind(
+            receiverExpr: containerExpr,
+            receiverType: containerType,
+            sema: sema,
+            interner: interner
+        ) == .ulongRange {
+            let isUnsignedLiteral = driver.callChecker.isContextualizableUnsignedIntegerLiteral(
+                elementExpr,
+                ast: ctx.ast
+            )
+            let resolvedElementType: TypeID = if isUnsignedLiteral {
+                driver.inferExpr(
+                    elementExpr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: sema.types.ulongType
+                )
+            } else {
+                elementType
+            }
+            if isUnsignedLiteral,
+               let member = driver.callChecker.ulongRangeContainsMemberSymbol(
+                   receiverType: driver.callChecker.sourceLevelRangeMemberLookupType(
+                       receiverExpr: containerExpr,
+                       receiverType: containerType,
+                       sema: sema,
+                       interner: interner
+                   ) ?? containerType,
+                   sema: sema,
+                   interner: interner
+               )
+            {
+                sema.bindings.bindCall(
+                    exprID,
+                    binding: CallBinding(
+                        chosenCallee: member,
+                        substitutedTypeArguments: [],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                return
+            }
+            if let sourceSymbol = driver.callChecker.sourceRangeHOFSymbol(
+                memberName: "contains",
+                rangeKind: .ulongRange,
+                argCount: 1,
+                argumentTypes: [sema.types.makeNonNullable(resolvedElementType)],
+                argumentLabels: [nil],
+                sema: sema,
+                interner: interner
+            ) {
+                sema.bindings.bindCall(
+                    exprID,
+                    binding: CallBinding(
+                        chosenCallee: sourceSymbol,
+                        substitutedTypeArguments: [],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                return
             }
         }
 

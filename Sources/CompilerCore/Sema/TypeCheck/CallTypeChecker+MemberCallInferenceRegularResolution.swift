@@ -46,6 +46,15 @@ extension CallTypeChecker {
         // Skip lambda literals and callable refs so that their first inference
         // happens inside prepareCallArguments with a contextual expected type,
         // preventing a stale no-expectedType binding from poisoning the cache.
+        let isULongRangeLiteralContainsCall = interner.resolve(calleeName) == "contains"
+            && args.count == 1
+            && MemberRuntimeDispatch.rangeReceiverKind(
+                receiverExpr: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner
+            ) == .ulongRange
+            && driver.callChecker.isContextualizableUnsignedIntegerLiteral(args[0].expr, ast: ast)
         let argTypes = args.map { arg -> TypeID in
             if let expr = ast.arena.expr(arg.expr) {
                 switch expr {
@@ -54,6 +63,14 @@ extension CallTypeChecker {
                 default:
                     break
                 }
+            }
+            if isULongRangeLiteralContainsCall {
+                return driver.inferExpr(
+                    arg.expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: sema.types.ulongType
+                )
             }
             let inferredType = sema.bindings.exprType(for: arg.expr)
                 ?? driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
@@ -1544,6 +1561,9 @@ extension CallTypeChecker {
             args: args,
             candidates: candidates,
             preInferredNonLambdaArgTypes: cachedNonLambdaArgTypes,
+            expectedTypeOverrides: isULongRangeLiteralContainsCall
+                ? [0: sema.types.ulongType]
+                : [:],
             explicitTypeArgs: explicitTypeArgs,
             receiverType: effectiveReceiverType,
             ctx: ctx,
