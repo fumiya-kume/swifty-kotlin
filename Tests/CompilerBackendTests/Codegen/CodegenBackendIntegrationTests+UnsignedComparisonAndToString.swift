@@ -48,6 +48,26 @@ struct CodegenBackendUnsignedComparisonAndToStringTests {
     }
 
     @Test
+    func testUnsignedCompareHelperBothHighBits() throws {
+        let source = """
+        package kotlin
+
+        fun main() {
+            println(ulongCompare(Long.MIN_VALUE, -1L))
+            println(ulongCompare(-1L, Long.MIN_VALUE))
+        }
+        """
+        try assertKotlinOutput(
+            source,
+            moduleName: "UnsignedCompareHelperBothHighBits",
+            expected: """
+            -1
+            1
+            """ + "\n"
+        )
+    }
+
+    @Test
     func testUnsignedComparisonULongMaxValueBoundary() throws {
         let source = """
         fun main() {

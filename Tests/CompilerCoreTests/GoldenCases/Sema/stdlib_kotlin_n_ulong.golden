@@ -1,0 +1,64 @@
+symbol fq=__local_0.empty kind=local vis=private flags=_ type=kotlin.ULongArray
+symbol fq=__local_1.values kind=local vis=private flags=_ type=kotlin.ULongArray
+symbol fq=__local_2.high kind=local vis=private flags=_ type=ULong
+symbol fq=golden.sema.compareULong kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.convertULongToDouble kind=function vis=public flags=_ sig=recv=_ params=[ULong] ret=Double
+symbol fq=golden.sema.convertULongToDouble.$0.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.convertULongToFloat kind=function vis=public flags=_ sig=recv=_ params=[ULong] ret=Float
+symbol fq=golden.sema.convertULongToFloat.$1.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.divideULong kind=function vis=public flags=_ sig=recv=_ params=[] ret=ULong
+symbol fq=golden.sema.makeULongArray kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.ULongArray
+symbol fq=golden.sema.remainderULong kind=function vis=public flags=_ sig=recv=_ params=[] ret=ULong
+symbol fq=kotlin.ULong#0 kind=class vis=public flags=synthetic
+symbol fq=kotlin.ULong.Companion kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.ULongArray#0 kind=class vis=public flags=synthetic
+file fstdlib_kotlin_n_ulong package=golden.sema
+  decl golden.sema.makeULongArray fun makeULongArray sym=golden.sema.makeULongArray
+  decl golden.sema.compareULong fun compareULong sym=golden.sema.compareULong
+  decl golden.sema.divideULong fun divideULong sym=golden.sema.divideULong
+  decl golden.sema.remainderULong fun remainderULong sym=golden.sema.remainderULong
+  decl golden.sema.convertULongToDouble fun convertULongToDouble sym=golden.sema.convertULongToDouble
+  decl golden.sema.convertULongToFloat fun convertULongToFloat sym=golden.sema.convertULongToFloat
+expr e@4:17 call callee=e@4:17#1 args=[] type=kotlin.ULongArray call=kotlin.ulongArrayOf
+expr e@4:5 localDecl empty mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.empty
+expr e@5:31 ulong(0) type=ULong
+expr e@5:36 ulong(9223372036854775808) type=ULong
+expr e@5:59 name(ULong) type=kotlin.ULong.Companion ref=kotlin.ULong#0
+expr e@5:59#1 memberCall recv=e@5:59 callee=MAX_VALUE args=[] type=ULong call=kotlin.MAX_VALUE.$get#5
+expr e@5:18 call callee=e@5:18#1 args=[_:e@5:31,_:e@5:36,_:e@5:59#1] type=kotlin.ULongArray call=kotlin.ulongArrayOf
+expr e@5:5 localDecl values mutable=0 type=_ init=e@5:18 type=Unit ref=__local_1.values
+expr e@6:25 ulong(1) type=ULong
+expr e@6:31 name(values) type=kotlin.ULongArray ref=__local_1.values
+expr e@6:39 name(empty) type=kotlin.ULongArray ref=__local_0.empty
+expr e@6:39#1 memberCall recv=e@6:39 callee=size args=[] type=Int call=kotlin.collections.size.$get#11
+expr e@6:39#2 memberCall recv=e@6:39#1 callee=toULong args=[] type=ULong
+expr e@6:12 call callee=e@6:12#1 args=[_:e@6:25,_:e@6:31,_:e@6:39#2] type=kotlin.ULongArray call=kotlin.ulongArrayOf
+expr e@6:5 return value=e@6:12 type=Nothing
+expr e@10:16 ulong(9223372036854775808) type=ULong
+expr e@10:5 localDecl high mutable=0 type=_ init=e@10:16 type=Unit ref=__local_2.high
+expr e@11:16 ulong(0) type=ULong
+expr e@11:22 name(high) type=ULong ref=__local_2.high
+expr e@11:16#1 binary(lessThan) lhs=e@11:16 rhs=e@11:22 type=Boolean
+expr e@11:30 name(high) type=ULong ref=__local_2.high
+expr e@11:37 ulong(0) type=ULong
+expr e@11:30#1 binary(greaterThan) lhs=e@11:30 rhs=e@11:37 type=Boolean
+expr e@11:16#2 binary(logicalAnd) lhs=e@11:16#1 rhs=e@11:30#1 type=Boolean
+expr e@11:44 name(ULong) type=kotlin.ULong.Companion ref=kotlin.ULong#0
+expr e@11:44#1 memberCall recv=e@11:44 callee=MAX_VALUE args=[] type=ULong call=kotlin.MAX_VALUE.$get#5
+expr e@11:63 name(high) type=ULong ref=__local_2.high
+expr e@11:44#2 binary(greaterOrEqual) lhs=e@11:44#1 rhs=e@11:63 type=Boolean
+expr e@11:16#3 binary(logicalAnd) lhs=e@11:16#2 rhs=e@11:44#2 type=Boolean
+expr e@11:69 int(1) type=Int
+expr e@11:76 int(0) type=Int
+expr e@11:12 if cond=e@11:16#3 then=e@11:69 else=e@11:76 type=Int
+expr e@11:5 return value=e@11:12 type=Nothing
+expr e@14:28 ulong(17663719463477156090) type=ULong
+expr e@14:53 ulong(2) type=ULong
+expr e@14:28#1 binary(divide) lhs=e@14:28 rhs=e@14:53 type=ULong
+expr e@16:31 ulong(17663719463477156090) type=ULong
+expr e@16:56 ulong(7) type=ULong
+expr e@16:31#1 binary(modulo) lhs=e@16:31 rhs=e@16:56 type=ULong
+expr e@18:50 name(value) type=ULong ref=golden.sema.convertULongToDouble.$0.value
+expr e@18:50#1 memberCall recv=e@18:50 callee=toDouble args=[] type=Double
+expr e@20:48 name(value) type=ULong ref=golden.sema.convertULongToFloat.$1.value
+expr e@20:48#1 memberCall recv=e@20:48 callee=toFloat args=[] type=Float
