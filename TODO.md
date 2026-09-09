@@ -1429,7 +1429,8 @@
     - `kotlin.collections.filterNotTo` — fun Map.filterNotTo(, Function1): #C  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin.collections/MutableMap<in #A, in #B>> (kotlin.collections/Map<out #A, #B>).kotlin.collections/filterNotTo(#C, kotlin/Function1<kotlin.collections/Map.Entry<#A, #B>, kotlin/Boolean>): #C`
     - `kotlin.collections.filterTo` — fun Map.filterTo(, Function1): #C  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin.collections/MutableMap<in #A, in #B>> (kotlin.collections/Map<out #A, #B>).kotlin.collections/filterTo(#C, kotlin/Function1<kotlin.collections/Map.Entry<#A, #B>, kotlin/Boolean>): #C`
 
-- [ ] KSP-1012: kotlin.collections.Map.map-family の未実装 stdlib API を実装する（4 件）
+- [x] KSP-1012: kotlin.collections.Map.map-family の未実装 stdlib API を実装する（4 件）
+  - 完了根拠（2026-09-04監査、Kotlin 2.3.10）：merged PR #6209（merge commit `6b5c0c436e6`）で `MapHOF.kt` に `mapKeysTo` / `mapNotNullTo` / `mapTo` / `mapValuesTo` を source-backed 実装済み。現行 `origin/master`（`ea67c72c377`）に実装・Sema Golden・diff case・codegen 回帰が含まれ、Map の source-backed dispatch は `MemberRuntimeDispatchTests` で対象4 APIが runtime link に上書きされないことを確認。対象 diff は PASS（`total=1 failed=0 passed=1`）、codegen 回帰は3 tests、#6209 の CI は全ジョブ PASS。Map HOF surface spec は空で active runtime dispatch／新規 synthetic 登録はなく、旧 `kk_map_mapKeysTo` / `kk_map_mapValuesTo` の ABI／test shim は KSP-430 互換用として保持。
   - 対象: `kotlin.collections` / receiver `Map` / family `map`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/MapHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
