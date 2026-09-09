@@ -1604,13 +1604,14 @@
     - `kotlin.collections.AbstractMutableMap.remove` — fun AbstractMutableMap.remove(): #B  -- `open fun remove(#A): #B?`
     - `kotlin.collections.AbstractMutableMap.values` — val AbstractMutableMap.values: MutableCollection  -- `open val values`
 
-- [ ] KSP-1040: kotlin.collections.AbstractMutableSet.AbstractMutableSet の未実装 stdlib API を実装する（3 件）
+- [x] KSP-1040: kotlin.collections.AbstractMutableSet.AbstractMutableSet の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.collections.AbstractMutableSet` / receiver `AbstractMutableSet`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractMutableSet/AbstractMutableSet.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_AbstractMutableSet_AbstractMutableSet_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_AbstractMutableSet_AbstractMutableSet_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_AbstractMutableSet_AbstractMutableSet_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠: master にマージ済みの KSP-931 (#6146, `8a399eda94`) が Kotlin 2.3.10 native-wasm 契約に沿って `AbstractMutableSet.kt` を source-backed 化し、`add` の abstract 契約と `equals` / `hashCode` の Set 実装を提供済み。source-backed symbol の一意性・階層・対象 Golden は既存 Sema 2件で確認し、既存 diff ケース（`add` override、継承した equality/hashCode）も 1/1、対象 Golden の直接比較も差分なし。対象3メンバー専用の runtime/ABI bridge・name-string 特例はなく、共有 MutableSet fallback は保持する。
   - 未実装シンボル一覧:
     - `kotlin.collections.AbstractMutableSet.add` — fun AbstractMutableSet.add(): Boolean  -- `abstract fun add(#A): kotlin/Boolean`
     - `kotlin.collections.AbstractMutableSet.equals` — fun AbstractMutableSet.equals(Any): Boolean  -- `open fun equals(kotlin/Any?): kotlin/Boolean`
