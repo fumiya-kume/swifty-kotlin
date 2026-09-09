@@ -596,7 +596,10 @@ extension CallTypeChecker {
            !ast.arena.isExplicitCall(id),
            let propResult = driver.helpers.lookupMemberProperty(
                named: calleeName,
-               receiverType: memberLookupType,
+               // Property reads are resolved from the receiver's static type.
+               // In particular, `super.p` must select the direct superclass
+               // declaration instead of the most-derived override.
+               receiverType: isSuperCall ? lookupReceiverType : memberLookupType,
                sema: sema
            )
         {
