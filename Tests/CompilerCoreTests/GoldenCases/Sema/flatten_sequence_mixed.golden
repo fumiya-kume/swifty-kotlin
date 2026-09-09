@@ -1,0 +1,21 @@
+symbol fq=__local_0.mixed kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Any>
+symbol fq=__local_1.flattened kind=local vis=private flags=_ type=kotlin.sequences.Sequence<out Any>
+symbol fq=__local_2.checked kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Any>
+symbol fq=flattenMixed kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+file fflatten_sequence_mixed package=_
+  decl flattenMixed fun flattenMixed sym=flattenMixed
+expr e@8:35 int(1) type=Int
+expr e@8:38 int(2) type=Int
+expr e@8:28 call callee=e@8:28#1 args=[_:e@8:35,_:e@8:38] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@8:53 int(3) type=Int
+expr e@8:56 int(4) type=Int
+expr e@8:42 call callee=e@8:42#1 args=[_:e@8:53,_:e@8:56] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
+expr e@8:17 call callee=e@8:17#1 args=[_:e@8:28,_:e@8:42] type=kotlin.sequences.Sequence<Any> call=kotlin.sequences.sequenceOf targs=[Any]
+expr e@8:5 localDecl mixed mutable=0 type=_ init=e@8:17 type=Unit ref=__local_0.mixed
+expr e@9:21 name(mixed) type=kotlin.sequences.Sequence<Any> ref=__local_0.mixed
+expr e@9:21#1 memberCall recv=e@9:21 callee=flatten args=[] type=kotlin.sequences.Sequence<out Any> call=kotlin.sequences.flatten targs=[Any]
+expr e@9:5 localDecl flattened mutable=0 type=_ init=e@9:21#1 type=Unit ref=__local_1.flattened
+expr e@10:34 name(flattened) type=kotlin.sequences.Sequence<out Any> ref=__local_1.flattened
+expr e@10:5 localDecl checked mutable=0 type=Sequence<Any> init=e@10:34 type=Unit ref=__local_2.checked

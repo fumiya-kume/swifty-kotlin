@@ -101,11 +101,31 @@ extension CallTypeChecker {
                 else {
                     return false
                 }
+                let parameterCount = signature.parameterTypes.count
+                func normalizedFlags(_ flags: [Bool]) -> [Bool] {
+                    if flags.count == parameterCount {
+                        return flags
+                    }
+                    if flags.count > parameterCount {
+                        return Array(flags.prefix(parameterCount))
+                    }
+                    return flags + Array(repeating: false, count: parameterCount - flags.count)
+                }
+                let hasDefaultValues = normalizedFlags(signature.valueParameterHasDefaultValues)
+                let isVararg = normalizedFlags(signature.valueParameterIsVararg)
+                if argumentTypes.count < parameterCount {
+                    let omittedParameterIndices = argumentTypes.count ..< parameterCount
+                    guard omittedParameterIndices.allSatisfy({
+                        hasDefaultValues[$0] || isVararg[$0]
+                    }) else {
+                        return false
+                    }
+                }
                 for (index, argumentType) in argumentTypes.enumerated() {
                     let parameterIndex: Int
                     if index < signature.parameterTypes.count {
                         parameterIndex = index
-                    } else if let varargIndex = signature.valueParameterIsVararg.firstIndex(of: true) {
+                    } else if let varargIndex = isVararg.firstIndex(of: true) {
                         parameterIndex = varargIndex
                     } else {
                         return false

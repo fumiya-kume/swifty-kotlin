@@ -1,0 +1,20 @@
+symbol fq=__local_0.copy kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_2.size kind=local vis=private flags=_ type=Int
+symbol fq=__local_3.checkedSize kind=local vis=private flags=_ type=Int
+symbol fq=golden.sema.genericArrayList kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<Int>] ret=Unit
+symbol fq=golden.sema.genericArrayList.$0.objects kind=valueParameter vis=private flags=_
+symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+file farray_to_list package=golden.sema
+  decl golden.sema.genericArrayList fun genericArrayList sym=golden.sema.genericArrayList
+expr e@5:16 name(objects) type=kotlin.Array<Int> ref=golden.sema.genericArrayList.$0.objects
+expr e@5:16#1 memberCall recv=e@5:16 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.collections.toList#0 targs=[Int]
+expr e@5:5 localDecl copy mutable=0 type=_ init=e@5:16#1 type=Unit ref=__local_0.copy
+expr e@6:30 name(copy) type=kotlin.collections.List<Int> ref=__local_0.copy
+expr e@6:5 localDecl checked mutable=0 type=List<Int> init=e@6:30 type=Unit ref=__local_1.checked
+expr e@7:16 name(objects) type=kotlin.Array<Int> ref=golden.sema.genericArrayList.$0.objects
+expr e@7:16#1 memberCall recv=e@7:16 callee=size args=[] type=Int call=kotlin.collections.size.$get#0
+expr e@7:5 localDecl size mutable=0 type=_ init=e@7:16#1 type=Unit ref=__local_2.size
+expr e@8:28 name(size) type=Int ref=__local_2.size
+expr e@8:5 localDecl checkedSize mutable=0 type=Int init=e@8:28 type=Unit ref=__local_3.checkedSize

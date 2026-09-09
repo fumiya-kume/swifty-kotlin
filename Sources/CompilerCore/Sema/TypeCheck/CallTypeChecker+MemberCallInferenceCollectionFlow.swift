@@ -4988,7 +4988,21 @@ extension CallTypeChecker {
                 let iterableSourceTypeArguments = calleeStr == "requireNoNulls"
                     ? [sema.types.makeNonNullable(collectionElementType)]
                     : [collectionElementType]
-                if bindBundledIterableSourceFunction(typeArguments: iterableSourceTypeArguments) {
+                let didBindSource: Bool
+                if calleeStr == "requireNoNulls" {
+                    // Prefer the List-specific overload when the receiver is a
+                    // concrete List; its return type preserves the List contract.
+                    didBindSource = bindBundledListSourceFunction(
+                        typeArguments: iterableSourceTypeArguments
+                    ) || bindBundledIterableSourceFunction(
+                        typeArguments: iterableSourceTypeArguments
+                    )
+                } else {
+                    didBindSource = bindBundledIterableSourceFunction(
+                        typeArguments: iterableSourceTypeArguments
+                    )
+                }
+                if didBindSource {
                     for argument in args
                     where ast.arena.expr(argument.expr)?.isLambdaOrCallableRef == true {
                         sema.bindings.unmarkCollectionHOFLambdaExpr(argument.expr)

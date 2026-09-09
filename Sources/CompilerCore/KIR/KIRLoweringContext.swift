@@ -70,6 +70,8 @@ final class KIRLoweringContext {
     var emittedObjectLiteralExprIDs: Set<ExprID> = []
     /// Caches itable ABI bridge symbols keyed by the interface/implementation pair.
     var itableBridgeSymbolsByKey: [String: SymbolID] = [:]
+    /// Caches raw-returning bridges used by runtime Any.toString dispatch.
+    var anyToStringBridgeSymbolsByImplementation: [SymbolID: SymbolID] = [:]
     var nextSyntheticLambdaSymbolRawValue: Int32 = -60_000_000
 
     /// Companion object initializer functions registered during class lowering.
@@ -484,6 +486,7 @@ final class KIRLoweringContext {
         syntheticObjectLiteralSymbolsByExprID.removeAll(keepingCapacity: true)
         emittedObjectLiteralExprIDs.removeAll(keepingCapacity: true)
         itableBridgeSymbolsByKey.removeAll(keepingCapacity: true)
+        anyToStringBridgeSymbolsByImplementation.removeAll(keepingCapacity: true)
         companionInitializerFunctions.removeAll(keepingCapacity: true)
     }
 }

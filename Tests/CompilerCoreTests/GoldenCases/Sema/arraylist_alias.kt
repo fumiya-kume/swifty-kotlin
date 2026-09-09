@@ -1,6 +1,12 @@
-fun processList(list: ArrayList<String>) {
-    println(list.size)
-}
+// `ArrayList<E>` is a typealias for `MutableList<E>`
+// (Sources/CompilerCore/Stdlib/kotlin/collections/CollectionAliases.kt).
+// This case verifies only alias resolution: parameter / return / property
+// types, nested type arguments, upper bounds, extension receivers, and
+// MutableList / List compatibility. Element mutation, indexed access and
+// printing are executed by Scripts/diff_cases/arraylist_alias.kt and
+// ksp627_collection_aliases.kt.
+
+fun processList(list: ArrayList<String>) {}
 
 fun createList(): ArrayList<Int> {
     return ArrayList<Int>()
@@ -11,57 +17,49 @@ class Container {
     val numbers: ArrayList<Int> = ArrayList<Int>()
 }
 
-fun nestedLists() {
-    val nested: ArrayList<ArrayList<String>> = ArrayList()
-    val inner = ArrayList<String>()
-    inner.add("nested")
-    nested.add(inner)
-    println(nested.size)
-}
-
 fun <T : ArrayList<String>> constrain(list: T): T {
     return list
 }
 
 fun ArrayList<String>.customExtension(): String {
-    return "extended: ${this.size}"
+    return "extended"
 }
 
 fun main() {
-    val list: ArrayList<String> = ArrayList()
-    list.add("hello")
-    list.add("world")
-    println(list.size)
-    println(list[0])
+    // Constructor inference from explicit type arguments alone, checked by the
+    // assignments and call below rather than an expected type.
+    val explicit = ArrayList<String>()
+    val explicitAsMutable: MutableList<String> = explicit
+    processList(explicit)
 
-    val ml: MutableList<String> = list
-    ml.add("!")
-    println(ml.size)
+    // Expected-type inference through the alias and through MutableList.
+    val fromAlias: ArrayList<Double> = ArrayList()
+    val fromMutable: MutableList<Boolean> = ArrayList()
 
-    val nums = ArrayList<Int>()
-    nums.add(1)
-    nums.add(2)
-    nums.add(3)
-    nums.removeAt(0)
-    println(nums)
+    // A value declared as MutableList satisfies an ArrayList parameter,
+    // because the alias resolves to the same type.
+    processList(explicitAsMutable)
 
-    val items: List<String> = ArrayList()
-    println(items.size)
+    // List (read-only) compatibility.
+    val asReadOnly: List<String> = ArrayList()
 
-    processList(list)
-
+    // Return type propagation.
     val created = createList()
-    created.add(42)
-    println(created.size)
+    val createdAsMutable: MutableList<Int> = created
 
-    val container = Container()
-    container.items.add("property")
-    println(container.items.size)
+    // Property type propagation.
+    val holder = Container()
+    val items: MutableList<String> = holder.items
+    val numbers: ArrayList<Int> = holder.numbers
 
-    nestedLists()
+    // Nested type arguments.
+    val nested: ArrayList<ArrayList<String>> = ArrayList()
+    val nestedAsMutable: MutableList<MutableList<String>> = nested
 
-    val constrained = constrain(list)
-    println(constrained.size)
+    // Upper-bound constraint and return propagation.
+    val constrained = constrain(explicit)
+    val constrainedAsMutable: MutableList<String> = constrained
 
-    println(list.customExtension())
+    // Extension receiver on the alias.
+    val extended: String = explicit.customExtension()
 }

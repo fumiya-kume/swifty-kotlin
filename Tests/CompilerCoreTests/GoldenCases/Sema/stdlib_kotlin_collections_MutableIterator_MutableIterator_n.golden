@@ -11,7 +11,6 @@ symbol fq=golden.sema.checksMutableIterable kind=function vis=public flags=_ sig
 symbol fq=golden.sema.checksMutableIterable.$3.iterable kind=valueParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableIterable kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableIterable.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableIterable.iterator kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableIterable<out kotlin.collections.MutableIterable.T> params=[] ret=kotlin.collections.MutableIterator<out kotlin.collections.MutableIterable.T>
 symbol fq=kotlin.collections.MutableIterator kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableIterator.T kind=typeParameter vis=private flags=_
 file fstdlib_kotlin_collections_MutableIterator_MutableIterator_n package=golden.sema
@@ -25,7 +24,7 @@ expr e@6:32 int(0) type=Int
 expr e@14:24 name(iterator) type=kotlin.collections.MutableIterator<Int> ref=golden.sema.checksCovariance.$2.iterator
 expr e@14:5 call callee=e@14:5#1 args=[_:e@14:24] type=Unit call=golden.sema.acceptsAnyIterator
 expr e@18:42 name(iterable) type=kotlin.collections.MutableIterable<Int> ref=golden.sema.checksMutableIterable.$3.iterable
-expr e@18:42#1 memberCall recv=e@18:42 callee=iterator args=[] type=kotlin.collections.MutableIterator<out Int> call=kotlin.collections.MutableIterable.iterator targs=[Int]
+expr e@18:42#1 memberCall recv=e@18:42 callee=iterator args=[] type=kotlin.collections.MutableIterator<Int> call=kotlin.collections.MutableIterable.iterator targs=[Int]
 expr e@18:5 localDecl iterator mutable=0 type=MutableIterator<Int> init=e@18:42#1 type=Unit ref=__local_0.iterator
 expr e@19:5 name(iterator) type=kotlin.collections.MutableIterator<Int> ref=__local_0.iterator
 expr e@19:5#1 memberCall recv=e@19:5 callee=remove args=[] type=Unit call=kotlin.collections.MutableIterator.remove targs=[Int]

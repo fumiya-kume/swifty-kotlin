@@ -34,8 +34,6 @@ struct SequenceLookupNames {
     let kkSequenceMaxOrNullName: InternedString
     let kkSequenceMinOrNullName: InternedString
     let kkSequenceFlattenName: InternedString
-    let kkSequenceFoldName: InternedString
-    let kkSequenceFoldIndexedName: InternedString
     let kkSequenceRunningFoldIndexedName: InternedString
     let kkSequenceScanIndexedName: InternedString
     let kkSequenceReduceIndexedName: InternedString
@@ -104,8 +102,6 @@ struct SequenceLookupNames {
         kkSequenceMaxOrNullName = interner.intern("kk_sequence_maxOrNull")
         kkSequenceMinOrNullName = interner.intern("kk_sequence_minOrNull")
         kkSequenceFlattenName = interner.intern("kk_sequence_flatten")
-        kkSequenceFoldName = interner.intern("kk_sequence_fold")
-        kkSequenceFoldIndexedName = interner.intern("kk_sequence_foldIndexed")
         kkSequenceRunningFoldIndexedName = interner.intern("kk_sequence_runningFoldIndexed")
         kkSequenceScanIndexedName = interner.intern("kk_sequence_scanIndexed")
         kkSequenceReduceIndexedName = interner.intern("kk_sequence_reduceIndexed")

@@ -1,0 +1,46 @@
+symbol fq=golden.sema.randomOnCharSequence kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
+symbol fq=golden.sema.randomOnCharSequence.$0.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.randomOnCharSequenceSeeded kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.random.Random] ret=Char
+symbol fq=golden.sema.randomOnCharSequenceSeeded.$1.random kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.randomOnCharSequenceSeeded.$1.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.randomOnString kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char
+symbol fq=golden.sema.randomOnStringSeeded kind=function vis=public flags=_ sig=recv=_ params=[kotlin.random.Random] ret=Char
+symbol fq=golden.sema.randomOnStringSeeded.$2.random kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.randomOrNullOnCharSequence kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char?
+symbol fq=golden.sema.randomOrNullOnCharSequence.$3.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.randomOrNullOnCharSequenceSeeded kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.random.Random] ret=Char?
+symbol fq=golden.sema.randomOrNullOnCharSequenceSeeded.$4.random kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.randomOrNullOnCharSequenceSeeded.$4.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.randomOrNullOnString kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char?
+symbol fq=golden.sema.randomOrNullOnStringSeeded kind=function vis=public flags=_ sig=recv=_ params=[kotlin.random.Random] ret=Char?
+symbol fq=golden.sema.randomOrNullOnStringSeeded.$5.random kind=valueParameter vis=private flags=_
+symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+file fstdlib_kotlin_text_CharSequence_random package=golden.sema
+  decl golden.sema.randomOnCharSequence fun randomOnCharSequence sym=golden.sema.randomOnCharSequence
+  decl golden.sema.randomOnCharSequenceSeeded fun randomOnCharSequenceSeeded sym=golden.sema.randomOnCharSequenceSeeded
+  decl golden.sema.randomOrNullOnCharSequence fun randomOrNullOnCharSequence sym=golden.sema.randomOrNullOnCharSequence
+  decl golden.sema.randomOrNullOnCharSequenceSeeded fun randomOrNullOnCharSequenceSeeded sym=golden.sema.randomOrNullOnCharSequenceSeeded
+  decl golden.sema.randomOnString fun randomOnString sym=golden.sema.randomOnString
+  decl golden.sema.randomOnStringSeeded fun randomOnStringSeeded sym=golden.sema.randomOnStringSeeded
+  decl golden.sema.randomOrNullOnString fun randomOrNullOnString sym=golden.sema.randomOrNullOnString
+  decl golden.sema.randomOrNullOnStringSeeded fun randomOrNullOnStringSeeded sym=golden.sema.randomOrNullOnStringSeeded
+expr e@5:55 name(value) type=kotlin.CharSequence ref=golden.sema.randomOnCharSequence.$0.value
+expr e@5:55#1 memberCall recv=e@5:55 callee=random args=[] type=Char call=kotlin.text.random#0
+expr e@7:77 name(value) type=kotlin.CharSequence ref=golden.sema.randomOnCharSequenceSeeded.$1.value
+expr e@7:90 name(random) type=kotlin.random.Random ref=golden.sema.randomOnCharSequenceSeeded.$1.random
+expr e@7:77#1 memberCall recv=e@7:77 callee=random args=[_:e@7:90] type=Char call=kotlin.text.random#1
+expr e@9:62 name(value) type=kotlin.CharSequence ref=golden.sema.randomOrNullOnCharSequence.$3.value
+expr e@9:62#1 memberCall recv=e@9:62 callee=randomOrNull args=[] type=Char? call=kotlin.text.randomOrNull#0
+expr e@11:84 name(value) type=kotlin.CharSequence ref=golden.sema.randomOrNullOnCharSequenceSeeded.$4.value
+expr e@11:103 name(random) type=kotlin.random.Random ref=golden.sema.randomOrNullOnCharSequenceSeeded.$4.random
+expr e@11:84#1 memberCall recv=e@11:84 callee=randomOrNull args=[_:e@11:103] type=Char? call=kotlin.text.randomOrNull#1
+expr e@13:30 string(abc) type=String
+expr e@13:30#1 memberCall recv=e@13:30 callee=random args=[] type=Char call=kotlin.text.random#0
+expr e@15:50 string(abc) type=String
+expr e@15:63 name(random) type=kotlin.random.Random ref=golden.sema.randomOnStringSeeded.$2.random
+expr e@15:50#1 memberCall recv=e@15:50 callee=random args=[_:e@15:63] type=Char call=kotlin.text.random#1
+expr e@17:37 string(abc) type=String
+expr e@17:37#1 memberCall recv=e@17:37 callee=randomOrNull args=[] type=Char? call=kotlin.text.randomOrNull#0
+expr e@19:57 string(abc) type=String
+expr e@19:76 name(random) type=kotlin.random.Random ref=golden.sema.randomOrNullOnStringSeeded.$5.random
+expr e@19:57#1 memberCall recv=e@19:57 callee=randomOrNull args=[_:e@19:76] type=Char? call=kotlin.text.randomOrNull#1
