@@ -721,6 +721,7 @@ public fun <R> CharSequence.foldRightIndexed(initial: R, operation: (index: Int,
 // explicit index walk keeps CharSequence receiver dispatch and the source
 // implementation visible to the compiler while matching the standard map
 // capacity and dynamic length behavior.
+@Suppress("UNCHECKED_CAST")
 public inline fun <K, V> CharSequence.associate(transform: (Char) -> Pair<K, V>): Map<K, V> {
     val result = LinkedHashMap<K, V>(mapCapacity(this.length).coerceAtLeast(16))
     var i = 0
@@ -733,6 +734,7 @@ public inline fun <K, V> CharSequence.associate(transform: (Char) -> Pair<K, V>)
     return result as Map<K, V>
 }
 
+@Suppress("UNCHECKED_CAST")
 public inline fun <K> CharSequence.associateBy(keySelector: (Char) -> K): Map<K, Char> {
     val result = LinkedHashMap<K, Char>(mapCapacity(this.length).coerceAtLeast(16))
     var i = 0
@@ -744,6 +746,7 @@ public inline fun <K> CharSequence.associateBy(keySelector: (Char) -> K): Map<K,
     return result as Map<K, Char>
 }
 
+@Suppress("UNCHECKED_CAST")
 public inline fun <K, V> CharSequence.associateBy(
     keySelector: (Char) -> K,
     valueTransform: (Char) -> V
@@ -803,6 +806,7 @@ public inline fun <K, V, M : MutableMap<in K, in V>> CharSequence.associateTo(
 }
 
 @SinceKotlin("1.3")
+@Suppress("UNCHECKED_CAST")
 public inline fun <V> CharSequence.associateWith(valueSelector: (Char) -> V): Map<Char, V> {
     val result = LinkedHashMap<Char, V>(
         mapCapacity(this.length.coerceAtMost(128)).coerceAtLeast(16)
@@ -834,6 +838,7 @@ public inline fun <V, M : MutableMap<in Char, in V>> CharSequence.associateWithT
 // KSP-1379: CharSequence grouping functions are source-backed. The explicit
 // index walk preserves the source receiver contract while avoiding iterator
 // inference gaps in the bundled compiler.
+@Suppress("UNCHECKED_CAST")
 public inline fun <K> CharSequence.groupBy(keySelector: (Char) -> K): Map<K, List<Char>> {
     val result = mutableMapOf<K, MutableList<Char>>()
     var i = 0
@@ -853,6 +858,7 @@ public inline fun <K> CharSequence.groupBy(keySelector: (Char) -> K): Map<K, Lis
     return result as Map<K, List<Char>>
 }
 
+@Suppress("UNCHECKED_CAST")
 public inline fun <K, V> CharSequence.groupBy(
     keySelector: (Char) -> K,
     valueTransform: (Char) -> V

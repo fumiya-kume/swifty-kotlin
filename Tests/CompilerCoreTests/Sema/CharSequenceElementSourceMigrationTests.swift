@@ -46,4 +46,14 @@ struct CharSequenceElementSourceMigrationTests {
         }
         #expect(calls == 5)
     }
+
+    @Test
+    func bundledStringHOFTypeChecksCleanlyWithoutUncheckedCastWarnings() throws {
+        let context = makeContextFromSource("fun noop() {}")
+        try runSema(context)
+        let uncheckedCastWarnings = context.diagnostics.diagnostics.filter {
+            $0.code == "KSWIFTK-SEMA-UNCHECKED-CAST"
+        }
+        #expect(uncheckedCastWarnings.isEmpty, "Expected no unchecked cast warnings, got: \(uncheckedCastWarnings)")
+    }
 }
