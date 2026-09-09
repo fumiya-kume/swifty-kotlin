@@ -1,0 +1,34 @@
+symbol fq=__local_0.values kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
+symbol fq=__local_1.folded kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.indexed kind=local vis=private flags=_ type=Int
+symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+file fstdlib_kotlin_sequences_Sequence_fold package=_
+  decl main fun main sym=main
+expr e@2:44 int(1) type=Int
+expr e@2:47 int(2) type=Int
+expr e@2:50 int(3) type=Int
+expr e@2:33 call callee=e@2:33#1 args=[_:e@2:44,_:e@2:47,_:e@2:50] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
+expr e@2:5 localDecl values mutable=0 type=Sequence<Int> init=e@2:33 type=Unit ref=__local_0.values
+expr e@3:18 name(values) type=kotlin.sequences.Sequence<Int> ref=__local_0.values
+expr e@3:30 int(0) type=Int
+expr e@3:49 name(acc) type=Int ref=s-0
+expr e@3:55 name(value) type=Int ref=s-1
+expr e@3:49#1 binary(add) lhs=e@3:49 rhs=e@3:55 type=Int
+expr e@3:33 lambda params=[acc,value] body=e@3:49#1 label=fold type=(Int, Int) -> Int
+expr e@3:18#1 memberCall recv=e@3:18 callee=fold args=[_:e@3:30,_:e@3:33] type=Int call=kotlin.sequences.fold targs=[Int,Int]
+expr e@3:5 localDecl folded mutable=0 type=_ init=e@3:18#1 type=Unit ref=__local_1.folded
+expr e@4:19 name(values) type=kotlin.sequences.Sequence<Int> ref=__local_0.values
+expr e@4:38 int(0) type=Int
+expr e@4:64 name(acc) type=Int ref=s-2
+expr e@4:70 name(index) type=Int ref=s-3
+expr e@4:78 name(value) type=Int ref=s-4
+expr e@4:70#1 binary(multiply) lhs=e@4:70 rhs=e@4:78 type=Int
+expr e@4:64#1 binary(add) lhs=e@4:64 rhs=e@4:70#1 type=Int
+expr e@4:41 lambda params=[index,acc,value] body=e@4:64#1 label=foldIndexed type=(Int, Int, Int) -> Int
+expr e@4:19#1 memberCall recv=e@4:19 callee=foldIndexed args=[_:e@4:38,_:e@4:41] type=Int call=kotlin.sequences.foldIndexed targs=[Int,Int]
+expr e@4:5 localDecl indexed mutable=0 type=_ init=e@4:19#1 type=Unit ref=__local_2.indexed
+expr e@5:13 name(folded) type=Int ref=__local_1.folded
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13] type=Unit call=kotlin.io.println#1
+expr e@6:13 name(indexed) type=Int ref=__local_2.indexed
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println#1

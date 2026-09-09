@@ -994,6 +994,21 @@ public fun <T> Iterable<T>.all(predicate: (T) -> Boolean): Boolean {
     return true
 }
 
+// KSP-986: Preserve the Collection fast path while keeping arbitrary
+// Iterable implementations on the iterator-backed source path.
+public fun <T> Iterable<T>.none(): Boolean {
+    if (this is Collection<*>) return (this as Collection<*>).isEmpty()
+    return !iterator().hasNext()
+}
+
+public inline fun <T> Iterable<T>.none(predicate: (T) -> Boolean): Boolean {
+    if (this is Collection<*> && (this as Collection<*>).isEmpty()) return true
+    for (element in this) {
+        if (predicate(element)) return false
+    }
+    return true
+}
+
 public fun <T> Iterable<T>.count(): Int {
     if (this is Collection<*>) return (this as Collection<*>).size
 
@@ -1079,6 +1094,18 @@ public fun <T : Any> Iterable<T?>.requireNoNulls(): Iterable<T> {
         }
     }
     return this as Iterable<T>
+}
+
+// Kotlin 2.3.10 exposes a List-specific overload so the narrowed return type
+// is preserved for statically typed List receivers.
+@Suppress("UNCHECKED_CAST")
+public fun <T : Any> List<T?>.requireNoNulls(): List<T> {
+    for (element in this) {
+        if (element == null) {
+            throw IllegalArgumentException("null element found in $this.")
+        }
+    }
+    return this as List<T>
 }
 
 // Shared by Iterable.joinTo/joinToString (below) and Sequence.joinTo/joinToString

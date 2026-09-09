@@ -125,6 +125,43 @@ struct StdlibArtifactRegressionTests {
         }
     }
 
+    /// KSP-1083: a generic kotlin.concurrent nominal must preserve its
+    /// source-backed type parameter while residual constructor/member links
+    /// remain usable through a precompiled stdlib artifact.
+    @Test
+    func testAtomicReferenceGenericThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        import kotlin.concurrent.AtomicReference
+
+        fun main() {
+            val reference = AtomicReference("source-plus-residual")
+            val loaded: String = reference.get()
+            println(loaded)
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "AtomicReferenceArtifact",
+                emit: .executable,
+                outputPath: outputBase,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            #expect(result.stdout.replacingOccurrences(of: "\r\n", with: "\n") == "source-plus-residual\n")
+        }
+    }
+
     /// Devin review: a regular nested object must use its own initializer
     /// linkage decision, even when its enclosing class has a companion.
     @Test

@@ -50,6 +50,15 @@ final class DataFlowSemaPhase: CompilerPhase {
             sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
             interner: ctx.interner, into: &predeclaredEarlyHeaders
         )
+        // KSP-1520: `Comparator.kt` is source-backed, but comparator-typed
+        // synthetic signatures are registered before the normal bundled header
+        // collection pass. Predeclare its nominal so those signatures resolve
+        // without a synthetic Comparator anchor.
+        predeclareBundledComparatorHeaders(
+            ast: ast, fileScopes: fileScopes, symbols: symbols,
+            sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
+            interner: ctx.interner, into: &predeclaredEarlyHeaders
+        )
         // KSP-711: `StringEncoding.kt` owns `Charset`/`Charsets`, but FileIO
         // extension bridges need the source symbol before synthetic
         // registration constructs their signatures.
@@ -135,9 +144,9 @@ final class DataFlowSemaPhase: CompilerPhase {
             bundledIndex: bundledIndex
         )
 
-        // Synthetic nominal anchors (e.g. kotlin.Comparator) register methods after
-        // library import. Apply imported class/interface layouts only after those
-        // synthetic methods exist, so vtable/itable slots can resolve.
+        // Apply imported class/interface layouts after synthetic bootstrap
+        // registration and before bundled source headers are collected, so
+        // imported vtable/itable slots can resolve against final symbols.
         applyImportedLibraryDeferredWork(
             importDeferredWork,
             symbols: symbols,
@@ -170,6 +179,15 @@ final class DataFlowSemaPhase: CompilerPhase {
             predeclared: predeclaredEarlyHeaders
         )
         BundledSyntheticStubRegistration.bundledIndex = previousBundledIndex
+        // KSP-1332: the source declaration spells this as List<KTypeProjection>,
+        // while the compiler's residual List model represents covariant uses
+        // with an explicit out projection. Reapply that existing KType contract
+        // after source collection has claimed the old synthetic anchor.
+        patchKTypeArgumentsType(
+            symbols: symbols,
+            types: types,
+            interner: ctx.interner
+        )
         initializeSourceBackedCloseableTypes(
             symbols: symbols,
             types: types,

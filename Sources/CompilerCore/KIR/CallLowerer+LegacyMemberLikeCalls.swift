@@ -4,20 +4,6 @@
 ///
 /// This remains deliberately isolated while narrower families continue to move out.
 extension CallLowerer {
-    /// Whether Sema bound the call to a bundled Kotlin-source declaration that
-    /// is lowered as an ordinary source call (no `kk_*` external link name).
-    func isResolvedSourceBackedCallee(_ exprID: ExprID, sema: SemaModule) -> Bool {
-        guard let chosenCallee = sema.bindings.callBindings[exprID]?.chosenCallee,
-              chosenCallee != .invalid,
-              let symbol = sema.symbols.symbol(chosenCallee),
-              symbol.kind == .function,
-              sema.symbols.isSourceBackedSymbol(chosenCallee)
-        else {
-            return false
-        }
-        return Self.isSourceBackedLinkName(sema.symbols.externalLinkName(for: chosenCallee))
-    }
-
     /// A declaration compiled from Kotlin source either carries no external link
     /// name (bundled source in this compilation) or the compiler's own `kk_fn_*`
     /// mangling (the same declaration imported from a stdlib library artifact).
@@ -27,11 +13,10 @@ extension CallLowerer {
         return linkName.hasPrefix("kk_fn_")
     }
 
-    /// Member names whose generic Iterable/Collection implementations moved to
-    /// bundled Kotlin source in KSP-435, KSP-632, KSP-978, and KSP-983. A call bound to one of those
+    /// bundled Kotlin source in KSP-435, KSP-632, KSP-978, KSP-983, and KSP-986. A call bound to one of those
     /// source declarations bypasses this file's runtime-bridge special cases.
     static let sourceBackedIterableCollectionMemberNames: Set<String> = [
-        "all", "any", "firstNotNullOf", "firstNotNullOfOrNull", "joinTo", "joinToString",
+        "all", "any", "none", "firstNotNullOf", "firstNotNullOfOrNull", "joinTo", "joinToString",
         "containsAll", "count", "isNotEmpty", "intersect", "last", "lastIndexOf", "lastOrNull",
         "minus", "minusElement", "plus", "plusElement", "random", "randomOrNull",
         "requireNoNulls", "reduceRight", "reduceRightIndexed", "reduceRightIndexedOrNull",
@@ -847,13 +832,21 @@ extension CallLowerer {
         // Any.hashCode(): Int — via kk_any_hashCode (STDLIB-306)
         if args.isEmpty, interner.resolve(calleeName) == "hashCode", allowsAnyFallback {
             let intType = sema.types.make(.primitive(.int, .nonNull))
+            let hashReceiverID = boxSentinelProneHashCodeReceiver(
+                loweredReceiverID,
+                sourceType: anyFallbackReceiverType,
+                sema: sema,
+                interner: interner,
+                arena: arena,
+                into: &instructions
+            )
             let receiverTag = anyFallbackTag(for: anyFallbackReceiverType, sema: sema)
             let receiverTagID = arena.appendExpr(.intLiteral(receiverTag), type: intType)
             instructions.append(.constValue(result: receiverTagID, value: .intLiteral(receiverTag)))
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_any_hashCode"),
-                arguments: [loweredReceiverID, receiverTagID],
+                arguments: [hashReceiverID, receiverTagID],
                 result: result,
                 canThrow: false,
                 thrownResult: nil
@@ -939,10 +932,18 @@ extension CallLowerer {
             case ("toULong", ulongType, ulongType): nil // identity
             case ("toFloat", intType, floatType): interner.intern("kk_int_to_float")
             case ("toFloat", longType, floatType): interner.intern("kk_long_to_float")
+            case ("toFloat", uintType, floatType): interner.intern("kk_uint_to_float")
+            case ("toFloat", ulongType, floatType): interner.intern("kk_ulong_to_float")
+            case ("toFloat", ubyteType, floatType): interner.intern("kk_ubyte_to_float")
+            case ("toFloat", ushortType, floatType): interner.intern("kk_ushort_to_float")
             case ("toFloat", byteType, floatType): interner.intern("kk_int_to_float")
             case ("toFloat", shortType, floatType): interner.intern("kk_int_to_float")
             case ("toFloat", doubleType, floatType): interner.intern("kk_double_to_float")
             case ("toFloat", floatType, floatType): nil // identity
+            case ("toDouble", uintType, doubleType): interner.intern("kk_uint_to_double")
+            case ("toDouble", ulongType, doubleType): interner.intern("kk_ulong_to_double")
+            case ("toDouble", ubyteType, doubleType): interner.intern("kk_ubyte_to_double")
+            case ("toDouble", ushortType, doubleType): interner.intern("kk_ushort_to_double")
             case ("toDouble", byteType, doubleType): interner.intern("kk_int_to_double_bits")
             case ("toDouble", shortType, doubleType): interner.intern("kk_int_to_double_bits")
             case ("toDouble", longType, doubleType): interner.intern("kk_long_to_double")

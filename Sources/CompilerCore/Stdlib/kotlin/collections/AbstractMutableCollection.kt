@@ -17,6 +17,80 @@ package kotlin.collections
  */
 public abstract class AbstractMutableCollection<E> protected constructor() : AbstractCollection<E>(), MutableCollection<E> {
     abstract override fun add(element: E): Boolean
+
+    /**
+     * Adds all of the elements of the specified collection to this collection.
+     */
+    @IgnorableReturnValue
+    override fun addAll(elements: Collection<E>): Boolean {
+        var changed = false
+        for (element in elements) {
+            if (add(element)) changed = true
+        }
+        return changed
+    }
+
+    /**
+     * Removes a single instance of the specified element from this collection, if it is present.
+     */
+    @IgnorableReturnValue
+    @Suppress("UNCHECKED_CAST")
+    override fun remove(element: E): Boolean {
+        val iterator = iterator() as MutableIterator<E>
+        while (iterator.hasNext()) {
+            if (iterator.next() == element) {
+                iterator.remove()
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * Removes all of this collection's elements that are also contained in the specified collection.
+     */
+    @IgnorableReturnValue
+    @Suppress("UNCHECKED_CAST")
+    override fun removeAll(elements: Collection<E>): Boolean {
+        val iterator = iterator() as MutableIterator<E>
+        var changed = false
+        while (iterator.hasNext()) {
+            if (elements.contains(iterator.next())) {
+                iterator.remove()
+                changed = true
+            }
+        }
+        return changed
+    }
+
+    /**
+     * Retains only the elements in this collection that are contained in the specified collection.
+     */
+    @IgnorableReturnValue
+    @Suppress("UNCHECKED_CAST")
+    override fun retainAll(elements: Collection<E>): Boolean {
+        val iterator = iterator() as MutableIterator<E>
+        var changed = false
+        while (iterator.hasNext()) {
+            if (!elements.contains(iterator.next())) {
+                iterator.remove()
+                changed = true
+            }
+        }
+        return changed
+    }
+
+    /**
+     * Removes all elements from this collection.
+     */
+    @Suppress("UNCHECKED_CAST")
+    override fun clear(): Unit {
+        val iterator = iterator() as MutableIterator<E>
+        while (iterator.hasNext()) {
+            val _ = iterator.next()
+            iterator.remove()
+        }
+    }
 }
 
 // KSP-1019: these are top-level MutableCollection extensions. They are kept

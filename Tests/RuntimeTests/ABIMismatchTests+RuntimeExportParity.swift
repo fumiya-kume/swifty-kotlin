@@ -109,7 +109,6 @@ struct ABIMismatchRuntimeExportParityTests {
             "kk_native_alloc_bytes",
             "kk_char_sequence_length",
             "kk_dynamic_iterator",
-            "kk_future_getState",
             "kk_int_to_int",
             "kk_kclass_has_annotation",
             "kk_kclass_js",
@@ -186,9 +185,8 @@ struct ABIMismatchRuntimeExportParityTests {
             "kk_list_takeLastWhile",
             "kk_list_dropWhile",
             "kk_list_dropLastWhile",
-            // KSP-445: Sequence fold/scan HOFs are source-backed in bundled
-            // kotlin.collections/sequences; runtime bridge is no longer exported.
-            "kk_sequence_foldIndexed",
+            // KSP-445: Sequence scan HOFs are source-backed in bundled
+            // kotlin.collections/sequences; runtime bridges are no longer exported.
             "kk_sequence_reduceIndexed",
             "kk_sequence_reduceIndexedOrNull",
             "kk_sequence_runningFold",

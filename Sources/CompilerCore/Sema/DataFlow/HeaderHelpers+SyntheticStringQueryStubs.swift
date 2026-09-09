@@ -1,36 +1,6 @@
 extension DataFlowSemaPhase {
     func registerSyntheticStringQueryStubs(context: SyntheticStringStubContext) -> TypeID {
         let (symbols, types, interner, kotlinTextPkg) = (context.symbols, context.types, context.interner, context.kotlinTextPkg); let (stringType, boolType, intType, charType) = (context.stringType, context.boolType, context.intType, context.charType); let (nullableCharType, listStringType) = (context.nullableCharType, context.listStringType)
-        // --- STDLIB-TEXT-FN-044: String.random() / String.random(Random) ---
-        registerSyntheticStringExtensionFunction(
-            named: "random",
-            externalLinkName: "__kk_string_random",
-            receiverType: stringType,
-            parameters: [],
-            returnType: charType,
-            packageFQName: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        let randomType = syntheticNominalType(
-            named: "Random",
-            in: [interner.intern("kotlin"), interner.intern("random")],
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
-        registerSyntheticStringExtensionFunction(
-            named: "random",
-            externalLinkName: "__kk_string_random_random",
-            receiverType: stringType,
-            parameters: [
-                ("random", randomType, false, false),
-            ],
-            returnType: charType,
-            packageFQName: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
         // --- STDLIB-192: equals(other) ---
         // KSP-413: equals(other, ignoreCase) is bundled Kotlin source
         // (Stdlib/kotlin/text/StringComparison.kt).

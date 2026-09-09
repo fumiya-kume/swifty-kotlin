@@ -1,5 +1,7 @@
 package kotlin.text
 
+import kotlin.random.Random
+
 // MIGRATION-TEXT-008 / KSP-410
 // String higher-order functions migrated from Swift runtime (RuntimeStringHOF.swift).
 //
@@ -217,6 +219,32 @@ public fun <R : Any> CharSequence.firstNotNullOfOrNull(transform: (Char) -> R?):
 
 public fun CharSequence.any(): Boolean {
     return !isEmpty()
+}
+
+@SinceKotlin("1.3")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.random(): Char {
+    if (isEmpty()) throw NoSuchElementException("Char sequence is empty.")
+    return get(Random.nextInt(length))
+}
+
+@SinceKotlin("1.3")
+public fun CharSequence.random(random: Random): Char {
+    if (isEmpty()) throw NoSuchElementException("Char sequence is empty.")
+    return get(random.nextInt(length))
+}
+
+@SinceKotlin("1.4")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.randomOrNull(): Char? {
+    if (isEmpty()) return null
+    return get(Random.nextInt(length))
+}
+
+@SinceKotlin("1.4")
+public fun CharSequence.randomOrNull(random: Random): Char? {
+    if (isEmpty()) return null
+    return get(random.nextInt(length))
 }
 
 public fun CharSequence.any(predicate: (Char) -> Boolean): Boolean {
