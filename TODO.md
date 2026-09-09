@@ -4658,7 +4658,7 @@
     - `kotlin.text.minWith` — fun CharSequence.minWith(Comparator): Char  -- `final fun (kotlin/CharSequence).kotlin.text/minWith(kotlin/Comparator<in kotlin/Char>): kotlin/Char`
     - `kotlin.text.minWithOrNull` — fun CharSequence.minWithOrNull(Comparator): Char  -- `final fun (kotlin/CharSequence).kotlin.text/minWithOrNull(kotlin/Comparator<in kotlin/Char>): kotlin/Char?`
 
-- [ ] KSP-1389: kotlin.text.CharSequence.none-family の未実装 stdlib API を実装する（1 件）
+- [~] KSP-1389: kotlin.text.CharSequence.none-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `none`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -4667,6 +4667,7 @@
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.text.none` — fun CharSequence.none(): Boolean  -- `final fun (kotlin/CharSequence).kotlin.text/none(): kotlin/Boolean`
+  - 実装済み（ゲート保留）: Kotlin 2.3.10 の `CharSequence.none()` 契約（`return isEmpty()`、既存 predicate overload は維持）を `StringHOF.kt` に source-backed で追加した。専用 Sema Golden、String/StringBuilder/custom CharSequence（`toString()` と内容が異なる場合を含む）、UTF-16/空文字列、`length` getter 1回、既存 predicate を専用 diff で固定した。focused Golden、専用 diff、Swift build、String synthetic link（4/4）、Runtime ABI link（4/4）、TODO ID、diff check は pass。全 Golden は build 後に無出力で中断し、全 diff_cases は同一 worktree の共有 lock 回避のため未完了のため Draft として記録する。
 
 - [ ] KSP-1390: kotlin.text.CharSequence.pad-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `pad`
