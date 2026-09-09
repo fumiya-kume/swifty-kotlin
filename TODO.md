@@ -1522,13 +1522,15 @@
     - `kotlin.collections.AbstractMutableCollection.removeAll` — fun AbstractMutableCollection.removeAll(Collection): Boolean  -- `open fun removeAll(kotlin.collections/Collection<#A>): kotlin/Boolean`
     - `kotlin.collections.AbstractMutableCollection.retainAll` — fun AbstractMutableCollection.retainAll(Collection): Boolean  -- `open fun retainAll(kotlin.collections/Collection<#A>): kotlin/Boolean`
 
-- [ ] KSP-1036: kotlin.collections.AbstractMutableList.AbstractMutableList の未実装 stdlib API を実装する（19 件）
+- [x] KSP-1036: kotlin.collections.AbstractMutableList.AbstractMutableList の未実装 stdlib API を実装する（19 件）
   - 対象: `kotlin.collections.AbstractMutableList` / receiver `AbstractMutableList`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractMutableList/AbstractMutableList.kt`（該当ファイルが無ければ新規作成）
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractMutableList.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_AbstractMutableList_AbstractMutableList_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_AbstractMutableList_AbstractMutableList_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_AbstractMutableList_AbstractMutableList_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠: Kotlin 2.3.10 native-wasm の実装契約に基づき、抽象ストレージ操作を除く19メンバ（`modCount` / `removeRange` を含む）のsource-backed default/abstract surfaceを追加した。`Iterator`、`ListIterator`、`SubList`、範囲削除、順序付き`equals`/`hashCode`まで実装し、共有 synthetic MutableList runtime bridgeはinterface/residual経路で利用中のため保持した。具体サブクラスの`add(Int, E)`が継承defaultの`add(E)`を誤って隠すresolverのrequired-arity判定も同PRで修正した。
+  - 検証: `abstractMutableListMembersAreSourceBacked`、既存のAbstractMutableList source surface Sema回帰、専用Golden shard、専用`diff_kotlinc`（JDK17、`DIFF_REQUIRE_JDK21=0`）をpass。Goldenは直接生成worker出力との一致も確認した。
   - 未実装シンボル一覧:
     - `kotlin.collections.AbstractMutableList.add` — fun AbstractMutableList.add(): Boolean  -- `open fun add(#A): kotlin/Boolean`
     - `kotlin.collections.AbstractMutableList.add` — fun AbstractMutableList.add(Int, ): Unit  -- `abstract fun add(kotlin/Int, #A)`
