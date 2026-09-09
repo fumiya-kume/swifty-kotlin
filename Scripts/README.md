@@ -30,6 +30,18 @@
 Swift Testing. Without a worker override, the runner keeps its default width.
 Limiting workers reduces concurrent CPU load; it does not skip test cases.
 
+To reduce Golden and other frontend test CPU time locally, build CompilerCore
+with the same debug optimization setting used by CI:
+
+```bash
+KSWIFTK_OPTIMIZE_COMPILER_CORE=1 SWIFT_TEST_WORKERS=4 bash Scripts/swift_test.sh --filter Golden
+```
+
+This opts CompilerCore into `-O` while keeping the debug build configuration.
+It can make stepping through CompilerCore code less direct; omit the setting
+when debugging the compiler. Run without `--skip-build` when changing it so
+the compiler is rebuilt with the requested optimization level.
+
 If a run crashes with a signal (e.g. `*** Signal 11: ...` / `exited with
 unexpected signal code`) and no per-test failure line was parsed, the whole
 `swift test` invocation is retried up to 3 times before failing the step.

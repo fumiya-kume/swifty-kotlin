@@ -170,8 +170,8 @@ final class CallLowerer {
         return result
     }
 
-    /// True for synthetic runtime-backed factory constructors that allocate
-    /// their own object (atomic scalar boxes and built-in exception classes).
+    /// True for runtime-backed factory constructors that allocate
+    /// their own object (atomic scalar/array boxes and built-in exception classes).
     private func isAtomicScalarConstructor(
         _ symbolID: SymbolID?,
         sema: SemaModule,
@@ -900,6 +900,15 @@ final class CallLowerer {
                     instructions: &instructions
                 )
                 appendObjectVtableMethodRegistrations(
+                    objectValue: allocatedObj,
+                    nominalSymbol: ownerNominalSymbol,
+                    driver: driver,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+                appendObjectAnyToStringRegistration(
                     objectValue: allocatedObj,
                     nominalSymbol: ownerNominalSymbol,
                     driver: driver,

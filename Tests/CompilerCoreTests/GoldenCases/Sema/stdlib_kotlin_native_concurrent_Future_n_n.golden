@@ -1,4 +1,3 @@
-symbol fq=kotlin.native.concurrent.Future kind=class vis=public flags=synthetic|valueType type=kotlin.native.concurrent.Future<kotlin.native.concurrent.Future.T>
 symbol fq=kotlin.native.concurrent.Future.T kind=typeParameter vis=private flags=_
 symbol fq=preserveFuture kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=kotlin.native.concurrent.Future<Int>
 symbol fq=preserveFuture.$0.future kind=valueParameter vis=private flags=_
