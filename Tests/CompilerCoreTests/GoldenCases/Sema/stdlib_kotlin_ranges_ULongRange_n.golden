@@ -89,20 +89,20 @@ expr e@24:22#1 inExpr lhs=e@24:22 rhs=e@24:35 type=Boolean call=kotlin.ranges.co
 expr e@24:5 localDecl emptyCross mutable=0 type=_ init=e@24:22#1 type=Unit ref=__local_13.emptyCross
 expr e@25:21 ulong(0) type=ULong
 expr e@25:26 name(ULong) type=kotlin.ULong.Companion ref=kotlin.ULong#0
-expr e@25:26#1 memberCall recv=e@25:26 callee=MAX_VALUE args=[] type=ULong call=kotlin.MAX_VALUE.$get#6
+expr e@25:26#1 memberCall recv=e@25:26 callee=MAX_VALUE args=[] type=ULong call=kotlin.MAX_VALUE.$get#7
 expr e@25:21#1 binary(rangeTo) lhs=e@25:21 rhs=e@25:26#1 type=ULong
 expr e@25:5 localDecl fullRange mutable=0 type=_ init=e@25:21#1 type=Unit ref=__local_14.fullRange
 expr e@27:9 name(UByte) type=kotlin.UByte.Companion ref=kotlin.UByte#0
-expr e@27:9#1 memberCall recv=e@27:9 callee=MAX_VALUE args=[] type=UByte call=kotlin.MAX_VALUE.$get#4
+expr e@27:9#1 memberCall recv=e@27:9 callee=MAX_VALUE args=[] type=UByte call=kotlin.MAX_VALUE.$get#5
 expr e@27:28 name(fullRange) type=ULong ref=__local_14.fullRange
 expr e@27:9#2 inExpr lhs=e@27:9#1 rhs=e@27:28 type=Boolean call=kotlin.ranges.contains#25
 expr e@28:13 name(UInt) type=kotlin.UInt.Companion ref=kotlin.UInt#0
-expr e@28:13#1 memberCall recv=e@28:13 callee=MAX_VALUE args=[] type=UInt call=kotlin.MAX_VALUE.$get#5
+expr e@28:13#1 memberCall recv=e@28:13 callee=MAX_VALUE args=[] type=UInt call=kotlin.MAX_VALUE.$get#6
 expr e@28:31 name(fullRange) type=ULong ref=__local_14.fullRange
 expr e@28:13#2 inExpr lhs=e@28:13#1 rhs=e@28:31 type=Boolean call=kotlin.ranges.contains#26
 expr e@27:9#3 binary(logicalAnd) lhs=e@27:9#2 rhs=e@28:13#2 type=Boolean
 expr e@29:13 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort#0
-expr e@29:13#1 memberCall recv=e@29:13 callee=MAX_VALUE args=[] type=UShort call=kotlin.MAX_VALUE.$get#7
+expr e@29:13#1 memberCall recv=e@29:13 callee=MAX_VALUE args=[] type=UShort call=kotlin.MAX_VALUE.$get#8
 expr e@29:33 name(fullRange) type=ULong ref=__local_14.fullRange
 expr e@29:13#2 inExpr lhs=e@29:13#1 rhs=e@29:33 type=Boolean call=kotlin.ranges.contains#28
 expr e@27:9#4 binary(logicalAnd) lhs=e@27:9#3 rhs=e@29:13#2 type=Boolean
