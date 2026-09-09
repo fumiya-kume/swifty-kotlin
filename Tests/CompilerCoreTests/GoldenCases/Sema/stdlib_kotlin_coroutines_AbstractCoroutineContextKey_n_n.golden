@@ -1,0 +1,14 @@
+symbol fq=golden.sema.BaseElement kind=interface vis=public flags=_
+symbol fq=golden.sema.BaseKey kind=class vis=public flags=_
+symbol fq=golden.sema.BaseKey.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.BaseKey params=[] ret=golden.sema.BaseKey
+symbol fq=golden.sema.DerivedElement kind=interface vis=public flags=_
+symbol fq=golden.sema.DerivedKey kind=class vis=public flags=_
+file fstdlib_kotlin_coroutines_AbstractCoroutineContextKey_n_n package=golden.sema
+  decl golden.sema.BaseKey class BaseKey sym=golden.sema.BaseKey
+  decl golden.sema.BaseElement interface BaseElement sym=golden.sema.BaseElement
+  decl golden.sema.DerivedElement interface DerivedElement sym=golden.sema.DerivedElement
+  decl golden.sema.DerivedKey class DerivedKey sym=golden.sema.DerivedKey
+expr e@15:5 call callee=e@15:5#1 args=[] type=golden.sema.BaseKey call=golden.sema.BaseKey.<init>
+expr e@16:18 name(element) type=Any ref=s-0
+expr e@16:18#1 asCast? expr=e@16:18 type=golden.sema.DerivedElement type=golden.sema.DerivedElement?
+expr e@16:5 lambda params=[element] body=e@16:18#1 type=(Any) -> golden.sema.DerivedElement?

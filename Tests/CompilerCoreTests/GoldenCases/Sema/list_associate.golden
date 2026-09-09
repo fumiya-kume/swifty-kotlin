@@ -1,0 +1,45 @@
+symbol fq=__local_0.assoc kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
+symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
+symbol fq=__local_2.byKey kind=local vis=private flags=_ type=kotlin.collections.Map<Int, String>
+symbol fq=__local_3.checked kind=local vis=private flags=_ type=kotlin.collections.Map<Int, String>
+symbol fq=__local_4.withVal kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
+symbol fq=__local_5.checked kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
+symbol fq=associateKeys kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
+symbol fq=associateKeys.$0.values kind=valueParameter vis=private flags=_
+symbol fq=associatePairs kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
+symbol fq=associatePairs.$1.values kind=valueParameter vis=private flags=_
+symbol fq=associateValues kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
+symbol fq=associateValues.$2.values kind=valueParameter vis=private flags=_
+symbol fq=kotlin.Pair kind=class vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+file flist_associate package=_
+  decl associatePairs fun associatePairs sym=associatePairs
+  decl associateKeys fun associateKeys sym=associateKeys
+  decl associateValues fun associateValues sym=associateValues
+expr e@6:17 name(values) type=kotlin.collections.List<String> ref=associatePairs.$1.values
+expr e@6:36 name(it) type=String ref=s-0
+expr e@6:42 name(it) type=String ref=s-0
+expr e@6:42#1 memberCall recv=e@6:42 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@6:36#1 memberCall recv=e@6:36 callee=to args=[_:e@6:42#1] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
+expr e@6:34 lambda params=[] body=e@6:36#1 label=associate type=(String) -> Any
+expr e@6:17#1 memberCall recv=e@6:17 callee=associate args=[_:e@6:34] type=kotlin.collections.Map<String, Int> call=kotlin.collections.associate#1 targs=[String,String,Int]
+expr e@6:5 localDecl assoc mutable=0 type=_ init=e@6:17#1 type=Unit ref=__local_0.assoc
+expr e@7:37 name(assoc) type=kotlin.collections.Map<String, Int> ref=__local_0.assoc
+expr e@7:5 localDecl checked mutable=0 type=Map<String,Int> init=e@7:37 type=Unit ref=__local_1.checked
+expr e@11:17 name(values) type=kotlin.collections.List<String> ref=associateKeys.$0.values
+expr e@11:38 name(it) type=String ref=s-1
+expr e@11:38#1 memberCall recv=e@11:38 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@11:36 lambda params=[] body=e@11:38#1 label=associateBy type=(String) -> Any
+expr e@11:17#1 memberCall recv=e@11:17 callee=associateBy args=[_:e@11:36] type=kotlin.collections.Map<Int, String> call=kotlin.collections.associateBy#2 targs=[String,Int]
+expr e@11:5 localDecl byKey mutable=0 type=_ init=e@11:17#1 type=Unit ref=__local_2.byKey
+expr e@12:37 name(byKey) type=kotlin.collections.Map<Int, String> ref=__local_2.byKey
+expr e@12:5 localDecl checked mutable=0 type=Map<Int,String> init=e@12:37 type=Unit ref=__local_3.checked
+expr e@16:19 name(values) type=kotlin.collections.List<String> ref=associateValues.$2.values
+expr e@16:42 name(it) type=String ref=s-2
+expr e@16:42#1 memberCall recv=e@16:42 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@16:40 lambda params=[] body=e@16:42#1 label=associateWith type=(String) -> Any
+expr e@16:19#1 memberCall recv=e@16:19 callee=associateWith args=[_:e@16:40] type=kotlin.collections.Map<String, Int> call=kotlin.collections.associateWith#1 targs=[String,Int]
+expr e@16:5 localDecl withVal mutable=0 type=_ init=e@16:19#1 type=Unit ref=__local_4.withVal
+expr e@17:37 name(withVal) type=kotlin.collections.Map<String, Int> ref=__local_4.withVal
+expr e@17:5 localDecl checked mutable=0 type=Map<String,Int> init=e@17:37 type=Unit ref=__local_5.checked

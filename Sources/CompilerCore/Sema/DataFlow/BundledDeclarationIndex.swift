@@ -261,8 +261,9 @@ struct BundledDeclarationIndex: Sendable {
         }
 
         let sourceFunctionFQName = kotlinCollections + [symbol.name]
-        return symbols.allSymbols().contains { candidate in
-            guard candidate.kind == .function,
+        return symbols.lookupAll(fqName: sourceFunctionFQName).contains { candidateID in
+            guard let candidate = symbols.symbol(candidateID),
+                  candidate.kind == .function,
                   (!candidate.flags.contains(.synthetic) || candidate.flags.contains(.importedLibrary)),
                   candidate.name == symbol.name,
                   candidate.fqName == sourceFunctionFQName,
@@ -295,8 +296,9 @@ struct BundledDeclarationIndex: Sendable {
             return false
         }
 
-        return symbols.allSymbols().contains { candidate in
-            guard candidate.id != symbol.id,
+        return symbols.lookupByShortName(symbol.name).contains { candidateID in
+            guard let candidate = symbols.symbol(candidateID),
+                  candidate.id != symbol.id,
                   candidate.kind == .function,
                   !candidate.flags.contains(.synthetic),
                   candidate.declSite != nil,

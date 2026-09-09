@@ -1,0 +1,36 @@
+symbol fq=__local_0.random kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.checked kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.randomSeeded kind=local vis=private flags=_ type=Int
+symbol fq=__local_3.checkedSeeded kind=local vis=private flags=_ type=Int
+symbol fq=__local_4.randomOrNull kind=local vis=private flags=_ type=Int?
+symbol fq=__local_5.checkedOrNull kind=local vis=private flags=_ type=Int?
+symbol fq=__local_6.randomOrNullSeeded kind=local vis=private flags=_ type=Int?
+symbol fq=__local_7.checkedOrNullSeeded kind=local vis=private flags=_ type=Int?
+symbol fq=golden.sema.collectionRandom kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>,kotlin.random.Random] ret=Unit
+symbol fq=golden.sema.collectionRandom.$0.seeded kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionRandom.$0.values kind=valueParameter vis=private flags=_
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+file fcollection_random_overloads package=golden.sema
+  decl golden.sema.collectionRandom fun collectionRandom sym=golden.sema.collectionRandom
+expr e@8:18 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionRandom.$0.values
+expr e@8:18#1 memberCall recv=e@8:18 callee=random args=[] type=Int call=kotlin.collections.random#0 targs=[Int]
+expr e@8:5 localDecl random mutable=0 type=_ init=e@8:18#1 type=Unit ref=__local_0.random
+expr e@9:24 name(random) type=Int ref=__local_0.random
+expr e@9:5 localDecl checked mutable=0 type=Int init=e@9:24 type=Unit ref=__local_1.checked
+expr e@10:24 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionRandom.$0.values
+expr e@10:38 name(seeded) type=kotlin.random.Random ref=golden.sema.collectionRandom.$0.seeded
+expr e@10:24#1 memberCall recv=e@10:24 callee=random args=[_:e@10:38] type=Int call=kotlin.collections.random#1 targs=[Int]
+expr e@10:5 localDecl randomSeeded mutable=0 type=_ init=e@10:24#1 type=Unit ref=__local_2.randomSeeded
+expr e@11:30 name(randomSeeded) type=Int ref=__local_2.randomSeeded
+expr e@11:5 localDecl checkedSeeded mutable=0 type=Int init=e@11:30 type=Unit ref=__local_3.checkedSeeded
+expr e@12:24 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionRandom.$0.values
+expr e@12:24#1 memberCall recv=e@12:24 callee=randomOrNull args=[] type=Int? call=kotlin.collections.randomOrNull#0 targs=[Int]
+expr e@12:5 localDecl randomOrNull mutable=0 type=_ init=e@12:24#1 type=Unit ref=__local_4.randomOrNull
+expr e@13:31 name(randomOrNull) type=Int? ref=__local_4.randomOrNull
+expr e@13:5 localDecl checkedOrNull mutable=0 type=Int? init=e@13:31 type=Unit ref=__local_5.checkedOrNull
+expr e@14:30 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionRandom.$0.values
+expr e@14:50 name(seeded) type=kotlin.random.Random ref=golden.sema.collectionRandom.$0.seeded
+expr e@14:30#1 memberCall recv=e@14:30 callee=randomOrNull args=[_:e@14:50] type=Int? call=kotlin.collections.randomOrNull#1 targs=[Int]
+expr e@14:5 localDecl randomOrNullSeeded mutable=0 type=_ init=e@14:30#1 type=Unit ref=__local_6.randomOrNullSeeded
+expr e@15:37 name(randomOrNullSeeded) type=Int? ref=__local_6.randomOrNullSeeded
+expr e@15:5 localDecl checkedOrNullSeeded mutable=0 type=Int? init=e@15:37 type=Unit ref=__local_7.checkedOrNullSeeded
