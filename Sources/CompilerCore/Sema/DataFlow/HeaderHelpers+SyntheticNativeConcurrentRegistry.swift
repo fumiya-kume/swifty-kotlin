@@ -2,6 +2,7 @@
 /// Synthetic stdlib stubs for `kotlin.native.concurrent` (STDLIB-NATIVE-CONCURRENT-002).
 ///
 /// Registers:
+///   - KSP-1216 package-level nominal anchors whose constructors and members are owned by follow-up tasks
 ///   - `Continuation0` / `Continuation1` / `Continuation2` classes
 ///   - `callContinuation0` / `callContinuation1` / `callContinuation2` extensions
 ///   - `FreezingException` class with native constructor surface
@@ -13,6 +14,7 @@
 ///   - `@ThreadLocal` annotation (PROPERTY/CLASS target, native variant)
 
 private enum NativeConcurrentRegistrationStep: CaseIterable {
+    case topLevelNominalAnchors
     case continuationTypes
     case callContinuationFunctions
     case freezingException
@@ -99,6 +101,14 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         switch step {
+        case .topLevelNominalAnchors:
+            registerNativeConcurrentTopLevelNominalAnchors(
+                packageFQName: packageFQName,
+                pkgSymbol: pkgSymbol,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
         case .continuationTypes:
             registerNativeConcurrentContinuationTypes(
                 packageFQName: packageFQName,
@@ -157,6 +167,211 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+    }
+
+    /// Registers only the package-level class identity required by KSP-1216.
+    /// Constructors and receiver members remain owned by KSP-1219 onward.
+    private func registerNativeConcurrentTopLevelNominalAnchors(
+        packageFQName: [InternedString],
+        pkgSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        for (name, replacement) in [
+            ("AtomicInt", "kotlin.concurrent.atomics.AtomicInt"),
+            ("AtomicLong", "kotlin.concurrent.atomics.AtomicLong"),
+            ("AtomicNativePtr", "kotlin.concurrent.atomics.AtomicNativePtr"),
+        ] {
+            registerNativeConcurrentNominalAnchor(
+                named: name,
+                packageFQName: packageFQName,
+                pkgSymbol: pkgSymbol,
+                annotations: [
+                    nativeConcurrentDeprecatedErrorAnnotation(
+                        message: "Use \(replacement) instead.",
+                        replaceWith: replacement
+                    ),
+                ],
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+
+        for name in ["AtomicReference", "FreezableAtomicReference"] {
+            registerNativeConcurrentNominalAnchor(
+                named: name,
+                packageFQName: packageFQName,
+                pkgSymbol: pkgSymbol,
+                typeParameter: (name: "T", variance: .invariant, upperBound: types.nullableAnyType),
+                annotations: [
+                    nativeConcurrentDeprecatedErrorAnnotation(
+                        message: "Use kotlin.concurrent.atomics.AtomicReference instead.",
+                        replaceWith: "kotlin.concurrent.atomics.AtomicReference"
+                    ),
+                ],
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+
+        registerNativeConcurrentNominalAnchor(
+            named: "DetachedObjectGraph",
+            packageFQName: packageFQName,
+            pkgSymbol: pkgSymbol,
+            typeParameter: (name: "T", variance: .invariant, upperBound: types.nullableAnyType),
+            annotations: [
+                MetadataAnnotationRecord(annotationFQName: "kotlin.native.concurrent.ObsoleteWorkersApi"),
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Support for the legacy memory manager has been completely removed. Use the pointed value directly. To pass the value through the C interop, use the StableRef class.\"",
+                    ]
+                ),
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                    arguments: ["errorSince = \"2.1\""]
+                ),
+            ],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerNativeConcurrentNominalAnchor(
+            named: "MutableData",
+            packageFQName: packageFQName,
+            pkgSymbol: pkgSymbol,
+            annotations: [
+                MetadataAnnotationRecord(annotationFQName: "kotlin.native.internal.NoReorderFields"),
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Support for the legacy memory manager has been completely removed. Use any regular collection instead.\"",
+                    ]
+                ),
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                    arguments: ["errorSince = \"2.1\""]
+                ),
+            ],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerNativeConcurrentNominalAnchor(
+            named: "WorkerBoundReference",
+            packageFQName: packageFQName,
+            pkgSymbol: pkgSymbol,
+            typeParameter: (name: "T", variance: .out, upperBound: types.anyType),
+            annotations: [
+                MetadataAnnotationRecord(annotationFQName: "kotlin.native.concurrent.ObsoleteWorkersApi"),
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Support for the legacy memory manager has been completely removed. Use the referenced value directly.\"",
+                    ]
+                ),
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                    arguments: ["errorSince = \"2.1\""]
+                ),
+            ],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // NativePtr is the opaque representation used by two internal KSP-1216
+        // functions. Its own members remain outside this API slice.
+        let nativeInternalPkg = ensurePackage(
+            path: ["kotlin", "native", "internal"],
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentNominalAnchor(
+            named: "NativePtr",
+            packageFQName: nativeInternalPkg,
+            pkgSymbol: symbols.lookup(fqName: nativeInternalPkg),
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerNativeConcurrentNominalAnchor(
+        named name: String,
+        packageFQName: [InternedString],
+        pkgSymbol: SymbolID?,
+        typeParameter: (name: String, variance: TypeVariance, upperBound: TypeID)? = nil,
+        annotations: [MetadataAnnotationRecord] = [],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let className = interner.intern(name)
+        let classFQName = packageFQName + [className]
+        let classSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: classFQName),
+           symbols.symbol(existing)?.kind == .class
+        {
+            classSymbol = existing
+        } else {
+            classSymbol = symbols.define(
+                kind: .class,
+                name: className,
+                fqName: classFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        if let pkgSymbol {
+            symbols.setParentSymbol(pkgSymbol, for: classSymbol)
+        }
+
+        let classType: TypeID
+        if let typeParameter {
+            let typeParameterName = interner.intern(typeParameter.name)
+            let typeParameterFQName = classFQName + [typeParameterName]
+            let typeParameterSymbol: SymbolID
+            if let existing = symbols.lookup(fqName: typeParameterFQName) {
+                typeParameterSymbol = existing
+            } else {
+                typeParameterSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: typeParameterName,
+                    fqName: typeParameterFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+            }
+            symbols.setParentSymbol(classSymbol, for: typeParameterSymbol)
+            symbols.setTypeParameterUpperBounds([typeParameter.upperBound], for: typeParameterSymbol)
+            types.setNominalTypeParameterSymbols([typeParameterSymbol], for: classSymbol)
+            types.setNominalTypeParameterVariances([typeParameter.variance], for: classSymbol)
+            let typeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: typeParameterSymbol,
+                nullability: .nonNull
+            )))
+            classType = types.make(.classType(ClassType(
+                classSymbol: classSymbol,
+                args: [.invariant(typeParameterType)],
+                nullability: .nonNull
+            )))
+        } else {
+            classType = types.make(.classType(ClassType(
+                classSymbol: classSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        }
+        symbols.setPropertyType(classType, for: classSymbol)
+        appendNativeConcurrentMetadataAnnotations(annotations, to: classSymbol, symbols: symbols)
     }
 
     private func registerNativeConcurrentMarkerAnnotations(

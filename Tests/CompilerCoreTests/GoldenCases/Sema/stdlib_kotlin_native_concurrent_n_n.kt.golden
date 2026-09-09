@@ -1,0 +1,170 @@
+symbol fq=golden.sema.atomicLazyValue kind=function vis=public flags=_ sig=recv=_ params=[() -> Int] ret=kotlin.Lazy<Int>
+symbol fq=golden.sema.atomicLazyValue.$0.initializer kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.attachGraph kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.internal.NativePtr] ret=Any?
+symbol fq=golden.sema.attachGraph.$1.stable kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.consume kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Any?
+symbol fq=golden.sema.consume.$2.id kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.detachGraph kind=function vis=public flags=_ sig=recv=_ params=[Int,() -> Any?] ret=kotlin.native.internal.NativePtr
+symbol fq=golden.sema.detachGraph.$3.mode kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.detachGraph.$3.producer kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.execute kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Worker,kotlin.native.concurrent.TransferMode,() -> Any?,kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<*>>] ret=kotlin.native.concurrent.Future<Any?>
+symbol fq=golden.sema.execute.$4.job kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.execute.$4.mode kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.execute.$4.producer kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.execute.$4.worker kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.freezeValue kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String
+symbol fq=golden.sema.freezeValue.$5.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveAtomicInt kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.AtomicInt] ret=kotlin.native.concurrent.AtomicInt
+symbol fq=golden.sema.preserveAtomicInt.$6.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveAtomicLong kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.AtomicLong] ret=kotlin.native.concurrent.AtomicLong
+symbol fq=golden.sema.preserveAtomicLong.$7.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveAtomicNativePtr kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.AtomicNativePtr] ret=kotlin.native.concurrent.AtomicNativePtr
+symbol fq=golden.sema.preserveAtomicNativePtr.$8.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveAtomicReference kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.AtomicReference<String?>] ret=kotlin.native.concurrent.AtomicReference<String?>
+symbol fq=golden.sema.preserveAtomicReference.$9.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveContinuation0 kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Continuation0] ret=kotlin.native.concurrent.Continuation0
+symbol fq=golden.sema.preserveContinuation0.$10.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveContinuation1 kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Continuation1<Int>] ret=kotlin.native.concurrent.Continuation1<Int>
+symbol fq=golden.sema.preserveContinuation1.$11.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveContinuation2 kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Continuation2<Int, String>] ret=kotlin.native.concurrent.Continuation2<Int, String>
+symbol fq=golden.sema.preserveContinuation2.$12.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveDetachedObjectGraph kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.DetachedObjectGraph<String>] ret=kotlin.native.concurrent.DetachedObjectGraph<String>
+symbol fq=golden.sema.preserveDetachedObjectGraph.$13.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveFreezableAtomicReference kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.FreezableAtomicReference<String?>] ret=kotlin.native.concurrent.FreezableAtomicReference<String?>
+symbol fq=golden.sema.preserveFreezableAtomicReference.$14.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveFreezingException kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.FreezingException] ret=kotlin.native.concurrent.FreezingException
+symbol fq=golden.sema.preserveFreezingException.$15.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveFuture kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=kotlin.native.concurrent.Future<Int>
+symbol fq=golden.sema.preserveFuture.$16.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveFutureState kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.FutureState] ret=kotlin.native.concurrent.FutureState
+symbol fq=golden.sema.preserveFutureState.$17.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveInvalidMutabilityException kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.InvalidMutabilityException] ret=kotlin.native.concurrent.InvalidMutabilityException
+symbol fq=golden.sema.preserveInvalidMutabilityException.$18.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveMutableData kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.MutableData] ret=kotlin.native.concurrent.MutableData
+symbol fq=golden.sema.preserveMutableData.$19.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveObsoleteWorkersApi kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.ObsoleteWorkersApi] ret=kotlin.native.concurrent.ObsoleteWorkersApi
+symbol fq=golden.sema.preserveObsoleteWorkersApi.$20.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveSharedImmutable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.SharedImmutable] ret=kotlin.native.concurrent.SharedImmutable
+symbol fq=golden.sema.preserveSharedImmutable.$21.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveThreadLocal kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.ThreadLocal] ret=kotlin.native.concurrent.ThreadLocal
+symbol fq=golden.sema.preserveThreadLocal.$22.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveTransferMode kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.TransferMode] ret=kotlin.native.concurrent.TransferMode
+symbol fq=golden.sema.preserveTransferMode.$23.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveWorker kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Worker] ret=kotlin.native.concurrent.Worker
+symbol fq=golden.sema.preserveWorker.$24.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.preserveWorkerBoundReference kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.WorkerBoundReference<String>] ret=kotlin.native.concurrent.WorkerBoundReference<String>
+symbol fq=golden.sema.preserveWorkerBoundReference.$25.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useWorker kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.waitForFutures kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<kotlin.native.concurrent.Future<Int>>] ret=kotlin.collections.Set<kotlin.native.concurrent.Future<Int>>
+symbol fq=golden.sema.waitForFutures.$26.futures kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.waitForWorker kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Worker] ret=Unit
+symbol fq=golden.sema.waitForWorker.$27.worker kind=valueParameter vis=private flags=_
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
+symbol fq=kotlin.native.concurrent.AtomicInt kind=class vis=public flags=synthetic type=kotlin.native.concurrent.AtomicInt
+symbol fq=kotlin.native.concurrent.AtomicLong kind=class vis=public flags=synthetic type=kotlin.native.concurrent.AtomicLong
+symbol fq=kotlin.native.concurrent.AtomicNativePtr kind=class vis=public flags=synthetic type=kotlin.native.concurrent.AtomicNativePtr
+symbol fq=kotlin.native.concurrent.AtomicReference kind=class vis=public flags=synthetic type=kotlin.native.concurrent.AtomicReference<kotlin.native.concurrent.AtomicReference.T>
+symbol fq=kotlin.native.concurrent.AtomicReference.T kind=typeParameter vis=private flags=synthetic
+symbol fq=kotlin.native.concurrent.Continuation0 kind=class vis=public flags=synthetic type=kotlin.native.concurrent.Continuation0
+symbol fq=kotlin.native.concurrent.Continuation1 kind=class vis=public flags=synthetic type=kotlin.native.concurrent.Continuation1<kotlin.native.concurrent.Continuation1.T1>
+symbol fq=kotlin.native.concurrent.Continuation1.T1 kind=typeParameter vis=private flags=_
+symbol fq=kotlin.native.concurrent.Continuation2 kind=class vis=public flags=synthetic type=kotlin.native.concurrent.Continuation2<kotlin.native.concurrent.Continuation2.T1, kotlin.native.concurrent.Continuation2.T2>
+symbol fq=kotlin.native.concurrent.Continuation2.T1 kind=typeParameter vis=private flags=_
+symbol fq=kotlin.native.concurrent.Continuation2.T2 kind=typeParameter vis=private flags=_
+symbol fq=kotlin.native.concurrent.DetachedObjectGraph kind=class vis=public flags=synthetic type=kotlin.native.concurrent.DetachedObjectGraph<kotlin.native.concurrent.DetachedObjectGraph.T>
+symbol fq=kotlin.native.concurrent.DetachedObjectGraph.T kind=typeParameter vis=private flags=synthetic
+symbol fq=kotlin.native.concurrent.FreezableAtomicReference kind=class vis=public flags=synthetic type=kotlin.native.concurrent.FreezableAtomicReference<kotlin.native.concurrent.FreezableAtomicReference.T>
+symbol fq=kotlin.native.concurrent.FreezableAtomicReference.T kind=typeParameter vis=private flags=synthetic
+symbol fq=kotlin.native.concurrent.FreezingException kind=class vis=public flags=_ type=kotlin.native.concurrent.FreezingException
+symbol fq=kotlin.native.concurrent.Future kind=class vis=public flags=synthetic|valueType type=kotlin.native.concurrent.Future<kotlin.native.concurrent.Future.T>
+symbol fq=kotlin.native.concurrent.Future.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.native.concurrent.FutureState kind=enumClass vis=public flags=_
+symbol fq=kotlin.native.concurrent.InvalidMutabilityException kind=class vis=public flags=synthetic type=kotlin.native.concurrent.InvalidMutabilityException
+symbol fq=kotlin.native.concurrent.MutableData kind=class vis=public flags=synthetic type=kotlin.native.concurrent.MutableData
+symbol fq=kotlin.native.concurrent.ObsoleteWorkersApi kind=annotationClass vis=public flags=synthetic
+symbol fq=kotlin.native.concurrent.ThreadLocal kind=annotationClass vis=public flags=synthetic
+symbol fq=kotlin.native.concurrent.Worker kind=class vis=public flags=synthetic|valueType type=kotlin.native.concurrent.Worker
+symbol fq=kotlin.native.concurrent.WorkerBoundReference kind=class vis=public flags=synthetic type=kotlin.native.concurrent.WorkerBoundReference<kotlin.native.concurrent.WorkerBoundReference.T>
+symbol fq=kotlin.native.concurrent.WorkerBoundReference.T kind=typeParameter vis=private flags=synthetic
+symbol fq=kotlin.native.internal.NativePtr kind=class vis=public flags=synthetic type=kotlin.native.internal.NativePtr
+symbol fq=kotlinx.cinterop.CFunction kind=class vis=public flags=synthetic type=kotlinx.cinterop.CFunction<kotlinx.cinterop.CFunction.T>
+symbol fq=kotlinx.cinterop.CFunction.T kind=typeParameter vis=private flags=_
+symbol fq=kotlinx.cinterop.CPointer kind=class vis=public flags=synthetic type=kotlinx.cinterop.CPointer<kotlinx.cinterop.CPointer.T>
+symbol fq=kotlinx.cinterop.CPointer.T kind=typeParameter vis=private flags=_
+file fstdlib_kotlin_native_concurrent_n_n package=golden.sema annotations=[@file:Suppress("DEPRECATION_ERROR"),@file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class),@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)]
+  decl golden.sema.preserveAtomicInt fun preserveAtomicInt sym=golden.sema.preserveAtomicInt
+  decl golden.sema.preserveAtomicLong fun preserveAtomicLong sym=golden.sema.preserveAtomicLong
+  decl golden.sema.preserveAtomicNativePtr fun preserveAtomicNativePtr sym=golden.sema.preserveAtomicNativePtr
+  decl golden.sema.preserveAtomicReference fun preserveAtomicReference sym=golden.sema.preserveAtomicReference
+  decl golden.sema.preserveContinuation0 fun preserveContinuation0 sym=golden.sema.preserveContinuation0
+  decl golden.sema.preserveContinuation1 fun preserveContinuation1 sym=golden.sema.preserveContinuation1
+  decl golden.sema.preserveContinuation2 fun preserveContinuation2 sym=golden.sema.preserveContinuation2
+  decl golden.sema.preserveDetachedObjectGraph fun preserveDetachedObjectGraph sym=golden.sema.preserveDetachedObjectGraph
+  decl golden.sema.preserveFreezableAtomicReference fun preserveFreezableAtomicReference sym=golden.sema.preserveFreezableAtomicReference
+  decl golden.sema.preserveFreezingException fun preserveFreezingException sym=golden.sema.preserveFreezingException
+  decl golden.sema.preserveFuture fun preserveFuture sym=golden.sema.preserveFuture
+  decl golden.sema.preserveFutureState fun preserveFutureState sym=golden.sema.preserveFutureState
+  decl golden.sema.preserveInvalidMutabilityException fun preserveInvalidMutabilityException sym=golden.sema.preserveInvalidMutabilityException
+  decl golden.sema.preserveMutableData fun preserveMutableData sym=golden.sema.preserveMutableData
+  decl golden.sema.preserveObsoleteWorkersApi fun preserveObsoleteWorkersApi sym=golden.sema.preserveObsoleteWorkersApi
+  decl golden.sema.preserveSharedImmutable fun preserveSharedImmutable sym=golden.sema.preserveSharedImmutable
+  decl golden.sema.preserveThreadLocal fun preserveThreadLocal sym=golden.sema.preserveThreadLocal
+  decl golden.sema.preserveTransferMode fun preserveTransferMode sym=golden.sema.preserveTransferMode
+  decl golden.sema.preserveWorker fun preserveWorker sym=golden.sema.preserveWorker
+  decl golden.sema.preserveWorkerBoundReference fun preserveWorkerBoundReference sym=golden.sema.preserveWorkerBoundReference
+  decl golden.sema.atomicLazyValue fun atomicLazyValue sym=golden.sema.atomicLazyValue
+  decl golden.sema.attachGraph fun attachGraph sym=golden.sema.attachGraph
+  decl golden.sema.consume fun consume sym=golden.sema.consume
+  decl golden.sema.detachGraph fun detachGraph sym=golden.sema.detachGraph
+  decl golden.sema.execute fun execute sym=golden.sema.execute
+  decl golden.sema.freezeValue fun freezeValue sym=golden.sema.freezeValue
+  decl golden.sema.waitForFutures fun waitForFutures sym=golden.sema.waitForFutures
+  decl golden.sema.waitForWorker fun waitForWorker sym=golden.sema.waitForWorker
+  decl golden.sema.useWorker fun useWorker sym=golden.sema.useWorker
+expr e@12:104 name(value) type=kotlin.native.concurrent.AtomicInt ref=golden.sema.preserveAtomicInt.$6.value
+expr e@13:107 name(value) type=kotlin.native.concurrent.AtomicLong ref=golden.sema.preserveAtomicLong.$7.value
+expr e@14:122 name(value) type=kotlin.native.concurrent.AtomicNativePtr ref=golden.sema.preserveAtomicNativePtr.$8.value
+expr e@15:140 name(value) type=kotlin.native.concurrent.AtomicReference<String?> ref=golden.sema.preserveAtomicReference.$9.value
+expr e@16:66 name(value) type=kotlin.native.concurrent.Continuation0 ref=golden.sema.preserveContinuation0.$10.value
+expr e@17:76 name(value) type=kotlin.native.concurrent.Continuation1<Int> ref=golden.sema.preserveContinuation1.$11.value
+expr e@18:92 name(value) type=kotlin.native.concurrent.Continuation2<Int, String> ref=golden.sema.preserveContinuation2.$12.value
+expr e@19:100 name(value) type=kotlin.native.concurrent.DetachedObjectGraph<String> ref=golden.sema.preserveDetachedObjectGraph.$13.value
+expr e@20:117 name(value) type=kotlin.native.concurrent.FreezableAtomicReference<String?> ref=golden.sema.preserveFreezableAtomicReference.$14.value
+expr e@21:78 name(value) type=kotlin.native.concurrent.FreezingException ref=golden.sema.preserveFreezingException.$15.value
+expr e@22:55 name(value) type=kotlin.native.concurrent.Future<Int> ref=golden.sema.preserveFuture.$16.value
+expr e@23:60 name(value) type=kotlin.native.concurrent.FutureState ref=golden.sema.preserveFutureState.$17.value
+expr e@24:105 name(value) type=kotlin.native.concurrent.InvalidMutabilityException ref=golden.sema.preserveInvalidMutabilityException.$18.value
+expr e@25:60 name(value) type=kotlin.native.concurrent.MutableData ref=golden.sema.preserveMutableData.$19.value
+expr e@26:81 name(value) type=kotlin.native.concurrent.ObsoleteWorkersApi ref=golden.sema.preserveObsoleteWorkersApi.$20.value
+expr e@27:72 name(value) type=kotlin.native.concurrent.SharedImmutable ref=golden.sema.preserveSharedImmutable.$21.value
+expr e@28:110 name(value) type=kotlin.native.concurrent.ThreadLocal ref=golden.sema.preserveThreadLocal.$22.value
+expr e@29:63 name(value) type=kotlin.native.concurrent.TransferMode ref=golden.sema.preserveTransferMode.$23.value
+expr e@30:45 name(value) type=kotlin.native.concurrent.Worker ref=golden.sema.preserveWorker.$24.value
+expr e@31:103 name(value) type=kotlin.native.concurrent.WorkerBoundReference<String> ref=golden.sema.preserveWorkerBoundReference.$25.value
+expr e@33:69 name(initializer) type=() -> Int ref=golden.sema.atomicLazyValue.$0.initializer
+expr e@33:58 call callee=e@33:58#1 args=[_:e@33:69] type=kotlin.Lazy<Int> call=kotlin.native.concurrent.atomicLazy targs=[Int]
+expr e@34:70 name(stable) type=kotlin.native.internal.NativePtr ref=golden.sema.attachGraph.$1.stable
+expr e@34:44 call callee=e@34:44#1 args=[_:e@34:70] type=Any? call=kotlin.native.concurrent.attachObjectGraphInternal
+expr e@35:44 name(id) type=Int ref=golden.sema.consume.$2.id
+expr e@35:30 call callee=e@35:30#1 args=[_:e@35:44] type=Any? call=kotlin.native.concurrent.consumeFuture
+expr e@37:31 name(mode) type=Int ref=golden.sema.detachGraph.$3.mode
+expr e@37:37 name(producer) type=() -> Any? ref=golden.sema.detachGraph.$3.producer
+expr e@37:5 call callee=e@37:5#1 args=[_:e@37:31,_:e@37:37] type=kotlin.native.internal.NativePtr call=kotlin.native.concurrent.detachObjectGraphInternal
+expr e@39:17 name(worker) type=kotlin.native.concurrent.Worker ref=golden.sema.execute.$4.worker
+expr e@39:25 name(mode) type=kotlin.native.concurrent.TransferMode ref=golden.sema.execute.$4.mode
+expr e@39:31 name(producer) type=() -> Any? ref=golden.sema.execute.$4.producer
+expr e@39:41 name(job) type=kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<*>> ref=golden.sema.execute.$4.job
+expr e@39:5 call callee=e@39:5#1 args=[_:e@39:17,_:e@39:25,_:e@39:31,_:e@39:41] type=kotlin.native.concurrent.Future<Any?> call=kotlin.native.concurrent.executeImpl
+expr e@40:42 name(value) type=String ref=golden.sema.freezeValue.$5.value
+expr e@40:42#1 memberCall recv=e@40:42 callee=freeze args=[] type=String call=kotlin.native.concurrent.freeze targs=[String]
+expr e@42:28 name(futures) type=kotlin.collections.Collection<kotlin.native.concurrent.Future<Int>> ref=golden.sema.waitForFutures.$26.futures
+expr e@42:37 int(0) type=Int
+expr e@42:5 call callee=e@42:5#1 args=[_:e@42:28,_:e@42:37] type=kotlin.collections.Set<kotlin.native.concurrent.Future<Int>> call=kotlin.native.concurrent.waitForMultipleFutures targs=[Int]
+expr e@43:65 name(worker) type=kotlin.native.concurrent.Worker ref=golden.sema.waitForWorker.$27.worker
+expr e@43:43 call callee=e@43:43#1 args=[_:e@43:65] type=Unit call=kotlin.native.concurrent.waitWorkerTermination
+expr e@44:35 name(null) type=Nothing?
+expr e@44:41 bool(true) type=Boolean
+expr e@44:49 int(42) type=Int
+expr e@44:47 lambda params=[] body=e@44:49 label=withWorker type=kotlin.native.concurrent.Worker.() -> Int
+expr e@44:24 call callee=e@44:24#1 args=[_:e@44:35,_:e@44:41,_:e@44:47] type=Int call=kotlin.native.concurrent.withWorker targs=[Int]

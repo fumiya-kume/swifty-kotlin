@@ -126,6 +126,12 @@ final class RuntimeFutureBox: @unchecked Sendable {
         return _ready
     }
 
+    var isAvailableForConsumption: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return _ready && !_consumed
+    }
+
     /// Non-consuming read.  Blocks until a value is available.
     func result() -> Int {
         blockUntilReady()
@@ -197,6 +203,131 @@ public func kk_future_consume(_ futureHandle: Int) -> Int {
         return 0
     }
     return box.consume()
+}
+
+// MARK: - KSP-1216 package-level bridges
+
+/// The modern memory manager no longer detaches object graphs. Keep the raw
+/// managed reference as the opaque NativePtr token consumed by attach.
+@_cdecl("__kk_native_concurrent_detach_object_graph")
+public func __kk_native_concurrent_detach_object_graph(_ modeRaw: Int, _ valueRaw: Int) -> Int {
+    _ = modeRaw
+    return valueRaw
+}
+
+/// Reattaches the opaque token produced by detachObjectGraphInternal.
+@_cdecl("__kk_native_concurrent_attach_object_graph")
+public func __kk_native_concurrent_attach_object_graph(_ stableRaw: Int) -> Int {
+    stableRaw
+}
+
+/// Consumes a Future through the source-backed package helper.
+@_cdecl("__kk_native_concurrent_consume_future")
+public func __kk_native_concurrent_consume_future(_ futureHandle: Int) -> Int {
+    kk_future_consume(futureHandle)
+}
+
+/// Runtime-owned thread scheduling for the source-backed executeImpl wrapper.
+@_cdecl("__kk_native_concurrent_execute_impl")
+public func __kk_native_concurrent_execute_impl(
+    _ workerHandle: Int,
+    _ modeRaw: Int,
+    _ jobArgumentRaw: Int,
+    _ jobPointerHandle: Int
+) -> Int {
+    _ = modeRaw
+    guard workerHandle != 0,
+          let workerPointer = UnsafeMutableRawPointer(bitPattern: workerHandle),
+          let worker = tryCast(workerPointer, to: RuntimeWorkerBox.self)
+    else {
+        return 0
+    }
+
+    let jobAddress: UInt
+    if let pointerBox = resolveCPointerBox(from: jobPointerHandle) {
+        jobAddress = pointerBox.address
+    } else {
+        jobAddress = UInt(bitPattern: jobPointerHandle)
+    }
+    guard jobAddress != 0,
+          let jobPointer = UnsafeRawPointer(bitPattern: jobAddress)
+    else {
+        return 0
+    }
+
+    typealias JobFunction = @convention(c) (Int) -> Int
+    let job = unsafeBitCast(jobPointer, to: JobFunction.self)
+    let futureHandle = kk_future_new()
+    let submitted = worker.execute {
+        _ = kk_future_complete(futureHandle, job(jobArgumentRaw))
+    }
+    return submitted ? futureHandle : 0
+}
+
+private func nativeConcurrentReadyFutureHandles(_ futuresHandle: Int) -> [Int] {
+    guard let futures = runtimeCollectionElements(from: futuresHandle) else {
+        return []
+    }
+    return futures.filter { futureHandle in
+        guard let pointer = UnsafeMutableRawPointer(bitPattern: futureHandle),
+              let future = tryCast(pointer, to: RuntimeFutureBox.self)
+        else {
+            return false
+        }
+        return future.isAvailableForConsumption
+    }
+}
+
+/// Waits until at least one Future can be consumed or the timeout expires.
+@_cdecl("__kk_native_concurrent_wait_for_multiple_futures")
+public func __kk_native_concurrent_wait_for_multiple_futures(
+    _ futuresHandle: Int,
+    _ timeoutMillis: Int
+) -> Int {
+    let deadline = timeoutMillis >= 0
+        ? DispatchTime.now() + .milliseconds(timeoutMillis)
+        : nil
+    while true {
+        let ready = nativeConcurrentReadyFutureHandles(futuresHandle)
+        if !ready.isEmpty {
+            return registerRuntimeObject(RuntimeSetBox(elements: ready))
+        }
+        if let deadline, DispatchTime.now() >= deadline {
+            return registerRuntimeObject(RuntimeSetBox(elements: []))
+        }
+        Thread.sleep(forTimeInterval: 0.001)
+    }
+}
+
+/// Starts a worker without exposing the adjacent Worker.Companion API surface.
+@_cdecl("__kk_native_concurrent_start_worker")
+public func __kk_native_concurrent_start_worker(_ errorReportingRaw: Int, _ nameRaw: Int) -> Int {
+    _ = errorReportingRaw
+    return kk_worker_new(nameRaw)
+}
+
+/// Terminates and joins a worker used by withWorker.
+@_cdecl("__kk_native_concurrent_terminate_worker")
+public func __kk_native_concurrent_terminate_worker(_ workerHandle: Int) -> Int {
+    let futureHandle = kk_worker_request_termination(workerHandle, 1)
+    if futureHandle != 0 {
+        _ = kk_future_result(futureHandle)
+    }
+    return 0
+}
+
+/// Blocks until a previously requested worker termination becomes visible.
+@_cdecl("__kk_native_concurrent_wait_worker_termination")
+public func __kk_native_concurrent_wait_worker_termination(_ workerHandle: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: workerHandle),
+          let worker = tryCast(pointer, to: RuntimeWorkerBox.self)
+    else {
+        return 0
+    }
+    while !worker.isTerminated {
+        Thread.sleep(forTimeInterval: 0.001)
+    }
+    return 0
 }
 
 // MARK: - ABI-003  TransferMode
