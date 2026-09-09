@@ -1,0 +1,35 @@
+symbol fq=__local_0.delegated kind=local vis=private flags=mutable type=Int
+symbol fq=__local_1.read kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.checked kind=local vis=private flags=_ type=Int
+symbol fq=__local_3.defaulted kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
+symbol fq=__local_4.value kind=local vis=private flags=_ type=Int
+symbol fq=__local_5.checked kind=local vis=private flags=_ type=Int
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
+symbol fq=mapDelegate kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int>] ret=Unit
+symbol fq=mapDelegate.$0.delegatedMap kind=valueParameter vis=private flags=_
+symbol fq=withDefaultRead kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int>] ret=Unit
+symbol fq=withDefaultRead.$1.map kind=valueParameter vis=private flags=_
+file fmutable_map_delegate_default package=_
+  decl mapDelegate fun mapDelegate sym=mapDelegate
+  decl withDefaultRead fun withDefaultRead sym=withDefaultRead
+expr e@4:27 name(delegatedMap) type=kotlin.collections.MutableMap<String, Int> ref=mapDelegate.$0.delegatedMap
+expr e@4:5 localDecl delegated mutable=1 type=Int init=e@4:27 delegated=1 type=Unit ref=__local_0.delegated
+expr e@5:17 int(31) type=Int
+expr e@5:5 localAssign delegated value=e@5:17 type=Unit ref=__local_0.delegated
+expr e@6:16 name(delegated) type=Int ref=__local_0.delegated
+expr e@6:5 localDecl read mutable=0 type=_ init=e@6:16 type=Unit ref=__local_1.read
+expr e@7:24 name(read) type=Int ref=__local_1.read
+expr e@7:5 localDecl checked mutable=0 type=Int init=e@7:24 type=Unit ref=__local_2.checked
+expr e@11:21 name(map) type=kotlin.collections.MutableMap<String, Int> ref=withDefaultRead.$1.map
+expr e@11:46 name(key) type=String ref=s-0
+expr e@11:46#1 memberCall recv=e@11:46 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@11:37 lambda params=[key] body=e@11:46#1 label=withDefault type=(String) -> Int
+expr e@11:21#1 memberCall recv=e@11:21 callee=withDefault args=[_:e@11:37] type=kotlin.collections.MutableMap<String, Int> call=kotlin.collections.withDefault#1 targs=[String,Int]
+expr e@11:5 localDecl defaulted mutable=0 type=_ init=e@11:21#1 type=Unit ref=__local_3.defaulted
+expr e@12:17 name(defaulted) type=kotlin.collections.MutableMap<String, Int> ref=__local_3.defaulted
+expr e@12:36 string(any) type=String
+expr e@12:17#1 memberCall recv=e@12:17 callee=getValue args=[_:e@12:36] type=Int call=kotlin.collections.getValue#1
+expr e@12:5 localDecl value mutable=0 type=_ init=e@12:17#1 type=Unit ref=__local_4.value
+expr e@13:24 name(value) type=Int ref=__local_4.value
+expr e@13:5 localDecl checked mutable=0 type=Int init=e@13:24 type=Unit ref=__local_5.checked
