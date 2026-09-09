@@ -1,0 +1,151 @@
+symbol fq=__local_0.positive kind=local vis=private flags=_ type=kotlin.ranges.ULongProgression
+symbol fq=__local_1.negative kind=local vis=private flags=_ type=kotlin.ranges.ULongProgression
+symbol fq=__local_2.emptyPositive kind=local vis=private flags=_ type=kotlin.ranges.ULongProgression
+symbol fq=__local_3.emptyNegative kind=local vis=private flags=_ type=kotlin.ranges.ULongProgression
+symbol fq=__local_4.minValue kind=local vis=private flags=_ type=kotlin.ranges.ULongProgression
+symbol fq=__local_5.maxValue kind=local vis=private flags=_ type=kotlin.ranges.ULongProgression
+symbol fq=__try_0_catch_0.error kind=local vis=internal flags=_ type=kotlin.NoSuchElementException
+symbol fq=__try_1_catch_0.error kind=local vis=internal flags=_ type=kotlin.NoSuchElementException
+symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[String,kotlin.ranges.ULongProgression] ret=Unit
+symbol fq=probe.$0.label kind=valueParameter vis=private flags=_
+symbol fq=probe.$0.progression kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_ranges_ULongProgression_n package=_
+  decl probe fun probe sym=probe
+  decl main fun main sym=main
+expr e@3:19 name(label) type=String ref=probe.$0.label
+expr e@3:33 name(progression) type=kotlin.ranges.ULongProgression ref=probe.$0.progression
+expr e@3:33#1 memberCall recv=e@3:33 callee=first args=[] type=ULong call=kotlin.ranges.first#7
+expr e@3:33#2 memberCall recv=e@3:33#1 callee=toString args=[] type=String
+expr e@3:17 stringTemplate[expr(e@3:19),lit(:first=),expr(e@3:33#2)] type=String
+expr e@3:9 call callee=e@3:9#1 args=[_:e@3:17] type=Unit call=kotlin.io.println#2
+expr e@2:9 blockExpr stmts=[] trailing=e@3:9 type=Unit
+expr e@5:19 name(label) type=String ref=probe.$0.label
+expr e@5:33 name(error) type=kotlin.NoSuchElementException ref=__try_0_catch_0.error
+expr e@5:33#1 memberCall recv=e@5:33 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@5:17 stringTemplate[expr(e@5:19),lit(:first=),expr(e@5:33#1)] type=String
+expr e@5:9 call callee=e@5:9#1 args=[_:e@5:17] type=Unit call=kotlin.io.println#2
+expr e@4:45 blockExpr stmts=[] trailing=e@5:9 type=Unit ref=__try_0_catch_0.error
+expr e@2:5 try body=e@2:9 catches=[e@4:45] finally=_ type=Unit
+expr e@8:19 name(label) type=String ref=probe.$0.label
+expr e@8:32 name(progression) type=kotlin.ranges.ULongProgression ref=probe.$0.progression
+expr e@8:32#1 memberCall recv=e@8:32 callee=last args=[] type=ULong call=kotlin.ranges.last#7
+expr e@8:32#2 memberCall recv=e@8:32#1 callee=toString args=[] type=String
+expr e@8:17 stringTemplate[expr(e@8:19),lit(:last=),expr(e@8:32#2)] type=String
+expr e@8:9 call callee=e@8:9#1 args=[_:e@8:17] type=Unit call=kotlin.io.println#2
+expr e@7:9 blockExpr stmts=[] trailing=e@8:9 type=Unit
+expr e@10:19 name(label) type=String ref=probe.$0.label
+expr e@10:32 name(error) type=kotlin.NoSuchElementException ref=__try_1_catch_0.error
+expr e@10:32#1 memberCall recv=e@10:32 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@10:17 stringTemplate[expr(e@10:19),lit(:last=),expr(e@10:32#1)] type=String
+expr e@10:9 call callee=e@10:9#1 args=[_:e@10:17] type=Unit call=kotlin.io.println#2
+expr e@9:45 blockExpr stmts=[] trailing=e@10:9 type=Unit ref=__try_1_catch_0.error
+expr e@7:5 try body=e@7:9 catches=[e@9:45] finally=_ type=Unit
+expr e@12:15 name(label) type=String ref=probe.$0.label
+expr e@12:30 name(progression) type=kotlin.ranges.ULongProgression ref=probe.$0.progression
+expr e@12:30#1 memberCall recv=e@12:30 callee=firstOrNull args=[] type=ULong? call=kotlin.ranges.firstOrNull#8
+expr e@12:59 name(progression) type=kotlin.ranges.ULongProgression ref=probe.$0.progression
+expr e@12:59#1 memberCall recv=e@12:59 callee=lastOrNull args=[] type=ULong? call=kotlin.ranges.lastOrNull#8
+expr e@12:13 stringTemplate[expr(e@12:15),lit(:orNull=),expr(e@12:30#1),lit(,),expr(e@12:59#1)] type=String
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13] type=Unit call=kotlin.io.println#2
+expr e@16:20 name(ULongProgression) type=kotlin.ranges.ULongProgression.Companion ref=kotlin.ranges.ULongProgression#0
+expr e@16:53 ulong(2) type=ULong
+expr e@16:58 ulong(11) type=ULong
+expr e@16:64 int(3) type=Int
+expr e@16:20#1 memberCall recv=e@16:20 callee=fromClosedRange args=[_:e@16:53,_:e@16:58,_:e@16:64] type=kotlin.ranges.ULongProgression call=kotlin.ranges.fromClosedRange#4
+expr e@16:5 localDecl positive mutable=0 type=_ init=e@16:20#1 type=Unit ref=__local_0.positive
+expr e@17:20 ulong(10) type=ULong
+expr e@17:32 ulong(0) type=ULong
+expr e@17:20#1 binary(downTo) lhs=e@17:20 rhs=e@17:32 type=kotlin.ranges.ULongProgression call=kotlin.ranges.downTo#18
+expr e@17:41 int(3) type=Int
+expr e@17:20#2 binary(step) lhs=e@17:20#1 rhs=e@17:41 type=kotlin.ranges.ULongProgression call=kotlin.ranges.step#10
+expr e@17:5 localDecl negative mutable=0 type=_ init=e@17:20#2 type=Unit ref=__local_1.negative
+expr e@18:25 name(ULongProgression) type=kotlin.ranges.ULongProgression.Companion ref=kotlin.ranges.ULongProgression#0
+expr e@18:58 ulong(5) type=ULong
+expr e@18:63 ulong(1) type=ULong
+expr e@18:68 int(1) type=Int
+expr e@18:25#1 memberCall recv=e@18:25 callee=fromClosedRange args=[_:e@18:58,_:e@18:63,_:e@18:68] type=kotlin.ranges.ULongProgression call=kotlin.ranges.fromClosedRange#4
+expr e@18:5 localDecl emptyPositive mutable=0 type=_ init=e@18:25#1 type=Unit ref=__local_2.emptyPositive
+expr e@19:25 name(ULongProgression) type=kotlin.ranges.ULongProgression.Companion ref=kotlin.ranges.ULongProgression#0
+expr e@19:58 ulong(1) type=ULong
+expr e@19:63 ulong(5) type=ULong
+expr e@19:69 int(1) type=Int
+expr e@19:68 unary(unaryMinus) operand=e@19:69 type=Int
+expr e@19:25#1 memberCall recv=e@19:25 callee=fromClosedRange args=[_:e@19:58,_:e@19:63,_:e@19:68] type=kotlin.ranges.ULongProgression call=kotlin.ranges.fromClosedRange#4
+expr e@19:5 localDecl emptyNegative mutable=0 type=_ init=e@19:25#1 type=Unit ref=__local_3.emptyNegative
+expr e@20:20 name(ULongProgression) type=kotlin.ranges.ULongProgression.Companion ref=kotlin.ranges.ULongProgression#0
+expr e@20:53 name(ULong) type=kotlin.ULong.Companion ref=kotlin.ULong#0
+expr e@20:53#1 memberCall recv=e@20:53 callee=MIN_VALUE args=[] type=ULong call=kotlin.MIN_VALUE.$get#6
+expr e@20:70 name(ULong) type=kotlin.ULong.Companion ref=kotlin.ULong#0
+expr e@20:70#1 memberCall recv=e@20:70 callee=MIN_VALUE args=[] type=ULong call=kotlin.MIN_VALUE.$get#6
+expr e@20:87 int(1) type=Int
+expr e@20:20#1 memberCall recv=e@20:20 callee=fromClosedRange args=[_:e@20:53#1,_:e@20:70#1,_:e@20:87] type=kotlin.ranges.ULongProgression call=kotlin.ranges.fromClosedRange#4
+expr e@20:5 localDecl minValue mutable=0 type=_ init=e@20:20#1 type=Unit ref=__local_4.minValue
+expr e@21:20 name(ULongProgression) type=kotlin.ranges.ULongProgression.Companion ref=kotlin.ranges.ULongProgression#0
+expr e@21:53 name(ULong) type=kotlin.ULong.Companion ref=kotlin.ULong#0
+expr e@21:53#1 memberCall recv=e@21:53 callee=MAX_VALUE args=[] type=ULong call=kotlin.MAX_VALUE.$get#6
+expr e@21:70 name(ULong) type=kotlin.ULong.Companion ref=kotlin.ULong#0
+expr e@21:70#1 memberCall recv=e@21:70 callee=MAX_VALUE args=[] type=ULong call=kotlin.MAX_VALUE.$get#6
+expr e@21:87 int(1) type=Int
+expr e@21:20#1 memberCall recv=e@21:20 callee=fromClosedRange args=[_:e@21:53#1,_:e@21:70#1,_:e@21:87] type=kotlin.ranges.ULongProgression call=kotlin.ranges.fromClosedRange#4
+expr e@21:5 localDecl maxValue mutable=0 type=_ init=e@21:20#1 type=Unit ref=__local_5.maxValue
+expr e@23:27 name(positive) type=kotlin.ranges.ULongProgression ref=__local_0.positive
+expr e@23:27#1 memberCall recv=e@23:27 callee=first args=[] type=ULong ref=kotlin.ranges.ULongProgression.first
+expr e@23:45 name(positive) type=kotlin.ranges.ULongProgression ref=__local_0.positive
+expr e@23:45#1 memberCall recv=e@23:45 callee=last args=[] type=ULong ref=kotlin.ranges.ULongProgression.last
+expr e@23:13 stringTemplate[lit(properties=),expr(e@23:27#1),lit(,),expr(e@23:45#1)] type=String
+expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println#2
+expr e@24:25 name(positive) type=kotlin.ranges.ULongProgression ref=__local_0.positive
+expr e@24:25#1 memberCall recv=e@24:25 callee=first args=[] type=ULong call=kotlin.ranges.first#7
+expr e@24:25#2 memberCall recv=e@24:25#1 callee=toString args=[] type=String
+expr e@24:56 name(positive) type=kotlin.ranges.ULongProgression ref=__local_0.positive
+expr e@24:56#1 memberCall recv=e@24:56 callee=firstOrNull args=[] type=ULong? call=kotlin.ranges.firstOrNull#8
+expr e@24:82 name(positive) type=kotlin.ranges.ULongProgression ref=__local_0.positive
+expr e@24:82#1 memberCall recv=e@24:82 callee=last args=[] type=ULong call=kotlin.ranges.last#7
+expr e@24:82#2 memberCall recv=e@24:82#1 callee=toString args=[] type=String
+expr e@24:112 name(positive) type=kotlin.ranges.ULongProgression ref=__local_0.positive
+expr e@24:112#1 memberCall recv=e@24:112 callee=lastOrNull args=[] type=ULong? call=kotlin.ranges.lastOrNull#8
+expr e@24:13 stringTemplate[lit(positive=),expr(e@24:25#2),lit(,),expr(e@24:56#1),lit(,),expr(e@24:82#2),lit(,),expr(e@24:112#1)] type=String
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println#2
+expr e@25:25 name(negative) type=kotlin.ranges.ULongProgression ref=__local_1.negative
+expr e@25:25#1 memberCall recv=e@25:25 callee=first args=[] type=ULong call=kotlin.ranges.first#7
+expr e@25:25#2 memberCall recv=e@25:25#1 callee=toString args=[] type=String
+expr e@25:56 name(negative) type=kotlin.ranges.ULongProgression ref=__local_1.negative
+expr e@25:56#1 memberCall recv=e@25:56 callee=firstOrNull args=[] type=ULong? call=kotlin.ranges.firstOrNull#8
+expr e@25:82 name(negative) type=kotlin.ranges.ULongProgression ref=__local_1.negative
+expr e@25:82#1 memberCall recv=e@25:82 callee=last args=[] type=ULong call=kotlin.ranges.last#7
+expr e@25:82#2 memberCall recv=e@25:82#1 callee=toString args=[] type=String
+expr e@25:112 name(negative) type=kotlin.ranges.ULongProgression ref=__local_1.negative
+expr e@25:112#1 memberCall recv=e@25:112 callee=lastOrNull args=[] type=ULong? call=kotlin.ranges.lastOrNull#8
+expr e@25:13 stringTemplate[lit(negative=),expr(e@25:25#2),lit(,),expr(e@25:56#1),lit(,),expr(e@25:82#2),lit(,),expr(e@25:112#1)] type=String
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println#2
+expr e@26:20 name(minValue) type=kotlin.ranges.ULongProgression ref=__local_4.minValue
+expr e@26:20#1 memberCall recv=e@26:20 callee=first args=[] type=ULong call=kotlin.ranges.first#7
+expr e@26:20#2 memberCall recv=e@26:20#1 callee=toString args=[] type=String
+expr e@26:51 name(minValue) type=kotlin.ranges.ULongProgression ref=__local_4.minValue
+expr e@26:51#1 memberCall recv=e@26:51 callee=firstOrNull args=[] type=ULong? call=kotlin.ranges.firstOrNull#8
+expr e@26:77 name(minValue) type=kotlin.ranges.ULongProgression ref=__local_4.minValue
+expr e@26:77#1 memberCall recv=e@26:77 callee=last args=[] type=ULong call=kotlin.ranges.last#7
+expr e@26:77#2 memberCall recv=e@26:77#1 callee=toString args=[] type=String
+expr e@26:107 name(minValue) type=kotlin.ranges.ULongProgression ref=__local_4.minValue
+expr e@26:107#1 memberCall recv=e@26:107 callee=lastOrNull args=[] type=ULong? call=kotlin.ranges.lastOrNull#8
+expr e@26:13 stringTemplate[lit(min=),expr(e@26:20#2),lit(,),expr(e@26:51#1),lit(,),expr(e@26:77#2),lit(,),expr(e@26:107#1)] type=String
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println#2
+expr e@27:20 name(maxValue) type=kotlin.ranges.ULongProgression ref=__local_5.maxValue
+expr e@27:20#1 memberCall recv=e@27:20 callee=first args=[] type=ULong call=kotlin.ranges.first#7
+expr e@27:20#2 memberCall recv=e@27:20#1 callee=toString args=[] type=String
+expr e@27:51 name(maxValue) type=kotlin.ranges.ULongProgression ref=__local_5.maxValue
+expr e@27:51#1 memberCall recv=e@27:51 callee=firstOrNull args=[] type=ULong? call=kotlin.ranges.firstOrNull#8
+expr e@27:77 name(maxValue) type=kotlin.ranges.ULongProgression ref=__local_5.maxValue
+expr e@27:77#1 memberCall recv=e@27:77 callee=last args=[] type=ULong call=kotlin.ranges.last#7
+expr e@27:77#2 memberCall recv=e@27:77#1 callee=toString args=[] type=String
+expr e@27:107 name(maxValue) type=kotlin.ranges.ULongProgression ref=__local_5.maxValue
+expr e@27:107#1 memberCall recv=e@27:107 callee=lastOrNull args=[] type=ULong? call=kotlin.ranges.lastOrNull#8
+expr e@27:13 stringTemplate[lit(max=),expr(e@27:20#2),lit(,),expr(e@27:51#1),lit(,),expr(e@27:77#2),lit(,),expr(e@27:107#1)] type=String
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println#2
+expr e@28:11 string(emptyPositive) type=String
+expr e@28:28 name(emptyPositive) type=kotlin.ranges.ULongProgression ref=__local_2.emptyPositive
+expr e@28:5 call callee=e@28:5#1 args=[_:e@28:11,_:e@28:28] type=Unit call=probe
+expr e@29:11 string(emptyNegative) type=String
+expr e@29:28 name(emptyNegative) type=kotlin.ranges.ULongProgression ref=__local_3.emptyNegative
+expr e@29:5 call callee=e@29:5#1 args=[_:e@29:11,_:e@29:28] type=Unit call=probe

@@ -426,6 +426,8 @@ extension CallLowerer {
                         return ["first", "firstOrNull", "last", "lastOrNull"].contains(memberName)
                     case "UIntProgression":
                         return ["first", "firstOrNull", "last", "lastOrNull"].contains(memberName)
+                    case "ULongProgression":
+                        return ["first", "firstOrNull", "last", "lastOrNull"].contains(memberName)
                     default:
                         return false
                     }

@@ -457,6 +457,13 @@ enum MemberRuntimeDispatch {
             }
         }
 
+        if kind == .ulongProgression {
+            let sourceBacked: Set<String> = ["first", "firstOrNull", "last", "lastOrNull"]
+            if sourceBacked.contains(member) {
+                return nil
+            }
+        }
+
         let migratedRangeMembers: Set<String> = ["first", "last", "count", "isEmpty", "reversed"]
         if migratedRangeMembers.contains(member) && !kind.isULongRangeLike && !kind.isUIntRangeLike {
             return "__kk_range_\(member)"

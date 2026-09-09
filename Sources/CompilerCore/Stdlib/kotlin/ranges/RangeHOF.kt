@@ -1579,6 +1579,35 @@ public external fun ULongRange.reversed(): ULongProgression
 
 // MARK: - ULongProgression
 
+private fun ulongProgressionDescription(progression: ULongProgression): String {
+    val step = progression.step
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun ULongProgression.first(): ULong {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${ulongProgressionDescription(this)} is empty.")
+    return this.first
+}
+
+@SinceKotlin("1.7")
+public fun ULongProgression.firstOrNull(): ULong? = if (isEmpty()) null else this.first
+
+@SinceKotlin("1.7")
+public fun ULongProgression.last(): ULong {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${ulongProgressionDescription(this)} is empty.")
+    return this.last
+}
+
+@SinceKotlin("1.7")
+public fun ULongProgression.lastOrNull(): ULong? = if (isEmpty()) null else this.last
+
 public fun ULongProgression.forEach(action: (ULong) -> Unit) {
     for (element in this) { action(element) }
 }
