@@ -10,7 +10,6 @@ symbol fq=combineNullableDescending.$3.secondary[kind=vparam] kind=valueParamete
 symbol fq=combineNullableDescending[kind=fun;params=kotlin.Comparator<String?>,kotlin.Comparator<Any?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String?>,kotlin.Comparator<Any?>] ret=kotlin.Comparator<String?>
 symbol fq=combineNullable[kind=fun;params=kotlin.Comparator<String?>,kotlin.Comparator<Any?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String?>,kotlin.Comparator<Any?>] ret=kotlin.Comparator<String?>
 symbol fq=combine[kind=fun;params=kotlin.Comparator<String>,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String>,kotlin.Comparator<Any>] ret=kotlin.Comparator<String>
-symbol fq=kotlin.Comparator[kind=iface;gen=1] kind=interface vis=public flags=funInterface
 file fstdlib_kotlin_comparisons_Comparator_n package=_
   decl combine[kind=fun;params=kotlin.Comparator<String>,kotlin.Comparator<Any>] fun combine sym=combine[kind=fun;params=kotlin.Comparator<String>,kotlin.Comparator<Any>]
   decl combineDescending[kind=fun;params=kotlin.Comparator<String>,kotlin.Comparator<Any>] fun combineDescending sym=combineDescending[kind=fun;params=kotlin.Comparator<String>,kotlin.Comparator<Any>]

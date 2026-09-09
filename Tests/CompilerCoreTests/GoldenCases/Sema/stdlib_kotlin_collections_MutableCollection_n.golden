@@ -42,7 +42,7 @@ file fstdlib_kotlin_collections_MutableCollection_n package=_
   decl StableIterable[kind=class] class StableIterable sym=StableIterable[kind=class]
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:46 name(values) type=kotlin.collections.List<Int> ref=StableIterable.values[kind=prop]
-expr e@2:46#1 memberCall recv=e@2:46 callee=iterator args=[] type=kotlin.collections.Iterator<out Int> call=kotlin.collections.Collection.iterator[kind=fun;recv=kotlin.collections.Collection<T0>;params=;gen=1]
+expr e@2:46#1 memberCall recv=e@2:46 callee=iterator args=[] type=kotlin.collections.Iterator<Int> call=kotlin.collections.Collection.iterator[kind=fun;recv=kotlin.collections.Collection<T0>;params=;gen=1] targs=[Int]
 expr e@6:61 int(1) type=Int
 expr e@6:47 call callee=e@6:47#1 args=[_:e@6:61] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
 expr e@6:5 localDecl addIterable mutable=0 type=MutableCollection<Int> init=e@6:47 type=Unit ref=__local_0.addIterable[kind=local]

@@ -34,7 +34,7 @@ import Testing
 @Suite("GoldenHarness.MetadataContract")
 struct GoldenHarnessMetadataContractTests {
     /// Checked-in Sema goldens keyed by the case's `.kt` basename
-    /// (e.g. `map_hofs.kt`).
+    /// (e.g. `map_filter_lambda_types.kt`).
     private static func semaGoldenContents() throws -> [String: String] {
         let cases = try GoldenHarnessCaseDiscovery.loadCases(suite: .sema)
         var result: [String: String] = [:]
@@ -48,7 +48,7 @@ struct GoldenHarnessMetadataContractTests {
 
     /// Representative fixtures across the constructs named by RF-GOLDEN-001:
     /// a stdlib typealias user (`linkedhashmap_alias`), collection HOFs
-    /// (`map_hofs`), a generic nominal (`stdlib_kotlin_Pair_n_n`), user data
+    /// (`map_filter_lambda_types`), a generic nominal (`stdlib_kotlin_Pair_n_n`), user data
     /// class (`data_class_copy_edge`), enum (`enum_class`), object literal
     /// (`object_literal_property_no_init`) and a custom accessor
     /// (`computed_property`). Each must still carry the full ordinary
@@ -59,7 +59,7 @@ struct GoldenHarnessMetadataContractTests {
 
         let expectations: [String: [String]] = [
             "linkedhashmap_alias.kt": ["symbol fq=", "kind=", "vis=", "flags=", "type=", "ref=", "call="],
-            "map_hofs.kt": ["call=", "targs=[", "fn{p="],
+            "map_filter_lambda_types.kt": ["call=", "targs=[", "fn{p="],
             "stdlib_kotlin_Pair_n_n.kt": ["fq=kotlin.Pair[kind=class;gen=2]", "call=kotlin.Pair.<init>"],
             "data_class_copy_edge.kt": ["flags=dataType", ".copy[kind=fun", "defaults=["],
             "enum_class.kt": ["kind=enum"],

@@ -176,7 +176,7 @@ expr e@48:13 localAssign iterableUsed value=e@48:28 type=Unit ref=__local_14.ite
 expr e@49:33 string(custom) type=String
 expr e@49:43 name(null) type=Nothing?
 expr e@49:20 call callee=e@49:20#1 args=[_:e@49:33,_:e@49:43] type=kotlin.collections.List<out Any?> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Any?]
-expr e@49:20#2 memberCall recv=e@49:20 callee=iterator args=[] type=kotlin.collections.Iterator<out Any?> call=kotlin.collections.Collection.iterator[kind=fun;recv=kotlin.collections.Collection<T0>;params=;gen=1]
+expr e@49:20#2 memberCall recv=e@49:20 callee=iterator args=[] type=kotlin.collections.Iterator<Any?> call=kotlin.collections.Collection.iterator[kind=fun;recv=kotlin.collections.Collection<T0>;params=;gen=1] targs=[Any?]
 expr e@49:13 return value=e@49:20#2 type=Nothing
 expr e@45:27 objectLiteral supers=[Iterable<Any?>] type=__ObjectLiteral_0_1781_2040
 expr e@45:5 localDecl oneShotIterable mutable=0 type=_ init=e@45:27 type=Unit ref=__local_15.oneShotIterable[kind=local]

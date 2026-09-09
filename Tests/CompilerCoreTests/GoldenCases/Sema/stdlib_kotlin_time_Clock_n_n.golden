@@ -6,8 +6,7 @@ symbol fq=__local_2.asClock[kind=local] kind=local vis=private flags=_ type=kotl
 symbol fq=__local_3.custom[kind=local] kind=local vis=private flags=_ type=kotlin.time.Clock
 symbol fq=kotlin.time.Clock.Companion[kind=obj] kind=object vis=public flags=synthetic|static
 symbol fq=kotlin.time.Clock.System[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.time.Clock.now[kind=fun;recv=kotlin.time.Clock;params=] kind=function vis=public flags=synthetic sig=recv=kotlin.time.Clock params=[] ret=kotlin.time.Instant
-symbol fq=kotlin.time.Clock[kind=iface] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.time.Clock[kind=iface] kind=interface vis=public flags=_
 symbol fq=kotlin.time.Instant.Companion[kind=obj] kind=object vis=public flags=synthetic|static
 symbol fq=kotlin.time.Instant[kind=class] kind=class vis=public flags=synthetic
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
