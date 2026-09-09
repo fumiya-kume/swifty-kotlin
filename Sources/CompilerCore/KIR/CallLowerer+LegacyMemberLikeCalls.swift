@@ -932,10 +932,18 @@ extension CallLowerer {
             case ("toULong", ulongType, ulongType): nil // identity
             case ("toFloat", intType, floatType): interner.intern("kk_int_to_float")
             case ("toFloat", longType, floatType): interner.intern("kk_long_to_float")
+            case ("toFloat", uintType, floatType): interner.intern("kk_uint_to_float")
+            case ("toFloat", ulongType, floatType): interner.intern("kk_ulong_to_float")
+            case ("toFloat", ubyteType, floatType): interner.intern("kk_ubyte_to_float")
+            case ("toFloat", ushortType, floatType): interner.intern("kk_ushort_to_float")
             case ("toFloat", byteType, floatType): interner.intern("kk_int_to_float")
             case ("toFloat", shortType, floatType): interner.intern("kk_int_to_float")
             case ("toFloat", doubleType, floatType): interner.intern("kk_double_to_float")
             case ("toFloat", floatType, floatType): nil // identity
+            case ("toDouble", uintType, doubleType): interner.intern("kk_uint_to_double")
+            case ("toDouble", ulongType, doubleType): interner.intern("kk_ulong_to_double")
+            case ("toDouble", ubyteType, doubleType): interner.intern("kk_ubyte_to_double")
+            case ("toDouble", ushortType, doubleType): interner.intern("kk_ushort_to_double")
             case ("toDouble", byteType, doubleType): interner.intern("kk_int_to_double_bits")
             case ("toDouble", shortType, doubleType): interner.intern("kk_int_to_double_bits")
             case ("toDouble", longType, doubleType): interner.intern("kk_long_to_double")
