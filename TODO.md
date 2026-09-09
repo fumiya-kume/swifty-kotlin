@@ -5599,7 +5599,8 @@
 ### ARCH Tier 2c: Sema の名前ディスパッチ出口戦略（RF4/KSP と同期）
 
 - [ ] ARCH-021: well-known シンボル表を導入する。現状 stdlib 特例判定は「TypeCheck 内の文字列リテラル switch 386 ケース + インライン `Set<String>` 名前表（collectionHOFNames 等 ~120 名）+ `interner.resolve == "…"` 比較」に散在し、ユーザ定義 `map`/`delay` 等との衝突ガードがサイトごと ad-hoc（`hasNonStdlibCollectionFactoryShadow` 等）。Roslyn `WellKnownMember` / rustc lang items に倣い、①bundled Kotlin 宣言側に `@KsIntrinsic("kotlin.collections.map")` 的注釈（既存 `@KsSymbolName` 機構を流用）または FQName 表を導入、②Sema 起動時に「well-known 名 → SymbolID」を 1 箇所で解決、③特例分岐を SymbolID 比較へ置換する**基盤**を作る（全面置換は RF4 台帳の消化として KSP 移行と同期し、本タスクは基盤 + 代表 2〜3 特例の置換まで）。完了条件: 基盤 + 置換済み特例の rg チェック（旧文字列比較 0 件）+ シャドーイング回帰テスト（ユーザ定義同名関数が特例に吸われない）+ G。
-- [ ] ARCH-022: `Scripts/loc_report.sh` に名前ディスパッチの実態メトリクスを追加する。現行の `interner_resolve_literal_comparison_count`（TypeCheck 79 件）は氷山の一角で、文字列 switch 386 ケースとインライン名前表を数えていない。「TypeCheck 内文字列リテラル case 数」「インライン `Set<String>` 名前表エントリ数」を追加し、ARCH-021/RF4 の進捗を非悪化ゲートに乗せる。完了条件: loc_report 出力に新メトリクス + `docs/refactoring-metrics.md` に基準値追記。
+- [~] ARCH-022: `Scripts/loc_report.sh` に名前ディスパッチの実態メトリクスを追加する。現行の `interner_resolve_literal_comparison_count`（TypeCheck 79 件）は氷山の一角で、文字列 switch 386 ケースとインライン名前表を数えていない。「TypeCheck 内文字列リテラル case 数」「インライン `Set<String>` 名前表エントリ数」を追加し、ARCH-021/RF4 の進捗を非悪化ゲートに乗せる。完了条件: loc_report 出力に新メトリクス + `docs/refactoring-metrics.md` に基準値追記。
+  - 実装済み・共通 G 待ち: `loc_report.sh` に `typecheck_string_literal_switch_case_count` と `typecheck_inline_string_set_entry_count` を追加し、コメント・文字列内容を除外する Swift 字句 scanner と回帰 fixture (`Scripts/test_loc_report.sh`) を同梱した。2026-09-08 の base `a72cc373f859aaf408c6a4e9510404a1e21c92dc` で基準値はそれぞれ 402 / 142。exact-base full Swift/Golden の共通 G は親タスクで実行中のため未完了。
 
 ### ARCH Tier 2d: テスト・CI の 4 穴埋め
 
