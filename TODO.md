@@ -1506,13 +1506,15 @@
     - `kotlin.collections.AbstractMap.toString` — fun AbstractMap.toString(): String  -- `open fun toString(): kotlin/String`
     - `kotlin.collections.AbstractMap.values` — val AbstractMap.values: Collection  -- `open val values`
 
-- [ ] KSP-1034: kotlin.collections.AbstractMutableCollection.AbstractMutableCollection の未実装 stdlib API を実装する（5 件）
+- [x] KSP-1034: kotlin.collections.AbstractMutableCollection.AbstractMutableCollection の未実装 stdlib API を実装する（5 件）
   - 対象: `kotlin.collections.AbstractMutableCollection` / receiver `AbstractMutableCollection`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractMutableCollection/AbstractMutableCollection.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_AbstractMutableCollection_AbstractMutableCollection_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_AbstractMutableCollection_AbstractMutableCollection_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_AbstractMutableCollection_AbstractMutableCollection_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠（2026-09-04、KSP-1034）: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractMutableCollection.kt` に `addAll` / `clear` / `remove` / `removeAll` / `retainAll` の source-backed default implementation を追加した。`removeAll` / `retainAll` は現行の `MutableIterator` 型公開制約に合わせて、Kotlin 2.3.10 の契約と等価な iterator loop に展開した。既存の `MutableCollection` runtime / ABI bridge は interface 経路で使用中のため保持した。
+  - 回帰: 対象 Sema Golden の更新あり／なし、aggregate Golden（28 tests / 10 suites）、対象 diff、aggregate diff（1199 passed / 0 failed / 51 skipped）、`check_todo_ids.sh`、`validate_runtime_abi_links.sh` が pass。
   - 未実装シンボル一覧:
     - `kotlin.collections.AbstractMutableCollection.addAll` — fun AbstractMutableCollection.addAll(Collection): Boolean  -- `open fun addAll(kotlin.collections/Collection<#A>): kotlin/Boolean`
     - `kotlin.collections.AbstractMutableCollection.clear` — fun AbstractMutableCollection.clear(): Unit  -- `open fun clear()`
