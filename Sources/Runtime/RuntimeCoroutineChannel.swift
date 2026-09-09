@@ -7,18 +7,20 @@ import Foundation
 
 // MARK: - Channel Runtime (CORO-001)
 
-/// Out-of-band status codes returned by `kk_channel_send` / `kk_channel_receive`.
+/// Out-of-band status codes returned by channel operations.
 /// The actual payload (when present) is written to an `outValue` pointer on receive,
 /// matching the status+out-pointer pattern used by `kk_coroutine_check_cancellation`.
 enum ChannelOperationStatus: Int {
     case success = 0
     case closed = 1
     case cancelled = 2
+    case failed = 3
 }
 
 let kChannelResultSuccess: Int = ChannelOperationStatus.success.rawValue
 let kChannelResultClosed: Int = ChannelOperationStatus.closed.rawValue
 let kChannelResultCancelled: Int = ChannelOperationStatus.cancelled.rawValue
+let kChannelResultFailed: Int = ChannelOperationStatus.failed.rawValue
 
 /// Buffer overflow strategies for Channel send operations (CORO-001)
 enum ChannelBufferOverflow {
@@ -203,6 +205,49 @@ final class RuntimeChannelHandle: @unchecked Sendable {
             return wasCancelled ? .cancelled : .closed
         }
         return wasDelivered ? .success : .closed
+    }
+
+    /// Attempt to send a value without suspending.  A full rendezvous or
+    /// buffered channel reports `.failed`; a closed channel reports `.closed`.
+    func trySend(_ value: Int) -> ChannelOperationStatus {
+        lock.lock()
+
+        if closed {
+            lock.unlock()
+            return .closed
+        }
+
+        if let receiver = receiverQueue.first {
+            receiverQueue.removeFirst()
+            receiver.result = value
+            lock.unlock()
+            resumeReceiverAsync(receiver)
+            return .success
+        }
+
+        if capacity > 0, buffer.count < capacity {
+            buffer.append(value)
+            lock.unlock()
+            return .success
+        }
+
+        if capacity > 0, buffer.count >= capacity {
+            switch bufferOverflow {
+            case .suspend:
+                break
+            case .dropOldest:
+                _ = buffer.removeFirst()
+                buffer.append(value)
+                lock.unlock()
+                return .success
+            case .dropLatest:
+                lock.unlock()
+                return .success
+            }
+        }
+
+        lock.unlock()
+        return .failed
     }
 
     /// Receive a value from the channel, suspending (blocking) the caller when
@@ -494,6 +539,39 @@ public func kk_channel_send(_ handle: Int, _ value: Int, _ continuation: Int) ->
     return channel.send(resolvedValue, continuation: continuation).rawValue
 }
 
+/// Non-suspending channel send used by `ProducerScope.trySend`.
+@_cdecl("kk_channel_try_send")
+public func kk_channel_try_send(_ handle: Int, _ value: Int) -> Int {
+    func isRegisteredChannelHandle(_ raw: Int) -> Bool {
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+            return false
+        }
+        let isRegistered = runtimeStorage.withGCLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        guard isRegistered else {
+            return false
+        }
+        return tryCast(ptr, to: RuntimeChannelHandle.self) != nil
+    }
+
+    let resolvedHandle: Int
+    let resolvedValue: Int
+    if !isRegisteredChannelHandle(handle), isRegisteredChannelHandle(value) {
+        resolvedHandle = value
+        resolvedValue = handle
+    } else {
+        resolvedHandle = handle
+        resolvedValue = value
+    }
+
+    guard let resolvedPtr = UnsafeMutableRawPointer(bitPattern: resolvedHandle) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_try_send received invalid channel handle")
+    }
+    let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(resolvedPtr).takeUnretainedValue()
+    return channel.trySend(resolvedValue).rawValue
+}
+
 @_cdecl("kk_channel_receive")
 public func kk_channel_receive(
     _ handle: Int,
@@ -521,10 +599,10 @@ public func kk_channel_close(_ handle: Int) -> Int {
 }
 
 /// Returns 1 when `status` indicates a closed or cancelled channel operation,
-/// 0 when `status` is `kChannelResultSuccess`.
+/// 0 for successful and non-closed try-send failures.
 @_cdecl("kk_channel_is_closed_token")
 public func kk_channel_is_closed_token(_ status: Int) -> Int {
-    return status == kChannelResultSuccess ? 0 : 1
+    return status == kChannelResultClosed || status == kChannelResultCancelled ? 1 : 0
 }
 
 /// Returns 1 if the channel is closed for receiving (i.e., it is closed AND the buffer

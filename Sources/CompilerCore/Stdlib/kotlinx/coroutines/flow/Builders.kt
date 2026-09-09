@@ -7,6 +7,9 @@
 
 package kotlinx.coroutines.flow
 
+import kotlin.internal.KsSymbolName
+import kotlinx.coroutines.channels.ProducerScope
+
 // MIGRATION-FLOW-001 (KSP-674)
 // flowOf / emptyFlow / Iterable.asFlow migrated from dedicated runtime bridges
 // (kk_flow_of / kk_flow_empty / kk_flow_as_flow) to Kotlin source composed from
@@ -29,3 +32,11 @@ public fun <T> Iterable<T>.asFlow(): Flow<T> {
         }
     }
 }
+
+// KSP-1543: Unlike the cold `flow` builder, these builders expose a real
+// ProducerScope backed by a per-collection runtime channel.
+@KsSymbolName("kk_channel_flow_create")
+public external fun <T> channelFlow(block: suspend ProducerScope<T>.() -> Unit): Flow<T>
+
+@KsSymbolName("kk_callback_flow_create")
+public external fun <T> callbackFlow(block: suspend ProducerScope<T>.() -> Unit): Flow<T>

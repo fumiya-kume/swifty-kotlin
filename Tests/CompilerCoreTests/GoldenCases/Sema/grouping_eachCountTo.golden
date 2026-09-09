@@ -1,19 +1,19 @@
-symbol fq=__local_0.dest[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
-symbol fq=__local_1.result[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=render.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
-symbol fq=render[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
+symbol fq=__local_0.dest kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
+symbol fq=__local_1.result kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
+symbol fq=render kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
+symbol fq=render.$0.values kind=valueParameter vis=private flags=_
 file fgrouping_eachCountTo package=_
-  decl render[kind=fun;params=kotlin.collections.List<String>] fun render sym=render[kind=fun;params=kotlin.collections.List<String>]
-expr e@2:16 call callee=e@2:16#1 args=[] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.mutableMapOf[kind=fun;params=;gen=2] targs=[Int,Int]
-expr e@2:5 localDecl dest mutable=0 type=_ init=e@2:16 type=Unit ref=__local_0.dest[kind=local]
-expr e@3:18 name(values) type=kotlin.collections.List<String> ref=render.$0.values[kind=vparam]
+  decl render fun render sym=render
+expr e@2:16 call callee=e@2:16#1 args=[] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.mutableMapOf#0 targs=[Int,Int]
+expr e@2:5 localDecl dest mutable=0 type=_ init=e@2:16 type=Unit ref=__local_0.dest
+expr e@3:18 name(values) type=kotlin.collections.List<String> ref=render.$0.values
 expr e@3:38 name(it) type=String ref=s-0
-expr e@3:38#1 memberCall recv=e@3:38 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
+expr e@3:38#1 memberCall recv=e@3:38 callee=length args=[] type=Int call=kotlin.length.$get
 expr e@3:36 lambda params=[] body=e@3:38#1 label=groupingBy type=(String) -> Int
-expr e@3:18#1 memberCall recv=e@3:18 callee=groupingBy args=[_:e@3:36] type=kotlin.collections.Grouping<String, Int> call=kotlin.collections.groupingBy[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[String,Int]
-expr e@3:62 name(dest) type=kotlin.collections.MutableMap<Int, Int> ref=__local_0.dest[kind=local]
-expr e@3:18#2 memberCall recv=e@3:18#1 callee=eachCountTo args=[_:e@3:62] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.eachCountTo[kind=fun;recv=kotlin.collections.Grouping<T0,T1>;params=kotlin.collections.MutableMap<T1,Int>;gen=2] targs=[String,Int]
-expr e@3:5 localDecl result mutable=0 type=_ init=e@3:18#2 type=Unit ref=__local_1.result[kind=local]
+expr e@3:18#1 memberCall recv=e@3:18 callee=groupingBy args=[_:e@3:36] type=kotlin.collections.Grouping<String, Int> call=kotlin.collections.groupingBy targs=[String,Int]
+expr e@3:62 name(dest) type=kotlin.collections.MutableMap<Int, Int> ref=__local_0.dest
+expr e@3:18#2 memberCall recv=e@3:18#1 callee=eachCountTo args=[_:e@3:62] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.eachCountTo targs=[String,Int,kotlin.collections.MutableMap<Int, Int>]
+expr e@3:5 localDecl result mutable=0 type=_ init=e@3:18#2 type=Unit ref=__local_1.result

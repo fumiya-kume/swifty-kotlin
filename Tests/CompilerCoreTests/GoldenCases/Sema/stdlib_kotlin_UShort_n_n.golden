@@ -1,65 +1,65 @@
-symbol fq=__local_0.boxed[kind=local] kind=local vis=private flags=_ type=Any
-symbol fq=__local_1.inferred[kind=local] kind=local vis=private flags=_ type=UShort
-symbol fq=__local_2.typed[kind=local] kind=local vis=private flags=_ type=UShort
-symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.show.$0.label[kind=vparam] kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.show.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.show[kind=fun;params=String,UShort] kind=function vis=private flags=_ sig=recv=_ params=[String,UShort] ret=Unit
-symbol fq=kotlin.Short.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.Short[kind=class] kind=class vis=public flags=synthetic
+symbol fq=__local_0.boxed kind=local vis=private flags=_ type=Any
+symbol fq=__local_1.inferred kind=local vis=private flags=_ type=UShort
+symbol fq=__local_2.typed kind=local vis=private flags=_ type=UShort
+symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.show kind=function vis=private flags=_ sig=recv=_ params=[String,UShort] ret=Unit
+symbol fq=golden.sema.show.$0.label kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.show.$0.value kind=valueParameter vis=private flags=_
+symbol fq=kotlin.Short kind=class vis=public flags=synthetic
+symbol fq=kotlin.Short.Companion kind=object vis=public flags=synthetic|static
 file fstdlib_kotlin_UShort_n_n package=golden.sema annotations=[@file:Suppress("INVISIBLE_MEMBER","INVISIBLE_REFERENCE")]
-  decl golden.sema.show[kind=fun;params=String,UShort] fun show sym=golden.sema.show[kind=fun;params=String,UShort]
-  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
-expr e@6:15 name(label) type=String ref=golden.sema.show.$0.label[kind=vparam]
-expr e@6:22 name(value) type=UShort ref=golden.sema.show.$0.value[kind=vparam]
+  decl golden.sema.show fun show sym=golden.sema.show
+  decl golden.sema.main fun main sym=golden.sema.main
+expr e@6:15 name(label) type=String ref=golden.sema.show.$0.label
+expr e@6:22 name(value) type=UShort ref=golden.sema.show.$0.value
 expr e@6:13 stringTemplate[expr(e@6:15),lit(=),expr(e@6:22)] type=String
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println[kind=fun;params=String]
-expr e@7:22 name(value) type=UShort ref=golden.sema.show.$0.value[kind=vparam]
-expr e@7:5 localDecl boxed mutable=0 type=Any init=e@7:22 type=Unit ref=__local_0.boxed[kind=local]
-expr e@8:15 name(label) type=String ref=golden.sema.show.$0.label[kind=vparam]
-expr e@8:26 name(boxed) type=Any ref=__local_0.boxed[kind=local]
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println#2
+expr e@7:22 name(value) type=UShort ref=golden.sema.show.$0.value
+expr e@7:5 localDecl boxed mutable=0 type=Any init=e@7:22 type=Unit ref=__local_0.boxed
+expr e@8:15 name(label) type=String ref=golden.sema.show.$0.label
+expr e@8:26 name(boxed) type=Any ref=__local_0.boxed
 expr e@8:26#1 isCheck expr=e@8:26 type=UShort type=Boolean
 expr e@8:13 stringTemplate[expr(e@8:15),lit(-is=),expr(e@8:26#1)] type=String
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println[kind=fun;params=String]
-expr e@9:15 name(label) type=String ref=golden.sema.show.$0.label[kind=vparam]
-expr e@9:30 name(boxed) type=Any ref=__local_0.boxed[kind=local]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println#2
+expr e@9:15 name(label) type=String ref=golden.sema.show.$0.label
+expr e@9:30 name(boxed) type=Any ref=__local_0.boxed
 expr e@9:30#1 asCast expr=e@9:30 type=UShort type=UShort
 expr e@9:30#2 memberCall recv=e@9:30#1 callee=toInt args=[] type=Int
 expr e@9:13 stringTemplate[expr(e@9:15),lit(-boxed=),expr(e@9:30#2)] type=String
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println#2
 expr e@13:10 string(zero) type=String
 expr e@13:25 int(0) type=Int
 expr e@13:25#1 memberCall recv=e@13:25 callee=toShort args=[] type=Short
-expr e@13:18 call callee=e@13:18#1 args=[_:e@13:25#1] type=UShort call=kotlin.UShort[kind=fun;params=Short]
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:10,_:e@13:18] type=Unit call=golden.sema.show[kind=fun;params=String,UShort]
+expr e@13:18 call callee=e@13:18#1 args=[_:e@13:25#1] type=UShort call=kotlin.UShort#1
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:10,_:e@13:18] type=Unit call=golden.sema.show
 expr e@14:10 string(max) type=String
-expr e@14:24 name(Short) type=kotlin.Short.Companion ref=kotlin.Short[kind=class]
-expr e@14:24#1 memberCall recv=e@14:24 callee=MAX_VALUE args=[] type=Short call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.Short.Companion;params=]
+expr e@14:24 name(Short) type=kotlin.Short.Companion ref=kotlin.Short
+expr e@14:24#1 memberCall recv=e@14:24 callee=MAX_VALUE args=[] type=Short call=kotlin.MAX_VALUE.$get#4
 expr e@14:24#2 memberCall recv=e@14:24#1 callee=toShort args=[] type=Short
-expr e@14:17 call callee=e@14:17#1 args=[_:e@14:24#2] type=UShort call=kotlin.UShort[kind=fun;params=Short]
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:10,_:e@14:17] type=Unit call=golden.sema.show[kind=fun;params=String,UShort]
+expr e@14:17 call callee=e@14:17#1 args=[_:e@14:24#2] type=UShort call=kotlin.UShort#1
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:10,_:e@14:17] type=Unit call=golden.sema.show
 expr e@15:10 string(minusOne) type=String
 expr e@15:31 int(1) type=Int
 expr e@15:30 unary(unaryMinus) operand=e@15:31 type=Int
 expr e@15:30#1 memberCall recv=e@15:30 callee=toShort args=[] type=Short
-expr e@15:22 call callee=e@15:22#1 args=[_:e@15:30#1] type=UShort call=kotlin.UShort[kind=fun;params=Short]
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:10,_:e@15:22] type=Unit call=golden.sema.show[kind=fun;params=String,UShort]
+expr e@15:22 call callee=e@15:22#1 args=[_:e@15:30#1] type=UShort call=kotlin.UShort#1
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:10,_:e@15:22] type=Unit call=golden.sema.show
 expr e@16:10 string(min) type=String
-expr e@16:24 name(Short) type=kotlin.Short.Companion ref=kotlin.Short[kind=class]
-expr e@16:24#1 memberCall recv=e@16:24 callee=MIN_VALUE args=[] type=Short call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.Short.Companion;params=]
+expr e@16:24 name(Short) type=kotlin.Short.Companion ref=kotlin.Short
+expr e@16:24#1 memberCall recv=e@16:24 callee=MIN_VALUE args=[] type=Short call=kotlin.MIN_VALUE.$get#4
 expr e@16:24#2 memberCall recv=e@16:24#1 callee=toShort args=[] type=Short
-expr e@16:17 call callee=e@16:17#1 args=[_:e@16:24#2] type=UShort call=kotlin.UShort[kind=fun;params=Short]
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:10,_:e@16:17] type=Unit call=golden.sema.show[kind=fun;params=String,UShort]
+expr e@16:17 call callee=e@16:17#1 args=[_:e@16:24#2] type=UShort call=kotlin.UShort#1
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:10,_:e@16:17] type=Unit call=golden.sema.show
 expr e@18:27 int(0) type=Int
 expr e@18:27#1 memberCall recv=e@18:27 callee=toShort args=[] type=Short
-expr e@18:20 call callee=e@18:20#1 args=[_:e@18:27#1] type=UShort call=kotlin.UShort[kind=fun;params=Short]
-expr e@18:5 localDecl inferred mutable=0 type=_ init=e@18:20 type=Unit ref=__local_1.inferred[kind=local]
+expr e@18:20 call callee=e@18:20#1 args=[_:e@18:27#1] type=UShort call=kotlin.UShort#1
+expr e@18:5 localDecl inferred mutable=0 type=_ init=e@18:20 type=Unit ref=__local_1.inferred
 expr e@19:34 int(1) type=Int
 expr e@19:33 unary(unaryMinus) operand=e@19:34 type=Int
 expr e@19:33#1 memberCall recv=e@19:33 callee=toShort args=[] type=Short
-expr e@19:25 call callee=e@19:25#1 args=[_:e@19:33#1] type=UShort call=kotlin.UShort[kind=fun;params=Short]
-expr e@19:5 localDecl typed mutable=0 type=UShort init=e@19:25 type=Unit ref=__local_2.typed[kind=local]
-expr e@20:24 name(inferred) type=UShort ref=__local_1.inferred[kind=local]
-expr e@20:40 name(typed) type=UShort ref=__local_2.typed[kind=local]
+expr e@19:25 call callee=e@19:25#1 args=[_:e@19:33#1] type=UShort call=kotlin.UShort#1
+expr e@19:5 localDecl typed mutable=0 type=UShort init=e@19:25 type=Unit ref=__local_2.typed
+expr e@20:24 name(inferred) type=UShort ref=__local_1.inferred
+expr e@20:40 name(typed) type=UShort ref=__local_2.typed
 expr e@20:13 stringTemplate[lit(inferred=),expr(e@20:24),lit( typed=),expr(e@20:40)] type=String
-expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13] type=Unit call=kotlin.io.println#2

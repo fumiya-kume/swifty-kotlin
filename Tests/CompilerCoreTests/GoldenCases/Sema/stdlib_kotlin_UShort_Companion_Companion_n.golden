@@ -1,108 +1,108 @@
-symbol fq=__local_0.directMax[kind=local] kind=local vis=private flags=_ type=UShort
-symbol fq=__local_1.directMin[kind=local] kind=local vis=private flags=_ type=UShort
-symbol fq=__local_2.directBits[kind=local] kind=local vis=private flags=_ type=Int
-symbol fq=__local_3.directBytes[kind=local] kind=local vis=private flags=_ type=Int
-symbol fq=__local_4.explicitMax[kind=local] kind=local vis=private flags=_ type=UShort
-symbol fq=__local_5.explicitMin[kind=local] kind=local vis=private flags=_ type=UShort
-symbol fq=__local_6.explicitBits[kind=local] kind=local vis=private flags=_ type=Int
-symbol fq=__local_7.explicitBytes[kind=local] kind=local vis=private flags=_ type=Int
-symbol fq=__local_8.maxBoundary[kind=local] kind=local vis=private flags=_ type=UInt
-symbol fq=__local_9.minBoundary[kind=local] kind=local vis=private flags=_ type=UInt
-symbol fq=__local_10.maxLiteral[kind=local] kind=local vis=private flags=_ type=UShort
-symbol fq=__local_11.minLiteral[kind=local] kind=local vis=private flags=_ type=UShort
-symbol fq=__local_12.bitProduct[kind=local] kind=local vis=private flags=_ type=Int
-symbol fq=__local_13.boxedMax[kind=local] kind=local vis=private flags=_ type=Any
-symbol fq=__local_14.boxedMin[kind=local] kind=local vis=private flags=_ type=Any
-symbol fq=__local_15.maxIsUShort[kind=local] kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_16.minIsUShort[kind=local] kind=local vis=private flags=_ type=Boolean
-symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.UShort.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.UShort[kind=class] kind=class vis=public flags=synthetic
+symbol fq=__local_0.directMax kind=local vis=private flags=_ type=UShort
+symbol fq=__local_1.directMin kind=local vis=private flags=_ type=UShort
+symbol fq=__local_2.directBits kind=local vis=private flags=_ type=Int
+symbol fq=__local_3.directBytes kind=local vis=private flags=_ type=Int
+symbol fq=__local_4.explicitMax kind=local vis=private flags=_ type=UShort
+symbol fq=__local_5.explicitMin kind=local vis=private flags=_ type=UShort
+symbol fq=__local_6.explicitBits kind=local vis=private flags=_ type=Int
+symbol fq=__local_7.explicitBytes kind=local vis=private flags=_ type=Int
+symbol fq=__local_8.maxBoundary kind=local vis=private flags=_ type=UInt
+symbol fq=__local_9.minBoundary kind=local vis=private flags=_ type=UInt
+symbol fq=__local_10.maxLiteral kind=local vis=private flags=_ type=UShort
+symbol fq=__local_11.minLiteral kind=local vis=private flags=_ type=UShort
+symbol fq=__local_12.bitProduct kind=local vis=private flags=_ type=Int
+symbol fq=__local_13.boxedMax kind=local vis=private flags=_ type=Any
+symbol fq=__local_14.boxedMin kind=local vis=private flags=_ type=Any
+symbol fq=__local_15.maxIsUShort kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_16.minIsUShort kind=local vis=private flags=_ type=Boolean
+symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.UShort#0 kind=class vis=public flags=synthetic
+symbol fq=kotlin.UShort.Companion kind=object vis=public flags=synthetic|static
 file fstdlib_kotlin_UShort_Companion_Companion_n package=golden.sema
-  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
-expr e@4:29 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort[kind=class]
-expr e@4:29#1 memberCall recv=e@4:29 callee=MAX_VALUE args=[] type=UShort call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
-expr e@4:5 localDecl directMax mutable=0 type=UShort init=e@4:29#1 type=Unit ref=__local_0.directMax[kind=local]
-expr e@5:29 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort[kind=class]
-expr e@5:29#1 memberCall recv=e@5:29 callee=MIN_VALUE args=[] type=UShort call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
-expr e@5:5 localDecl directMin mutable=0 type=UShort init=e@5:29#1 type=Unit ref=__local_1.directMin[kind=local]
-expr e@6:27 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort[kind=class]
-expr e@6:27#1 memberCall recv=e@6:27 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
-expr e@6:5 localDecl directBits mutable=0 type=Int init=e@6:27#1 type=Unit ref=__local_2.directBits[kind=local]
-expr e@7:28 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort[kind=class]
-expr e@7:28#1 memberCall recv=e@7:28 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
-expr e@7:5 localDecl directBytes mutable=0 type=Int init=e@7:28#1 type=Unit ref=__local_3.directBytes[kind=local]
-expr e@8:31 name(UShort) type=kotlin.UShort ref=kotlin.UShort[kind=class]
-expr e@8:31#1 memberCall recv=e@8:31 callee=Companion args=[] type=kotlin.UShort.Companion ref=kotlin.UShort.Companion[kind=obj]
-expr e@8:31#2 memberCall recv=e@8:31#1 callee=MAX_VALUE args=[] type=UShort call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
-expr e@8:5 localDecl explicitMax mutable=0 type=UShort init=e@8:31#2 type=Unit ref=__local_4.explicitMax[kind=local]
-expr e@9:31 name(UShort) type=kotlin.UShort ref=kotlin.UShort[kind=class]
-expr e@9:31#1 memberCall recv=e@9:31 callee=Companion args=[] type=kotlin.UShort.Companion ref=kotlin.UShort.Companion[kind=obj]
-expr e@9:31#2 memberCall recv=e@9:31#1 callee=MIN_VALUE args=[] type=UShort call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
-expr e@9:5 localDecl explicitMin mutable=0 type=UShort init=e@9:31#2 type=Unit ref=__local_5.explicitMin[kind=local]
-expr e@10:29 name(UShort) type=kotlin.UShort ref=kotlin.UShort[kind=class]
-expr e@10:29#1 memberCall recv=e@10:29 callee=Companion args=[] type=kotlin.UShort.Companion ref=kotlin.UShort.Companion[kind=obj]
-expr e@10:29#2 memberCall recv=e@10:29#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
-expr e@10:5 localDecl explicitBits mutable=0 type=Int init=e@10:29#2 type=Unit ref=__local_6.explicitBits[kind=local]
-expr e@11:30 name(UShort) type=kotlin.UShort ref=kotlin.UShort[kind=class]
-expr e@11:30#1 memberCall recv=e@11:30 callee=Companion args=[] type=kotlin.UShort.Companion ref=kotlin.UShort.Companion[kind=obj]
-expr e@11:30#2 memberCall recv=e@11:30#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
-expr e@11:5 localDecl explicitBytes mutable=0 type=Int init=e@11:30#2 type=Unit ref=__local_7.explicitBytes[kind=local]
-expr e@12:29 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort[kind=class]
-expr e@12:29#1 memberCall recv=e@12:29 callee=MAX_VALUE args=[] type=UShort call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
+  decl golden.sema.main fun main sym=golden.sema.main
+expr e@4:29 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort#0
+expr e@4:29#1 memberCall recv=e@4:29 callee=MAX_VALUE args=[] type=UShort call=kotlin.MAX_VALUE.$get#8
+expr e@4:5 localDecl directMax mutable=0 type=UShort init=e@4:29#1 type=Unit ref=__local_0.directMax
+expr e@5:29 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort#0
+expr e@5:29#1 memberCall recv=e@5:29 callee=MIN_VALUE args=[] type=UShort call=kotlin.MIN_VALUE.$get#8
+expr e@5:5 localDecl directMin mutable=0 type=UShort init=e@5:29#1 type=Unit ref=__local_1.directMin
+expr e@6:27 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort#0
+expr e@6:27#1 memberCall recv=e@6:27 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#8
+expr e@6:5 localDecl directBits mutable=0 type=Int init=e@6:27#1 type=Unit ref=__local_2.directBits
+expr e@7:28 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort#0
+expr e@7:28#1 memberCall recv=e@7:28 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#8
+expr e@7:5 localDecl directBytes mutable=0 type=Int init=e@7:28#1 type=Unit ref=__local_3.directBytes
+expr e@8:31 name(UShort) type=kotlin.UShort ref=kotlin.UShort#0
+expr e@8:31#1 memberCall recv=e@8:31 callee=Companion args=[] type=kotlin.UShort.Companion ref=kotlin.UShort.Companion
+expr e@8:31#2 memberCall recv=e@8:31#1 callee=MAX_VALUE args=[] type=UShort call=kotlin.MAX_VALUE.$get#8
+expr e@8:5 localDecl explicitMax mutable=0 type=UShort init=e@8:31#2 type=Unit ref=__local_4.explicitMax
+expr e@9:31 name(UShort) type=kotlin.UShort ref=kotlin.UShort#0
+expr e@9:31#1 memberCall recv=e@9:31 callee=Companion args=[] type=kotlin.UShort.Companion ref=kotlin.UShort.Companion
+expr e@9:31#2 memberCall recv=e@9:31#1 callee=MIN_VALUE args=[] type=UShort call=kotlin.MIN_VALUE.$get#8
+expr e@9:5 localDecl explicitMin mutable=0 type=UShort init=e@9:31#2 type=Unit ref=__local_5.explicitMin
+expr e@10:29 name(UShort) type=kotlin.UShort ref=kotlin.UShort#0
+expr e@10:29#1 memberCall recv=e@10:29 callee=Companion args=[] type=kotlin.UShort.Companion ref=kotlin.UShort.Companion
+expr e@10:29#2 memberCall recv=e@10:29#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#8
+expr e@10:5 localDecl explicitBits mutable=0 type=Int init=e@10:29#2 type=Unit ref=__local_6.explicitBits
+expr e@11:30 name(UShort) type=kotlin.UShort ref=kotlin.UShort#0
+expr e@11:30#1 memberCall recv=e@11:30 callee=Companion args=[] type=kotlin.UShort.Companion ref=kotlin.UShort.Companion
+expr e@11:30#2 memberCall recv=e@11:30#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#8
+expr e@11:5 localDecl explicitBytes mutable=0 type=Int init=e@11:30#2 type=Unit ref=__local_7.explicitBytes
+expr e@12:29 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort#0
+expr e@12:29#1 memberCall recv=e@12:29 callee=MAX_VALUE args=[] type=UShort call=kotlin.MAX_VALUE.$get#8
 expr e@12:29#2 memberCall recv=e@12:29#1 callee=toUInt args=[] type=UInt
-expr e@12:5 localDecl maxBoundary mutable=0 type=UInt init=e@12:29#2 type=Unit ref=__local_8.maxBoundary[kind=local]
-expr e@13:29 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort[kind=class]
-expr e@13:29#1 memberCall recv=e@13:29 callee=MIN_VALUE args=[] type=UShort call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
+expr e@12:5 localDecl maxBoundary mutable=0 type=UInt init=e@12:29#2 type=Unit ref=__local_8.maxBoundary
+expr e@13:29 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort#0
+expr e@13:29#1 memberCall recv=e@13:29 callee=MIN_VALUE args=[] type=UShort call=kotlin.MIN_VALUE.$get#8
 expr e@13:29#2 memberCall recv=e@13:29#1 callee=toUInt args=[] type=UInt
-expr e@13:5 localDecl minBoundary mutable=0 type=UInt init=e@13:29#2 type=Unit ref=__local_9.minBoundary[kind=local]
+expr e@13:5 localDecl minBoundary mutable=0 type=UInt init=e@13:29#2 type=Unit ref=__local_9.minBoundary
 expr e@14:30 uint(65535) type=UShort
-expr e@14:5 localDecl maxLiteral mutable=0 type=UShort init=e@14:30 type=Unit ref=__local_10.maxLiteral[kind=local]
+expr e@14:5 localDecl maxLiteral mutable=0 type=UShort init=e@14:30 type=Unit ref=__local_10.maxLiteral
 expr e@15:30 uint(0) type=UShort
-expr e@15:5 localDecl minLiteral mutable=0 type=UShort init=e@15:30 type=Unit ref=__local_11.minLiteral[kind=local]
-expr e@16:27 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort[kind=class]
-expr e@16:27#1 memberCall recv=e@16:27 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
-expr e@16:46 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort[kind=class]
-expr e@16:46#1 memberCall recv=e@16:46 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get[kind=fun;recv=kotlin.UShort.Companion;params=]
+expr e@15:5 localDecl minLiteral mutable=0 type=UShort init=e@15:30 type=Unit ref=__local_11.minLiteral
+expr e@16:27 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort#0
+expr e@16:27#1 memberCall recv=e@16:27 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#8
+expr e@16:46 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort#0
+expr e@16:46#1 memberCall recv=e@16:46 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#8
 expr e@16:27#2 binary(multiply) lhs=e@16:27#1 rhs=e@16:46#1 type=Int
-expr e@16:5 localDecl bitProduct mutable=0 type=Int init=e@16:27#2 type=Unit ref=__local_12.bitProduct[kind=local]
-expr e@17:25 name(directMax) type=UShort ref=__local_0.directMax[kind=local]
-expr e@17:5 localDecl boxedMax mutable=0 type=Any init=e@17:25 type=Unit ref=__local_13.boxedMax[kind=local]
-expr e@18:25 name(directMin) type=UShort ref=__local_1.directMin[kind=local]
-expr e@18:5 localDecl boxedMin mutable=0 type=Any init=e@18:25 type=Unit ref=__local_14.boxedMin[kind=local]
-expr e@19:32 name(boxedMax) type=Any ref=__local_13.boxedMax[kind=local]
+expr e@16:5 localDecl bitProduct mutable=0 type=Int init=e@16:27#2 type=Unit ref=__local_12.bitProduct
+expr e@17:25 name(directMax) type=UShort ref=__local_0.directMax
+expr e@17:5 localDecl boxedMax mutable=0 type=Any init=e@17:25 type=Unit ref=__local_13.boxedMax
+expr e@18:25 name(directMin) type=UShort ref=__local_1.directMin
+expr e@18:5 localDecl boxedMin mutable=0 type=Any init=e@18:25 type=Unit ref=__local_14.boxedMin
+expr e@19:32 name(boxedMax) type=Any ref=__local_13.boxedMax
 expr e@19:32#1 isCheck expr=e@19:32 type=UShort type=Boolean
-expr e@19:5 localDecl maxIsUShort mutable=0 type=Boolean init=e@19:32#1 type=Unit ref=__local_15.maxIsUShort[kind=local]
-expr e@20:32 name(boxedMin) type=Any ref=__local_14.boxedMin[kind=local]
+expr e@19:5 localDecl maxIsUShort mutable=0 type=Boolean init=e@19:32#1 type=Unit ref=__local_15.maxIsUShort
+expr e@20:32 name(boxedMin) type=Any ref=__local_14.boxedMin
 expr e@20:32#1 isCheck expr=e@20:32 type=UShort type=Boolean
-expr e@20:5 localDecl minIsUShort mutable=0 type=Boolean init=e@20:32#1 type=Unit ref=__local_16.minIsUShort[kind=local]
-expr e@21:13 name(directMax) type=UShort ref=__local_0.directMax[kind=local]
-expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@22:13 name(directMin) type=UShort ref=__local_1.directMin[kind=local]
-expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@23:13 name(directBits) type=Int ref=__local_2.directBits[kind=local]
-expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@24:13 name(directBytes) type=Int ref=__local_3.directBytes[kind=local]
-expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@25:13 name(explicitMax) type=UShort ref=__local_4.explicitMax[kind=local]
-expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@26:13 name(explicitMin) type=UShort ref=__local_5.explicitMin[kind=local]
-expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@27:13 name(explicitBits) type=Int ref=__local_6.explicitBits[kind=local]
-expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@28:13 name(explicitBytes) type=Int ref=__local_7.explicitBytes[kind=local]
-expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@29:13 name(maxBoundary) type=UInt ref=__local_8.maxBoundary[kind=local]
-expr e@29:5 call callee=e@29:5#1 args=[_:e@29:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@30:13 name(minBoundary) type=UInt ref=__local_9.minBoundary[kind=local]
-expr e@30:5 call callee=e@30:5#1 args=[_:e@30:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@31:13 name(maxLiteral) type=UShort ref=__local_10.maxLiteral[kind=local]
-expr e@31:5 call callee=e@31:5#1 args=[_:e@31:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@32:13 name(minLiteral) type=UShort ref=__local_11.minLiteral[kind=local]
-expr e@32:5 call callee=e@32:5#1 args=[_:e@32:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@33:13 name(bitProduct) type=Int ref=__local_12.bitProduct[kind=local]
-expr e@33:5 call callee=e@33:5#1 args=[_:e@33:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@34:13 name(maxIsUShort) type=Boolean ref=__local_15.maxIsUShort[kind=local]
-expr e@34:5 call callee=e@34:5#1 args=[_:e@34:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@35:13 name(minIsUShort) type=Boolean ref=__local_16.minIsUShort[kind=local]
-expr e@35:5 call callee=e@35:5#1 args=[_:e@35:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@20:5 localDecl minIsUShort mutable=0 type=Boolean init=e@20:32#1 type=Unit ref=__local_16.minIsUShort
+expr e@21:13 name(directMax) type=UShort ref=__local_0.directMax
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13] type=Unit call=kotlin.io.println#1
+expr e@22:13 name(directMin) type=UShort ref=__local_1.directMin
+expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13] type=Unit call=kotlin.io.println#1
+expr e@23:13 name(directBits) type=Int ref=__local_2.directBits
+expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println#1
+expr e@24:13 name(directBytes) type=Int ref=__local_3.directBytes
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println#1
+expr e@25:13 name(explicitMax) type=UShort ref=__local_4.explicitMax
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println#1
+expr e@26:13 name(explicitMin) type=UShort ref=__local_5.explicitMin
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println#1
+expr e@27:13 name(explicitBits) type=Int ref=__local_6.explicitBits
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println#1
+expr e@28:13 name(explicitBytes) type=Int ref=__local_7.explicitBytes
+expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println#1
+expr e@29:13 name(maxBoundary) type=UInt ref=__local_8.maxBoundary
+expr e@29:5 call callee=e@29:5#1 args=[_:e@29:13] type=Unit call=kotlin.io.println#1
+expr e@30:13 name(minBoundary) type=UInt ref=__local_9.minBoundary
+expr e@30:5 call callee=e@30:5#1 args=[_:e@30:13] type=Unit call=kotlin.io.println#1
+expr e@31:13 name(maxLiteral) type=UShort ref=__local_10.maxLiteral
+expr e@31:5 call callee=e@31:5#1 args=[_:e@31:13] type=Unit call=kotlin.io.println#1
+expr e@32:13 name(minLiteral) type=UShort ref=__local_11.minLiteral
+expr e@32:5 call callee=e@32:5#1 args=[_:e@32:13] type=Unit call=kotlin.io.println#1
+expr e@33:13 name(bitProduct) type=Int ref=__local_12.bitProduct
+expr e@33:5 call callee=e@33:5#1 args=[_:e@33:13] type=Unit call=kotlin.io.println#1
+expr e@34:13 name(maxIsUShort) type=Boolean ref=__local_15.maxIsUShort
+expr e@34:5 call callee=e@34:5#1 args=[_:e@34:13] type=Unit call=kotlin.io.println#1
+expr e@35:13 name(minIsUShort) type=Boolean ref=__local_16.minIsUShort
+expr e@35:5 call callee=e@35:5#1 args=[_:e@35:13] type=Unit call=kotlin.io.println#1

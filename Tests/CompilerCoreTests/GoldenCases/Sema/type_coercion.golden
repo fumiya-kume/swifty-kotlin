@@ -1,54 +1,57 @@
-symbol fq=__local_0.i[kind=local] kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.l[kind=local] kind=local vis=private flags=_ type=Long
-symbol fq=__local_2.d[kind=local] kind=local vis=private flags=_ type=Double
-symbol fq=__local_3.f[kind=local] kind=local vis=private flags=_ type=Float
-symbol fq=kotlin.Long.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.Long[kind=class] kind=class vis=public flags=synthetic
-symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.i kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.l kind=local vis=private flags=_ type=Long
+symbol fq=__local_2.d kind=local vis=private flags=_ type=Double
+symbol fq=__local_3.f kind=local vis=private flags=_ type=Float
+symbol fq=kotlin.Double kind=class vis=public flags=synthetic
+symbol fq=kotlin.Double.Companion kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.Long kind=class vis=public flags=synthetic
+symbol fq=kotlin.Long.Companion kind=object vis=public flags=synthetic|static
+symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ftype_coercion package=_
-  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+  decl main fun main sym=main
 expr e@2:18 int(42) type=Int
-expr e@2:5 localDecl i mutable=0 type=Int init=e@2:18 type=Unit ref=__local_0.i[kind=local]
-expr e@3:19 name(i) type=Int ref=__local_0.i[kind=local]
+expr e@2:5 localDecl i mutable=0 type=Int init=e@2:18 type=Unit ref=__local_0.i
+expr e@3:19 name(i) type=Int ref=__local_0.i
 expr e@3:19#1 memberCall recv=e@3:19 callee=toLong args=[] type=Long
-expr e@3:5 localDecl l mutable=0 type=Long init=e@3:19#1 type=Unit ref=__local_1.l[kind=local]
-expr e@4:21 name(i) type=Int ref=__local_0.i[kind=local]
-expr e@4:21#1 memberCall recv=e@4:21 callee=toDouble args=[] type=Double call=kotlin.toDouble[kind=fun;recv=Int;params=]
-expr e@4:5 localDecl d mutable=0 type=Double init=e@4:21#1 type=Unit ref=__local_2.d[kind=local]
-expr e@5:20 name(i) type=Int ref=__local_0.i[kind=local]
+expr e@3:5 localDecl l mutable=0 type=Long init=e@3:19#1 type=Unit ref=__local_1.l
+expr e@4:21 name(i) type=Int ref=__local_0.i
+expr e@4:21#1 memberCall recv=e@4:21 callee=toDouble args=[] type=Double call=kotlin.toDouble#1
+expr e@4:5 localDecl d mutable=0 type=Double init=e@4:21#1 type=Unit ref=__local_2.d
+expr e@5:20 name(i) type=Int ref=__local_0.i
 expr e@5:20#1 memberCall recv=e@5:20 callee=toFloat args=[] type=Float
-expr e@5:5 localDecl f mutable=0 type=Float init=e@5:20#1 type=Unit ref=__local_3.f[kind=local]
-expr e@6:13 name(l) type=Long ref=__local_1.l[kind=local]
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@7:13 name(d) type=Double ref=__local_2.d[kind=local]
-expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@8:13 name(f) type=Float ref=__local_3.f[kind=local]
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@9:13 name(l) type=Long ref=__local_1.l[kind=local]
+expr e@5:5 localDecl f mutable=0 type=Float init=e@5:20#1 type=Unit ref=__local_3.f
+expr e@6:13 name(l) type=Long ref=__local_1.l
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println#1
+expr e@7:13 name(d) type=Double ref=__local_2.d
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13] type=Unit call=kotlin.io.println#1
+expr e@8:13 name(f) type=Float ref=__local_3.f
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println#1
+expr e@9:13 name(l) type=Long ref=__local_1.l
 expr e@9:13#1 memberCall recv=e@9:13 callee=toInt args=[] type=Int
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@10:13 name(d) type=Double ref=__local_2.d[kind=local]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#1
+expr e@10:13 name(d) type=Double ref=__local_2.d
 expr e@10:13#1 memberCall recv=e@10:13 callee=toInt args=[] type=Int
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@11:13 name(d) type=Double ref=__local_2.d[kind=local]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#1
+expr e@11:13 name(d) type=Double ref=__local_2.d
 expr e@11:13#1 memberCall recv=e@11:13 callee=toLong args=[] type=Long
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@12:13 name(f) type=Float ref=__local_3.f[kind=local]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#1
+expr e@12:13 name(f) type=Float ref=__local_3.f
 expr e@12:13#1 memberCall recv=e@12:13 callee=toInt args=[] type=Int
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@13:13 name(f) type=Float ref=__local_3.f[kind=local]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
+expr e@13:13 name(f) type=Float ref=__local_3.f
 expr e@13:13#1 memberCall recv=e@13:13 callee=toLong args=[] type=Long
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@14:13 name(f) type=Float ref=__local_3.f[kind=local]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println#1
+expr e@14:13 name(f) type=Float ref=__local_3.f
 expr e@14:13#1 memberCall recv=e@14:13 callee=toDouble args=[] type=Double
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@15:13 name(Long) type=kotlin.Long.Companion ref=kotlin.Long[kind=class]
-expr e@15:13#1 memberCall recv=e@15:13 callee=MAX_VALUE args=[] type=Long call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.Long.Companion;params=]
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@16:13 name(Long) type=kotlin.Long.Companion ref=kotlin.Long[kind=class]
-expr e@16:13#1 memberCall recv=e@16:13 callee=MIN_VALUE args=[] type=Long call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.Long.Companion;params=]
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@17:13 memberCall recv=e@17:13#1 callee=MAX_VALUE args=[] type=Double
-expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println#1
+expr e@15:13 name(Long) type=kotlin.Long.Companion ref=kotlin.Long
+expr e@15:13#1 memberCall recv=e@15:13 callee=MAX_VALUE args=[] type=Long call=kotlin.MAX_VALUE.$get#3
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println#1
+expr e@16:13 name(Long) type=kotlin.Long.Companion ref=kotlin.Long
+expr e@16:13#1 memberCall recv=e@16:13 callee=MIN_VALUE args=[] type=Long call=kotlin.MIN_VALUE.$get#3
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println#1
+expr e@17:13 name(Double) type=kotlin.Double.Companion ref=kotlin.Double
+expr e@17:13#1 memberCall recv=e@17:13 callee=MAX_VALUE args=[] type=Double call=kotlin.MAX_VALUE.$get#1
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#1] type=Unit call=kotlin.io.println#1
 expr e@18:13 memberCall recv=e@18:13#1 callee=MAX_VALUE args=[] type=Float
-expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println#1
