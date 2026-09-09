@@ -1,0 +1,34 @@
+symbol fq=golden.sema.ProbeSet kind=class vis=private flags=_
+symbol fq=golden.sema.ProbeSet.$class0.E kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.ProbeSet.elements kind=property vis=public flags=_ type=kotlin.collections.List<golden.sema.ProbeSet.$class0.E>
+symbol fq=golden.sema.acceptSet kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int>] ret=Unit
+symbol fq=golden.sema.acceptSet.$0.values kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.probe kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.ProbeSet<Int>] ret=Boolean
+symbol fq=golden.sema.probe.$1.values kind=valueParameter vis=private flags=_
+symbol fq=kotlin.collections.AbstractSet kind=class vis=public flags=abstractType|openType type=kotlin.collections.AbstractSet<out kotlin.collections.AbstractSet.E>
+symbol fq=kotlin.collections.AbstractSet.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
+file fstdlib_kotlin_collections_AbstractSet_AbstractSet_n package=golden.sema
+  decl golden.sema.ProbeSet class ProbeSet sym=golden.sema.ProbeSet
+  decl golden.sema.acceptSet fun acceptSet sym=golden.sema.acceptSet
+  decl golden.sema.probe fun probe sym=golden.sema.probe
+expr e@8:17 name(elements) type=kotlin.collections.List<golden.sema.ProbeSet.$class0.E> ref=golden.sema.ProbeSet.elements
+expr e@8:17#1 memberCall recv=e@8:17 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@10:44 name(elements) type=kotlin.collections.List<golden.sema.ProbeSet.$class0.E> ref=golden.sema.ProbeSet.elements
+expr e@10:44#1 memberCall recv=e@10:44 callee=iterator args=[] type=kotlin.collections.Iterator<out golden.sema.ProbeSet.$class0.E> call=kotlin.collections.Collection.iterator
+expr e@16:15 name(values) type=golden.sema.ProbeSet<Int> ref=golden.sema.probe.$1.values
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:15] type=Unit call=golden.sema.acceptSet
+expr e@17:12 name(values) type=golden.sema.ProbeSet<Int> ref=golden.sema.probe.$1.values
+expr e@17:26 name(values) type=golden.sema.ProbeSet<Int> ref=golden.sema.probe.$1.values
+expr e@17:12#1 memberCall recv=e@17:12 callee=equals args=[_:e@17:26] type=Boolean call=kotlin.collections.AbstractSet.equals targs=[Int]
+expr e@17:37 name(values) type=golden.sema.ProbeSet<Int> ref=golden.sema.probe.$1.values
+expr e@17:37#1 memberCall recv=e@17:37 callee=hashCode args=[] type=Int call=kotlin.collections.AbstractSet.hashCode targs=[Int]
+expr e@17:58 name(values) type=golden.sema.ProbeSet<Int> ref=golden.sema.probe.$1.values
+expr e@17:58#1 memberCall recv=e@17:58 callee=hashCode args=[] type=Int call=kotlin.collections.AbstractSet.hashCode targs=[Int]
+expr e@17:37#2 binary(equal) lhs=e@17:37#1 rhs=e@17:58#1 type=Boolean
+expr e@17:12#2 binary(logicalAnd) lhs=e@17:12#1 rhs=e@17:37#2 type=Boolean
+expr e@17:5 return value=e@17:12#2 type=Nothing

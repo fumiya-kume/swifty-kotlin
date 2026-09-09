@@ -1638,7 +1638,7 @@
   - 未実装シンボル一覧:
     - `kotlin.collections.AbstractSet.<init>` — constructor ()  -- `constructor <init>()`
 
-- [ ] KSP-1042: kotlin.collections.AbstractSet.AbstractSet の未実装 stdlib API を実装する（2 件）
+- [x] KSP-1042: kotlin.collections.AbstractSet.AbstractSet の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.collections.AbstractSet` / receiver `AbstractSet`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractSet/AbstractSet.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1648,6 +1648,9 @@
   - 未実装シンボル一覧:
     - `kotlin.collections.AbstractSet.equals` — fun AbstractSet.equals(Any): Boolean  -- `open fun equals(kotlin/Any?): kotlin/Boolean`
     - `kotlin.collections.AbstractSet.hashCode` — fun AbstractSet.hashCode(): Int  -- `open fun hashCode(): kotlin/Int`
+  - 完了根拠: Kotlin 2.3.10 の公式 `AbstractSet` にある unordered set equality / element-hash sum の契約を、`Sources/CompilerCore/Stdlib/kotlin/collections/AbstractSet.kt` に source-backed 実装した。`equals` は self/Set 判定、順序非依存の要素照合、サイズ照合を行い、`hashCode` は要素 hash の加算を行う。対象専用の Runtime bridge、synthetic stub、RuntimeABI、CallTypeChecker/CallLowerer の name-string 特例は現行 master に存在しないため変更していない。
+  - 回帰: 専用 Sema Golden と `Scripts/diff_cases/stdlib_kotlin_collections_AbstractSet_AbstractSet_n.kt` で、同一要素の順序違い、サイズ差、要素差、非 Set、`null`、順序非依存 hashCode、`null` 要素の hashCode を固定し、kotlinc 2.3.10 と比較した。
+  - 検証: `swift build`、Sema Golden shard 37/69、対象 diff ケース、`bash Scripts/check_todo_ids.sh`、`bash Scripts/validate_runtime_abi_links.sh` が pass。
 
 - [ ] KSP-1043: kotlin.collections.ArrayDeque top-level の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.collections.ArrayDeque` / top-level
