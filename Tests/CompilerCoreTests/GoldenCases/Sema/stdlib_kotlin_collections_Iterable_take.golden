@@ -45,13 +45,13 @@ expr e@17:16 int(2) type=Int
 expr e@17:5#1 memberCall recv=e@17:5 callee=take args=[_:e@17:16] type=kotlin.collections.List<Int> call=kotlin.ranges.take#3
 expr e@18:5 name(text) type=String ref=probe.$0.text
 expr e@18:15 int(2) type=Int
-expr e@18:5#1 memberCall recv=e@18:5 callee=take args=[_:e@18:15] type=String call=kotlin.text.take
+expr e@18:5#1 memberCall recv=e@18:5 callee=take args=[_:e@18:15] type=String call=kotlin.text.take#0
 expr e@19:5 name(text) type=String ref=probe.$0.text
 expr e@19:22 name(it) type=Char ref=s-3
 expr e@19:27 char(97) type=Char
 expr e@19:22#1 binary(greaterThan) lhs=e@19:22 rhs=e@19:27 type=Boolean
 expr e@19:20 lambda params=[] body=e@19:22#1 label=takeWhile type=(Char) -> Boolean
-expr e@19:5#1 memberCall recv=e@19:5 callee=takeWhile args=[_:e@19:20] type=String call=kotlin.text.takeWhile
+expr e@19:5#1 memberCall recv=e@19:5 callee=takeWhile args=[_:e@19:20] type=String call=kotlin.text.takeWhile#0
 expr e@20:5 name(flow) type=kotlinx.coroutines.flow.Flow<Int> ref=probe.$0.flow
 expr e@20:15 int(2) type=Int
 expr e@20:5#1 memberCall recv=e@20:5 callee=take args=[_:e@20:15] type=kotlinx.coroutines.flow.Flow<Int> call=kotlinx.coroutines.flow.take targs=[Int]

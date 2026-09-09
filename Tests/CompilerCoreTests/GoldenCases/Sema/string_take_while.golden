@@ -7,7 +7,7 @@ expr e@2:46 name(it) type=Char ref=s-0
 expr e@2:52 char(99) type=Char
 expr e@2:46#1 binary(notEqual) lhs=e@2:46 rhs=e@2:52 type=Boolean
 expr e@2:44 lambda params=[] body=e@2:46#1 label=takeWhile type=(Char) -> Boolean
-expr e@2:26#1 memberCall recv=e@2:26 callee=takeWhile args=[_:e@2:44] type=String call=kotlin.text.takeWhile
+expr e@2:26#1 memberCall recv=e@2:26 callee=takeWhile args=[_:e@2:44] type=String call=kotlin.text.takeWhile#0
 expr e@2:5 localDecl prefix mutable=0 type=String init=e@2:26#1 type=Unit ref=__local_0.prefix
 expr e@3:13 name(prefix) type=String ref=__local_0.prefix
 expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13] type=Unit call=kotlin.io.println#2
