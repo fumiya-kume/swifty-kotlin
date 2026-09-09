@@ -3389,7 +3389,7 @@
     - `kotlin.native.runtime.SweepStatistics.<init>` — constructor (Long, Long)  -- `constructor <init>(kotlin/Long, kotlin/Long)`
   - 完了根拠: Kotlin 2.3.10 公式 `GCInfo.kt` と同じ `@NativeRuntimeApi` / `@SinceKotlin("1.9")` 付き constructor を bundled Kotlin source に移し、`NativeRefRuntimeSemaTests.testSweepStatisticsConstructorIsSourceBacked` で source-backed constructor と既存 synthetic property surface の分離を検証した。KSP-1272 の `sweptCount` / `keptCount` receiver properties、GC/GCInfo/MemoryUsage/RootSetStatistics/Debugging、Runtime/ABI bridge は変更していない。
 
-- [ ] KSP-1272: kotlin.native.runtime.SweepStatistics.SweepStatistics の未実装 stdlib API を実装する（2 件）
+- [~] KSP-1272: kotlin.native.runtime.SweepStatistics.SweepStatistics の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.native.runtime.SweepStatistics` / receiver `SweepStatistics`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/native/runtime/SweepStatistics/SweepStatistics.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3399,6 +3399,8 @@
   - 未実装シンボル一覧:
     - `kotlin.native.runtime.SweepStatistics.keptCount` — val SweepStatistics.keptCount: Long  -- `final val keptCount`
     - `kotlin.native.runtime.SweepStatistics.sweptCount` — val SweepStatistics.sweptCount: Long  -- `final val sweptCount`
+
+  - focused根拠: Kotlin 2.3.10 GCInfo.kt と同じ @NativeRuntimeApi / @SinceKotlin("1.9") 付き immutable Long properties を bundled Kotlin source に移し、SweepStatistics の synthetic property registration/spec を削除した。NativeRefRuntimeSemaTests で両 property の source-backed、non-synthetic、non-mutable、external-linkなしを確認し、専用 fixture は constructor の sweptCount/keptCount 順序と Long 極値を native 実行で固定する。全 Swift/Golden/diff の変更 head G は未実行のため完了は保留する。
 
 - [ ] KSP-1274: kotlin.properties.Delegates.Delegates の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.properties.Delegates` / receiver `Delegates`

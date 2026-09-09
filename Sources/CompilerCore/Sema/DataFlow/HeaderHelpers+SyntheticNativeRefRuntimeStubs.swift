@@ -436,18 +436,6 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
-        let classFQName = packageFQName + [interner.intern("SweepStatistics")]
-        let classContext = SyntheticStubRegistrationContext(
-            ownerFQName: classFQName,
-            parentSymbol: classSymbol
-        )
-        registerSyntheticPropertyStubs(
-            SyntheticNativeRefRuntimeSurfaceSpec.sweepStatisticsProperties,
-            context: classContext,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
     }
 
     // MARK: - GCInfo class
