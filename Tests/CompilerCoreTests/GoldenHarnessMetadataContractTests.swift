@@ -113,7 +113,6 @@ struct GoldenHarnessMetadataContractTests {
     /// Cases where an expression type rendered as `<error>` — the same
     /// mechanical-acceptance guard as the diagnostic inventory.
     private static let errorTypeCaseBasenames: Set<String> = [
-        "flatten_sequence_stdlib.kt",
         "inner_class.kt",
         "use_site_variance.kt",
     ]
