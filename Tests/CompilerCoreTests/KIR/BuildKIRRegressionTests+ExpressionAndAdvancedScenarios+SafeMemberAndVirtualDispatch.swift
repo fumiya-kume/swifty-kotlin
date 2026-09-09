@@ -25,7 +25,7 @@ extension BuildKIRRegressionTests {
             }
 
             #expect(dispatches.contains { dispatch in
-                if case .itableDynamic(_, 1) = dispatch { return true }
+                if case .itableDynamic(_, 2) = dispatch { return true }
                 return false
             })
         }
