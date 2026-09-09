@@ -319,13 +319,14 @@
 >
 > 2026-08-14 現 HEAD で `SyntheticBase64Stubs` / `SyntheticHexFormatStubs` は存在しないため、Base64/HexFormat 対応タスクは追加しない。
 
-- [ ] KSP-697: `buildList` capacity overload を Kotlin 化し `HeaderHelpers+SyntheticBuilderDSLStubs.swift` を削除する
+- [x] KSP-697: `buildList` capacity overload を Kotlin 化し `HeaderHelpers+SyntheticBuilderDSLStubs.swift` を削除する
   - 対象スタブ: `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticBuilderDSLStubs.swift`
   - 実装先: `Sources/CompilerCore/Stdlib/kotlin/collections/CollectionBuilders.kt`
   - 削除/降格 kk_*: `__kk_build_list_with_capacity` を活用 or 削除（`RuntimeBuilders.swift`/`RuntimeCollections.swift`。着手時 rg）
   - 手順: T
-  - diff: `build_list.kt` 等既存 + capacity 引数ケース追加
+  - diff: `collection_builders.kt` / `build_empty_collections.kt` / `ksp950_build_family.kt`（capacity・負数・freezeの既存ケースを再利用）
   - 前提: なし
+  - 2026-09-08 完了: KSP-950（#6213）で両 `buildList` overload と capacity 検証・freeze は Kotlin 実装済み。残存していた合成スタブと通常/bucketed両registryの登録を削除し、`--no-stdlib` で両overloadが未解決になる契約をテスト化した。CoreのBuilder DSL/ABI 9テスト（no-stdlibは2ケース）とBackend 5テストで、source/artifact・capacity・負数・freezeはPASS。`__kk_build_list*` の旧lowering/ABI削除は、専用の後続 RF-LOWER-CALL-004〜006 で扱う。`bash Scripts/swift_test.sh --disable-sandbox --skip-build --skip '^RuntimeTests\.'` でCore 3516・Backend 1548・CLI/LSP/RuntimeTestsParallelはPASS。Runtimeは `SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh --disable-sandbox --skip-build --filter RuntimeTests` で全2451テストPASS（既知issue 1件）。Golden 4系統は全実行内でPASS、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases` は1241 PASS / 0 FAIL / 既存SKIP 59。`loc_report.sh` はSources -192行・Synthetic helper -191行、ABI export数は不変。
 
 - [ ] KSP-699: CollectionFactory bootstrap stub を削除し factory 関数を完全に Kotlin 化する
   - 対象スタブ: `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticCollectionFactoryStubs.swift`
