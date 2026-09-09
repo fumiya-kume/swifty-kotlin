@@ -52,3 +52,38 @@ public abstract class AbstractCollection<out E> protected constructor() : Collec
 
     override fun isEmpty(): Boolean = size == 0
 }
+
+// KSP-957: source-backed implementations for the generic Iterable and Map
+// on-family functions. Keep the receiver type in the return value, matching
+// Kotlin 2.3.10's generated common stdlib sources.
+@SinceKotlin("1.1")
+@Suppress("UNCHECKED_CAST")
+public inline fun <T, C : Iterable<T>> C.onEach(action: (T) -> Unit): C {
+    val source = this as Iterable<T>
+    for (element in source) action(element)
+    return this
+}
+
+@SinceKotlin("1.4")
+@Suppress("UNCHECKED_CAST")
+public inline fun <T, C : Iterable<T>> C.onEachIndexed(action: (index: Int, T) -> Unit): C {
+    val source = this as Iterable<T>
+    source.forEachIndexed(action)
+    return this
+}
+
+@SinceKotlin("1.1")
+@Suppress("UNCHECKED_CAST")
+public inline fun <K, V, M : Map<out K, V>> M.onEach(action: (Map.Entry<K, V>) -> Unit): M {
+    val source = this as Map<K, V>
+    for (element in source.entries) action(element)
+    return this
+}
+
+@SinceKotlin("1.4")
+@Suppress("UNCHECKED_CAST")
+public inline fun <K, V, M : Map<out K, V>> M.onEachIndexed(action: (index: Int, Map.Entry<K, V>) -> Unit): M {
+    val source = this as Map<K, V>
+    source.entries.forEachIndexed(action)
+    return this
+}

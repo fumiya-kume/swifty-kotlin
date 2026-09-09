@@ -1216,7 +1216,7 @@
     - `kotlin.collections.arrayListOf` — fun arrayListOf(Array): ArrayList  -- `final fun <#A: kotlin/Any?> kotlin.collections/arrayListOf(kotlin/Array<out #A>...): kotlin.collections/ArrayList<#A>`
     - `kotlin.collections.arrayOfUninitializedElements` — fun arrayOfUninitializedElements(Int): Array  -- `final inline fun <#A: kotlin/Any?> kotlin.collections/arrayOfUninitializedElements(kotlin/Int): kotlin/Array<#A>`
 
-- [ ] KSP-957: kotlin.collections.on-family の未実装 stdlib API を実装する（4 件）
+- [x] KSP-957: kotlin.collections.on-family の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.collections` / top-level / family `on`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractCollection.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1228,6 +1228,9 @@
     - `kotlin.collections.onEach` — fun onEach(Function1): #C  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin.collections/Map<out #A, #B>> (#C).kotlin.collections/onEach(kotlin/Function1<kotlin.collections/Map.Entry<#A, #B>, kotlin/Unit>): #C`
     - `kotlin.collections.onEachIndexed` — fun onEachIndexed(Function2): #B  -- `final inline fun <#A: kotlin/Any?, #B: kotlin.collections/Iterable<#A>> (#B).kotlin.collections/onEachIndexed(kotlin/Function2<kotlin/Int, #A, kotlin/Unit>): #B`
     - `kotlin.collections.onEachIndexed` — fun onEachIndexed(Function2): #C  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin.collections/Map<out #A, #B>> (#C).kotlin.collections/onEachIndexed(kotlin/Function2<kotlin/Int, kotlin.collections/Map.Entry<#A, #B>, kotlin/Unit>): #C`
+
+  - 完了根拠: Kotlin 2.3.10 の generated common stdlib に対応する Iterable/Map の4 APIを source-backed 実装し、generic self-type receiver の binding を追加。既存の List/Sequence/String 経路は保持し、対象 runtime/ABI/synthetic stub の追加・削除は不要。
+  - 検証根拠: 対象 diff の実行結果、Sema Golden の fixture 完全一致、全 diff（1199 passed / 51 skipped）、`bash Scripts/check_todo_ids.sh`、`bash Scripts/validate_runtime_abi_links.sh` が pass。
 
 - [x] KSP-961: kotlin.collections.Entry の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.collections` / receiver `Entry`
