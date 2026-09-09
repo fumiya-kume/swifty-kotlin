@@ -1287,7 +1287,7 @@
     - `kotlin.collections.associateWith` — fun Iterable.associateWith(Function1): Map  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlin.collections/associateWith(kotlin/Function1<#A, #B>): kotlin.collections/Map<#A, #B>`
     - `kotlin.collections.associateWithTo` — fun Iterable.associateWithTo(, Function1): #C  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin.collections/MutableMap<in #A, in #B>> (kotlin.collections/Iterable<#A>).kotlin.collections/associateWithTo(#C, kotlin/Function1<#A, #B>): #C`
 
-- [ ] KSP-966: kotlin.collections.Iterable.collection-family の未実装 stdlib API を実装する（2 件）
+- [x] KSP-966: kotlin.collections.Iterable.collection-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.collections` / receiver `Iterable` / family `collection`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/Iterables.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1297,6 +1297,7 @@
   - 未実装シンボル一覧:
     - `kotlin.collections.collectionSizeOrDefault` — fun Iterable.collectionSizeOrDefault(Int): Int  -- `final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlin.collections/collectionSizeOrDefault(kotlin/Int): kotlin/Int`
     - `kotlin.collections.collectionSizeOrNull` — fun Iterable.collectionSizeOrNull(): Int  -- `final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlin.collections/collectionSizeOrNull(): kotlin/Int?`
+  - 完了根拠 (2026-09-04): Kotlin 2.3.10 本家 `Iterables.kt` と公開 stdlib ABI に合わせ、両 helper を `@PublishedApi internal` の bundled Kotlin source として追加。`Collection<*>` は `size` を返し、一般 `Iterable` は走査せず `null` / 指定 default を返す。対象名の synthetic stub・Runtime/RuntimeABI bridge・Sema/KIR name-string 特例は元から存在せず、新設もしない。focused Sema/Golden/KIR/runtime execution/diff 回帰で可視性・注釈・source binding・分岐挙動を固定する。
 
 - [ ] KSP-967: kotlin.collections.Iterable.contains-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections` / receiver `Iterable` / family `contains`
