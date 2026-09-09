@@ -170,8 +170,8 @@ final class CallLowerer {
         return result
     }
 
-    /// True for synthetic runtime-backed factory constructors that allocate
-    /// their own object (atomic scalar boxes and built-in exception classes).
+    /// True for runtime-backed factory constructors that allocate
+    /// their own object (atomic scalar/array boxes and built-in exception classes).
     private func isAtomicScalarConstructor(
         _ symbolID: SymbolID?,
         sema: SemaModule,
@@ -341,6 +341,16 @@ final class CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        // `contract { ... }` is a compiler-only DSL. Sema has already recorded
+        // its effects, so lowering the builder lambda would create dead KIR
+        // (including enum references such as InvocationKind.EXACTLY_ONCE)
+        // with no runtime meaning and potentially undefined link symbols.
+        if sema.bindings.stdlibSpecialCallKind(for: exprID) == .contract {
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+        }
+
         // SAM constructor calls: `Transformer { ... }` — the single lambda
         // argument is already marked as a SAM conversion and no call binding
         // exists for the constructor (the callee name is the fun interface itself).

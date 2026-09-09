@@ -15,5 +15,5 @@ expr e@3:38#1 memberCall recv=e@3:38 callee=length args=[] type=Int call=kotlin.
 expr e@3:36 lambda params=[] body=e@3:38#1 label=groupingBy type=(String) -> Int
 expr e@3:18#1 memberCall recv=e@3:18 callee=groupingBy args=[_:e@3:36] type=kotlin.collections.Grouping<String, Int> call=kotlin.collections.groupingBy targs=[String,Int]
 expr e@3:62 name(dest) type=kotlin.collections.MutableMap<Int, Int> ref=__local_0.dest
-expr e@3:18#2 memberCall recv=e@3:18#1 callee=eachCountTo args=[_:e@3:62] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.eachCountTo targs=[String,Int]
+expr e@3:18#2 memberCall recv=e@3:18#1 callee=eachCountTo args=[_:e@3:62] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.eachCountTo targs=[String,Int,kotlin.collections.MutableMap<Int, Int>]
 expr e@3:5 localDecl result mutable=0 type=_ init=e@3:18#2 type=Unit ref=__local_1.result

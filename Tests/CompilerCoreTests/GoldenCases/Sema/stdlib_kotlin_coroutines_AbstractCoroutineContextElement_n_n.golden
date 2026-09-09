@@ -1,0 +1,7 @@
+symbol fq=golden.sema.Probe kind=class vis=public flags=abstractType|openType
+symbol fq=golden.sema.Probe.<init>.$0.key kind=valueParameter vis=private flags=_
+symbol fq=kotlin.coroutines.CoroutineContext.Key kind=interface vis=internal flags=synthetic type=kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.CoroutineContext.Key.$synthetic.E>
+symbol fq=kotlin.coroutines.CoroutineContext.Key.$synthetic.E kind=typeParameter vis=private flags=synthetic
+file fstdlib_kotlin_coroutines_AbstractCoroutineContextElement_n_n package=golden.sema
+  decl golden.sema.Probe class Probe sym=golden.sema.Probe
+expr e@6:86 name(key) type=kotlin.coroutines.CoroutineContext.Key<*> ref=golden.sema.Probe.<init>.$0.key

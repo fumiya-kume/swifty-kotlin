@@ -12,6 +12,8 @@ package kotlin.time
 // operations remain extension functions in kotlin/time/TimeMark.kt.
 
 import kotlin.internal.KsSymbolName
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 @KsSymbolName("__kk_time_source_monotonic_mark_now")
 private external fun __kk_time_source_monotonic_mark_now(receiver: Long): Long
@@ -78,4 +80,31 @@ public interface TimeSource {
 
     public companion object {
     }
+}
+
+// KSP-1475
+// Measure an interval with the receiver's time source. The mark is captured
+// before invoking the block so the result includes the complete block body.
+@OptIn(ExperimentalContracts::class)
+public inline fun TimeSource.measureTime(block: () -> Unit): Duration {
+    contract {
+        callsInPlace(block, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
+    }
+    val mark = markNow()
+    block()
+    return mark.elapsedNow()
+}
+
+// KSP-1475
+// Preserve the value produced by the block while measuring against the same
+// receiver mark. TimedValue's synthetic constructor supplies the existing
+// runtime allocation ABI without adding a new bridge for this source API.
+@OptIn(ExperimentalContracts::class)
+public inline fun <T> TimeSource.measureTimedValue(block: () -> T): TimedValue<T> {
+    contract {
+        callsInPlace(block, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
+    }
+    val mark = markNow()
+    val result = block()
+    return TimedValue(result, mark.elapsedNow())
 }

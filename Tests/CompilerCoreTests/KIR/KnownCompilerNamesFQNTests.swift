@@ -190,5 +190,35 @@ struct KnownCompilerNamesFQNTests {
             "Regex(String, stdlib-Set) should route to kk_regex_create_with_options"
         )
     }
+
+    @Test func testAtomicArrayClassesAreRuntimeFactorySymbols() {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let knownNames = KnownCompilerNames(interner: interner)
+        let names = [
+            ["kotlin", "concurrent", "AtomicIntArray"],
+            ["kotlin", "concurrent", "AtomicLongArray"],
+            ["kotlin", "concurrent", "AtomicArray"],
+            ["kotlin", "concurrent", "atomics", "AtomicIntArray"],
+            ["kotlin", "concurrent", "atomics", "AtomicLongArray"],
+            ["kotlin", "concurrent", "atomics", "AtomicArray"],
+        ]
+        for fqName in names {
+            let interned = fqName.map(interner.intern)
+            let symbol = symbols.define(
+                kind: .class,
+                name: interned.last!,
+                fqName: interned,
+                declSite: nil,
+                visibility: .public,
+                flags: []
+            )
+            let info = symbols.symbol(symbol)!
+            #expect(
+                knownNames.isAtomicScalarFactorySymbol(info),
+                Comment(rawValue: fqName.joined(separator: ".") + " constructor must lower as a runtime factory")
+            )
+        }
+    }
 }
 #endif
