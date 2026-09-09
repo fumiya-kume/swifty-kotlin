@@ -1851,7 +1851,7 @@
     - `kotlin.collections.List.listIterator` — fun List.listIterator(Int): ListIterator  -- `abstract fun listIterator(kotlin/Int): kotlin.collections/ListIterator<#A>`
     - `kotlin.collections.List.size` — val List.size: Int  -- `abstract val size`
 
-- [ ] KSP-1064: kotlin.collections.ListIterator.ListIterator の未実装 stdlib API を実装する（6 件）
+- [x] KSP-1064: kotlin.collections.ListIterator.ListIterator の未実装 stdlib API を実装する（6 件）
   - 対象: `kotlin.collections.ListIterator` / receiver `ListIterator`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/ListIterator/ListIterator.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1865,6 +1865,8 @@
     - `kotlin.collections.ListIterator.nextIndex` — fun ListIterator.nextIndex(): Int  -- `abstract fun nextIndex(): kotlin/Int`
     - `kotlin.collections.ListIterator.previous` — fun ListIterator.previous(): #A  -- `abstract fun previous(): #A`
     - `kotlin.collections.ListIterator.previousIndex` — fun ListIterator.previousIndex(): Int  -- `abstract fun previousIndex(): kotlin/Int`
+  - 完了根拠: `ListIterator.kt` に Kotlin 2.3.10 準拠の `next` / `hasNext` override と4つの双方向 APIを source-backed declaration として揃え、bundled source に対する同名 synthetic fallback の生成を抑制した。non-bundled / precompiled context 向けの既存 Runtime bridge と fallback は維持している。
+  - 回帰: `ListIteratorSourceMigrationTests`（2 tests）、対象 Golden 再生成、既存 `stdlib_kotlin_collections_n_ListIterator.kt` diff、`RuntimeABIExternalLinkValidationTests`（4 tests）を確認した。
 
 - [ ] KSP-1066: kotlin.collections.Map top-level の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections.Map` / top-level
