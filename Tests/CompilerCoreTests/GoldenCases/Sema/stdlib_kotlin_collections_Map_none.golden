@@ -4,6 +4,7 @@ symbol fq=collectionNone[kind=fun;params=kotlin.collections.Collection<Int?>] ki
 symbol fq=customMap.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=customMap[kind=fun;params=ProbeMap] kind=function vis=public flags=_ sig=recv=_ params=[ProbeMap] ret=Boolean
 symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
 symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
@@ -60,7 +61,7 @@ expr e@20:12 name(values) type=kotlin.collections.List<Int?> ref=listNone.$2.val
 expr e@20:12#1 memberCall recv=e@20:12 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.List<T0>;params=;gen=1] targs=[Int?]
 expr e@20:5 return value=e@20:12#1 type=Nothing
 expr e@24:12 name(values) type=kotlin.collections.Collection<Int?> ref=collectionNone.$0.values[kind=vparam]
-expr e@24:12#1 memberCall recv=e@24:12 callee=none args=[] type=Boolean
+expr e@24:12#1 memberCall recv=e@24:12 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int?]
 expr e@24:5 return value=e@24:12#1 type=Nothing
 expr e@28:12 name(values) type=kotlin.sequences.Sequence<Int?> ref=sequenceNone.$7.values[kind=vparam]
 expr e@28:12#1 memberCall recv=e@28:12 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int?]

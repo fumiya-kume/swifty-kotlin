@@ -349,6 +349,26 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_channel_flow_create",
+            parameters: [
+                RuntimeABIParameter(name: "emitterFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_callback_flow_create",
+            parameters: [
+                RuntimeABIParameter(name: "emitterFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_flow_emit",
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
@@ -698,7 +718,18 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
-            section: "Coroutine"
+            section: "Coroutine",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_channel_try_send",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine",
+            isThrowing: false
         ),
         RuntimeABIFunctionSpec(
             name: "kk_channel_receive",

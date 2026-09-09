@@ -3,7 +3,6 @@ symbol fq=golden.sema.atomicIntArrayFromSize[kind=fun;params=Int] kind=function 
 symbol fq=golden.sema.atomicIntArrayFromStorage.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.atomicIntArrayFromStorage[kind=fun;params=kotlin.IntArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.IntArray] ret=kotlin.concurrent.AtomicIntArray
 symbol fq=kotlin.IntArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.concurrent.AtomicIntArray[kind=class] kind=class vis=public flags=synthetic type=kotlin.concurrent.AtomicIntArray
 file fstdlib_kotlin_concurrent_AtomicIntArray_n_n package=golden.sema annotations=[@file:OptIn(kotlin.ExperimentalStdlibApi::class),@file:Suppress("INVISIBLE_MEMBER","INVISIBLE_REFERENCE")]
   decl golden.sema.atomicIntArrayFromSize[kind=fun;params=Int] fun atomicIntArrayFromSize sym=golden.sema.atomicIntArrayFromSize[kind=fun;params=Int]
   decl golden.sema.atomicIntArrayFromStorage[kind=fun;params=kotlin.IntArray] fun atomicIntArrayFromStorage sym=golden.sema.atomicIntArrayFromStorage[kind=fun;params=kotlin.IntArray]

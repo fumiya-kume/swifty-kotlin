@@ -2,6 +2,8 @@ symbol fq=__local_0.a[kind=local] kind=local vis=private flags=_ type=Int
 symbol fq=__local_1.b[kind=local] kind=local vis=private flags=_ type=Int
 symbol fq=__local_2.c[kind=local] kind=local vis=private flags=_ type=Long
 symbol fq=__local_3.d[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=kotlin.Double.Companion[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.Double[kind=class] kind=class vis=public flags=synthetic
 symbol fq=kotlin.Int.Companion[kind=obj] kind=object vis=public flags=synthetic|static
 symbol fq=kotlin.Int[kind=class] kind=class vis=public flags=synthetic
 symbol fq=kotlin.Long.Companion[kind=obj] kind=object vis=public flags=synthetic|static
@@ -18,5 +20,6 @@ expr e@3:5 localDecl b mutable=0 type=_ init=e@3:13#1 type=Unit ref=__local_1.b[
 expr e@4:13 name(Long) type=kotlin.Long.Companion ref=kotlin.Long[kind=class]
 expr e@4:13#1 memberCall recv=e@4:13 callee=MAX_VALUE args=[] type=Long call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.Long.Companion;params=]
 expr e@4:5 localDecl c mutable=0 type=_ init=e@4:13#1 type=Unit ref=__local_2.c[kind=local]
-expr e@5:13 memberCall recv=e@5:13#1 callee=NaN args=[] type=Double
-expr e@5:5 localDecl d mutable=0 type=_ init=e@5:13 type=Unit ref=__local_3.d[kind=local]
+expr e@5:13 name(Double) type=kotlin.Double.Companion ref=kotlin.Double[kind=class]
+expr e@5:13#1 memberCall recv=e@5:13 callee=NaN args=[] type=Double call=kotlin.NaN.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@5:5 localDecl d mutable=0 type=_ init=e@5:13#1 type=Unit ref=__local_3.d[kind=local]

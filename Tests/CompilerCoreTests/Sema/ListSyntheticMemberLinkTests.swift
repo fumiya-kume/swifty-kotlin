@@ -60,6 +60,106 @@ struct ListSyntheticMemberLinkTests {
     }
 
     @Test
+    func testListRequireNoNullsUsesListSpecificBundledSourceOverload() throws {
+        let source = """
+        fun checked(values: List<String?>): List<String> {
+            return values.requireNoNulls()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try #require(ctx.ast)
+            let sema = try #require(ctx.sema)
+            #expect(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.requireNoNulls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let callExpr = try #require(lastExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, args, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "requireNoNulls" && args.isEmpty
+            })
+            let chosenCallee = try #require(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            let signature = try #require(sema.symbols.functionSignature(for: chosenCallee))
+            let receiverType = try #require(signature.receiverType)
+            guard case let .classType(receiverClass) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) else {
+                Issue.record("Expected List.requireNoNulls receiver to be a class type")
+                return
+            }
+            let receiverName = try #require(sema.symbols.symbol(receiverClass.classSymbol)?.name)
+
+            #expect(ctx.interner.resolve(receiverName) == "List")
+            #expect(sema.symbols.isSourceBackedSymbol(chosenCallee))
+            #expect(sema.symbols.externalLinkName(for: chosenCallee) == nil)
+        }
+    }
+
+    @Test
+    func testListSliceSelectsRangeAndIterableSourceOverloads() throws {
+        let source = """
+        fun sliceValues(values: List<Int>, indices: List<Int>): List<Int> {
+            val ranged = values.slice(1..2)
+            val selected = values.slice(indices)
+            return ranged + selected
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try #require(ctx.ast)
+            let sema = try #require(ctx.sema)
+            #expect(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.slice overloads to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let sliceCalls = ast.arena.exprs.indices.compactMap { index -> ExprID? in
+                let exprID = ExprID(rawValue: Int32(index))
+                guard case let .memberCall(_, callee, _, args, range) = ast.arena.expr(exprID),
+                      ctx.interner.resolve(callee) == "slice",
+                      args.count == 1,
+                      ctx.sourceManager.path(of: range.start.file) == path
+                else {
+                    return nil
+                }
+                return exprID
+            }
+            #expect(sliceCalls.count == 2)
+
+            for callExpr in sliceCalls {
+                guard case let .memberCall(_, _, _, args, _) = ast.arena.expr(callExpr),
+                      let argument = args.first,
+                      let chosenCallee = sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                      let signature = sema.symbols.functionSignature(for: chosenCallee),
+                      let parameterType = signature.parameterTypes.first
+                else {
+                    Issue.record("Expected List.slice call to have a bound source overload")
+                    continue
+                }
+                guard case let .classType(parameterClass) = sema.types.kind(of: sema.types.makeNonNullable(parameterType)),
+                      let parameterName = sema.symbols.symbol(parameterClass.classSymbol)?.name
+                else {
+                    Issue.record("Expected List.slice parameter to be a class type")
+                    continue
+                }
+
+                #expect(sema.symbols.isSourceBackedSymbol(chosenCallee))
+                #expect(sema.symbols.externalLinkName(for: chosenCallee) == nil)
+                if sema.bindings.isRangeExpr(argument.expr) {
+                    #expect(ctx.interner.resolve(parameterName) == "IntRange")
+                } else {
+                    #expect(ctx.interner.resolve(parameterName) == "Iterable")
+                }
+            }
+        }
+    }
+
+    @Test
     func testListTransformMembersUseRuntimeExternalLinksForParameterReceivers() throws {
         let source = """
         import kotlin.random.Random
