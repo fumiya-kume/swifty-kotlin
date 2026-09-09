@@ -3,7 +3,7 @@ symbol fq=__local_1.s2 kind=local vis=private flags=_ type=kotlin.collections.Li
 symbol fq=__local_2.s3 kind=local vis=private flags=_ type=kotlin.collections.List<Int>
 symbol fq=__local_3.fn kind=local vis=private flags=_ type=() -> Int?
 symbol fq=__local_4.s4 kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence.toList kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.toList.$0.T> params=[] ret=kotlin.collections.List<kotlin.sequences.toList.$0.T>
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit

@@ -181,9 +181,10 @@ extension KIRLoweringDriver {
     /// may reference other instance fields by bare name (e.g. `initCount += 1`,
     /// DEBT-KIR-008/BUG-170). The generated function is invoked later through
     /// the delegate's stored function pointer (`LazyImpl`'s `initializer` for
-    /// `.lazy`, `SimpleObservableProperty`/`SimpleVetoableProperty`'s `onChange`
-    /// for the other two), which cannot simply gain an extra KIR parameter — the
-    /// runtime side always invokes it through a fixed dispatch entry point
+    /// `.lazy`, or the callback captured by the source-backed observable and
+    /// vetoable delegate objects). These callbacks cannot simply gain an extra
+    /// KIR parameter because the runtime side always invokes them through a
+    /// fixed dispatch entry point
     /// (`kk_function_invoke_0` for `.lazy`, `kk_function_invoke_3` for
     /// `.observable`/`.vetoable`) that already distinguishes a raw thunk
     /// pointer from a boxed `Function0`/`Function3` closure value (BUG-151
@@ -294,7 +295,7 @@ extension KIRLoweringDriver {
             // relying on it only ever being invoked through
             // kk_function_invoke_0/_3's raw-thunk branch. Passed instead to a
             // real Kotlin closure-typed parameter (`LazyImpl`'s
-            // `initializer`, `SimpleObservableProperty`'s `onChange`, ...)
+            // `initializer`, `ObservableProperty`'s callback, ...)
             // and invoked there through ordinary closure-call syntax, the
             // value must be a genuine boxed FunctionN -- but
             // `kk_function_create_N` boxes a `(closureRaw, args..., outThrown)`-
@@ -545,35 +546,4 @@ extension KIRLoweringDriver {
         return materializedExpr
     }
 
-    /// Lowers the initial value argument from a delegate expression.
-    func lowerDelegateInitialValue(
-        delegateExpr: ExprID?,
-        shared: KIRLoweringSharedContext,
-        emit instructions: inout KIRLoweringEmitContext
-    ) -> KIRExprID {
-        let ast = shared.ast
-        let sema = shared.sema
-        let arena = shared.arena
-        guard let exprID = delegateExpr,
-              let expr = ast.arena.expr(exprID)
-        else {
-            let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.anyType)
-            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-            return zeroExpr
-        }
-
-        switch expr {
-        case let .call(_, _, args, _):
-            if let firstArg = args.first {
-                return lowerExpr(firstArg.expr, shared: shared, emit: &instructions)
-            }
-        case let .memberCall(_, _, _, args, _):
-            if let firstArg = args.first {
-                return lowerExpr(firstArg.expr, shared: shared, emit: &instructions)
-            }
-        default: break
-        }
-
-        return lowerExpr(exprID, shared: shared, emit: &instructions)
-    }
 }

@@ -6,8 +6,8 @@ symbol fq=floatSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.c
 symbol fq=floatSum.$2.values kind=valueParameter vis=private flags=_
 symbol fq=intSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
 symbol fq=intSum.$3.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=longSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Long>] ret=Long
 symbol fq=longSum.$4.values kind=valueParameter vis=private flags=_
 symbol fq=shortSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Short>] ret=Int

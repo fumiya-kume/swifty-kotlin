@@ -162,6 +162,62 @@ struct SymbolTableTests {
     }
 
     @Test
+    func testPropertyCanCoexistWithFactoryValueParameterUsingSameFQName() throws {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let fqName = [interner.intern("AtomicIntArray"), interner.intern("size")]
+        let parameterID = symbols.define(
+            kind: .valueParameter,
+            name: interner.intern("size"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .private
+        )
+        let propertyID = symbols.define(
+            kind: .property,
+            name: interner.intern("size"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+
+        #expect(parameterID != propertyID)
+        #expect(symbols.count == 2)
+        #expect(symbols.lookupAll(fqName: fqName) == [parameterID, propertyID])
+        #expect(try #require(symbols.symbol(parameterID)).kind == .valueParameter)
+        #expect(try #require(symbols.symbol(propertyID)).kind == .property)
+    }
+
+    @Test
+    func testFactoryValueParameterCanCoexistWithPropertyUsingSameFQNameInReverseOrder() throws {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let fqName = [interner.intern("AtomicIntArray"), interner.intern("size")]
+        let propertyID = symbols.define(
+            kind: .property,
+            name: interner.intern("size"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        let parameterID = symbols.define(
+            kind: .valueParameter,
+            name: interner.intern("size"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .private
+        )
+
+        #expect(parameterID != propertyID)
+        #expect(symbols.count == 2)
+        #expect(symbols.lookupAll(fqName: fqName) == [propertyID, parameterID])
+        #expect(try #require(symbols.symbol(propertyID)).kind == .property)
+        #expect(try #require(symbols.symbol(parameterID)).kind == .valueParameter)
+    }
+
+    @Test
     func testFunctionCanCoexistWithPropertyUsingSameNameInReverseDeclarationOrder() {
         let interner = StringInterner()
         let symbols = SymbolTable()
