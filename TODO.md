@@ -1042,7 +1042,7 @@
     - `kotlin.Char.Companion.SIZE_BITS` — val Companion.SIZE_BITS: Int  -- `final const val SIZE_BITS`
     - `kotlin.Char.Companion.SIZE_BYTES` — val Companion.SIZE_BYTES: Int  -- `final const val SIZE_BYTES`
 
-- [ ] KSP-819: kotlin.Comparable.Comparable の未実装 stdlib API を実装する（1 件）
+- [x] KSP-819: kotlin.Comparable.Comparable の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.Comparable` / receiver `Comparable`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/Comparable/Comparable.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
