@@ -5612,4 +5612,5 @@
 ### ARCH Tier 3: 診断 UX と小粒フォローアップ
 
 - [ ] ARCH-031: `Diagnostic.secondaryRanges` を実配線する。フィールドは存在するが**全 13 構築サイトが空配列を渡し、レンダラも読まない**。型不一致（期待型の由来位置）とオーバーロード曖昧（候補宣言位置）の 2 診断から詰め、テキスト/JSON 両レンダラで表示する。完了条件: 該当診断の golden 更新 + `rg 'secondaryRanges: \[\]' Sources/CompilerCore` の件数減少を PR 本文に記載 + G。
-- [ ] ARCH-032: `DiagnosticCodeAction` に TextEdit ペイロードを追加し LSP quick-fix を成立させる。現状 codeActions は title+kind のみで**適用可能な編集を持たない**ラベル。`edits: [(range, newText)]` を追加し、LSPServer の codeAction ハンドラへ貫通、代表 2 診断（未使用 import 削除・`@Suppress` 追加等）で実装。完了条件: LSPServerTests で edit 適用結果を固定 + G。
+- [~] ARCH-032: `DiagnosticCodeAction` に TextEdit ペイロードを追加し LSP quick-fix を成立させる。現状 codeActions は title+kind のみで**適用可能な編集を持たない**ラベル。`edits: [(range, newText)]` を追加し、LSPServer の codeAction ハンドラへ貫通、代表 2 診断（`override` 追加・`const` 修飾子削除）で実装。完了条件: LSPServerTests で edit 適用結果を固定 + G。
+  - 実装済み・共通 G 待ち: `DiagnosticTextEdit` を持つ `DiagnosticCodeAction`、LSP `textDocument/codeAction` routing/capability/WorkspaceEdit、`KSWIFTK-SEMA-OVERRIDE` の `override ` 挿入と `KSWIFTK-SEMA-0080` の lexer token に基づく `const ` 削除を実装し、UTF-16 位置・context.only・不正／stale document・適用後再解析を LSPServerTests に固定した。exact-base full Swift/Golden の共通 G は未完了。

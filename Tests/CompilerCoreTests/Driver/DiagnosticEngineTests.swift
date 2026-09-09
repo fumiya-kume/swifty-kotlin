@@ -482,6 +482,33 @@ struct DiagnosticEngineTests {
     }
 
     @Test
+    func testRenderJSONCodeActionIncludesTextEdits() {
+        let sourceManager = SourceManager()
+        let fileID = sourceManager.addFile(path: "edit.kt", contents: Data("const var answer = 1\n".utf8))
+        let edit = DiagnosticTextEdit(
+            range: SourceRange(
+                start: SourceLocation(file: fileID, offset: 0),
+                end: SourceLocation(file: fileID, offset: 6)
+            ),
+            newText: ""
+        )
+        let action = DiagnosticCodeAction(title: "Remove const", edits: [edit])
+        let engine = DiagnosticEngine()
+        engine.error(
+            "KSWIFTK-SEMA-0080",
+            "const var is invalid",
+            range: edit.range,
+            codeActions: [action]
+        )
+
+        let json = engine.renderJSON(sourceManager)
+        #expect(json.contains("\"edits\""))
+        #expect(json.contains("\"newText\": \"\""))
+        #expect(json.contains("\"start\": { \"line\": 0, \"character\": 0 }"))
+        #expect(json.contains("\"end\": { \"line\": 0, \"character\": 6 }"))
+    }
+
+    @Test
     func testRenderJSONMultipleDiagnosticsSorted() {
         let srcMgr = SourceManager()
         let fileID = srcMgr.addFile(path: "multi.kt", contents: Data("aaa\nbbb\nccc\n".utf8))
