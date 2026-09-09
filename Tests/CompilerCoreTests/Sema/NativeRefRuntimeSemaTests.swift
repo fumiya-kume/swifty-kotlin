@@ -227,14 +227,22 @@ struct NativeRefRuntimeSemaTests {
     @Test
     func testWeakReferenceHasGetMember() throws {
         let (sema, interner) = try sharedSema()
-        let classFQName = ["kotlin", "native", "ref", "WeakReference"].map { interner.intern($0) }
-        let getMemberFQName = classFQName + [interner.intern("get")]
-        let members = sema.symbols.lookupAll(fqName: getMemberFQName)
-        #expect(!(members.isEmpty), "WeakReference should have a get() member")
-
-        let getMember = try #require(members.first)
+        let getFQName = ["kotlin", "native", "ref", "get"].map { interner.intern($0) }
+        let getMember = try #require(
+            sema.symbols.lookupAll(fqName: getFQName).first { symbolID in
+                guard let symbol = sema.symbols.symbol(symbolID),
+                      symbol.kind == .function,
+                      !symbol.flags.contains(.synthetic)
+                else {
+                    return false
+                }
+                return sema.symbols.isSourceBackedSymbol(symbolID)
+            },
+            "WeakReference.get() should be a bundled source extension"
+        )
         let signature = try #require(sema.symbols.functionSignature(for: getMember))
         #expect(signature.parameterTypes.count == 0, "WeakReference.get() should take no parameters")
+        #expect(signature.receiverType != nil, "WeakReference.get() should have a receiver")
         // Return type should be nullable (T?)
         let returnKind = sema.types.kind(of: signature.returnType)
         if case let .typeParam(param) = returnKind {
@@ -242,10 +250,8 @@ struct NativeRefRuntimeSemaTests {
         } else {
             Issue.record("Expected return type to be a nullable type param, got \(returnKind)")
         }
-        #expect(
-            sema.symbols.externalLinkName(for: getMember) == "kk_weak_ref_get",
-            "WeakReference.get() should lower to kk_weak_ref_get"
-        )
+        #expect(sema.symbols.externalLinkName(for: getMember) == nil)
+        #expect(sema.symbols.isSourceBackedSymbol(getMember))
     }
 
     @Test
@@ -270,19 +276,25 @@ struct NativeRefRuntimeSemaTests {
     @Test
     func testWeakReferenceHasClearMember() throws {
         let (sema, interner) = try sharedSema()
-        let classFQName = ["kotlin", "native", "ref", "WeakReference"].map { interner.intern($0) }
-        let clearMemberFQName = classFQName + [interner.intern("clear")]
+        let clearFQName = ["kotlin", "native", "ref", "clear"].map { interner.intern($0) }
         let clearMember = try #require(
-            sema.symbols.lookupAll(fqName: clearMemberFQName).first,
-            "WeakReference should have a clear() member"
+            sema.symbols.lookupAll(fqName: clearFQName).first { symbolID in
+                guard let symbol = sema.symbols.symbol(symbolID),
+                      symbol.kind == .function,
+                      !symbol.flags.contains(.synthetic)
+                else {
+                    return false
+                }
+                return sema.symbols.isSourceBackedSymbol(symbolID)
+            },
+            "WeakReference.clear() should be a bundled source extension"
         )
         let signature = try #require(sema.symbols.functionSignature(for: clearMember))
         #expect(signature.parameterTypes.count == 0)
+        #expect(signature.receiverType != nil)
         #expect(signature.returnType == sema.types.unitType)
-        #expect(
-            sema.symbols.externalLinkName(for: clearMember) == "kk_weak_ref_clear",
-            "WeakReference.clear() should lower to kk_weak_ref_clear"
-        )
+        #expect(sema.symbols.externalLinkName(for: clearMember) == nil)
+        #expect(sema.symbols.isSourceBackedSymbol(clearMember))
     }
 
     @Test
