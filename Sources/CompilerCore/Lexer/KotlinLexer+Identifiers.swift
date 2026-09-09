@@ -30,13 +30,24 @@ extension KotlinLexer {
         }
         let name = text(from: start ..< cursor)
         offset = cursor
+        let kind: TokenKind
+        if let cached = identifierKinds[name] {
+            kind = cached
+        } else {
+            kind = classifyIdentifier(name)
+            identifierKinds[name] = kind
+        }
+        return Token(kind: kind, range: makeRange(start: start, end: cursor), leadingTrivia: leadingTrivia)
+    }
+
+    private func classifyIdentifier(_ name: String) -> TokenKind {
         if let keyword = Keyword(rawValue: name) {
-            return Token(kind: .keyword(keyword), range: makeRange(start: start, end: cursor), leadingTrivia: leadingTrivia)
+            return .keyword(keyword)
         }
         if let softKeyword = SoftKeyword(rawValue: name) {
-            return Token(kind: .softKeyword(softKeyword), range: makeRange(start: start, end: cursor), leadingTrivia: leadingTrivia)
+            return .softKeyword(softKeyword)
         }
-        return Token(kind: .identifier(interner.intern(name)), range: makeRange(start: start, end: cursor), leadingTrivia: leadingTrivia)
+        return .identifier(interner.intern(name))
     }
 
     func scanBacktickedIdentifier(leadingTrivia: [TriviaPiece], start: Int) -> Token {
