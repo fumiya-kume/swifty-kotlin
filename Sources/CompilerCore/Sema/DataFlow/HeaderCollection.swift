@@ -1631,14 +1631,33 @@ extension DataFlowSemaPhase {
         // Compatibility shells intentionally keep a nil declSite so bundled
         // source declarations do not displace them in golden semantic dumps.
         // KSP-683 needs the migrated Duration nominals to remain source-backed
-        // for their value-class and enum metadata.
+        // for their value-class and enum metadata. KSP-1083 applies the same
+        // staged source-shell treatment to the kotlin.concurrent atomic
+        // nominals while their constructors and members remain residual.
         let resolvedFQName = fqName.map(interner.resolve)
-        return resolvedFQName == ["kotlin", "native", "ref", "WeakReference"]
+        if resolvedFQName == ["kotlin", "native", "ref", "WeakReference"]
             || resolvedFQName == ["kotlin", "ranges", "IntProgression"]
             || resolvedFQName == ["kotlin", "time", "Duration"]
             || resolvedFQName == ["kotlin", "time", "DurationUnit"]
             || resolvedFQName == ["kotlin", "text", "CharCategory"]
-            || resolvedFQName == ["kotlin", "native", "concurrent", "TransferMode"]
+            || resolvedFQName == ["kotlin", "native", "concurrent", "TransferMode"] {
+            return true
+        }
+        guard resolvedFQName.count == 3,
+              resolvedFQName[0] == "kotlin",
+              resolvedFQName[1] == "concurrent"
+        else {
+            return false
+        }
+        return [
+            "AtomicArray",
+            "AtomicInt",
+            "AtomicIntArray",
+            "AtomicLong",
+            "AtomicLongArray",
+            "AtomicNativePtr",
+            "AtomicReference",
+        ].contains(resolvedFQName[2])
     }
 
     /// The fully-qualified names a bundled source file is allowed to claim from

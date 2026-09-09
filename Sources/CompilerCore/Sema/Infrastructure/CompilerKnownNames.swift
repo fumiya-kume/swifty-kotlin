@@ -581,6 +581,9 @@ package struct KnownCompilerNames {
         let atomicLongName = interner.intern("AtomicLong")
         let atomicBooleanName = interner.intern("AtomicBoolean")
         let atomicReferenceName = interner.intern("AtomicReference")
+        let atomicIntArrayName = interner.intern("AtomicIntArray")
+        let atomicLongArrayName = interner.intern("AtomicLongArray")
+        let atomicArrayName = interner.intern("AtomicArray")
         let javaAtomicIntegerName = interner.intern("AtomicInteger")
         let java = interner.intern("java")
         let util = interner.intern("util")
@@ -591,10 +594,16 @@ package struct KnownCompilerNames {
             [kotlin, kotlinConcurrent, atomicLongName],
             [kotlin, kotlinConcurrent, atomicBooleanName],
             [kotlin, kotlinConcurrent, atomicReferenceName],
+            [kotlin, kotlinConcurrent, atomicIntArrayName],
+            [kotlin, kotlinConcurrent, atomicLongArrayName],
+            [kotlin, kotlinConcurrent, atomicArrayName],
             [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicIntName],
             [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicLongName],
             [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicBooleanName],
             [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicReferenceName],
+            [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicIntArrayName],
+            [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicLongArrayName],
+            [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicArrayName],
             [java, util, javaConcurrent, javaAtomic, javaAtomicIntegerName],
         ]
     }
@@ -654,10 +663,14 @@ package struct KnownCompilerNames {
         return symbol.name == stringBuilder && symbol.fqName.isEmpty
     }
 
-    /// True for synthetic runtime-backed atomic scalar classes whose constructors
-    /// are factory functions (e.g. `kk_atomic_int_create`) rather than
-    /// `(this, value)` initializers. These classes must not allocate a generic
-    /// `kk_object_new` instance before calling the constructor.
+    /// True for runtime-backed atomic box classes whose constructors are
+    /// factory functions (e.g. `kk_atomic_int_create`, `kk_atomic_int_array_create`)
+    /// rather than `(this, value)` initializers. These classes must not allocate
+    /// a generic `kk_object_new` instance before calling the constructor.
+    ///
+    /// Includes the source-backed `kotlin.concurrent` shells: claiming the
+    /// synthetic class drops `.synthetic`, so constructor lowering has to
+    /// recognize them by FQN rather than by the old special-call path.
     func isAtomicScalarFactorySymbol(_ symbol: SemanticSymbol) -> Bool {
         atomicScalarFactoryFQNames.contains(symbol.fqName)
     }

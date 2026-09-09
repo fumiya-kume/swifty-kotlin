@@ -2012,13 +2012,15 @@
     - `kotlin.collections.Set.iterator` — fun Set.iterator(): Iterator  -- `abstract fun iterator(): kotlin.collections/Iterator<#A>`
     - `kotlin.collections.Set.size` — val Set.size: Int  -- `abstract val size`
 
-- [ ] KSP-1083: kotlin.concurrent top-level の未実装 stdlib API を実装する（11 件）
+- [x] KSP-1083: kotlin.concurrent top-level の未実装 stdlib API を実装する（10 件）
   - 対象: `kotlin.concurrent` / top-level
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/concurrent/Stdlib.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_concurrent_n_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_concurrent_n_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_concurrent_n_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠: `Stdlib.kt` に 7 件の source-backed nominal declaration と 3 件の source-backed factory を追加し、残る constructor/member は KSP-1085〜KSP-1098 の専有範囲として既存 residual bridge を維持した。
+  - `kotlin.concurrent.Volatile` は KSP-1099（PR #6496）の専有範囲のため、本 TODO の対象から除外する。
   - 未実装シンボル一覧:
     - `kotlin.concurrent.AtomicArray` — class kotlin.concurrent.AtomicArray  -- `final class <#A: kotlin/Any?> kotlin.concurrent/AtomicArray {`
     - `kotlin.concurrent.AtomicArray` — fun AtomicArray(Int, Function1): AtomicArray  -- `final inline fun <#A: reified kotlin/Any?> kotlin.concurrent/AtomicArray(kotlin/Int, kotlin/Function1<kotlin/Int, #A>): kotlin.concurrent/AtomicArray<#A>`
@@ -2030,7 +2032,6 @@
     - `kotlin.concurrent.AtomicLongArray` — fun AtomicLongArray(Int, Function1): AtomicLongArray  -- `final inline fun kotlin.concurrent/AtomicLongArray(kotlin/Int, kotlin/Function1<kotlin/Int, kotlin/Long>): kotlin.concurrent/AtomicLongArray`
     - `kotlin.concurrent.AtomicNativePtr` — class kotlin.concurrent.AtomicNativePtr  -- `final class kotlin.concurrent/AtomicNativePtr {`
     - `kotlin.concurrent.AtomicReference` — class kotlin.concurrent.AtomicReference  -- `final class <#A: kotlin/Any?> kotlin.concurrent/AtomicReference {`
-    - `kotlin.concurrent.Volatile` — class kotlin.concurrent.Volatile  -- `open annotation class kotlin.concurrent/Volatile : kotlin/Annotation {`
 
 - [ ] KSP-1084: kotlin.concurrent.KMutableProperty0 の未実装 stdlib API を実装する（9 件）
   - 対象: `kotlin.concurrent` / receiver `KMutableProperty0`
