@@ -284,6 +284,153 @@ extension CallTypeChecker {
         )
     }
 
+    /// Bind the CharSequence substring overloads and recover their bundled
+    /// source declarations when ordinary member lookup has no candidate. The
+    /// range argument is refined from its source-level receiver classification
+    /// so inline range literals keep their IntRange overload instead of being
+    /// mistaken for a scalar index.
+    func tryBindSyntheticStringSubstringFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        argTypes: [TypeID],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        safeCall: Bool,
+        existingCandidates: [SymbolID] = []
+    ) -> TypeID? {
+        guard ctx.interner.resolve(calleeName) == "substring",
+              args.count == 1 || args.count == 2,
+              isSyntheticCharSequenceReceiverType(receiverType, sema: ctx.sema)
+        else {
+            return nil
+        }
+
+        var refinedArgTypes = argTypes
+        let rangeArgumentType: TypeID? = if args.count == 1 {
+            sourceLevelRangeMemberLookupType(
+                receiverExpr: args[0].expr,
+                receiverType: argTypes[0],
+                sema: ctx.sema,
+                interner: ctx.interner
+            )
+        } else {
+            nil
+        }
+        if let rangeType = rangeArgumentType {
+            refinedArgTypes[0] = rangeType
+        }
+
+        let isRangeCall = rangeArgumentType != nil
+        let nonNullArgs = refinedArgTypes.map { ctx.sema.types.makeNonNullable($0) }
+        let validShape = if isRangeCall {
+            true
+        } else {
+            nonNullArgs.allSatisfy { $0 == ctx.sema.types.intType }
+        }
+        guard validShape else { return nil }
+
+        // If member lookup found a concrete receiver member or a visible user
+        // extension, resolve those candidates first. The bundled source is a
+        // recovery path and must not bypass normal Kotlin precedence.
+        let nonNullReceiver = ctx.sema.types.makeNonNullable(receiverType)
+        let scopedCandidates = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible.filter { candidate in
+            guard let symbol = ctx.cachedSymbol(candidate),
+                  symbol.kind == .function,
+                  let signature = ctx.sema.symbols.functionSignature(for: candidate),
+                  let declaredReceiver = signature.receiverType
+            else {
+                return false
+            }
+            return extensionSyntheticFallbackReceiverMatches(
+                callSiteReceiver: nonNullReceiver,
+                declaredReceiver: declaredReceiver,
+                sema: ctx.sema
+            )
+        }
+        var normalCandidates = existingCandidates
+        for candidate in scopedCandidates where !normalCandidates.contains(candidate) {
+            normalCandidates.append(candidate)
+        }
+        // Kotlin gives an applicable concrete member precedence over all
+        // extensions, even when both declarations use the same receiver type.
+        // Source symbols encode a member under its owning nominal FQName, while
+        // an extension keeps its package or file FQName. Reconstruct the owner
+        // hierarchy so this distinction survives bundled-source lookup.
+        var memberOwnerFQNames = Set<[InternedString]>()
+        if let receiverNominal = driver.helpers.nominalSymbol(
+            of: nonNullReceiver,
+            types: ctx.sema.types
+        ) {
+            var pendingOwners = [receiverNominal]
+            while let owner = pendingOwners.first {
+                pendingOwners.removeFirst()
+                guard let ownerSymbol = ctx.sema.symbols.symbol(owner),
+                      memberOwnerFQNames.insert(ownerSymbol.fqName).inserted
+                else {
+                    continue
+                }
+                pendingOwners.append(contentsOf: ctx.sema.symbols.directSupertypes(for: owner))
+            }
+        }
+        let concreteMemberCandidates = normalCandidates.filter { candidate in
+            guard let symbol = ctx.sema.symbols.symbol(candidate),
+                  symbol.kind == .function,
+                  symbol.fqName.count > 1
+            else {
+                return false
+            }
+            return memberOwnerFQNames.contains(Array(symbol.fqName.dropLast()))
+        }
+        let candidateGroups = concreteMemberCandidates.isEmpty
+            ? [normalCandidates]
+            : [concreteMemberCandidates, normalCandidates]
+        for candidates in candidateGroups where !candidates.isEmpty {
+            let resolvedArgs = zip(args, refinedArgTypes).map { argument, type in
+                CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+            }
+            let resolved = ctx.resolver.resolveCall(
+                candidates: candidates,
+                call: CallExpr(
+                    range: range,
+                    calleeName: calleeName,
+                    args: resolvedArgs,
+                    explicitTypeArgs: explicitTypeArgs
+                ),
+                expectedType: expectedType,
+                implicitReceiverType: receiverType,
+                ctx: ctx.semaCtx
+            )
+            if let chosen = resolved.chosenCallee {
+                let returnType = bindCallAndResolveReturnType(
+                    id,
+                    chosen: chosen,
+                    resolved: resolved,
+                    sema: ctx.sema
+                )
+                let finalType = safeCall ? ctx.sema.types.makeNullable(returnType) : returnType
+                ctx.sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
+        return tryBindSyntheticStringMemberFallback(
+            id,
+            calleeName: calleeName,
+            receiverType: receiverType,
+            args: args,
+            argTypes: refinedArgTypes,
+            range: range,
+            ctx: ctx,
+            expectedType: expectedType,
+            explicitTypeArgs: explicitTypeArgs,
+            safeCall: safeCall
+        )
+    }
+
     func isSyntheticStringMemberCandidate(
         _ symbolID: SymbolID,
         named calleeName: InternedString,
