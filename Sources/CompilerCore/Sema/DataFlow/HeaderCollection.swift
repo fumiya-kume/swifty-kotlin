@@ -1639,6 +1639,7 @@ extension DataFlowSemaPhase {
             || resolvedFQName == ["kotlin", "ranges", "IntProgression"]
             || resolvedFQName == ["kotlin", "time", "Duration"]
             || resolvedFQName == ["kotlin", "time", "DurationUnit"]
+            || resolvedFQName == ["kotlin", "native", "concurrent", "Future"]
             || resolvedFQName == ["kotlin", "text", "CharCategory"]
             || resolvedFQName == ["kotlin", "native", "concurrent", "TransferMode"] {
             return true
