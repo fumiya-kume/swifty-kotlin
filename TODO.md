@@ -1049,13 +1049,14 @@
   - 未実装シンボル一覧:
     - `kotlin.Comparable.compareTo` — fun Comparable.compareTo(): Int  -- `abstract fun compareTo(#A): kotlin/Int`
 
-- [ ] KSP-827: kotlin.DeepRecursiveScope.DeepRecursiveScope の未実装 stdlib API を実装する（1 件）
+- [x] KSP-827: kotlin.DeepRecursiveScope.DeepRecursiveScope の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.DeepRecursiveScope` / receiver `DeepRecursiveScope`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/DeepRecursiveScope/DeepRecursiveScope.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_DeepRecursiveScope_DeepRecursiveScope_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_DeepRecursiveScope_DeepRecursiveScope_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_DeepRecursiveScope_DeepRecursiveScope_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠: bundled `DeepRecursive.kt` の既存 `__kk_deep_recursive_scope_callRecursive` bridge に Kotlin 2.3.10 の `suspend` 契約を反映し、専用 Sema Golden・focused Sema signature test・kotlinc diff・既存 DeepRecursive runtime 回帰で確認。KSP-826 の `DeepRecursiveFunction` receiver 拡張と共有 runtime/ABI bridge は変更しない。
   - 未実装シンボル一覧:
     - `kotlin.DeepRecursiveScope.callRecursive` — fun DeepRecursiveScope.callRecursive(): #B  -- `abstract suspend fun callRecursive(#A): #B`
 
