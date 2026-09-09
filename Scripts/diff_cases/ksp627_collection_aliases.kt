@@ -31,6 +31,8 @@ fun main() {
     set.add("a")
     println(set.size)
     println(set.contains("a"))
+    println(set.remove("a"))
+    println(set.contains("a"))
 
     val linked = LinkedHashSet<Int>()
     linked.add(6)
