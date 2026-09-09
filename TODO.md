@@ -4396,9 +4396,9 @@
   - 未実装シンボル一覧:
     - `kotlin.text.chunked` — fun CharSequence.chunked(Int, Function1): List  -- `final fun <#A: kotlin/Any?> (kotlin/CharSequence).kotlin.text/chunked(kotlin/Int, kotlin/Function1<kotlin/CharSequence, #A>): kotlin.collections/List<#A>`
 
-- [ ] KSP-1368: kotlin.text.CharSequence.common-family の未実装 stdlib API を実装する（2 件）
+- [~] KSP-1368: kotlin.text.CharSequence.common-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `common`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringComparison.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_text_CharSequence_common.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_text_CharSequence_common.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_text_CharSequence_common.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
@@ -4406,6 +4406,9 @@
   - 未実装シンボル一覧:
     - `kotlin.text.commonPrefixWith` — fun CharSequence.commonPrefixWith(CharSequence, Boolean): String  -- `final fun (kotlin/CharSequence).kotlin.text/commonPrefixWith(kotlin/CharSequence, kotlin/Boolean = ...): kotlin/String`
     - `kotlin.text.commonSuffixWith` — fun CharSequence.commonSuffixWith(CharSequence, Boolean): String  -- `final fun (kotlin/CharSequence).kotlin.text/commonSuffixWith(kotlin/CharSequence, kotlin/Boolean = ...): kotlin/String`
+  - 完了根拠: `StringComparison.kt` に Kotlin 2.3.10 の `CharSequence` receiver overload を追加した。既存の `String` overload、`__kkCharsEqual` の二段 case-fold、String/CharSequence の indexed dispatch は保持し、サロゲート対を結果境界で分割しない専用 helper を同じ source family に限定した。Runtime ABI / synthetic bridge は追加していない。
+  - 回帰: `stdlib_kotlin_text_CharSequence_common.kt` の Sema Golden と diff fixture で、静的 CharSequence の String/StringBuilder/custom receiver、空/全一致/部分一致、ignoreCase、非 ASCII、サロゲート境界を固定した。既存 `common_prefix_with` / `common_suffix_with` Golden は overload 番号だけ再生成した。
+  - 検証: `swift build --disable-sandbox` と専用 GoldenHarnessWorker probe、`check_todo_ids.sh`、`git diff --check` が pass。指定の `run_heavy.py` 経由専用 diff、Golden shard、全 Swift/Golden/all diff、Runtime ABI link 検証は共有2枠（base 全 Swift / 他 TODO の検証）待機中のため保留し、Draft として記録する。
 
 - [ ] KSP-1369: kotlin.text.CharSequence.contains-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `contains`
