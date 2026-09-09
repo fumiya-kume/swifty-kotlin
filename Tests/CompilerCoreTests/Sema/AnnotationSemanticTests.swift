@@ -146,7 +146,7 @@ struct AnnotationSemanticTests {
 
             """,
 
-            // testSyntheticDeprecatedToCharEmitsWarning
+            // testSyntheticDeprecatedToCharEmitsError
             """
             package sample11
                     fun caller(): Char = 65L.toChar()
@@ -390,6 +390,32 @@ struct AnnotationSemanticTests {
                     @Suppress("DATA_CLASS_COPY_VISIBILITY")
                     data class Secret private constructor(val value: Int)
 
+            """,
+
+            // testDeprecatedSinceKotlinRefinesSeverityAndHonorsSuppression
+            """
+            package sample39
+                    @Deprecated("Use replacement")
+                    @DeprecatedSinceKotlin(warningSince = "1.0", errorSince = "2.1")
+                    fun sinceError(): Int = 1
+
+                    @Deprecated("Use replacement")
+                    @DeprecatedSinceKotlin(warningSince = "1.0", errorSince = "3.1")
+                    fun sinceWarning(): Int = 2
+
+                    @Deprecated("Use replacement")
+                    @DeprecatedSinceKotlin(warningSince = "3.0", errorSince = "3.1")
+                    fun sinceFuture(): Int = 3
+
+                    @Deprecated("Use replacement")
+                    @DeprecatedSinceKotlin(warningSince = "3.0")
+                    fun sinceFutureWarningOnly(): Int = 4
+
+                    @Suppress("DEPRECATION_ERROR")
+                    fun suppressed(): Int = sinceError()
+
+                    fun caller(): Int = sinceError() + sinceWarning() + sinceFuture() + sinceFutureWarningOnly()
+
             """
         ]
 
@@ -522,8 +548,8 @@ struct AnnotationSemanticTests {
                 let diagnostics = sampleDiags.filter { $0.code == "KSWIFTK-SEMA-DEPRECATED" }
 
                 #expect(diagnostics.count == 1, "Expected one deprecated diagnostic for toChar(), got: \(sampleDiags)")
-                let v8 = diagnostics.contains(where: isWarning)
-                #expect(v8, "Expected deprecated warning for toChar(), got: \(sampleDiags)")
+                let v8 = diagnostics.contains(where: isError)
+                #expect(v8, "Expected deprecated error for toChar(), got: \(sampleDiags)")
                 #expect(diagnostics[0].message.contains("toChar"), "Expected toChar() in message, got: \(diagnostics[0].message)")
             }
             // testSyntheticDeprecatedStringSubSequenceEmitsWarning
@@ -785,6 +811,21 @@ struct AnnotationSemanticTests {
                 let diagnostics = sampleDiags.filter { $0.code == "KSWIFTK-SEMA-DATA-COPY-VISIBILITY" }
 
                 #expect(diagnostics.isEmpty, "Expected DATA_CLASS_COPY_VISIBILITY suppression alias to suppress diagnostic, got: \(sampleDiags)")
+            }
+            // testDeprecatedSinceKotlinRefinesSeverityAndHonorsSuppression
+            do {
+                let samplePath = paths[39]
+                let sampleDiags = diagnosticsForPath(samplePath, in: ctx)
+
+                let diagnostics = sampleDiags.filter { $0.code == "KSWIFTK-SEMA-DEPRECATED" }
+
+                #expect(diagnostics.count == 2, "Expected only unsuppressed error/warning diagnostics, got: \(sampleDiags)")
+                #expect(diagnostics.contains(where: isError), "Expected errorSince to promote the diagnostic, got: \(diagnostics)")
+                #expect(diagnostics.contains(where: isWarning), "Expected warningSince to retain a warning, got: \(diagnostics)")
+                #expect(diagnostics.contains(where: { $0.message.contains("sinceError") }))
+                #expect(diagnostics.contains(where: { $0.message.contains("sinceWarning") }))
+                #expect(!diagnostics.contains(where: { $0.message.contains("sinceFuture") }))
+                #expect(!diagnostics.contains(where: { $0.message.contains("sinceFutureWarningOnly") }))
             }
 
         }

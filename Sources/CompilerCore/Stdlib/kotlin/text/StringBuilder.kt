@@ -56,7 +56,7 @@ public class StringBuilder : Appendable, CharSequence {
         __kk_string_builder_append_obj(value.toString())
 
     fun append(value: Any?): StringBuilder =
-        __kk_string_builder_append_obj(value)
+        __kk_string_builder_append_obj(value.toString())
 
     fun append(value: Byte): StringBuilder =
         __kk_string_builder_append_obj(value.toString())
@@ -66,6 +66,13 @@ public class StringBuilder : Appendable, CharSequence {
 
     fun append(value: CharArray): StringBuilder =
         appendRange(value, 0, value.size)
+
+    fun append(str: CharArray, offset: Int, len: Int): StringBuilder {
+        if (offset < 0 || len < 0 || offset > str.size - len) {
+            throw IndexOutOfBoundsException("offset=$offset, length=$len, size=${str.size}")
+        }
+        return appendRange(str, offset, offset + len)
+    }
 
     fun append(vararg value: Any?): StringBuilder {
         var index = 0
@@ -82,10 +89,153 @@ public class StringBuilder : Appendable, CharSequence {
         return this
     }
 
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
+    inline fun appendLine(value: Boolean): StringBuilder = append(value).appendLine()
+
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
+    inline fun appendLine(value: Byte): StringBuilder = append(value.toInt()).appendLine()
+
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
+    inline fun appendLine(value: Char): StringBuilder = append(value).appendLine()
+
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
+    inline fun appendLine(value: CharArray): StringBuilder = append(value).appendLine()
+
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
+    inline fun appendLine(value: CharSequence?): StringBuilder = append(value).appendLine()
+
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
+    inline fun appendLine(value: Double): StringBuilder = append(value).appendLine()
+
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
+    inline fun appendLine(value: Float): StringBuilder = append(value).appendLine()
+
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
+    inline fun appendLine(value: Int): StringBuilder = append(value).appendLine()
+
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
+    inline fun appendLine(value: Long): StringBuilder = append(value).appendLine()
+
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
+    inline fun appendLine(value: Short): StringBuilder = append(value.toInt()).appendLine()
+
+    @SinceKotlin("1.4")
+    @kotlin.internal.InlineOnly
+    @IgnorableReturnValue
+    inline fun appendLine(value: String?): StringBuilder = append(value).appendLine()
+
     fun appendLine(): StringBuilder {
         __kk_string_builder_append_obj("\n")
         return this
     }
+
+    @Deprecated(
+        "Use appendLine instead. Note that the new method always appends the line feed character '\\n' regardless of the system line separator.",
+        ReplaceWith("appendLine()")
+    )
+    @DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "2.1")
+    fun appendln(): StringBuilder = appendLine()
+
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        "Use appendLine instead. Note that the new method always appends the line feed character '\\n' regardless of the system line separator.",
+        ReplaceWith("appendLine(value)")
+    )
+    @DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "2.1")
+    @kotlin.internal.InlineOnly
+    inline fun appendln(value: Any?): StringBuilder = append(value).appendln()
+
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        "Use appendLine instead. Note that the new method always appends the line feed character '\\n' regardless of the system line separator.",
+        ReplaceWith("appendLine(value)")
+    )
+    @DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "2.1")
+    @kotlin.internal.InlineOnly
+    inline fun appendln(value: Boolean): StringBuilder = append(value).appendln()
+
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        "Use appendLine instead. Note that the new method always appends the line feed character '\\n' regardless of the system line separator.",
+        ReplaceWith("appendLine(value)")
+    )
+    @DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "2.1")
+    @kotlin.internal.InlineOnly
+    inline fun appendln(value: Byte): StringBuilder = append(value.toInt()).appendln()
+
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        "Use appendLine instead. Note that the new method always appends the line feed character '\\n' regardless of the system line separator.",
+        ReplaceWith("appendLine(value)")
+    )
+    @DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "2.1")
+    @kotlin.internal.InlineOnly
+    inline fun appendln(value: Double): StringBuilder = append(value).appendln()
+
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        "Use appendLine instead. Note that the new method always appends the line feed character '\\n' regardless of the system line separator.",
+        ReplaceWith("appendLine(value)")
+    )
+    @DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "2.1")
+    @kotlin.internal.InlineOnly
+    inline fun appendln(value: Float): StringBuilder = append(value).appendln()
+
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        "Use appendLine instead. Note that the new method always appends the line feed character '\\n' regardless of the system line separator.",
+        ReplaceWith("appendLine(value)")
+    )
+    @DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "2.1")
+    @kotlin.internal.InlineOnly
+    inline fun appendln(value: Int): StringBuilder = append(value).appendln()
+
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        "Use appendLine instead. Note that the new method always appends the line feed character '\\n' regardless of the system line separator.",
+        ReplaceWith("appendLine(value)")
+    )
+    @DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "2.1")
+    @kotlin.internal.InlineOnly
+    inline fun appendln(value: Long): StringBuilder = append(value).appendln()
+
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        "Use appendLine instead. Note that the new method always appends the line feed character '\\n' regardless of the system line separator.",
+        ReplaceWith("appendLine(value)")
+    )
+    @DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "2.1")
+    @kotlin.internal.InlineOnly
+    inline fun appendln(value: Short): StringBuilder = append(value.toInt()).appendln()
+
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        "Use appendLine instead. Note that the new method always appends the line feed character '\\n' regardless of the system line separator.",
+        ReplaceWith("appendLine(value)")
+    )
+    @DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "2.1")
+    @kotlin.internal.InlineOnly
+    inline fun appendln(value: String?): StringBuilder = append(value).appendln()
 
     fun insert(index: Int, value: Any?): StringBuilder =
         insertString(index, value.toString())

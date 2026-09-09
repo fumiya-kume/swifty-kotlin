@@ -2,6 +2,48 @@ import Foundation
 
 // ANNO-001: @Deprecated annotation checking helpers.
 
+private struct KotlinCompilerVersion: Comparable {
+    let major: Int
+    let minor: Int
+    let patch: Int
+
+    static func < (lhs: KotlinCompilerVersion, rhs: KotlinCompilerVersion) -> Bool {
+        if lhs.major != rhs.major {
+            return lhs.major < rhs.major
+        }
+        if lhs.minor != rhs.minor {
+            return lhs.minor < rhs.minor
+        }
+        return lhs.patch < rhs.patch
+    }
+
+    init?(rawValue: String) {
+        let components = rawValue.split(separator: ".", omittingEmptySubsequences: false)
+        guard components.count == 2 || components.count == 3,
+              let major = Int(components[0]),
+              let minor = Int(components[1]) else {
+            return nil
+        }
+        let patch = components.count == 3 ? Int(components[2]) : 0
+        guard let patch, major >= 0, minor >= 0, patch >= 0 else {
+            return nil
+        }
+        self.major = major
+        self.minor = minor
+        self.patch = patch
+    }
+
+    init(major: Int, minor: Int, patch: Int) {
+        self.major = major
+        self.minor = minor
+        self.patch = patch
+    }
+}
+
+// Keep this in sync with the Kotlin target used by the bundled stdlib
+// artifact (currently 2.3.10).
+private let kotlinCompilerTargetVersion = KotlinCompilerVersion(major: 2, minor: 3, patch: 10)
+
 extension TypeCheckHelpers {
     private enum DeprecatedLevel {
         case warning
@@ -12,6 +54,12 @@ extension TypeCheckHelpers {
         let message: String
         let level: DeprecatedLevel
         let replaceWith: String?
+    }
+
+    private struct DeprecatedSinceKotlinArguments {
+        let warningSince: KotlinCompilerVersion?
+        let errorSince: KotlinCompilerVersion?
+        let hiddenSince: KotlinCompilerVersion?
     }
 
     /// Checks whether `symbol` has a `@Deprecated` annotation and emits an appropriate
@@ -27,43 +75,63 @@ extension TypeCheckHelpers {
         diagnostics: DiagnosticEngine
     ) {
         let annotations = sema.symbols.annotations(for: symbolID)
-        for ann in annotations
-            where KnownCompilerAnnotation.deprecated.matches(ann.annotationFQName)
-        {
-            let symbolName = if let sym = sema.symbols.symbol(symbolID) {
-                sym.fqName.map { interner.resolve($0) }.joined(separator: ".")
-            } else {
-                "<unknown>"
-            }
-            let parsed = parseDeprecatedArguments(ann.arguments)
-            var deprecationMessage = parsed.message.isEmpty
-                ? "'\(symbolName)' is deprecated."
-                : "'\(symbolName)' is deprecated. \(parsed.message)"
-            let codeActions: [DiagnosticCodeAction]
-            if let replaceWith = parsed.replaceWith, !replaceWith.isEmpty {
-                deprecationMessage += " Replace with: \(replaceWith)"
-                codeActions = [DiagnosticCodeAction(title: "Replace with '\(replaceWith)'")]
-            } else {
-                codeActions = []
-            }
-
-            if parsed.level == .error {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-DEPRECATED",
-                    deprecationMessage,
-                    range: range,
-                    codeActions: codeActions
-                )
-            } else {
-                diagnostics.warning(
-                    "KSWIFTK-SEMA-DEPRECATED",
-                    deprecationMessage,
-                    range: range,
-                    codeActions: codeActions
-                )
-            }
-            return // Only emit one deprecation diagnostic per symbol reference.
+        guard let deprecatedAnnotation = annotations.first(where: {
+            KnownCompilerAnnotation.deprecated.matches($0.annotationFQName)
+        }) else {
+            return
         }
+
+        let symbolName = if let sym = sema.symbols.symbol(symbolID) {
+            sym.fqName.map { interner.resolve($0) }.joined(separator: ".")
+        } else {
+            "<unknown>"
+        }
+        let parsed = parseDeprecatedArguments(deprecatedAnnotation.arguments)
+        let sinceArguments = annotations.first(where: {
+            KnownCompilerAnnotation.deprecatedSinceKotlin.matches($0.annotationFQName)
+        }).map { parseDeprecatedSinceKotlinArguments($0.arguments) }
+
+        // An explicit @Deprecated(level = ERROR) remains authoritative.  The
+        // SinceKotlin metadata only refines the default warning level used by
+        // the stdlib as the target compiler version advances.
+        let severity: DeprecatedSeverity = if parsed.level == .error {
+            .error
+        } else if let sinceArguments {
+            deprecatedSeverity(for: sinceArguments)
+        } else {
+            .warning
+        }
+        guard severity != .none else {
+            return
+        }
+
+        var deprecationMessage = parsed.message.isEmpty
+            ? "'\(symbolName)' is deprecated."
+            : "'\(symbolName)' is deprecated. \(parsed.message)"
+        let codeActions: [DiagnosticCodeAction]
+        if let replaceWith = parsed.replaceWith, !replaceWith.isEmpty {
+            deprecationMessage += " Replace with: \(replaceWith)"
+            codeActions = [DiagnosticCodeAction(title: "Replace with '\(replaceWith)'")]
+        } else {
+            codeActions = []
+        }
+
+        if severity == .error {
+            diagnostics.error(
+                "KSWIFTK-SEMA-DEPRECATED",
+                deprecationMessage,
+                range: range,
+                codeActions: codeActions
+            )
+        } else {
+            diagnostics.warning(
+                "KSWIFTK-SEMA-DEPRECATED",
+                deprecationMessage,
+                range: range,
+                codeActions: codeActions
+            )
+        }
+        return // Only emit one deprecation diagnostic per symbol reference.
     }
 
     func checkBuiltinDeprecation(
@@ -137,6 +205,67 @@ extension TypeCheckHelpers {
         let replaceWith = parseReplaceWithExpression(replaceWithCandidate)
 
         return DeprecatedArguments(message: message, level: level, replaceWith: replaceWith)
+    }
+
+    private enum DeprecatedSeverity {
+        case none
+        case warning
+        case error
+    }
+
+    private func parseDeprecatedSinceKotlinArguments(_ arguments: [String]) -> DeprecatedSinceKotlinArguments {
+        var namedArgs: [String: String] = [:]
+        var positionalArgs: [String] = []
+
+        for raw in arguments {
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else {
+                continue
+            }
+            if let (name, value) = splitNamedArgument(trimmed) {
+                namedArgs[name.lowercased()] = value
+            } else {
+                positionalArgs.append(trimmed)
+            }
+        }
+
+        func parseVersion(_ raw: String?) -> KotlinCompilerVersion? {
+            guard let raw else {
+                return nil
+            }
+            let normalized = normalizeAnnotationStringLiteral(raw)
+            guard !normalized.isEmpty else {
+                return nil
+            }
+            return KotlinCompilerVersion(rawValue: normalized)
+        }
+
+        func positional(_ index: Int) -> String? {
+            positionalArgs.indices.contains(index) ? positionalArgs[index] : nil
+        }
+
+        return DeprecatedSinceKotlinArguments(
+            warningSince: parseVersion(namedArgs["warningsince"] ?? positional(0)),
+            errorSince: parseVersion(namedArgs["errorsince"] ?? positional(1)),
+            hiddenSince: parseVersion(namedArgs["hiddensince"] ?? positional(2))
+        )
+    }
+
+    private func deprecatedSeverity(for arguments: DeprecatedSinceKotlinArguments) -> DeprecatedSeverity {
+        if let errorSince = arguments.errorSince, kotlinCompilerTargetVersion >= errorSince {
+            return .error
+        }
+        if let warningSince = arguments.warningSince, kotlinCompilerTargetVersion >= warningSince {
+            return .warning
+        }
+        // A SinceKotlin annotation keeps the declaration available without a
+        // deprecation diagnostic until its first visible threshold is reached.
+        // Lookup hiding based on hiddenSince is outside this helper and remains
+        // unsupported, so hiddenSince-only metadata keeps the historical warning.
+        if arguments.warningSince != nil || arguments.errorSince != nil {
+            return .none
+        }
+        return .warning
     }
 
     private func splitNamedArgument(_ argument: String) -> (String, String)? {
