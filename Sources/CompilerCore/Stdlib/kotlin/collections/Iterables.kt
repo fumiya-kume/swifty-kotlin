@@ -1003,6 +1003,18 @@ public fun <T : Any> Iterable<T?>.requireNoNulls(): Iterable<T> {
     return this as Iterable<T>
 }
 
+// Kotlin 2.3.10 exposes a List-specific overload so the narrowed return type
+// is preserved for statically typed List receivers.
+@Suppress("UNCHECKED_CAST")
+public fun <T : Any> List<T?>.requireNoNulls(): List<T> {
+    for (element in this) {
+        if (element == null) {
+            throw IllegalArgumentException("null element found in $this.")
+        }
+    }
+    return this as List<T>
+}
+
 // Shared by Iterable.joinTo/joinToString (below) and Sequence.joinTo/joinToString
 // (SequenceAggregateHOF.kt, kotlin.sequences) — both only need iterator(), so a
 // single implementation keyed on Iterator<T> covers both receiver types (KSP-621).

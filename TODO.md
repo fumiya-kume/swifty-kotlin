@@ -1368,9 +1368,9 @@
     - `kotlin.collections.none` — fun Iterable.none(): Boolean  -- `final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlin.collections/none(): kotlin/Boolean`
     - `kotlin.collections.none` — fun Iterable.none(Function1): Boolean  -- `final inline fun <#A: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlin.collections/none(kotlin/Function1<#A, kotlin/Boolean>): kotlin/Boolean`
 
-- [ ] KSP-1001: kotlin.collections.List の未実装 stdlib API を実装する（28 件）
+- [x] KSP-1001: kotlin.collections.List の未実装 stdlib API を実装する（28 件）
   - 対象: `kotlin.collections` / receiver `List`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/ListSearchHOF.kt`
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/ListSearchHOF.kt`, `ListAccessHOF.kt`, `ListAggregateHOF.kt`, `ListConversions.kt`, `ListSliceTakeDrop.kt`, `Iterables.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_List_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_List_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_List_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
@@ -1404,6 +1404,10 @@
     - `kotlin.collections.single` — fun List.single(): #A  -- `final fun <#A: kotlin/Any?> (kotlin.collections/List<#A>).kotlin.collections/single(): #A`
     - `kotlin.collections.singleOrNull` — fun List.singleOrNull(): #A  -- `final fun <#A: kotlin/Any?> (kotlin.collections/List<#A>).kotlin.collections/singleOrNull(): #A?`
     - `kotlin.collections.slice` — fun List.slice(IntRange): List  -- `final fun <#A: kotlin/Any?> (kotlin.collections/List<#A>).kotlin.collections/slice(kotlin.ranges/IntRange): kotlin.collections/List<#A>`
+  - 完了根拠（2026-09-04）: latest master `ea67c72c377635307afa1dfb944d60aa4d6d820a` と履歴・open/merged PR を監査。KSP-1001 の既存PRはなく、open #6598 (KSP-939) は List interface/factory の別タスク。component/search/access/aggregate/conversion 等の26件は #5768 (KSP-423), #5015 (KSP-424), #5716 (KSP-422), #5725 (KSP-427), #5773 (KSP-429) 等の merged source-backed 実装で確認。
+  - 今回の残差: Kotlin 2.3.10 公式 `_Collections.kt` の `List<T?>.requireNoNulls(): List<T>` と `List<T>.slice(IntRange): List<T>` を追加。`List.requireNoNulls` は List source overload を優先して `List<T>` を保持し、`Iterable.requireNoNulls` は従来どおり generic bridge として維持。`slice` は `IntRange` / `Iterable<Int>` の source overload を型に応じて選択し、runtime/ABI の synthetic link は追加していない。
+  - 回帰根拠: Sema の List source binding/overload 選択、codegen の List 戻り値/null 例外と既存 slice runtime、Kotlin 2.3.10 との専用 diff case、Sema Golden fixture で固定。
+  - 検証（focused）: `swift build`、Sema 2件、codegen 2件、`DIFF_REQUIRE_JDK21=0 bash Scripts/diff_kotlinc.sh --no-parallel --run-timeout 30 Scripts/diff_cases/stdlib_kotlin_collections_List_n.kt`、GoldenHarnessWorker fixture 比較、`bash Scripts/check_todo_ids.sh`、`bash Scripts/validate_runtime_abi_links.sh`、`git diff --check`。
 
 - [x] KSP-1006: kotlin.collections.Map.filter-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.collections` / receiver `Map` / family `filter`
