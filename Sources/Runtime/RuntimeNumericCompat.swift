@@ -28,6 +28,11 @@ public func kk_any_to_string(_ value: Int, _ tag: Int) -> UnsafeMutableRawPointe
     if value == runtimeNullSentinelInt {
         return runtimeMakeStringPointer("null")
     }
+    if tag == 1,
+       let override = runtimeAnyToStringOverride(value)
+    {
+        return override
+    }
     if tag == 2 {
         return runtimeMakeStringPointer(value != 0 ? "true" : "false")
     }
@@ -42,6 +47,29 @@ public func kk_any_to_string(_ value: Int, _ tag: Int) -> UnsafeMutableRawPointe
         return pointer
     }
     return runtimeMakeStringPointer(runtimeElementToString(value))
+}
+
+private func runtimeAnyToStringOverride(_ raw: Int) -> UnsafeMutableRawPointer? {
+    guard let objectPtr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    let objectKey = UInt(bitPattern: objectPtr)
+    guard let functionRaw = runtimeStorage.withMetadataLock({ state in
+        state.objectAnyToStringMethods[objectKey]
+    }) else {
+        return nil
+    }
+
+    let function = unsafeBitCast(functionRaw, to: KKFunctionEntryPoint1.self)
+    var thrown = 0
+    let result = function(raw, &thrown)
+    guard thrown == 0, result != 0 else {
+        return nil
+    }
+    if result == runtimeNullSentinelInt {
+        return runtimeMakeStringPointer("null")
+    }
+    return UnsafeMutableRawPointer(bitPattern: result)
 }
 
 /// Nullable-aware variant of `kk_any_to_string`, for call sites that know
