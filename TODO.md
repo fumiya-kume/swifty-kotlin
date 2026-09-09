@@ -3993,7 +3993,7 @@
     - `kotlin.reflect.KTypeParameter.upperBounds` — val KTypeParameter.upperBounds: List  -- `abstract val upperBounds`
     - `kotlin.reflect.KTypeParameter.variance` — val KTypeParameter.variance: KVariance  -- `abstract val variance`
 
-- [ ] KSP-1335: kotlin.reflect.KTypeProjection.KTypeProjection の未実装 stdlib API を実装する（8 件）
+- [x] KSP-1335: kotlin.reflect.KTypeProjection.KTypeProjection の未実装 stdlib API を実装する（8 件）
   - 対象: `kotlin.reflect.KTypeProjection` / receiver `KTypeProjection`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/reflect/KTypeProjection/KTypeProjection.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
