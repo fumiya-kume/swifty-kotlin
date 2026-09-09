@@ -1,7 +1,7 @@
 # Kotlin Compiler Remaining Tasks
 
 ### Diff skip 追跡（残り 4 件）
-- [~] DEBT-DIFF-007: `run_case` の compile-exit-code-match 誤判定修正（2026-07-08、`Scripts/diff_kotlinc.sh`）で新規に顕在化した ref/candidate 不一致を、診断/ネガティブテスト・enum/data class/interface 未実装・common stdlib gap・coroutine Flow・reflection・JVM interop・finally routing の7グループへ分解して triage 済み（2026-07-29、`docs/diff-skip-inventory.md` の DEBT-DIFF-007 節）。2026-08-13 更新：今回さらに19件のテスト入力ミス/common stdlib gap ケースを修正し `SKIP-DIFF` を解除。2026-08-18 更新：`list_binary_search_compare.kt`・`mock_objects.kt` をテスト入力ミス修正で追加解除（36→16→14）。アクティブな `SKIP-DIFF (DEBT-DIFF-007)` は14件残存（enum/data class/interface・coroutine Flow・reflection member access・JVM interop・contracts・context receivers 等、コンパイラ/ランタイム実装待ち）。新たに見つかった未修正の実バグ多数（`Unit`を明示的な値として使えない一般的ギャップ、`if (x !is T) return` 後に smart-cast が後続コードへ伝播しない一般的ギャップ、トップレベルの2件目以降の複数行文字列プロパティが `null` になる疑いのある一般的初期化順序バグ、等）も同節に記録済み。
+- [~] DEBT-DIFF-007: `run_case` の compile-exit-code-match 誤判定修正（2026-07-08、`Scripts/diff_kotlinc.sh`）で新規に顕在化した ref/candidate 不一致を、診断/ネガティブテスト・enum/data class/interface 未実装・common stdlib gap・coroutine Flow・reflection・JVM interop・finally routing の7グループへ分解して triage 済み（2026-07-29、`docs/diff-skip-inventory.md` の DEBT-DIFF-007 節）。2026-08-13 更新：今回さらに19件のテスト入力ミス/common stdlib gap ケースを修正し `SKIP-DIFF` を解除。2026-08-18 更新：`list_binary_search_compare.kt`・`mock_objects.kt` をテスト入力ミス修正で追加解除（36→16→14）。2026-09-04 更新：現行 `SKIP-DIFF (DEBT-DIFF-007)` タグを実測して11件へ更新（`flow_builders.kt` は KSP-1543 で解除）。新たに見つかった未修正の実バグ多数（`Unit`を明示的な値として使えない一般的ギャップ、`if (x !is T) return` 後に smart-cast が後続コードへ伝播しない一般的ギャップ、トップレベルの2件目以降の複数行文字列プロパティが `null` になる疑いのある一般的初期化順序バグ、等）も同節に記録済み。
 
 ## Dead Code 削除タスク（DEADCODE: 2026-07-11〜12 再監査）
 
@@ -295,7 +295,7 @@
 
 > 引き継ぎ注記(2026-07-10): 旧 `STDLIB-CORO-001`（`[~]` のまま 2026-07-07 #4582 で削除）の残課題は KSP-498/499 + KSP-674〜679 が正式に引き継ぐ。SharedFlow/StateFlow 等の細分は KSP-W6 の concurrent 節を参照。
 
-- [ ] KSP-1543: real `ProducerScope` を用いた channelFlow/callbackFlow の (b) 実装を設計・実装する（KSP-686 完了メモの残課題として記録されたまま未起票だった — 2026-08-19 起票。当初 KSP-1542 として起票したが、master 側の別コミットが同番号を別内容〔`HeaderHelpers+SyntheticCollectionTypeFallbacks.swift` 整理〕に使っていたためマージ時に 1543 へ採番し直した）。現状: `channelFlow`/`callbackFlow` は (a)（未実装 API）に分類されており、`channelFlow<Int> { send(1) }.collect { println(it) }` は `KSWIFTK-SEMA-0023: Unresolved function 'send'`、`callbackFlow<Int> { trySend(1); close() }.collect { println(it) }` は `trySend`/`close` 未解決でコンパイル終了する（リンク・実行には到達しない）。fiction の `emit` alias は両 builder とも compile/run して動作するが、real `ProducerScope` API の動作ではない。両 API とも `flow_builders.kt` の Sema 回帰テストで明示的な未解決診断として固定済み（`HeaderHelpers+SyntheticCoroutineRegistry.swift` の合成登録、`CallTypeChecker`/`TypeCheck/Helpers` の fallback、`FlowLoweringPass`/`CoroutineLoweringPass` の特例、未実装 `kk_channel_flow_*`/`kk_callback_flow_*` ABI allowlist は KSP-686 で削除済み）。
+- [~] KSP-1543: real `ProducerScope` を用いた channelFlow/callbackFlow の (b) 実装を設計・実装する（KSP-686 完了メモの残課題として記録されたまま未起票だった — 2026-08-19 起票。当初 KSP-1542 として起票したが、master 側の別コミットが同番号を別内容〔`HeaderHelpers+SyntheticCollectionTypeFallbacks.swift` 整理〕に使っていたためマージ時に 1543 へ採番し直した）。2026-09-04 実装: source-backed `ProducerScope`/`SendChannel`/`ChannelResult`、channelFlow/callbackFlow の cold channel-backed runtime、receiver-first launcher/capture ABI、`trySend`/`close` と Runtime ABI 登録、Sema/Runtime/diff 回帰を追加し、`flow_builders.kt` の `SKIP-DIFF` を解除した。focused Sema/Runtime/ABI/`flow_builders.kt` parity は PASS。全 Swift suite と Golden は専用 scratch で開始したが長時間無出力のため安全停止しており、共通ゲート G の green 確認待ち。green 化後に `[x]` へ更新する。
 
 ### KSP-W5: 後始末（W3/W4 の対応タスク完了後）
 

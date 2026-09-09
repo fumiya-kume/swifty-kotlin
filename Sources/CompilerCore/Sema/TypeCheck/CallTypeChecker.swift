@@ -2493,6 +2493,18 @@ final class CallTypeChecker {
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
+            // KSP-1543: source-backed channelFlow/callbackFlow still use the
+            // launcher continuation ABI for their suspend ProducerScope receiver.
+            // Mark the lambda only after overload resolution selects the bundled
+            // declaration, so a same-named user function keeps the regular ABI.
+            if isSourceBackedProducerFlowBuilder(chosen, ctx: ctx)
+            {
+                for argument in args {
+                    if case .lambdaLiteral = ast.arena.expr(argument.expr) {
+                        sema.bindings.markCoroutineLauncherLambdaExpr(argument.expr)
+                    }
+                }
+            }
             // ANNO-001: Check for @Deprecated annotation on the resolved callee.
             driver.helpers.checkDeprecation(
                 for: chosen,
