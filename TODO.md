@@ -5426,13 +5426,15 @@
     - `kotlin.time.measureTime` — fun Monotonic.measureTime(Function0): Duration  -- `final inline fun (kotlin.time/TimeSource.Monotonic).kotlin.time/measureTime(kotlin/Function0<kotlin/Unit>): kotlin.time/Duration`
     - `kotlin.time.measureTimedValue` — fun Monotonic.measureTimedValue(Function0): TimedValue  -- `final inline fun <#A: kotlin/Any?> (kotlin.time/TimeSource.Monotonic).kotlin.time/measureTimedValue(kotlin/Function0<#A>): kotlin.time/TimedValue<#A>`
 
-- [ ] KSP-1475: kotlin.time.TimeSource の未実装 stdlib API を実装する（2 件）
+- [x] KSP-1475: kotlin.time.TimeSource の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.time` / receiver `TimeSource`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/time/TimeSource.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_time_TimeSource_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_time_TimeSource_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_time_TimeSource_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠（2026-09-04）: `TimeSource.kt` に Kotlin 2.3.10 準拠の `TimeSource.measureTime` / `measureTimedValue`（`callsInPlace(EXACTLY_ONCE)` を含む）を追加。既存の `markNow` / `TimedValue` source/runtime ABI を再利用し、新規 bridge・synthetic stub・name-string 特例は追加していない。nested interface object の itable initializer 欠落を最小修正し、interface receiver の `TimeSource.Monotonic` 実行を成立させた。
+  - 検証: 対象 Sema golden shard、focused KIR、Kotlin 2.3.10 との対象 diff、fresh stdlib artifact の直接実行、`validate_runtime_abi_links.sh`、`git diff --check` を pass（全体 Golden/diff は未実行）。
   - 未実装シンボル一覧:
     - `kotlin.time.measureTime` — fun TimeSource.measureTime(Function0): Duration  -- `final inline fun (kotlin.time/TimeSource).kotlin.time/measureTime(kotlin/Function0<kotlin/Unit>): kotlin.time/Duration`
     - `kotlin.time.measureTimedValue` — fun TimeSource.measureTimedValue(Function0): TimedValue  -- `final inline fun <#A: kotlin/Any?> (kotlin.time/TimeSource).kotlin.time/measureTimedValue(kotlin/Function0<#A>): kotlin.time/TimedValue<#A>`

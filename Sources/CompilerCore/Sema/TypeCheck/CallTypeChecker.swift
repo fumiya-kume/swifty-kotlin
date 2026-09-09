@@ -1169,6 +1169,11 @@ final class CallTypeChecker {
                 locals: &locals,
                 expectedType: lambdaExpectedType
             )
+            // Contract effects are consumed by Sema and have no runtime
+            // representation. Mark the call so KIR does not lower its builder
+            // lambda, whose effect expressions may otherwise become runtime
+            // calls even though the contract itself is compiler-only.
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: .contract)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
         }
