@@ -633,7 +633,10 @@
 > 目標: 同一ファイル / 同一スイート内で同じ入力を使う箇所を 1 回の pipeline 呼び出しにまとめ、上記カウントを再び半減させる。
 > 進行中 PR: #5765 (Batch 83)。未 PR の作業ブランチ: `devin/consolidate-sema-api-tests-batch84` (Batch 84)。
 
-- [ ] REFACT-TEST-002: 各テストで `makeSema()` を作り直している surface-inventory 系 Sema スイートに `sharedSema()` キャッシュを導入
+- [x] REFACT-TEST-002: 各テストで `makeSema()` を作り直している surface-inventory 系 Sema スイートに `sharedSema()` キャッシュを導入
+  - 根拠（2026-09-04、latest master ea67c72c…）: #5680/#5681/#5840/#5919/#5817 が対象の sharedSema/shared context 実装を merged 済み。対象実装ファイルは latest master に到達しており、production code の重複変更はない。
+  - 構造監査: Sema 85 suite と IntegerNarrowing の共有 fixture は、per-test direct no-arg `makeSema()` ではなく shared helper の cache miss または意図した source-specific fixture のみを使用している。残る4ファイル（ListIteratorSourceMigration、ReflectKClassCast/SafeCast、SetSourceMigration）は surface-inventory 共通 fixture の対象外で、個別 source を検証するための構成を維持した。
+  - 検証（latest master ea67c72c…）: `swift build`、対象7 suite 46/46 serial、同対象 46/46 parallel（2 workers）、Smoke 12/12、Runtime ABI 4/4、`check_todo_ids.sh`、`git diff --check` が PASS。既存の cf95db64… 時点の関連 301 tests/29 suites、対象 Sema Golden 11 cases、Kotlin 2.3.10 diff 19/19（`native_annotations`/`native_api` は既存 SKIP-DIFF）、StringInternerTests 15/15 serial の検証も、対象実装ファイルが ea67c72c… まで不変であることを確認済み。全 Golden corpus の再実行は長時間のため本 TODO-only change では実施していない。
   - 対象例: `IntegerNarrowingPassTests.swift` (8), `EnumAPISurfaceInventoryTests.swift` (8), `ExceptionSyntheticStubTests.swift` (4), `GenericInterfaceInheritanceTests.swift` (4), `ReflectKMutablePropertySyntheticTests.swift` (4), `ReflectKProperty2SyntheticTests.swift` (4), `ThrowableMemberSourceTests.swift` (4), `ReflectK*` 系・`NativeCInteropBetaInteropApiTests` など (2-3 件×多数)
 - [~] REFACT-TEST-003: 同一入力で複数 `runToKIR(ctx)` を呼んでいる KIR テストを共有 `runToKIR(ctx)` に集約（必須ゲート未完了のため完了保留）
   - 独立した fixture 群を package／関数名で分離し、Regex、NativePlatform bridge（`Platform.memoryModel` は synthetic object-property state のため単独 context）、BuildKIR、BlockExpression、BuildAST body parsing、FileRewrite、Property Delegation を raw／lowered の共有 `CompilationContext` に集約した。既存のテスト名と対象 fixture の assertion は維持している。
