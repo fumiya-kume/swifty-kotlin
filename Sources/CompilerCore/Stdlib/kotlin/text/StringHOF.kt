@@ -281,6 +281,14 @@ public fun CharSequence.none(predicate: (Char) -> Boolean): Boolean {
     return true
 }
 
+/**
+ * Returns the length of this char sequence.
+ */
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.count(): Int {
+    return length
+}
+
 public fun CharSequence.count(predicate: (Char) -> Boolean): Int {
     var count = 0
     var i = 0
