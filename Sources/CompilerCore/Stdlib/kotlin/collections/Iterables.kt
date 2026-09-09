@@ -104,7 +104,7 @@ public fun <T> Iterable<T>.toMutableSet(): MutableSet<T> {
 }
 
 public fun <T> Iterable<T>.toHashSet(): HashSet<T> {
-    val result = mutableSetOf<T>()
+    val result = HashSet<T>()
     for (element in this) result.add(element)
     return result
 }
@@ -112,6 +112,85 @@ public fun <T> Iterable<T>.toHashSet(): HashSet<T> {
 @IgnorableReturnValue
 public fun <T, C : MutableCollection<in T>> Iterable<T>.toCollection(destination: C): C {
     for (element in this) destination.add(element)
+    return destination
+}
+
+// KSP-964: Generic Iterable association APIs use virtual iterator dispatch so
+// custom and one-shot Iterable implementations follow Kotlin's encounter-order
+// and last-write-wins map semantics without a runtime bridge.
+@Suppress("UNCHECKED_CAST")
+public inline fun <T, K, V> Iterable<T>.associate(transform: (T) -> Pair<K, V>): Map<K, V> {
+    val result = mutableMapOf<K, V>()
+    for (element in this) {
+        val pair = transform(element)
+        result[pair.first] = pair.second
+    }
+    return result as Map<K, V>
+}
+
+@Suppress("UNCHECKED_CAST")
+public inline fun <T, K> Iterable<T>.associateBy(keySelector: (T) -> K): Map<K, T> {
+    val result = mutableMapOf<K, T>()
+    for (element in this) result[keySelector(element)] = element
+    return result as Map<K, T>
+}
+
+@Suppress("UNCHECKED_CAST")
+public inline fun <T, K, V> Iterable<T>.associateBy(
+    keySelector: (T) -> K,
+    valueTransform: (T) -> V
+): Map<K, V> {
+    val result = mutableMapOf<K, V>()
+    for (element in this) result[keySelector(element)] = valueTransform(element)
+    return result as Map<K, V>
+}
+
+@IgnorableReturnValue
+public inline fun <T, K, M : MutableMap<in K, in T>> Iterable<T>.associateByTo(
+    destination: M,
+    keySelector: (T) -> K
+): M {
+    for (element in this) destination.put(keySelector(element), element)
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <T, K, V, M : MutableMap<in K, in V>> Iterable<T>.associateByTo(
+    destination: M,
+    keySelector: (T) -> K,
+    valueTransform: (T) -> V
+): M {
+    for (element in this) destination.put(keySelector(element), valueTransform(element))
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <T, K, V, M : MutableMap<in K, in V>> Iterable<T>.associateTo(
+    destination: M,
+    transform: (T) -> Pair<K, V>
+): M {
+    for (element in this) {
+        val pair = transform(element)
+        destination.put(pair.first, pair.second)
+    }
+    return destination
+}
+
+@SinceKotlin("1.3")
+@Suppress("UNCHECKED_CAST")
+public inline fun <K, V> Iterable<K>.associateWith(valueSelector: (K) -> V): Map<K, V> {
+    val result = mutableMapOf<K, V>()
+    for (element in this) result[element] = valueSelector(element)
+    return result as Map<K, V>
+}
+
+@SinceKotlin("1.3")
+@IgnorableReturnValue
+public inline fun <K, V, M : MutableMap<in K, in V>> Iterable<K>.associateWithTo(
+    destination: M,
+    valueSelector: (K) -> V
+): M {
+    for (element in this) destination.put(element, valueSelector(element))
     return destination
 }
 
@@ -837,6 +916,21 @@ public fun <T> Iterable<T>.all(predicate: (T) -> Boolean): Boolean {
     return true
 }
 
+// KSP-986: Preserve the Collection fast path while keeping arbitrary
+// Iterable implementations on the iterator-backed source path.
+public fun <T> Iterable<T>.none(): Boolean {
+    if (this is Collection<*>) return (this as Collection<*>).isEmpty()
+    return !iterator().hasNext()
+}
+
+public inline fun <T> Iterable<T>.none(predicate: (T) -> Boolean): Boolean {
+    if (this is Collection<*> && (this as Collection<*>).isEmpty()) return true
+    for (element in this) {
+        if (predicate(element)) return false
+    }
+    return true
+}
+
 public fun <T> Iterable<T>.count(): Int {
     if (this is Collection<*>) return (this as Collection<*>).size
 
@@ -922,6 +1016,18 @@ public fun <T : Any> Iterable<T?>.requireNoNulls(): Iterable<T> {
         }
     }
     return this as Iterable<T>
+}
+
+// Kotlin 2.3.10 exposes a List-specific overload so the narrowed return type
+// is preserved for statically typed List receivers.
+@Suppress("UNCHECKED_CAST")
+public fun <T : Any> List<T?>.requireNoNulls(): List<T> {
+    for (element in this) {
+        if (element == null) {
+            throw IllegalArgumentException("null element found in $this.")
+        }
+    }
+    return this as List<T>
 }
 
 // Shared by Iterable.joinTo/joinToString (below) and Sequence.joinTo/joinToString

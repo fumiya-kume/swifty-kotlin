@@ -1,0 +1,40 @@
+symbol fq=golden.sema.ProbeMap kind=class vis=public flags=_
+symbol fq=golden.sema.readMap kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int?>] ret=Int?
+symbol fq=golden.sema.readMap.$0.values kind=valueParameter vis=private flags=_
+symbol fq=kotlin.Any kind=class vis=public flags=synthetic
+symbol fq=kotlin.Any.hashCode kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=Int
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
+symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
+file fstdlib_kotlin_collections_n_AbstractMap package=golden.sema
+  decl golden.sema.ProbeMap class ProbeMap sym=golden.sema.ProbeMap
+  decl golden.sema.readMap fun readMap sym=golden.sema.readMap
+expr e@9:17 call callee=e@9:17#1 args=[] type=kotlin.collections.Map<String, out Int?> call=kotlin.collections.emptyMap targs=[String,Int?]
+expr e@9:17#2 memberCall recv=e@9:17 callee=entries args=[] type=kotlin.collections.Set<kotlin.collections.Map.Entry<String, Int?>> call=kotlin.collections.entries targs=[String,Int?]
+expr e@13:5 name(values) type=kotlin.collections.Map<String, Int?> ref=golden.sema.readMap.$0.values
+expr e@13:12 string(missing) type=String
+expr e@13:5#1 indexedAccess receiver=e@13:5 indices=[e@13:12] type=Int? call=kotlin.collections.Map.get targs=[String,Int?]
+expr e@14:5 name(values) type=kotlin.collections.Map<String, Int?> ref=golden.sema.readMap.$0.values
+expr e@14:24 string(missing) type=String
+expr e@14:5#1 memberCall recv=e@14:5 callee=containsKey args=[_:e@14:24] type=Boolean call=kotlin.collections.containsKey
+expr e@15:5 name(values) type=kotlin.collections.Map<String, Int?> ref=golden.sema.readMap.$0.values
+expr e@15:26 name(null) type=Nothing?
+expr e@15:5#1 memberCall recv=e@15:5 callee=containsValue args=[_:e@15:26] type=Boolean call=kotlin.collections.containsValue
+expr e@16:5 name(values) type=kotlin.collections.Map<String, Int?> ref=golden.sema.readMap.$0.values
+expr e@16:5#1 memberCall recv=e@16:5 callee=entries args=[] type=kotlin.collections.Set<kotlin.collections.Map.Entry<String, Int?>> call=kotlin.collections.entries targs=[String,Int?]
+expr e@17:5 name(values) type=kotlin.collections.Map<String, Int?> ref=golden.sema.readMap.$0.values
+expr e@17:5#1 memberCall recv=e@17:5 callee=keys args=[] type=kotlin.collections.Set<String> call=kotlin.collections.keys targs=[String,Int?]
+expr e@18:5 name(values) type=kotlin.collections.Map<String, Int?> ref=golden.sema.readMap.$0.values
+expr e@18:5#1 memberCall recv=e@18:5 callee=values args=[] type=kotlin.collections.Collection<Int?> call=kotlin.collections.values targs=[String,Int?]
+expr e@19:5 name(values) type=kotlin.collections.Map<String, Int?> ref=golden.sema.readMap.$0.values
+expr e@19:5#1 memberCall recv=e@19:5 callee=isEmpty args=[] type=Boolean
+expr e@20:5 name(values) type=kotlin.collections.Map<String, Int?> ref=golden.sema.readMap.$0.values
+expr e@20:5#1 memberCall recv=e@20:5 callee=hashCode args=[] type=Int call=kotlin.Any.hashCode
+expr e@21:12 name(values) type=kotlin.collections.Map<String, Int?> ref=golden.sema.readMap.$0.values
+expr e@21:19 string(value) type=String
+expr e@21:12#1 indexedAccess receiver=e@21:12 indices=[e@21:19] type=Int? call=kotlin.collections.Map.get targs=[String,Int?]
+expr e@21:5 return value=e@21:12#1 type=Nothing

@@ -1,10 +1,9 @@
 
 /// Kotlin-native metaprogramming annotation stubs.
 ///
-/// Registers synthetic `kotlin.*`, `kotlin.annotation.*`,
-/// `kotlin.experimental.*`, and `kotlin.concurrent.*` annotation classes that
-/// are needed for name-resolution and type-checking on any Kotlin target
-/// (including Native).
+/// Registers synthetic `kotlin.*`, `kotlin.annotation.*`, and
+/// `kotlin.experimental.*` annotation classes that are needed for
+/// name-resolution and type-checking on any Kotlin target (including Native).
 ///
 /// JVM-specific annotations (`kotlin.jvm.*`) were removed as part of
 /// CLEANUP-STUB-084 since this compiler targets macOS native via LLVM.
@@ -221,28 +220,5 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
-
-
-        // kotlin.concurrent package — `@Volatile` is a Native-target annotation.
-        let kotlinConcurrentPkg = ensurePackage(
-            path: ["kotlin", "concurrent"],
-            symbols: symbols,
-            interner: interner
-        )
-        registerSyntheticAnnotationClass(
-            named: "Volatile",
-            packageFQName: kotlinConcurrentPkg,
-            packageSymbol: symbols.lookup(fqName: kotlinConcurrentPkg) ?? .invalid,
-            symbols: symbols,
-            interner: interner
-        )
-        attachAnnotationIfNeeded(
-            MetadataAnnotationRecord(
-                annotationFQName: "kotlin.annotation.Target",
-                arguments: ["AnnotationTarget.FIELD"]
-            ),
-            to: kotlinConcurrentPkg + [interner.intern("Volatile")],
-            symbols: symbols
-        )
     }
 }

@@ -1,0 +1,86 @@
+symbol fq=golden.sema.decodeByteArrayRange kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray] ret=kotlin.ByteArray
+symbol fq=golden.sema.decodeByteArrayRange.$0.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.decodeCharSequenceRange kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.ByteArray
+symbol fq=golden.sema.decodeCharSequenceRange.$1.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.decodeIntoByteArrayRange kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray,kotlin.ByteArray] ret=Int
+symbol fq=golden.sema.decodeIntoByteArrayRange.$2.destination kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.decodeIntoByteArrayRange.$2.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.decodeIntoCharSequenceRange kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.ByteArray] ret=Int
+symbol fq=golden.sema.decodeIntoCharSequenceRange.$3.destination kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.decodeIntoCharSequenceRange.$3.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.encodeIntoByteArrayRange kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray,kotlin.ByteArray] ret=Int
+symbol fq=golden.sema.encodeIntoByteArrayRange.$4.destination kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.encodeIntoByteArrayRange.$4.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.encodeRange kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray] ret=String
+symbol fq=golden.sema.encodeRange.$5.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.encodeToAppendableRange kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray,kotlin.text.Appendable] ret=kotlin.text.Appendable
+symbol fq=golden.sema.encodeToAppendableRange.$6.destination kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.encodeToAppendableRange.$6.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.encodeToByteArrayRange kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray] ret=kotlin.ByteArray
+symbol fq=golden.sema.encodeToByteArrayRange.$7.source kind=valueParameter vis=private flags=_
+symbol fq=kotlin.ByteArray kind=class vis=public flags=synthetic type=kotlin.ByteArray
+symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+file fstdlib_kotlin_io_encoding_Base64_Base64_n_n package=golden.sema
+  decl golden.sema.encodeRange fun encodeRange sym=golden.sema.encodeRange
+  decl golden.sema.encodeToByteArrayRange fun encodeToByteArrayRange sym=golden.sema.encodeToByteArrayRange
+  decl golden.sema.encodeIntoByteArrayRange fun encodeIntoByteArrayRange sym=golden.sema.encodeIntoByteArrayRange
+  decl golden.sema.encodeToAppendableRange fun encodeToAppendableRange sym=golden.sema.encodeToAppendableRange
+  decl golden.sema.decodeByteArrayRange fun decodeByteArrayRange sym=golden.sema.decodeByteArrayRange
+  decl golden.sema.decodeIntoByteArrayRange fun decodeIntoByteArrayRange sym=golden.sema.decodeIntoByteArrayRange
+  decl golden.sema.decodeCharSequenceRange fun decodeCharSequenceRange sym=golden.sema.decodeCharSequenceRange
+  decl golden.sema.decodeIntoCharSequenceRange fun decodeIntoCharSequenceRange sym=golden.sema.decodeIntoCharSequenceRange
+expr e@8:46 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64
+expr e@8:46#1 memberCall recv=e@8:46 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default
+expr e@8:68 name(source) type=kotlin.ByteArray ref=golden.sema.encodeRange.$5.source
+expr e@8:76 int(1) type=Int
+expr e@8:79 int(4) type=Int
+expr e@8:46#2 memberCall recv=e@8:46#1 callee=encode args=[_:e@8:68,_:e@8:76,_:e@8:79] type=String call=kotlin.io.encoding.Base64.encode
+expr e@11:60 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64
+expr e@11:60#1 memberCall recv=e@11:60 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default
+expr e@11:93 name(source) type=kotlin.ByteArray ref=golden.sema.encodeToByteArrayRange.$7.source
+expr e@11:101 int(1) type=Int
+expr e@11:104 int(4) type=Int
+expr e@11:60#2 memberCall recv=e@11:60#1 callee=encodeToByteArray args=[_:e@11:93,_:e@11:101,_:e@11:104] type=kotlin.ByteArray call=kotlin.io.encoding.Base64.encodeToByteArray
+expr e@15:5 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64
+expr e@15:5#1 memberCall recv=e@15:5 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default
+expr e@15:40 name(source) type=kotlin.ByteArray ref=golden.sema.encodeIntoByteArrayRange.$4.source
+expr e@15:48 name(destination) type=kotlin.ByteArray ref=golden.sema.encodeIntoByteArrayRange.$4.destination
+expr e@15:61 int(2) type=Int
+expr e@15:64 int(1) type=Int
+expr e@15:67 int(4) type=Int
+expr e@15:5#2 memberCall recv=e@15:5#1 callee=encodeIntoByteArray args=[_:e@15:40,_:e@15:48,_:e@15:61,_:e@15:64,_:e@15:67] type=Int call=kotlin.io.encoding.Base64.encodeIntoByteArray
+expr e@19:5 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64
+expr e@19:5#1 memberCall recv=e@19:5 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default
+expr e@19:39 name(source) type=kotlin.ByteArray ref=golden.sema.encodeToAppendableRange.$6.source
+expr e@19:47 name(destination) type=kotlin.text.Appendable ref=golden.sema.encodeToAppendableRange.$6.destination
+expr e@19:60 int(1) type=Int
+expr e@19:63 int(4) type=Int
+expr e@19:5#2 memberCall recv=e@19:5#1 callee=encodeToAppendable args=[_:e@19:39,_:e@19:47,_:e@19:60,_:e@19:63] type=kotlin.text.Appendable call=kotlin.io.encoding.Base64.encodeToAppendable targs=[kotlin.text.Appendable]
+expr e@22:58 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64
+expr e@22:58#1 memberCall recv=e@22:58 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default
+expr e@22:80 name(source) type=kotlin.ByteArray ref=golden.sema.decodeByteArrayRange.$0.source
+expr e@22:88 int(1) type=Int
+expr e@22:91 int(5) type=Int
+expr e@22:58#2 memberCall recv=e@22:58#1 callee=decode args=[_:e@22:80,_:e@22:88,_:e@22:91] type=kotlin.ByteArray call=kotlin.io.encoding.Base64.decode#0
+expr e@26:5 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64
+expr e@26:5#1 memberCall recv=e@26:5 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default
+expr e@26:40 name(source) type=kotlin.ByteArray ref=golden.sema.decodeIntoByteArrayRange.$2.source
+expr e@26:48 name(destination) type=kotlin.ByteArray ref=golden.sema.decodeIntoByteArrayRange.$2.destination
+expr e@26:61 int(2) type=Int
+expr e@26:64 int(1) type=Int
+expr e@26:67 int(5) type=Int
+expr e@26:5#2 memberCall recv=e@26:5#1 callee=decodeIntoByteArray args=[_:e@26:40,_:e@26:48,_:e@26:61,_:e@26:64,_:e@26:67] type=Int call=kotlin.io.encoding.Base64.decodeIntoByteArray#0
+expr e@29:64 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64
+expr e@29:64#1 memberCall recv=e@29:64 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default
+expr e@29:86 name(source) type=kotlin.CharSequence ref=golden.sema.decodeCharSequenceRange.$1.source
+expr e@29:94 int(1) type=Int
+expr e@29:97 int(5) type=Int
+expr e@29:64#2 memberCall recv=e@29:64#1 callee=decode args=[_:e@29:86,_:e@29:94,_:e@29:97] type=kotlin.ByteArray call=kotlin.io.encoding.Base64.decode#1
+expr e@33:5 name(Base64) type=kotlin.io.encoding.Base64 ref=kotlin.io.encoding.Base64
+expr e@33:5#1 memberCall recv=e@33:5 callee=Default args=[] type=kotlin.io.encoding.Base64.Default ref=kotlin.io.encoding.Base64.Default
+expr e@33:40 name(source) type=kotlin.CharSequence ref=golden.sema.decodeIntoCharSequenceRange.$3.source
+expr e@33:48 name(destination) type=kotlin.ByteArray ref=golden.sema.decodeIntoCharSequenceRange.$3.destination
+expr e@33:61 int(2) type=Int
+expr e@33:64 int(1) type=Int
+expr e@33:67 int(5) type=Int
+expr e@33:5#2 memberCall recv=e@33:5#1 callee=decodeIntoByteArray args=[_:e@33:40,_:e@33:48,_:e@33:61,_:e@33:64,_:e@33:67] type=Int call=kotlin.io.encoding.Base64.decodeIntoByteArray#1
