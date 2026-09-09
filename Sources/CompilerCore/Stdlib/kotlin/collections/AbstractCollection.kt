@@ -51,6 +51,39 @@ public abstract class AbstractCollection<out E> protected constructor() : Collec
     }
 
     override fun isEmpty(): Boolean = size == 0
+
+    override fun toString(): String = joinToString(", ", "[", "]") { element ->
+        if (element === this) "(this Collection)" else element.toString()
+    }
+
+    /**
+     * Returns a new array containing all elements of this collection.
+     */
+    protected open fun toArray(): Array<Any?> {
+        val result = arrayOfNulls<Any?>(size)
+        var index = 0
+        for (element in this) {
+            result[index++] = element
+        }
+        return result
+    }
+
+    /**
+     * Fills the provided array or creates a new array with the collection's elements.
+     */
+    @Suppress("UNCHECKED_CAST")
+    protected open fun <T> toArray(array: Array<T>): Array<T> {
+        val destination = if (array.size < size) {
+            arrayOfNulls<T>(size) as Array<T>
+        } else {
+            array
+        }
+        var index = 0
+        for (element in this) {
+            destination[index++] = element as T
+        }
+        return destination
+    }
 }
 
 // KSP-957: source-backed implementations for the generic Iterable and Map

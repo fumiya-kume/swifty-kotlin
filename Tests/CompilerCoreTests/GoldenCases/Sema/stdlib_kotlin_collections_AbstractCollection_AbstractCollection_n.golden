@@ -1,0 +1,65 @@
+symbol fq=ProbeCollection kind=class vis=public flags=_
+symbol fq=ProbeCollection.copyInto kind=function vis=public flags=_ sig=recv=ProbeCollection params=[kotlin.Array<Any?>] ret=kotlin.Array<Any?>
+symbol fq=ProbeCollection.copyInto.$0.array kind=valueParameter vis=private flags=_
+symbol fq=ProbeCollection.objectArray kind=function vis=public flags=_ sig=recv=ProbeCollection params=[] ret=kotlin.Array<Any?>
+symbol fq=ProbeCollection.values kind=property vis=private flags=_ type=kotlin.Array<String?>
+symbol fq=ProbeIterator kind=class vis=private flags=_
+symbol fq=ProbeIterator.<init> kind=constructor vis=private flags=_ sig=recv=ProbeIterator params=[kotlin.Array<String?>] ret=ProbeIterator
+symbol fq=ProbeIterator.<init>.$1.values kind=valueParameter vis=private flags=_
+symbol fq=ProbeIterator.index kind=property vis=private flags=mutable type=Int
+symbol fq=ProbeIterator.values kind=property vis=public flags=_ type=kotlin.Array<String?>
+symbol fq=__local_0.value kind=local vis=private flags=_ type=String?
+symbol fq=__local_1.rendered kind=local vis=private flags=_ type=String
+symbol fq=__local_2.objectArray kind=local vis=private flags=_ type=kotlin.Array<Any?>
+symbol fq=__local_3.typedArray kind=local vis=private flags=_ type=kotlin.Array<Any?>
+symbol fq=inspect kind=function vis=public flags=_ sig=recv=_ params=[ProbeCollection] ret=String
+symbol fq=inspect.$2.collection kind=valueParameter vis=private flags=_
+symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.collections.AbstractCollection kind=class vis=public flags=abstractType|openType type=kotlin.collections.AbstractCollection<out kotlin.collections.AbstractCollection.E>
+symbol fq=kotlin.collections.AbstractCollection.E kind=typeParameter vis=private flags=_
+file fstdlib_kotlin_collections_AbstractCollection_AbstractCollection_n package=_
+  decl ProbeIterator class ProbeIterator sym=ProbeIterator
+  decl ProbeCollection class ProbeCollection sym=ProbeCollection
+  decl inspect fun inspect sym=inspect
+expr e@5:25 int(0) type=Int
+expr e@7:39 name(index) type=Int ref=ProbeIterator.index
+expr e@7:47 name(values) type=kotlin.Array<String?> ref=ProbeIterator.values
+expr e@7:47#1 memberCall recv=e@7:47 callee=size args=[] type=Int call=kotlin.collections.size.$get#0
+expr e@7:39#1 binary(lessThan) lhs=e@7:39 rhs=e@7:47#1 type=Boolean
+expr e@10:21 name(values) type=kotlin.Array<String?> ref=ProbeIterator.values
+expr e@10:28 name(index) type=Int ref=ProbeIterator.index
+expr e@10:21#1 indexedAccess receiver=e@10:21 indices=[e@10:28] type=String?
+expr e@10:9 localDecl value mutable=0 type=_ init=e@10:21#1 type=Unit ref=__local_0.value
+expr e@11:18 int(1) type=Int
+expr e@11:9 compoundAssign(plusAssign) name=index value=e@11:18 type=Unit ref=ProbeIterator.index
+expr e@12:16 name(value) type=String? ref=__local_0.value
+expr e@12:9 return value=e@12:16 type=Nothing
+expr e@17:43 string(one) type=String
+expr e@17:50 name(null) type=Nothing?
+expr e@17:26 call callee=e@17:26#1 args=[_:e@17:43,_:e@17:50] type=kotlin.Array<String?> call=kotlin.arrayOf targs=[String?]
+expr e@20:17 name(values) type=kotlin.Array<String?> ref=ProbeCollection.values
+expr e@20:17#1 memberCall recv=e@20:17 callee=size args=[] type=Int
+expr e@22:64 name(values) type=kotlin.Array<String?> ref=ProbeCollection.values
+expr e@22:50 call callee=e@22:50#1 args=[_:e@22:64] type=ProbeIterator call=ProbeIterator.<init>
+expr e@24:38 call callee=e@24:38#1 args=[] type=kotlin.Array<Any?> call=kotlin.collections.AbstractCollection.toArray#0 targs=[String?]
+expr e@26:61 name(array) type=kotlin.Array<Any?> ref=ProbeCollection.copyInto.$0.array
+expr e@26:53 call callee=e@26:53#1 args=[_:e@26:61] type=kotlin.Array<Any?> call=kotlin.collections.AbstractCollection.toArray#1 targs=[String?,Any?]
+expr e@30:20 name(collection) type=ProbeCollection ref=inspect.$2.collection
+expr e@30:20#1 memberCall recv=e@30:20 callee=toString args=[] type=String call=kotlin.collections.AbstractCollection.toString targs=[String?]
+expr e@30:5 localDecl rendered mutable=0 type=_ init=e@30:20#1 type=Unit ref=__local_1.rendered
+expr e@31:23 name(collection) type=ProbeCollection ref=inspect.$2.collection
+expr e@31:23#1 memberCall recv=e@31:23 callee=objectArray args=[] type=kotlin.Array<Any?> call=ProbeCollection.objectArray
+expr e@31:5 localDecl objectArray mutable=0 type=_ init=e@31:23#1 type=Unit ref=__local_2.objectArray
+expr e@32:22 name(collection) type=ProbeCollection ref=inspect.$2.collection
+expr e@32:56 name(null) type=Nothing?
+expr e@32:62 name(null) type=Nothing?
+expr e@32:42 call callee=e@32:42#1 args=[_:e@32:56,_:e@32:62] type=kotlin.Array<Any?> call=kotlin.arrayOf targs=[Any?]
+expr e@32:22#1 memberCall recv=e@32:22 callee=copyInto args=[_:e@32:42] type=kotlin.Array<Any?> call=ProbeCollection.copyInto
+expr e@32:5 localDecl typedArray mutable=0 type=_ init=e@32:22#1 type=Unit ref=__local_3.typedArray
+expr e@33:14 name(rendered) type=String ref=__local_1.rendered
+expr e@33:25 name(objectArray) type=kotlin.Array<Any?> ref=__local_2.objectArray
+expr e@33:25#1 memberCall recv=e@33:25 callee=size args=[] type=Int call=kotlin.collections.size.$get#0
+expr e@33:45 name(typedArray) type=kotlin.Array<Any?> ref=__local_3.typedArray
+expr e@33:45#1 memberCall recv=e@33:45 callee=size args=[] type=Int call=kotlin.collections.size.$get#0
+expr e@33:12 stringTemplate[expr(e@33:14),lit(:),expr(e@33:25#1),lit(:),expr(e@33:45#1)] type=String
+expr e@33:5 return value=e@33:12 type=Nothing

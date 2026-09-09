@@ -1471,13 +1471,15 @@
     - `kotlin.collections.none` — fun Map.none(): Boolean  -- `final fun <#A: kotlin/Any?, #B: kotlin/Any?> (kotlin.collections/Map<out #A, #B>).kotlin.collections/none(): kotlin/Boolean`
   - 完了根拠（2026-09-04監査）: merged PR #6216（merge commit `346c18370d218126ded5fac35fd9e3a5ec5c2bb4`）で `Map<out K, V>.none(): Boolean` を `MapHOF.kt` に source-backed 実装済み。Sema Golden は zero-argument call を `kotlin.collections.none#29`、predicate overload を `#28` に分離し、`kk_map_none` と対応するsynthetic/Runtime ABIは predicate arity 1 の既存経路として保持している。対象Goldenの直接生成比較、PR #6216のKotlin 2.3.10 kotlinc diff、TODO ID検査、Runtime ABI link検証を確認済み。
 
-- [ ] KSP-1026: kotlin.collections.AbstractCollection.AbstractCollection の未実装 stdlib API を実装する（6 件）
+- [x] KSP-1026: kotlin.collections.AbstractCollection.AbstractCollection の未実装 stdlib API を実装する（6 件）
   - 対象: `kotlin.collections.AbstractCollection` / receiver `AbstractCollection`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractCollection/AbstractCollection.kt`（該当ファイルが無ければ新規作成）
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractCollection.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_AbstractCollection_AbstractCollection_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_AbstractCollection_AbstractCollection_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_AbstractCollection_AbstractCollection_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠（2026-09-04）: `contains` / `containsAll` / `isEmpty` は既存の source-backed 実装を確認し、`toString` と protected `toArray()` 2 overloads を Kotlin 2.3.10 の契約に合わせて同ファイルへ追加。対象の Runtime bridge / synthetic stub / ABI / name-string 特例は存在しないため変更なし。
+  - 検証根拠: 対象 Sema / Golden / Kotlin 2.3.10 diff は PASS、`check_todo_ids.sh` と `validate_runtime_abi_links.sh` は PASS。全 Sema Golden 一括更新は対象外ケースの worker timeout 14 件で完走せず、対象ケース単体は PASS。
   - 未実装シンボル一覧:
     - `kotlin.collections.AbstractCollection.contains` — fun AbstractCollection.contains(): Boolean  -- `open fun contains(#A): kotlin/Boolean`
     - `kotlin.collections.AbstractCollection.containsAll` — fun AbstractCollection.containsAll(Collection): Boolean  -- `open fun containsAll(kotlin.collections/Collection<#A>): kotlin/Boolean`
