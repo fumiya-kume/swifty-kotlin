@@ -42,12 +42,27 @@ extension CallTypeChecker {
             }
             return receiverKind == .uintRange || receiverKind == .uintProgression
         }()
+        let isTypedULongProgressionReceiver: Bool = {
+            guard let receiverType,
+                  let receiverKind = MemberRuntimeDispatch.rangeReceiverKind(
+                      receiverExpr: receiverID,
+                      receiverType: receiverType,
+                      sema: sema,
+                      interner: interner
+                  )
+            else {
+                return false
+            }
+            return receiverKind == .ulongProgression
+        }()
         let isSyntacticRangeExpression = ControlFlowTypeChecker.isRangeExpression(receiverID, ast: ctx.ast)
         guard !isClassNameReceiver,
               (sema.bindings.isRangeExpr(receiverID)
                   || isOpenEndRangeReceiver
                   || isSyntacticRangeExpression
-                  || (isTypedUIntRangeReceiver && isUIntRangeSourceMigrationMember))
+                  || (isTypedUIntRangeReceiver && isUIntRangeSourceMigrationMember)
+                  || (isTypedULongProgressionReceiver
+                      && isULongProgressionSourceBackedHOF(memberName, argCount: args.count)))
         else {
             return nil
         }
@@ -364,6 +379,14 @@ extension CallTypeChecker {
             || memberName == "lastOrNull"
     }
 
+    private func isULongProgressionSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
+        guard argCount == 0 else { return false }
+        return memberName == "first"
+            || memberName == "firstOrNull"
+            || memberName == "last"
+            || memberName == "lastOrNull"
+    }
+
     private func isUIntRangeSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
         if memberName == "iterator" {
             return argCount == 0
@@ -401,6 +424,11 @@ extension CallTypeChecker {
         }
         if memberName == "step" {
             return argCount == 1
+        }
+        if memberName == "first" || memberName == "firstOrNull"
+            || memberName == "last" || memberName == "lastOrNull"
+        {
+            return argCount == 0
         }
         if memberName == "windowed" {
             return (1...3).contains(argCount)
@@ -447,6 +475,8 @@ extension CallTypeChecker {
                 && isCharProgressionSourceBackedHOF(memberName, argCount: args.count))
             || (rangeKind == .longProgression
                 && isLongProgressionSourceBackedHOF(memberName, argCount: args.count))
+            || (rangeKind == .ulongProgression
+                && isULongProgressionSourceBackedHOF(memberName, argCount: args.count))
             || ((memberName == "random" || memberName == "randomOrNull")
                 && (rangeKind == .longRange || rangeKind == .charRange
                     || rangeKind == .uintRange || rangeKind == .ulongRange))
@@ -629,6 +659,8 @@ extension CallTypeChecker {
             return [kotlin, ranges, interner.intern("IntProgression")]
         case .longProgression:
             return [kotlin, ranges, interner.intern("LongProgression")]
+        case .ulongProgression:
+            return [kotlin, ranges, interner.intern("ULongProgression")]
         case .charProgression:
             return [kotlin, ranges, interner.intern("CharProgression")]
         case .longRange:

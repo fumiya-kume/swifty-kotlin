@@ -3496,7 +3496,7 @@
     - `kotlin.ranges.contains` — fun LongRange.contains(Int): Boolean  -- `final inline fun (kotlin.ranges/LongRange).kotlin.ranges/contains(kotlin/Int): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun LongRange.contains(Short): Boolean  -- `final inline fun (kotlin.ranges/LongRange).kotlin.ranges/contains(kotlin/Short): kotlin/Boolean`
 
-- [ ] KSP-1289: kotlin.ranges.UIntProgression の未実装 stdlib API を実装する（4 件）
+- [~] KSP-1289: kotlin.ranges.UIntProgression の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.ranges` / receiver `UIntProgression`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3508,6 +3508,7 @@
     - `kotlin.ranges.firstOrNull` — fun UIntProgression.firstOrNull(): UInt  -- `final fun (kotlin.ranges/UIntProgression).kotlin.ranges/firstOrNull(): kotlin/UInt?`
     - `kotlin.ranges.last` — fun UIntProgression.last(): UInt  -- `final fun (kotlin.ranges/UIntProgression).kotlin.ranges/last(): kotlin/UInt`
     - `kotlin.ranges.lastOrNull` — fun UIntProgression.lastOrNull(): UInt  -- `final fun (kotlin.ranges/UIntProgression).kotlin.ranges/lastOrNull(): kotlin/UInt?`
+  - focused 実装/検証: Kotlin 2.3.10 の `@SinceKotlin("1.7")` 4 API、正向き・負向き・empty・UInt の min/max、property/function distinction、nullable 戻り値を固定。全 Swift/全 Golden/全 diff の共通 G は未実行のため Draft PR。
 
 - [ ] KSP-1290: kotlin.ranges.UIntRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `UIntRange`
@@ -3521,7 +3522,7 @@
     - `kotlin.ranges.contains` — fun UIntRange.contains(ULong): Boolean  -- `final fun (kotlin.ranges/UIntRange).kotlin.ranges/contains(kotlin/ULong): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun UIntRange.contains(UShort): Boolean  -- `final fun (kotlin.ranges/UIntRange).kotlin.ranges/contains(kotlin/UShort): kotlin/Boolean`
 
-- [ ] KSP-1291: kotlin.ranges.ULongProgression の未実装 stdlib API を実装する（4 件）
+- [~] KSP-1291: kotlin.ranges.ULongProgression の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.ranges` / receiver `ULongProgression`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3533,6 +3534,7 @@
     - `kotlin.ranges.firstOrNull` — fun ULongProgression.firstOrNull(): ULong  -- `final fun (kotlin.ranges/ULongProgression).kotlin.ranges/firstOrNull(): kotlin/ULong?`
     - `kotlin.ranges.last` — fun ULongProgression.last(): ULong  -- `final fun (kotlin.ranges/ULongProgression).kotlin.ranges/last(): kotlin/ULong`
     - `kotlin.ranges.lastOrNull` — fun ULongProgression.lastOrNull(): ULong  -- `final fun (kotlin.ranges/ULongProgression).kotlin.ranges/lastOrNull(): kotlin/ULong?`
+  - focused 実装/検証: Kotlin 2.3.10 の `@SinceKotlin("1.7")` 4 API、正向き・負向き・empty・ULong の min/max、property/function distinction、nullable 戻り値を固定。全 Swift/全 Golden/全 diff の共通 G は未実行のため Draft PR。
 
 - [ ] KSP-1292: kotlin.ranges.ULongRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `ULongRange`

@@ -417,6 +417,7 @@ enum MemberRuntimeDispatch {
         }
         if kind == .uintProgression {
             let sourceBacked: Set<String> = [
+                "first", "firstOrNull", "last", "lastOrNull",
                 "iterator", "chunked", "windowed", "take", "drop",
                 "map", "mapIndexed", "mapNotNull",
                 "filter", "filterIndexed", "filterNot",
@@ -450,6 +451,13 @@ enum MemberRuntimeDispatch {
         }
 
         if kind == .longProgression {
+            let sourceBacked: Set<String> = ["first", "firstOrNull", "last", "lastOrNull"]
+            if sourceBacked.contains(member) {
+                return nil
+            }
+        }
+
+        if kind == .ulongProgression {
             let sourceBacked: Set<String> = ["first", "firstOrNull", "last", "lastOrNull"]
             if sourceBacked.contains(member) {
                 return nil
