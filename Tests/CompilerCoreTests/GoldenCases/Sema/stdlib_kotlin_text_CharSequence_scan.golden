@@ -1,0 +1,92 @@
+symbol fq=__local_0.scanned kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_1.indexed kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_2.scanned kind=local vis=private flags=_ type=kotlin.collections.List<String?>?
+symbol fq=__local_3.indexed kind=local vis=private flags=_ type=kotlin.collections.List<Int>?
+symbol fq=__local_4.scanned kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_5.indexed kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=inspectNamed kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=Unit
+symbol fq=inspectNamed.$0.seed kind=valueParameter vis=private flags=_
+symbol fq=inspectNamed.$0.source kind=valueParameter vis=private flags=_
+symbol fq=inspectNullable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence?] ret=Unit
+symbol fq=inspectNullable.$1.source kind=valueParameter vis=private flags=_
+symbol fq=inspectScan kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Unit
+symbol fq=inspectScan.$2.source kind=valueParameter vis=private flags=_
+symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.text.code kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=Int
+file fstdlib_kotlin_text_CharSequence_scan package=_
+  decl inspectScan fun inspectScan sym=inspectScan
+  decl inspectNullable fun inspectNullable sym=inspectNullable
+  decl inspectNamed fun inspectNamed sym=inspectNamed
+expr e@2:30 name(source) type=kotlin.CharSequence ref=inspectScan.$2.source
+expr e@2:42 int(0) type=Int
+expr e@2:61 name(acc) type=Int ref=s-0
+expr e@2:67 name(value) type=Char ref=s-1
+expr e@2:67#1 memberCall recv=e@2:67 callee=code args=[] type=Int call=kotlin.text.code
+expr e@2:61#1 binary(add) lhs=e@2:61 rhs=e@2:67#1 type=Int
+expr e@2:45 lambda params=[acc,value] body=e@2:61#1 label=scan type=(Int, Char) -> Int
+expr e@2:30#1 memberCall recv=e@2:30 callee=scan args=[_:e@2:42,_:e@2:45] type=kotlin.collections.List<Int> call=kotlin.text.scan targs=[Int]
+expr e@2:5 localDecl scanned mutable=0 type=List<Int> init=e@2:30#1 type=Unit ref=__local_0.scanned
+expr e@3:33 name(source) type=kotlin.CharSequence ref=inspectScan.$2.source
+expr e@3:52 string() type=String
+expr e@4:9 name(acc) type=String ref=s-2
+expr e@4:15 name(index) type=Int ref=s-3
+expr e@4:9#1 binary(add) lhs=e@4:9 rhs=e@4:15 type=String
+expr e@4:23 name(value) type=Char ref=s-4
+expr e@4:9#2 binary(add) lhs=e@4:9#1 rhs=e@4:23 type=String
+expr e@3:56 lambda params=[index,acc,value] body=e@4:9#2 label=scanIndexed type=(Int, String, Char) -> String
+expr e@3:33#1 memberCall recv=e@3:33 callee=scanIndexed args=[_:e@3:52,_:e@3:56] type=kotlin.collections.List<String> call=kotlin.text.scanIndexed targs=[String]
+expr e@3:5 localDecl indexed mutable=0 type=List<String> init=e@3:33#1 type=Unit ref=__local_1.indexed
+expr e@6:13 name(scanned) type=kotlin.collections.List<Int> ref=__local_0.scanned
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println#1
+expr e@7:13 name(indexed) type=kotlin.collections.List<String> ref=__local_1.indexed
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13] type=Unit call=kotlin.io.println#1
+expr e@11:19 name(source) type=kotlin.CharSequence? ref=inspectNullable.$1.source
+expr e@11:41 name(null) type=Nothing?
+expr e@12:13 name(acc) type=String? ref=s-5
+expr e@12:20 name(null) type=Nothing?
+expr e@12:13#1 binary(equal) lhs=e@12:13 rhs=e@12:20 type=Boolean
+expr e@12:26 name(value) type=Char ref=s-6
+expr e@12:26#1 memberCall recv=e@12:26 callee=toString args=[] type=String
+expr e@12:48 name(acc) type=String ref=s-5
+expr e@12:54 name(value) type=Char ref=s-6
+expr e@12:48#1 binary(add) lhs=e@12:48 rhs=e@12:54 type=String
+expr e@12:9 if cond=e@12:13#1 then=e@12:26#1 else=e@12:48#1 type=String
+expr e@11:47 lambda params=[acc,value] body=e@12:9 label=scan type=(String?, Char) -> String?
+expr e@11:19#1 safeMemberCall recv=e@11:19 callee=scan args=[_:e@11:41,_:e@11:47] type=kotlin.collections.List<String?>? call=kotlin.text.scan targs=[String?]
+expr e@11:5 localDecl scanned mutable=0 type=_ init=e@11:19#1 type=Unit ref=__local_2.scanned
+expr e@14:19 name(source) type=kotlin.CharSequence? ref=inspectNullable.$1.source
+expr e@14:39 int(0) type=Int
+expr e@14:61 name(acc) type=Int ref=s-7
+expr e@14:67 name(index) type=Int ref=s-8
+expr e@14:61#1 binary(add) lhs=e@14:61 rhs=e@14:67 type=Int
+expr e@14:42 lambda params=[index,acc,_] body=e@14:61#1 label=scanIndexed type=(Int, Int, Char) -> Int
+expr e@14:19#1 safeMemberCall recv=e@14:19 callee=scanIndexed args=[_:e@14:39,_:e@14:42] type=kotlin.collections.List<Int>? call=kotlin.text.scanIndexed targs=[Int]
+expr e@14:5 localDecl indexed mutable=0 type=_ init=e@14:19#1 type=Unit ref=__local_3.indexed
+expr e@15:13 name(scanned) type=kotlin.collections.List<String?>? ref=__local_2.scanned
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13] type=Unit call=kotlin.io.println#1
+expr e@16:13 name(indexed) type=kotlin.collections.List<Int>? ref=__local_3.indexed
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13] type=Unit call=kotlin.io.println#1
+expr e@20:19 name(source) type=kotlin.CharSequence ref=inspectNamed.$0.source
+expr e@20:41 name(seed) type=Int ref=inspectNamed.$0.seed
+expr e@20:75 name(acc) type=Int ref=s-9
+expr e@20:81 name(value) type=Char ref=s-10
+expr e@20:81#1 memberCall recv=e@20:81 callee=code args=[] type=Int call=kotlin.text.code
+expr e@20:75#1 binary(add) lhs=e@20:75 rhs=e@20:81#1 type=Int
+expr e@20:59 lambda params=[acc,value] body=e@20:75#1 label=scan type=(Int, Char) -> Int
+expr e@20:19#1 memberCall recv=e@20:19 callee=scan args=[initial:e@20:41,operation:e@20:59] type=kotlin.collections.List<Int> call=kotlin.text.scan targs=[Int]
+expr e@20:5 localDecl scanned mutable=0 type=_ init=e@20:19#1 type=Unit ref=__local_4.scanned
+expr e@21:19 name(source) type=kotlin.CharSequence ref=inspectNamed.$0.source
+expr e@21:48 string() type=String
+expr e@22:9 name(acc) type=String ref=s-11
+expr e@22:15 name(index) type=Int ref=s-12
+expr e@22:9#1 binary(add) lhs=e@22:9 rhs=e@22:15 type=String
+expr e@22:23 name(value) type=Char ref=s-13
+expr e@22:9#2 binary(add) lhs=e@22:9#1 rhs=e@22:23 type=String
+expr e@21:64 lambda params=[index,acc,value] body=e@22:9#2 label=scanIndexed type=(Int, String, Char) -> String
+expr e@21:19#1 memberCall recv=e@21:19 callee=scanIndexed args=[initial:e@21:48,operation:e@21:64] type=kotlin.collections.List<String> call=kotlin.text.scanIndexed targs=[String]
+expr e@21:5 localDecl indexed mutable=0 type=_ init=e@21:19#1 type=Unit ref=__local_5.indexed
+expr e@24:13 name(scanned) type=kotlin.collections.List<Int> ref=__local_4.scanned
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println#1
+expr e@25:13 name(indexed) type=kotlin.collections.List<String> ref=__local_5.indexed
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println#1

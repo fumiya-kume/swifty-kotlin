@@ -575,3 +575,11 @@ public inline fun CharSequence.runningReduceIndexed(operation: (index: Int, acc:
     }
     return result as List<Char>
 }
+
+public inline fun <R> CharSequence.scan(initial: R, operation: (acc: R, Char) -> R): List<R> {
+    return runningFold(initial, operation)
+}
+
+public inline fun <R> CharSequence.scanIndexed(initial: R, operation: (index: Int, acc: R, Char) -> R): List<R> {
+    return runningFoldIndexed(initial, operation)
+}
