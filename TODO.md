@@ -319,13 +319,14 @@
 >
 > 2026-08-14 現 HEAD で `SyntheticBase64Stubs` / `SyntheticHexFormatStubs` は存在しないため、Base64/HexFormat 対応タスクは追加しない。
 
-- [ ] KSP-697: `buildList` capacity overload を Kotlin 化し `HeaderHelpers+SyntheticBuilderDSLStubs.swift` を削除する
+- [x] KSP-697: `buildList` capacity overload を Kotlin 化し `HeaderHelpers+SyntheticBuilderDSLStubs.swift` を削除する
   - 対象スタブ: `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticBuilderDSLStubs.swift`
   - 実装先: `Sources/CompilerCore/Stdlib/kotlin/collections/CollectionBuilders.kt`
   - 削除/降格 kk_*: `__kk_build_list_with_capacity` を活用 or 削除（`RuntimeBuilders.swift`/`RuntimeCollections.swift`。着手時 rg）
   - 手順: T
-  - diff: `build_list.kt` 等既存 + capacity 引数ケース追加
+  - diff: `collection_builders.kt` / `build_empty_collections.kt` / `ksp950_build_family.kt`（capacity・負数・freezeの既存ケースを再利用）
   - 前提: なし
+  - 2026-09-08 完了: KSP-950（#6213）で両 `buildList` overload と capacity 検証・freeze は Kotlin 実装済み。残存していた合成スタブと通常/bucketed両registryの登録を削除し、`--no-stdlib` で両overloadが未解決になる契約をテスト化した。CoreのBuilder DSL/ABI 9テスト（no-stdlibは2ケース）とBackend 5テストで、source/artifact・capacity・負数・freezeはPASS。`__kk_build_list*` の旧lowering/ABI削除は、専用の後続 RF-LOWER-CALL-004〜006 で扱う。`bash Scripts/swift_test.sh --disable-sandbox --skip-build --skip '^RuntimeTests\.'` でCore 3516・Backend 1548・CLI/LSP/RuntimeTestsParallelはPASS。Runtimeは `SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh --disable-sandbox --skip-build --filter RuntimeTests` で全2451テストPASS（既知issue 1件）。Golden 4系統は全実行内でPASS、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases` は1241 PASS / 0 FAIL / 既存SKIP 59。`loc_report.sh` はSources -192行・Synthetic helper -191行、ABI export数は不変。
 
 - [ ] KSP-699: CollectionFactory bootstrap stub を削除し factory 関数を完全に Kotlin 化する
   - 対象スタブ: `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticCollectionFactoryStubs.swift`
@@ -607,9 +608,13 @@
 
 - [ ] BUG-235: `Collection<T>` 型レシーバに対する `first()` / `last()` が解決されず、リンク時に `Undefined symbols: _first` で失敗する。最小再現: `fun main() { val m = mutableMapOf("k" to 1); println(m.values.first()) }`。`List<T>` レシーバでは解決されるため、`map.values` のように静的型が `Collection<T>` になる経路だけが落ちる。根本原因: `Sources/CompilerCore/Sema/TypeCheck/CallTypeChecker+CollectionMemberFallback.swift:1197` の `collectionMembers` は `firstOrNull` / `lastOrNull` / `single` / `singleOrNull` / `elementAt` を列挙する一方で `first` / `last` を欠いており、source-backed 拡張へのフォールバックに入らない（`Collection` / `Set.joinToString` の非対称ガードと同型の欠落）。今回修正しない理由: 本 PR が触る KIR / ABI lowering とは別サブシステム（Sema のコレクションメンバフォールバック）であり、`collectionMembers` への追加は overload 解決の影響範囲を全 diff / Golden で再検証する必要がある。本 PR は BUG-233 の ABI-002 修正の検証を回しており、同一 PR に混ぜると原因の切り分けができなくなる。
 
+- [ ] BUG-237: `Sequence<Any>` に対する `flatten()` / `toList()` を、kotlinc がコンパイルエラーにするにもかかわらず本コンパイラが受理する。最小再現: `fun main() { val mixed = sequenceOf(listOf(1, 2), sequenceOf(3, 4)); println(mixed.flatten().toList()) }`。`sequenceOf` の要素型推論は両コンパイラとも `Any` に広げて一致する（`Sequence` は `Iterable` を継承しないため `List<Int>` と `Sequence<Int>` の共通上位型は `Any`。reified でないため交差型診断も出ない）が、kotlinc（2.4.10 実測）は `flatten()` で `cannot infer type for type parameter 'R'` / `no value passed for parameter 'iterator'` / `cannot infer type for type parameter 'T'` を報告して失敗する。本コンパイラは `kotlin.sequences.flatten` に解決して `Sequence<out Any>` を返し、実行すると `[1, 2, 3, 4]` を出力する（flatten の型制約チェックの欠落か、Any への緩いマッチ）。この差により、混在 Sequence の実行は `Scripts/diff_cases/` に置けない（参照側がコンパイルエラー）。現状の挙動は `Tests/CompilerCoreTests/GoldenCases/Sema/flatten_sequence_mixed.kt` で Sema の固定記録として保持する。発見元: RF-FIXTURE-010 で `mixedSeq` を `flatten_sequence_edge_cases.kt` へ移そうとして参照コンパイルが失敗して発覚。今回修正しない理由: `flatten` の overload 制約（`Sequence<Iterable<T>>` / `Sequence<Sequence<T>>` のみに適用）の強化は Sema の型推論層の変更で、BUG-236 と同様に型システム側の対応が必要であり、golden fixture の分割という RF-FIXTURE-010 のスコープを超える。
+
 - [ ] BUG-228: `super.p`（`super` 修飾でのプロパティ読み取り）が、静的に宣言された基底クラスの実装ではなく、レシーバの属するクラス自身の最も派生した override を観測する。メソッドの `super.f()` は正しく基底の実装を呼ぶため、プロパティだけ非対称に壊れている。最小再現: `open class Base { open val p = "bp" } ` `class Derived : Base() { override val p = "dp"; fun viaSuper() = super.p } ` `fun main() { println(Derived().viaSuper()) }` は kotlinc であれば `super.p` が Base 自身の実装（`bp`）を返すはずだが、本コンパイラは `dp`（Derived 自身の override）を返す。原因（未確定、要追加調査）: `super`（bare の superRef 式）自体の型は `ExprTypeChecker+NameLambdaAndCallableRefInference.swift` の `resolveUnqualifiedSuper` によって正しく直接基底クラス型に束縛されることを確認済みだが（`sema.bindings.exprTypes[superRefExprID]` が Base 型になる）、続く `.p` のメンバー名解決がこの型情報を使わず、レシーバの実行時クラス（`super` を書いた側のクラス自身）のスコープから素朴に名前 `p` を解決しているように見える（この場合は Derived 自身の宣言を発見してしまう）。関数呼び出しには `sema.bindings.isSuperCallExpr(exprID)`/`markSuperCall`（`CallTypeChecker+MemberCallInferenceRegularResolution.swift`）という専用の super 検出・処理経路が存在するが、プロパティ（非呼び出し）の名前解決には同等の仕組みが一切ない（`grep -rn "isSuperCallExpr\|markSuperCall"` は呼び出し系ファイルのみに出現）。どの汎用メンバー名解決関数がこの問題を引き起こしているかは未特定（`.superRef` を受け取る側の一般的な「レシーバの型 T からメンバー名 X を解決する」ロジックの特定に、BUG-227 のスコープ外の追加調査が必要）。発見元: BUG-227（プロパティの vtable 仮想ディスパッチ欠落）の回帰テスト作成中、「`super.p` を仮想化してしまうと今回の修正が既存の（静的だが無害な）バグを動的に間違った値を返すバグへ悪化させる」というリスクを検証する過程で発見。BUG-227 の修正では、レシーバ式が `.superRef` の場合は無条件に仮想ディスパッチを除外するガードを追加することで、本バグを悪化させないことのみ確認済み（`super.p` の出力値自体は修正前後で `dp` のまま不変）。今回修正しない理由: 根本原因である汎用メンバー名解決ロジックの特定自体に別調査が必要で、BUG-227（vtable 仮想ディスパッチの欠落）とは異なるレイヤ（Sema の名前解決）の別バグであり、スコープを大きく超える。
 
 - [ ] BUG-229: 一次コンストラクタのパラメータプロパティ（`class Foo(open val p: String)` のような primary constructor 上の `val`/`var`）に `open` 修飾子を付けても、override 可能として認識されない。最小再現: `open class Base(open val p: String)` `class Derived(p: String) : Base(p) { override val p: String = p + "!" }` は kotlinc であれば正しくコンパイルされるはずだが、本コンパイラは `override val p` の宣言位置で `KSWIFTK-SEMA-FINAL: 'p' in 'Base' is final and cannot be overridden.` を報告する（クラス本体で `open val p: String = ...` と書いた場合は問題なく override できるため、one 次コンストラクタパラメータだけの非対称なギャップ）。原因: `Sources/CompilerCore/Sema/DataFlow/OpenFinalOverride.swift` の open/override 検証（`validateMemberOverrides`/`extractMemberMeta`）は `classDecl.memberFunctions`/`classDecl.memberProperties`（クラス本体の宣言）のみを走査し、`classDecl.primaryConstructorParams`（一次コンストラクタのパラメータプロパティ）を一切対象にしていない。そのため主コンストラクタの `val`/`var` パラメータに `open` を書いても対応する `SymbolFlags.openType` が設定されず、`isMemberOverridable` の判定（`sym.flags.contains(.openType) || ...`）で常に false となり「final」と誤診断される。発見元: BUG-227 の回帰テスト設計時に advisor の提案した追加ケース（primary constructor property override — vtable スロットへの登録漏れによる実行時 null 呼び出しリスクの確認目的）を試したところ、vtable の話に到達する前の Sema 検証で既に拒否されることが判明。今回修正しない理由: `OpenFinalOverride.swift` の modifier 抽出ロジックにコンストラクタパラメータ用の経路を新設する必要があり（`ConstructorParam` 自身の `open`/`override`/`abstract`/`final` 修飾子を読み、`classDecl.memberProperties` と同様に `validateMemberOverrides` へ合流させる改修）、かつプロパティ本体の symbol 登録側（`HeaderCollection.swift` 等）で primary constructor property に対して `.openType`/`.overrideMember` フラグが正しく設定される経路も別途確認・追加する必要がある。BUG-227（vtable 仮想ディスパッチの欠落）とは全く異なるレイヤ（Sema の修飾子検証、override 可否判定に到達する前段）の別バグであり、スコープを大きく超える。
+
+- [ ] BUG-236: 要素型の異なる引数を渡した `arrayOf` の要素型推論が、Kotlin の LUB ではなく `Any` へ広げられる。最小再現: `fun main() { val mixed = arrayOf(1, "two", 3.0) }`。kotlinc（実測は 2.4.10 / language version 2.4）は `T` を `Comparable<*> & java.io.Serializable` の交差型と推論し、reified 型パラメータへの交差型の具象化を `error: type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>' & 'Serializable']` として**コンパイルエラー**にする（`kotlinc -Xcontext-parameters` の既定設定で実測）。本コンパイラは同じ式を診断なしで受理し `kotlin.Array<Any>` を推論する（`Tests/CompilerCoreTests/GoldenCases/Sema/arrayof_element_type_inference.golden` の `arrayOfMixed` が `targs=[Any]` として固定している。TYPE-103 以来の既定動作で、本 PR で新たに導入した挙動ではない）。この差により、混在 `arrayOf` の**実行**結果を `Scripts/diff_cases/` に置くことはできない（参照側がコンパイルエラーになるため diff の対象にならない）。明示注釈を付けた `arrayOf<Any>(1, "two", 3)` の実行は `Scripts/diff_cases/array_edge_cases.kt` が既にカバーしている。発見元: RF-FIXTURE-002 で分割後の実行検証を補完する際、混在ケースを `Scripts/diff_cases/arrayof_type_safety.kt` に追加したところ参照コンパイルが失敗して発覚。今回修正しない理由: 修正には共通上位型（LUB）計算と交差型の表現、および reified 型パラメータへの交差型具象化の診断という型システム側の新機能が必要で、Kotlin/Native には `java.io.Serializable` が存在しないため交差型の構成要素自体の設計判断も伴う。golden fixture の依存削減という RF-FIXTURE-002 のスコープを大きく超える。
 
 ---
 
@@ -705,9 +710,27 @@
 
   - **同 PR 内で修正したバグ**: BUG-233 —— `.kklib` 経由の stdlib で `map[k] = v` / `getOrPut` が `Double` / `Float` / `Char` / `Boolean` を box せず raw のまま格納していた（`{k=4609434218613702656}`）。ライブラリから取り込んだ inline body の呼び出しが callee symbol を失い、ABILoweringPass が消去された型パラメータのスロットを判別できなくなるのが原因。`ABILoweringPass` に ABI-002 として boundary bridge の signature 復元を追加し、回帰ケース `Scripts/diff_cases/bug233_mutable_map_indexed_set_primitive_boxing.kt` を追加した。
   - **同 PR で修正しなかったバグ**: BUG-234（`getOrPut` の既存エントリ読み戻し）、BUG-235（`Collection<T>.first()` / `last()` の未解決シンボル）。いずれも理由をバグバックログに記載した。
-- [ ] RF-FIXTURE-002: `arrayof_type_preserve.kt` の配列生成の型推論を生成方式ごとに分離する（74行 / 18回）
+- [x] RF-FIXTURE-002: `arrayof_type_preserve.kt` の配列生成の型推論を生成方式ごとに分離する（74行 / 18回）
   - `arrayOf` の要素型 / 混在型、空配列の期待型、primitive factory 8型、`Array(size) { ... }` の initializer 推論・明示型引数と期待型の優先を区別する。特に `Array<Int>` を `Array<out Any>` に受けるケースを単なる期待型付き factory に置き換えない。
   - `println(array.size)` ではなく推論結果の型を照合し、Byte / Short は不要な数値変換と切り離せる入力にする。実行先は `arrayof_type_safety.kt` / `array_constructor.kt` / `array_primitive_types.kt`。これらだけで8型・混在型の実行結果を網羅するとみなさず、元ケースのうち実行が必要な項目だけ補完する。
+  - 分割結果（旧 `arrayof_type_preserve.{kt,golden}` は削除。1ファイル = 1つの型規則）:
+    - `arrayof_element_type_inference.kt`（16行 / golden 34行・2,430 B）— `arrayOf` が引数型から要素型を決める規則。`arrayOfInts` / `arrayOfStrings` / `arrayOfMixed`（混在は `targs=[Any]`）。
+    - `arrayof_empty_expected_type.kt`（5行 / golden 7行・578 B）— 引数なし `arrayOf()` が期待型から要素型を取る規則。`arrayOfWithExpectedType`。
+    - `primitive_array_factories.kt`（43行 / golden 99行・7,453 B）— primitive factory 8型。Int / Long / Double / Float / Boolean / Char はリテラル引数のまま、Short / Byte だけ `toShort()` / `toByte()` を外して型付きパラメータ入力にした（`shortArrayOfValues` / `byteArrayOfValues`）。
+    - `array_constructor_type_inference.kt`（15行 / golden 31行・2,354 B）— `Array(size) { ... }` の initializer 推論・明示型引数優先・期待型。`arrayConstructorExplicitTypeArgWinsOverExpectedType` は `Array<out Any> = Array<Int>(3) { it }` の原形を維持し、call の型 `kotlin.Array<Int>` と局所変数の `Array<out Any>` の差を固定する。
+  - 型照合の方法: 推論自体が目的の式には期待型を先に与えず、直後の型付きローカル（`val checked: Array<Int> = ints`）で照合する。`println(x.size)` は全廃した。
+  - 削減した依存 API: `kotlin.io.println#1`、`kotlin.collections.size.$get#0`〜`#8`（9 overload）、`Int.toShort()` / `Int.toByte()`。外部 symbol 行も、旧 fixture が1ファイルで抱えていた synthetic array クラス9件が `kotlin.Array` のみ（3ファイル）と primitive 8件（`primitive_array_factories` のみ）に分離された。
+  - 規模: golden 合計 171行 / 12,787 B → 171行 / 12,815 B。合計が縮まないのは後述のバグ修正でラムダ推論4行が新たに記録されるようになったため（修正前の分割後合計は 12,592 B）。**最大 fixture は 171行 / 12,787 B → 99行 / 7,453 B**。
+  - 実行コスト: Sema ケース 589 → 592、8件単位の batch 数は 74 → 74 で不変。同条件（Sema 単独 filter・同一マシン・fresh build）の suite 実測は 569.4s → 576.4s（+1.2%、batch 数が変わらないため誤差範囲）。
+  - 実行検証の対応（元15関数）:
+    - `arrayOf` の Int / String: `arrayof_type_safety.kt`（`get` / `size` / `contains`）・`array_of.kt`・`test_array_new_functions.kt` で既存充足。
+    - primitive factory 8型: `array_sorted_variants.kt`（int / long / short / byte / char / double / float）・`byte_short_array.kt`（要素の読み書き・binarySearch）・`array_for_loop.kt`（int / long）・`array_primitive_types.kt` と `primitive_array_map_boolean_char_boxing.kt`（boolean / char の要素値）で既存充足。3つの実行先だけでは8型を網羅していないため、他の既存ケースまで照合した。
+    - 空 `arrayOf()` の期待型: 既存実行なし。`arrayof_type_safety.kt` に `size` / `isEmpty` を追加した。
+    - `Array(size) { ... }` の明示型引数優先・期待型: 既存実行なし。`array_constructor.kt` に追加し、併せて両経路の index 伝播（`Array(3) { it + 10 }` / `Array<Int>(3) { it + 20 }`）も追加した。
+    - 混在 `arrayOf(1, "two", 3.0)`: 参照 kotlinc がコンパイルエラーにするため diff ケースにできない（BUG-236）。明示注釈版 `arrayOf<Any>(...)` の実行は `array_edge_cases.kt` が既にカバー。
+  - 副産物のコンパイラバグ修正（バグ修正ルールに従い本 PR で修正・回帰同梱）: `Array(size) { init }` に**明示型引数がある場合と期待型がある場合**、init ラムダが一度も型推論されず、index パラメータが束縛されないまま lower されて全要素が index 0 で初期化されていた（`Array<Int>(3) { it }` → `[0, 0, 0]`、`Array<Int>(3) { i -> i + 10 }` → `[10, 10, 10]`）。原因は `Sources/CompilerCore/Sema/TypeCheck/CallTypeChecker.swift` の `inferLambdaOnce` フラグの値が該当2分岐で逆（`true` = 推論スキップ）だったこと。フラグの導入は `3b7a7b07df`（TYPE-103 レビュー追従）。該当2分岐を通る fixture 関数（`arrayConstructorExplicitTypeArgWinsOverExpectedType` / `arrayConstructorExpectedType`）は次の追従コミット `256f5973b0` で追加されたが、いずれも `println(array.size)` しか照合しておらず、要素数が正しければ index が壊れていても通ってしまうため検出されていなかった（本タスクが除去対象とした検証パターンそのもの）。フラグを削除し `3b7a7b07df` 以前の無条件推論に戻した。回帰は `Scripts/diff_cases/array_constructor.kt`（実行値）と `array_constructor_type_inference.golden`（`e@10:47` / `e@14:41` のラムダ型が記録されること）で固定。
+  - ゲート: 全 Swift テスト（1542 tests / 309 suites, green）、`--filter Golden`（更新モードなし、Golden.Sema 74 batches / 611.3s, green）、全 diff（total 1236 / failed 0 / skipped 59、skip はすべて既存の `SKIP-DIFF`）、`check_todo_ids.sh`、`git diff --check`。分割対象以外の既存 golden の変更は0件。
+  - 進行順の逸脱: 共通方針は RF-GOLDEN-010 と RF-FIXTURE-001 の先行を求めているが、いずれも未着手のまま本タスクを実施した。010 は overload キーの表記変更であり、本タスクの入力分割・依存削減とは独立に適用できる。
 - [ ] RF-FIXTURE-003: `map_hofs.kt` の Map HOF・分解宣言・変換を分離する（11行 / 15回）
   - `forEach` の entry destructuring、`map` / `filter` の引数・戻り値、`mapValues` / `mapKeys` の K/V 型伝播、`toList` の Pair 変換を別目的にする。Map と entries の Iterable HOF の解決先を混同しない。
   - ラムダ内外の `println` を型照合へ置き換え、必要のない String 操作を使わない。実行先は `map_hof.kt` / `map_entries_hof.kt`。destructuring と `toList` の型検証は、出力ケースがあるという理由だけでは削除しない。
@@ -1504,13 +1527,15 @@
     - `kotlin.collections.AbstractMap.toString` — fun AbstractMap.toString(): String  -- `open fun toString(): kotlin/String`
     - `kotlin.collections.AbstractMap.values` — val AbstractMap.values: Collection  -- `open val values`
 
-- [ ] KSP-1034: kotlin.collections.AbstractMutableCollection.AbstractMutableCollection の未実装 stdlib API を実装する（5 件）
+- [x] KSP-1034: kotlin.collections.AbstractMutableCollection.AbstractMutableCollection の未実装 stdlib API を実装する（5 件）
   - 対象: `kotlin.collections.AbstractMutableCollection` / receiver `AbstractMutableCollection`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractMutableCollection/AbstractMutableCollection.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_AbstractMutableCollection_AbstractMutableCollection_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_AbstractMutableCollection_AbstractMutableCollection_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_AbstractMutableCollection_AbstractMutableCollection_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠（2026-09-04、KSP-1034）: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractMutableCollection.kt` に `addAll` / `clear` / `remove` / `removeAll` / `retainAll` の source-backed default implementation を追加した。`removeAll` / `retainAll` は現行の `MutableIterator` 型公開制約に合わせて、Kotlin 2.3.10 の契約と等価な iterator loop に展開した。既存の `MutableCollection` runtime / ABI bridge は interface 経路で使用中のため保持した。
+  - 回帰: 対象 Sema Golden の更新あり／なし、aggregate Golden（28 tests / 10 suites）、対象 diff、aggregate diff（1199 passed / 0 failed / 51 skipped）、`check_todo_ids.sh`、`validate_runtime_abi_links.sh` が pass。
   - 未実装シンボル一覧:
     - `kotlin.collections.AbstractMutableCollection.addAll` — fun AbstractMutableCollection.addAll(Collection): Boolean  -- `open fun addAll(kotlin.collections/Collection<#A>): kotlin/Boolean`
     - `kotlin.collections.AbstractMutableCollection.clear` — fun AbstractMutableCollection.clear(): Unit  -- `open fun clear()`
@@ -1518,13 +1543,15 @@
     - `kotlin.collections.AbstractMutableCollection.removeAll` — fun AbstractMutableCollection.removeAll(Collection): Boolean  -- `open fun removeAll(kotlin.collections/Collection<#A>): kotlin/Boolean`
     - `kotlin.collections.AbstractMutableCollection.retainAll` — fun AbstractMutableCollection.retainAll(Collection): Boolean  -- `open fun retainAll(kotlin.collections/Collection<#A>): kotlin/Boolean`
 
-- [ ] KSP-1036: kotlin.collections.AbstractMutableList.AbstractMutableList の未実装 stdlib API を実装する（19 件）
+- [x] KSP-1036: kotlin.collections.AbstractMutableList.AbstractMutableList の未実装 stdlib API を実装する（19 件）
   - 対象: `kotlin.collections.AbstractMutableList` / receiver `AbstractMutableList`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractMutableList/AbstractMutableList.kt`（該当ファイルが無ければ新規作成）
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractMutableList.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_AbstractMutableList_AbstractMutableList_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_AbstractMutableList_AbstractMutableList_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_AbstractMutableList_AbstractMutableList_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠: Kotlin 2.3.10 native-wasm の実装契約に基づき、抽象ストレージ操作を除く19メンバ（`modCount` / `removeRange` を含む）のsource-backed default/abstract surfaceを追加した。`Iterator`、`ListIterator`、`SubList`、範囲削除、順序付き`equals`/`hashCode`まで実装し、共有 synthetic MutableList runtime bridgeはinterface/residual経路で利用中のため保持した。具体サブクラスの`add(Int, E)`が継承defaultの`add(E)`を誤って隠すresolverのrequired-arity判定も同PRで修正した。
+  - 検証: `abstractMutableListMembersAreSourceBacked`、既存のAbstractMutableList source surface Sema回帰、専用Golden shard、専用`diff_kotlinc`（JDK17、`DIFF_REQUIRE_JDK21=0`）をpass。Goldenは直接生成worker出力との一致も確認した。
   - 未実装シンボル一覧:
     - `kotlin.collections.AbstractMutableList.add` — fun AbstractMutableList.add(): Boolean  -- `open fun add(#A): kotlin/Boolean`
     - `kotlin.collections.AbstractMutableList.add` — fun AbstractMutableList.add(Int, ): Unit  -- `abstract fun add(kotlin/Int, #A)`
@@ -1711,7 +1738,7 @@
     - `kotlin.collections.Collection.iterator` — fun Collection.iterator(): Iterator  -- `abstract fun iterator(): kotlin.collections/Iterator<#A>`
     - `kotlin.collections.Collection.size` — val Collection.size: Int  -- `abstract val size`
 
-- [ ] KSP-1055: kotlin.collections.HashMap.HashMap の未実装 stdlib API を実装する（16 件）
+- [x] KSP-1055: kotlin.collections.HashMap.HashMap の未実装 stdlib API を実装する（16 件）
   - 対象: `kotlin.collections.HashMap` / receiver `HashMap`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/HashMap/HashMap.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
