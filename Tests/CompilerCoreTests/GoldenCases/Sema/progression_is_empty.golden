@@ -1,0 +1,14 @@
+symbol fq=__local_0.empty kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_1.checked kind=local vis=private flags=_ type=Boolean
+symbol fq=emptyProgression kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+file fprogression_is_empty package=_
+  decl emptyProgression fun emptyProgression sym=emptyProgression
+expr e@5:17 name(IntProgression) type=kotlin.ranges.IntProgression.Companion ref=kotlin.ranges.IntProgression
+expr e@5:48 int(10) type=Int
+expr e@5:52 int(1) type=Int
+expr e@5:55 int(1) type=Int
+expr e@5:17#1 memberCall recv=e@5:17 callee=fromClosedRange args=[_:e@5:48,_:e@5:52,_:e@5:55] type=kotlin.ranges.IntProgression call=kotlin.ranges.fromClosedRange#1
+expr e@5:17#2 memberCall recv=e@5:17#1 callee=isEmpty args=[] type=Boolean call=kotlin.ranges.isEmpty#2
+expr e@5:5 localDecl empty mutable=0 type=_ init=e@5:17#2 type=Unit ref=__local_0.empty
+expr e@6:28 name(empty) type=Boolean ref=__local_0.empty
+expr e@6:5 localDecl checked mutable=0 type=Boolean init=e@6:28 type=Unit ref=__local_1.checked

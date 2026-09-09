@@ -37,14 +37,14 @@ expr e@11:38 lambda params=[] body=e@11:40#1 label=all type=(Int) -> Boolean
 expr e@11:32#1 memberCall recv=e@11:32 callee=all args=[_:e@11:38] type=Boolean call=kotlin.collections.all#17 targs=[Int]
 expr e@11:5 localDecl allPositive mutable=0 type=Boolean init=e@11:32#1 type=Unit ref=__local_3.allPositive
 expr e@14:28 name(s) type=kotlin.sequences.Sequence<Int> ref=__local_0.s
-expr e@14:28#1 memberCall recv=e@14:28 callee=none args=[] type=Boolean call=kotlin.collections.none#32 targs=[Int]
+expr e@14:28#1 memberCall recv=e@14:28 callee=none args=[] type=Boolean call=kotlin.collections.none#34 targs=[Int]
 expr e@14:5 localDecl hasNone mutable=0 type=Boolean init=e@14:28#1 type=Unit ref=__local_4.hasNone
 expr e@17:33 name(s) type=kotlin.sequences.Sequence<Int> ref=__local_0.s
 expr e@17:42 name(it) type=Int ref=s-2
 expr e@17:47 int(0) type=Int
 expr e@17:42#1 binary(lessThan) lhs=e@17:42 rhs=e@17:47 type=Boolean
 expr e@17:40 lambda params=[] body=e@17:42#1 label=none type=(Int) -> Boolean
-expr e@17:33#1 memberCall recv=e@17:33 callee=none args=[_:e@17:40] type=Boolean call=kotlin.collections.none#33 targs=[Int]
+expr e@17:33#1 memberCall recv=e@17:33 callee=none args=[_:e@17:40] type=Boolean call=kotlin.collections.none#35 targs=[Int]
 expr e@17:5 localDecl noneNegative mutable=0 type=Boolean init=e@17:33#1 type=Unit ref=__local_5.noneNegative
 expr e@20:27 name(s) type=kotlin.sequences.Sequence<Int> ref=__local_0.s
 expr e@20:36 name(it) type=Int ref=s-3

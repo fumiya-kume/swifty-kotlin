@@ -88,9 +88,12 @@ struct NativeConcurrentAPISurfaceInventoryTests {
         let package = Self.packagePath.map { interner.intern($0) }
         let targetNames = Set(Self.implementedTopLevelEntries.union(Self.knownGapTopLevelEntries).map(\.name))
         let currentNames = Set(sema.symbols.allSymbols().compactMap { symbol -> String? in
+            // Internal stdlib bridge helpers (e.g. __kkFutureGetState) are not part
+            // of the public kotlin.native.concurrent surface and should not be counted.
             guard symbol.fqName.count == package.count + 1,
                   Array(symbol.fqName.prefix(package.count)) == package,
-                  symbol.kind != .package
+                  symbol.kind != .package,
+                  symbol.visibility == .public
             else {
                 return nil
             }

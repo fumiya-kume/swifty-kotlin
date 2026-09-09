@@ -129,6 +129,131 @@ func appendObjectVtableMethodRegistrations(
     )
 }
 
+/// Returns a raw-string ABI bridge for a class `toString()` implementation.
+/// Runtime Any dispatch only has an `Int` receiver and an `Int` string-handle
+/// result, while Kotlin class methods use the flat String aggregate ABI.
+func anyToStringBridgeSymbolForImplementation(
+    _ implementation: SymbolID,
+    driver: KIRLoweringDriver,
+    arena: KIRArena,
+    sema: SemaModule,
+    interner: StringInterner
+) -> SymbolID? {
+    guard implementation.rawValue >= 0,
+          let implementationSig = sema.symbols.functionSignature(for: implementation),
+          let signatureReceiverType = implementationSig.receiverType,
+          implementationSig.parameterTypes.isEmpty,
+          case .stringStruct = sema.types.kind(of: implementationSig.returnType)
+    else {
+        return nil
+    }
+    let implementationFn = arena.function(for: implementation)
+    let implementationReturnType = implementationFn?.returnType ?? implementationSig.returnType
+    let receiverType = implementationFn?.params.first?.type ?? signatureReceiverType
+
+    if let cached = driver.ctx.anyToStringBridgeSymbolsByImplementation[implementation] {
+        return cached
+    }
+
+    let bridgeSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
+    driver.ctx.anyToStringBridgeSymbolsByImplementation[implementation] = bridgeSymbol
+    let bridgeName = interner.intern(
+        "kk_any_to_string_bridge_\(implementation.rawValue)_\(bridgeSymbol.rawValue)"
+    )
+
+    let receiverParam = KIRParameter(
+        symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
+        type: receiverType
+    )
+    let receiverExpr = arena.appendExpr(
+        .symbolRef(receiverParam.symbol),
+        type: receiverParam.type
+    )
+    var body: [KIRInstruction] = [
+        .beginBlock,
+        .constValue(result: receiverExpr, value: .symbolRef(receiverParam.symbol)),
+    ]
+    let callResult = arena.appendTemporary(type: implementationReturnType)
+    let thrownResult: KIRExprID? = implementationSig.canThrow
+        ? arena.appendTemporary(type: sema.types.nullableAnyType)
+        : nil
+    body.append(.call(
+        symbol: implementation,
+        callee: interner.intern("__any_to_string_impl_\(implementation.rawValue)"),
+        arguments: [receiverExpr],
+        result: callResult,
+        canThrow: implementationSig.canThrow,
+        thrownResult: thrownResult
+    ))
+
+    if let thrownResult {
+        let continueLabel = driver.ctx.makeLoopLabel()
+        let rethrowLabel = driver.ctx.makeLoopLabel()
+        body.append(.jumpIfNotNull(value: thrownResult, target: rethrowLabel))
+        body.append(.jump(continueLabel))
+        body.append(.label(rethrowLabel))
+        body.append(.rethrow(value: thrownResult))
+        body.append(.label(continueLabel))
+    }
+
+    body.append(.returnValue(callResult))
+    body.append(.endBlock)
+
+    let bridgeDecl = arena.appendDecl(.function(KIRFunction(
+        symbol: bridgeSymbol,
+        name: bridgeName,
+        params: [receiverParam],
+        returnType: sema.types.intType,
+        body: body,
+        isSuspend: false,
+        isInline: false
+    )))
+    driver.ctx.appendGeneratedCallableDecl(bridgeDecl)
+    return bridgeSymbol
+}
+
+/// Registers the generated raw-string bridge used when a class instance is
+/// stringified after its static type has been erased to `Any`.
+func appendObjectAnyToStringRegistration(
+    objectValue: KIRExprID,
+    nominalSymbol: SymbolID,
+    driver: KIRLoweringDriver,
+    sema: SemaModule,
+    arena: KIRArena,
+    interner: StringInterner,
+    instructions: inout [KIRInstruction]
+) {
+    guard sema.symbols.symbol(nominalSymbol)?.kind == .class,
+          let implementation = resolveClassToStringSymbol(
+              for: nominalSymbol,
+              sema: sema,
+              interner: interner
+          ),
+          let bridge = anyToStringBridgeSymbolForImplementation(
+              implementation,
+              driver: driver,
+              arena: arena,
+              sema: sema,
+              interner: interner
+          )
+    else {
+        return
+    }
+
+    let intType = sema.types.intType
+    let bridgeExpr = arena.appendExpr(.symbolRef(bridge), type: intType)
+    instructions.append(.constValue(result: bridgeExpr, value: .symbolRef(bridge)))
+    let registerResult = arena.appendTemporary(type: intType)
+    instructions.append(.call(
+        symbol: nil,
+        callee: interner.intern("kk_object_register_any_to_string"),
+        arguments: [objectValue, bridgeExpr],
+        result: registerResult,
+        canThrow: false,
+        thrownResult: nil
+    ))
+}
+
 /// BUG-227: analog of `kirVtableImplementations` for property accessors.
 /// Property-accessor keys in `layout.vtableSlots` are synthetic IDs (an
 /// arithmetic transform of the underlying property's own symbol — see
@@ -543,11 +668,11 @@ func appendObjectItableMethodRegistrations(
 
 /// Returns the interface methods that must be registered for dynamic itable dispatch.
 ///
-/// BUG-200: bundled library metadata currently omits the compiler-residual
+/// BUG-200/KSP-1070: legacy or precompiled library metadata may omit the
 /// covariant `MutableIterable.iterator(): MutableIterator<T>` entry from the
-/// `MutableIterable` vtable layout. The source class still advertises the
-/// interface and its implementation, so add that exact method at slot zero
-/// until the shared residual layout can carry the covariant member itself.
+/// `MutableIterable` vtable layout. Source-backed layouts include the member
+/// when available; add that exact method at slot zero for residual layouts so
+/// interface dispatch remains compatible across both paths.
 func kirItableMethodEntries(
     for interfaceSymbol: SymbolID,
     interfaceLayout: NominalLayout,

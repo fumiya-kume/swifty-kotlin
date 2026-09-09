@@ -1,9 +1,9 @@
 /// Residual compiler/runtime support for kotlin.time.Clock (STDLIB-TIME-086).
 ///
 /// `Clock` and the public `Clock.System.now()` API are source-backed. This
-/// residual file retains the interface member bridge and the nested object
-/// anchor required by source loading. `Clock` is user-implementable, so
-/// `now()` must remain an interface member for virtual dispatch to work.
+/// residual file retains only the interface shell and the nested object anchor
+/// required by source loading. `Clock` is user-implementable, so `now()` must
+/// remain an interface member for virtual dispatch to work.
 ///
 /// `Clock.System` is created as a nested object so that the bundled Kotlin
 /// source extension `Clock.System.now()` in Stdlib/kotlin/time/Clock.kt can
@@ -28,18 +28,12 @@ extension DataFlowSemaPhase {
 
         // MARK: - Instant class (registered by registerSyntheticInstantStubs)
 
-        let instantSymbol = ensureClassSymbol(
+        _ = ensureClassSymbol(
             named: "Instant",
             in: kotlinTimePkg,
             symbols: symbols,
             interner: interner
         )
-        let instantType = types.make(.classType(ClassType(
-            classSymbol: instantSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-
         // MARK: - Clock interface
 
         let clockSymbol = ensureInterfaceSymbol(
@@ -48,24 +42,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        let clockType = types.make(.classType(ClassType(
-            classSymbol: clockSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-
-        // Clock.now() -> Instant (interface method)
-        registerClockMemberFunction(
-            named: "now",
-            externalLinkName: "kk_clock_now",
-            ownerSymbol: clockSymbol,
-            ownerType: clockType,
-            parameters: [],
-            returnType: instantType,
-            symbols: symbols,
-            interner: interner
-        )
-
         // Clock.Companion is a public namespace object in the Kotlin API.
         _ = ensureClockCompanionSymbol(
             ownerSymbol: clockSymbol,
@@ -155,69 +131,4 @@ extension DataFlowSemaPhase {
         return fqName
     }
 
-    private func registerClockMemberFunction(
-        named name: String,
-        externalLinkName: String,
-        ownerSymbol: SymbolID,
-        ownerType: TypeID,
-        parameters: [(name: String, type: TypeID)],
-        returnType: TypeID,
-        symbols: SymbolTable,
-        interner: StringInterner,
-        isOperator: Bool = false
-    ) {
-        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
-        let memberName = interner.intern(name)
-        let memberFQName = ownerInfo.fqName + [memberName]
-        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
-            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
-                return false
-            }
-            return existingSignature.receiverType == ownerType
-                && existingSignature.parameterTypes == parameters.map(\.type)
-        }) == nil else {
-            return
-        }
-        var flags: SymbolFlags = [.synthetic]
-        if isOperator { flags.insert(.operatorFunction) }
-        let memberSymbol = symbols.define(
-            kind: .function,
-            name: memberName,
-            fqName: memberFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: flags
-        )
-        symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
-        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
-
-        var valueParameterSymbols: [SymbolID] = []
-        var parameterTypes: [TypeID] = []
-        for parameter in parameters {
-            let parameterName = interner.intern(parameter.name)
-            let paramSymbol = symbols.define(
-                kind: .valueParameter,
-                name: parameterName,
-                fqName: memberFQName + [parameterName],
-                declSite: nil,
-                visibility: .private,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(memberSymbol, for: paramSymbol)
-            valueParameterSymbols.append(paramSymbol)
-            parameterTypes.append(parameter.type)
-        }
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: ownerType,
-                parameterTypes: parameterTypes,
-                returnType: returnType,
-                isSuspend: false,
-                valueParameterSymbols: valueParameterSymbols,
-                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
-            ),
-            for: memberSymbol
-        )
-    }
 }
