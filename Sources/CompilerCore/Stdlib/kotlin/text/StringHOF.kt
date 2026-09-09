@@ -185,6 +185,37 @@ public fun <R> CharSequence.mapIndexed(transform: (Int, Char) -> R): List<R> {
     return result
 }
 
+public inline fun <R : Any> CharSequence.mapIndexedNotNull(transform: (index: Int, Char) -> R?): List<R> {
+    return mapIndexedNotNullTo(ArrayList<R>(), transform)
+}
+
+@IgnorableReturnValue
+public inline fun <R : Any, C : MutableCollection<in R>> CharSequence.mapIndexedNotNullTo(
+    destination: C,
+    transform: (index: Int, Char) -> R?
+): C {
+    var index = 0
+    while (index < this.length) {
+        val transformed = transform(index, this[index])
+        if (transformed != null) destination.add(transformed)
+        index++
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <R, C : MutableCollection<in R>> CharSequence.mapIndexedTo(
+    destination: C,
+    transform: (index: Int, Char) -> R
+): C {
+    var index = 0
+    while (index < this.length) {
+        destination.add(transform(index, this[index]))
+        index++
+    }
+    return destination
+}
+
 public fun <R : Any> CharSequence.mapNotNull(transform: (Char) -> R?): List<R> {
     val result = mutableListOf<R>()
     var i = 0
@@ -195,6 +226,95 @@ public fun <R : Any> CharSequence.mapNotNull(transform: (Char) -> R?): List<R> {
         i++
     }
     return result
+}
+
+@IgnorableReturnValue
+public inline fun <R : Any, C : MutableCollection<in R>> CharSequence.mapNotNullTo(
+    destination: C,
+    transform: (Char) -> R?
+): C {
+    var index = 0
+    while (index < this.length) {
+        val transformed = transform(this[index])
+        if (transformed != null) destination.add(transformed)
+        index++
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <R, C : MutableCollection<in R>> CharSequence.mapTo(
+    destination: C,
+    transform: (Char) -> R
+): C {
+    var index = 0
+    while (index < this.length) {
+        destination.add(transform(this[index]))
+        index++
+    }
+    return destination
+}
+
+/**
+ * Returns a single list of all elements yielded from results of [transform] function being invoked on each character of original char sequence.
+ */
+public inline fun <R> CharSequence.flatMap(transform: (Char) -> Iterable<R>): List<R> {
+    return flatMapTo(ArrayList<R>(), transform)
+}
+
+/**
+ * Returns a single list of all elements yielded from results of [transform] function being invoked on each character
+ * and its index in the original char sequence.
+ */
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("flatMapIndexedIterable")
+@kotlin.internal.InlineOnly
+public inline fun <R> CharSequence.flatMapIndexed(transform: (index: Int, Char) -> Iterable<R>): List<R> {
+    return flatMapIndexedTo(ArrayList<R>(), transform)
+}
+
+/**
+ * Appends all elements yielded from results of [transform] function being invoked on each character
+ * and its index in the original char sequence, to the given [destination].
+ */
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("flatMapIndexedIterableTo")
+@IgnorableReturnValue
+@kotlin.internal.InlineOnly
+public inline fun <R, C : MutableCollection<in R>> CharSequence.flatMapIndexedTo(
+    destination: C,
+    transform: (index: Int, Char) -> Iterable<R>
+): C {
+    var index = 0
+    while (index < this.length) {
+        val list = transform(index, this[index])
+        index++
+        val resultIterator = list.iterator()
+        while (resultIterator.hasNext()) destination.add(resultIterator.next())
+    }
+    return destination
+}
+
+/**
+ * Appends all elements yielded from results of [transform] function being invoked on each character of original char sequence, to the given [destination].
+ */
+@IgnorableReturnValue
+public inline fun <R, C : MutableCollection<in R>> CharSequence.flatMapTo(
+    destination: C,
+    transform: (Char) -> Iterable<R>
+): C {
+    var index = 0
+    while (index < this.length) {
+        val list = transform(this[index])
+        index++
+        val resultIterator = list.iterator()
+        while (resultIterator.hasNext()) destination.add(resultIterator.next())
+    }
+    return destination
 }
 
 @kotlin.internal.InlineOnly
@@ -224,6 +344,22 @@ public fun <R : Any> CharSequence.firstNotNullOf(transform: (Char) -> R?): R {
     throw NoSuchElementException("No element of the char sequence was transformed to a non-null value.")
 }
 
+public fun CharSequence.first(): Char {
+    if (isEmpty())
+        throw NoSuchElementException("Char sequence is empty.")
+    return this[0]
+}
+
+public inline fun CharSequence.first(predicate: (Char) -> Boolean): Char {
+    var index = 0
+    while (index < length) {
+        val element = this[index]
+        if (predicate(element)) return element
+        index++
+    }
+    throw NoSuchElementException("Char sequence contains no character matching the predicate.")
+}
+
 public fun <R : Any> CharSequence.firstNotNullOfOrNull(transform: (Char) -> R?): R? {
     var i = 0
     val sz = this.length
@@ -231,6 +367,20 @@ public fun <R : Any> CharSequence.firstNotNullOfOrNull(transform: (Char) -> R?):
         val transformed = transform(this[i])
         if (transformed != null) return transformed
         i++
+    }
+    return null
+}
+
+public fun CharSequence.firstOrNull(): Char? {
+    return if (isEmpty()) null else this[0]
+}
+
+public inline fun CharSequence.firstOrNull(predicate: (Char) -> Boolean): Char? {
+    var index = 0
+    while (index < length) {
+        val element = this[index]
+        if (predicate(element)) return element
+        index++
     }
     return null
 }
@@ -342,6 +492,77 @@ public fun CharSequence.sumByDouble(selector: (Char) -> Double): Double {
     var i = 0
     val sz = this.length
     while (i < sz) {
+        sum += selector(this[i])
+        i++
+    }
+    return sum
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("sumOfDouble")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.sumOf(selector: (Char) -> Double): Double {
+    var sum: Double = 0.toDouble()
+    var i = 0
+    while (i < this.length) {
+        sum += selector(this[i])
+        i++
+    }
+    return sum
+}
+
+@SinceKotlin("1.4")
+@kotlin.jvm.JvmName("sumOfInt")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.sumOf(selector: (Char) -> Int): Int {
+    var sum: Int = 0.toInt()
+    var i = 0
+    while (i < this.length) {
+        sum += selector(this[i])
+        i++
+    }
+    return sum
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("sumOfLong")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.sumOf(selector: (Char) -> Long): Long {
+    var sum: Long = 0.toLong()
+    var i = 0
+    while (i < this.length) {
+        sum += selector(this[i])
+        i++
+    }
+    return sum
+}
+
+@SinceKotlin("1.5")
+@kotlin.jvm.JvmName("sumOfUInt")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.sumOf(selector: (Char) -> UInt): UInt {
+    var sum: UInt = 0.toUInt()
+    var i = 0
+    while (i < this.length) {
+        sum += selector(this[i])
+        i++
+    }
+    return sum
+}
+
+@SinceKotlin("1.5")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("sumOfULong")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.sumOf(selector: (Char) -> ULong): ULong {
+    var sum: ULong = 0.toULong()
+    var i = 0
+    while (i < this.length) {
         sum += selector(this[i])
         i++
     }
