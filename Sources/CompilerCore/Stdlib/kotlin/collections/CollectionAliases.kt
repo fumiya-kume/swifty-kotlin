@@ -29,20 +29,6 @@ public class HashSet<E> : AbstractMutableSet<E>, MutableSet<E> {
     constructor(elements: Collection<E>)
 }
 
-/**
- * A mutable hash map backed by the runtime map representation.
- *
- * The constructor calls are rewritten to `__kk_hash_map_of` by
- * `CollectionLiteralLoweringPass`, which keeps the nominal class visible to
- * sema while sharing MutableMap storage and dispatch at runtime.
- */
-public class HashMap<K, V> : MutableMap<K, V> {
-    constructor()
-    constructor(initialCapacity: Int)
-    constructor(initialCapacity: Int, loadFactor: Float)
-    constructor(original: Map<out K, V>)
-}
-
 public typealias LinkedHashMap<K, V> = MutableMap<K, V>
 
 /**
