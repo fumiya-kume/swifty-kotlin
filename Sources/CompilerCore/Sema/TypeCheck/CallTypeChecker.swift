@@ -470,17 +470,17 @@ final class CallTypeChecker {
         let suspendCoroutineIntrinsicFQName = knownNames.kotlinCoroutinesIntrinsicsFQName + [knownNames.suspendCoroutineUninterceptedOrReturn]
         let isSuspendCoroutineIntrinsic = if let calleeName {
             calleeName == knownNames.suspendCoroutineUninterceptedOrReturn
-                && !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
-                && isSyntheticStdlibSymbol(
+                && locals[calleeName] == nil
+                && sourceOrSyntheticStdlibFunctionSymbol(
                     calleeName,
                     fqComponents: ["kotlin", "coroutines", "intrinsics", "suspendCoroutineUninterceptedOrReturn"],
                     ctx: ctx
-                )
+                ) != nil
         } else {
             calleePath == suspendCoroutineIntrinsicFQName
         }
         let isSuspendCoroutineShadowed = calleeName.map {
-            isShadowedByNonSyntheticSymbol($0, locals: locals, ctx: ctx)
+            locals[$0] != nil
         } ?? false
         if isSuspendCoroutineIntrinsic,
            args.count == 1,

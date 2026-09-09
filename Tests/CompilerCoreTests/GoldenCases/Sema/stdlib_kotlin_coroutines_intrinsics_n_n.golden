@@ -1,0 +1,14 @@
+symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.probe kind=function vis=public flags=suspendFunction sig=recv=_ params=[] ret=Any? suspend=1
+symbol fq=kotlin.coroutines.Continuation#0 kind=interface vis=public flags=synthetic type=kotlin.coroutines.Continuation<kotlin.coroutines.Continuation.T>
+symbol fq=kotlin.coroutines.Continuation.T kind=typeParameter vis=private flags=_
+file fstdlib_kotlin_coroutines_intrinsics_n_n package=golden.sema
+  decl golden.sema.probe fun probe suspend=1 sym=golden.sema.probe
+  decl golden.sema.main fun main sym=golden.sema.main
+expr e@7:45 name(COROUTINE_SUSPENDED) type=Any ref=kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+expr e@7:43 lambda params=[] body=e@7:45 label=suspendCoroutineUninterceptedOrReturn type=(kotlin.coroutines.Continuation<Any?>) -> Any?
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:43] type=Any? call=kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn targs=[Any?]
+expr e@10:13 name(COROUTINE_SUSPENDED) type=Any ref=kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+expr e@10:37 name(COROUTINE_SUSPENDED) type=Any ref=kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+expr e@10:13#1 binary(identityEqual) lhs=e@10:13 rhs=e@10:37 type=Boolean
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#1

@@ -97,6 +97,40 @@ struct StdlibArtifactRegressionTests {
         }
     }
 
+    /// KSP-1151: source-backed coroutine intrinsic fallbacks must not leave a
+    /// direct reference to the Kotlin parameter `function` in the stdlib
+    /// artifact. A trivial artifact consumer is enough to exercise the native
+    /// linker against every object emitted by the stdlib-only build.
+    @Test
+    func testCoroutineIntrinsicFallbackThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        fun main() {
+            println("ok")
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "CoroutineIntrinsicArtifact",
+                emit: .executable,
+                outputPath: outputBase,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            #expect(result.stdout.replacingOccurrences(of: "\r\n", with: "\n") == "ok\n")
+        }
+    }
+
     /// KSP-1165: a named companion object must remain an exact nested type when
     /// the stdlib is consumed through a precompiled artifact.
     @Test
