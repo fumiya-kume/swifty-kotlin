@@ -4,20 +4,6 @@
 ///
 /// This remains deliberately isolated while narrower families continue to move out.
 extension CallLowerer {
-    /// Whether Sema bound the call to a bundled Kotlin-source declaration that
-    /// is lowered as an ordinary source call (no `kk_*` external link name).
-    func isResolvedSourceBackedCallee(_ exprID: ExprID, sema: SemaModule) -> Bool {
-        guard let chosenCallee = sema.bindings.callBindings[exprID]?.chosenCallee,
-              chosenCallee != .invalid,
-              let symbol = sema.symbols.symbol(chosenCallee),
-              symbol.kind == .function,
-              sema.symbols.isSourceBackedSymbol(chosenCallee)
-        else {
-            return false
-        }
-        return Self.isSourceBackedLinkName(sema.symbols.externalLinkName(for: chosenCallee))
-    }
-
     /// A declaration compiled from Kotlin source either carries no external link
     /// name (bundled source in this compilation) or the compiler's own `kk_fn_*`
     /// mangling (the same declaration imported from a stdlib library artifact).
