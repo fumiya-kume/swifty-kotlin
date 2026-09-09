@@ -153,13 +153,25 @@ public func kk_list_iterator(_ listRaw: Int) -> Int {
                 removeAction: { index in
                     guard list.elements.indices.contains(index) else { return }
                     list.elements.remove(at: index)
+                },
+                setAction: { index, value in
+                    guard list.elements.indices.contains(index) else { return }
+                    list.elements[index] = value
+                },
+                addAction: { index, value in
+                    guard (0...list.elements.count).contains(index) else { return }
+                    list.elements.insert(value, at: index)
                 }
             )
         )
         registerListIteratorItable(raw: raw)
+        registerMutableListIteratorItable(raw: raw)
         return raw
     }
     if let set = runtimeSetBox(from: listRaw) {
+        // `Set`/`MutableSet` have no `listIterator()`, so this box is only ever
+        // exposed through `Iterator`/`MutableIterator` — no `setAction`/`addAction`
+        // needed here, unlike the `list` branch above.
         let raw = registerRuntimeObject(
             RuntimeListIteratorBox(
                 elements: set.elements,
@@ -218,11 +230,20 @@ public func kk_list_iterator_at(_ listRaw: Int, _ index: Int, _ outThrown: Unsaf
         removeAction: { removedIndex in
             guard list.elements.indices.contains(removedIndex) else { return }
             list.elements.remove(at: removedIndex)
+        },
+        setAction: { setIndex, value in
+            guard list.elements.indices.contains(setIndex) else { return }
+            list.elements[setIndex] = value
+        },
+        addAction: { addIndex, value in
+            guard (0...list.elements.count).contains(addIndex) else { return }
+            list.elements.insert(value, at: addIndex)
         }
     )
     iter.index = index
     let raw = registerRuntimeObject(iter)
     registerListIteratorItable(raw: raw)
+    registerMutableListIteratorItable(raw: raw)
     return raw
 }
 
@@ -249,6 +270,7 @@ public func kk_list_iterator_next(_ iterRaw: Int) -> Int {
         return 0
     }
     let value = iter.elements[iter.index]
+    iter.lastReturnedIndex = iter.index
     iter.index += 1
     return value
 }
@@ -258,6 +280,22 @@ func runtimeListIteratorRemove(_ iterRaw: Int) -> Int {
         return 0
     }
     _ = iter.removeLastReturned()
+    return 0
+}
+
+func runtimeListIteratorSet(_ iterRaw: Int, _ elem: Int) -> Int {
+    guard let iter = runtimeListIteratorBox(from: iterRaw) else {
+        return 0
+    }
+    _ = iter.setLastReturned(elem)
+    return 0
+}
+
+func runtimeListIteratorAdd(_ iterRaw: Int, _ elem: Int) -> Int {
+    guard let iter = runtimeListIteratorBox(from: iterRaw) else {
+        return 0
+    }
+    iter.addBeforeNext(elem)
     return 0
 }
 
@@ -289,6 +327,7 @@ public func kk_list_iterator_previous(_ iterRaw: Int) -> Int {
     // Always decrement index and return the element at the new position
     // This matches the standard ListIterator behavior
     iter.index -= 1
+    iter.lastReturnedIndex = iter.index
     return iter.elements[iter.index]
 }
 

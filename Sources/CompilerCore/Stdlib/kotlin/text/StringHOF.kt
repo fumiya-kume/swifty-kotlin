@@ -1,5 +1,7 @@
 package kotlin.text
 
+import kotlin.random.Random
+
 // MIGRATION-TEXT-008 / KSP-410
 // String higher-order functions migrated from Swift runtime (RuntimeStringHOF.swift).
 //
@@ -66,6 +68,99 @@ public fun String.filterNot(predicate: (Char) -> Boolean): String {
     return sb.toString()
 }
 
+public inline fun CharSequence.filter(predicate: (Char) -> Boolean): CharSequence {
+    val sb = StringBuilder()
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (predicate(c)) sb.append(c)
+        i++
+    }
+    return sb.toString()
+}
+
+public inline fun CharSequence.filterIndexed(predicate: (index: Int, Char) -> Boolean): CharSequence {
+    val sb = StringBuilder()
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (predicate(i, c)) sb.append(c)
+        i++
+    }
+    return sb.toString()
+}
+
+public inline fun String.filterIndexed(predicate: (index: Int, Char) -> Boolean): String {
+    val sb = StringBuilder()
+    var i = 0
+    val sz = length
+    while (i < sz) {
+        val c = this[i]
+        if (predicate(i, c)) sb.append(c)
+        i++
+    }
+    return sb.toString()
+}
+
+@IgnorableReturnValue
+public inline fun <C : Appendable> CharSequence.filterIndexedTo(
+    destination: C,
+    predicate: (index: Int, Char) -> Boolean
+): C {
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (predicate(i, c)) destination.append(c)
+        i++
+    }
+    return destination
+}
+
+public inline fun CharSequence.filterNot(predicate: (Char) -> Boolean): CharSequence {
+    val sb = StringBuilder()
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (!predicate(c)) sb.append(c)
+        i++
+    }
+    return sb.toString()
+}
+
+@IgnorableReturnValue
+public inline fun <C : Appendable> CharSequence.filterNotTo(
+    destination: C,
+    predicate: (Char) -> Boolean
+): C {
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (!predicate(c)) destination.append(c)
+        i++
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <C : Appendable> CharSequence.filterTo(
+    destination: C,
+    predicate: (Char) -> Boolean
+): C {
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (predicate(c)) destination.append(c)
+        i++
+    }
+    return destination
+}
+
 public fun <R> CharSequence.map(transform: (Char) -> R): List<R> {
     val result = mutableListOf<R>()
     var i = 0
@@ -124,6 +219,32 @@ public fun <R : Any> CharSequence.firstNotNullOfOrNull(transform: (Char) -> R?):
 
 public fun CharSequence.any(): Boolean {
     return !isEmpty()
+}
+
+@SinceKotlin("1.3")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.random(): Char {
+    if (isEmpty()) throw NoSuchElementException("Char sequence is empty.")
+    return get(Random.nextInt(length))
+}
+
+@SinceKotlin("1.3")
+public fun CharSequence.random(random: Random): Char {
+    if (isEmpty()) throw NoSuchElementException("Char sequence is empty.")
+    return get(random.nextInt(length))
+}
+
+@SinceKotlin("1.4")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.randomOrNull(): Char? {
+    if (isEmpty()) return null
+    return get(Random.nextInt(length))
+}
+
+@SinceKotlin("1.4")
+public fun CharSequence.randomOrNull(random: Random): Char? {
+    if (isEmpty()) return null
+    return get(random.nextInt(length))
 }
 
 public fun CharSequence.any(predicate: (Char) -> Boolean): Boolean {
@@ -233,18 +354,6 @@ public fun CharSequence.sumByDouble(selector: (Char) -> Double): Double {
         i++
     }
     return sum
-}
-
-public fun CharSequence.filterIndexed(predicate: (index: Int, Char) -> Boolean): String {
-    val sb = StringBuilder()
-    var i = 0
-    val sz = this.length
-    while (i < sz) {
-        val c = this[i]
-        if (predicate(i, c)) sb.append(c)
-        i++
-    }
-    return sb.toString()
 }
 
 public fun String.onEachIndexed(action: (index: Int, Char) -> Unit): String {

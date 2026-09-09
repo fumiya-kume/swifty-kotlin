@@ -229,5 +229,37 @@ struct CodegenBackendMutableCollectionEdgeCasesTests {
         )
     }
 
+    // MutableListIterator.add/set had no external link name, so codegen fell
+    // back to a direct call to the bare Kotlin name ("_add"/"_set"),
+    // undefined at link time. `remove` happened to *link* anyway because
+    // "_remove" collides with libc's `remove(const char *)`, silently
+    // misinterpreting the iterator handle as a path instead of mutating the
+    // list. `set`/`add`/`remove` require a preceding `next()` call in real
+    // Kotlin (otherwise IllegalStateException), so this traverses first.
+    @Test
+    func testCodegenMutableListIteratorSetAddRemoveMutateBackingList() throws {
+        let source = """
+        fun main() {
+            val backing = mutableListOf(1, 2, 3)
+            val mutIter: MutableListIterator<Int> = backing.listIterator()
+            mutIter.next()
+            mutIter.set(99)
+            println(backing)
+            mutIter.next()
+            mutIter.add(50)
+            println(backing)
+            mutIter.next()
+            mutIter.remove()
+            println(backing)
+        }
+        """
+
+        try assertKotlinOutput(
+            source,
+            moduleName: "MutableListIteratorSetAddRemove",
+            expected: "[99, 2, 3]\n[99, 2, 50, 3]\n[99, 2, 50]\n"
+        )
+    }
+
 }
 #endif

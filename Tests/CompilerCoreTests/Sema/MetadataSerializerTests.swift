@@ -549,5 +549,59 @@ struct MetadataSerializerTests {
         #expect(records[0].vtableSlots == "bar@0")
         #expect(records[0].itableSlots == "baz@0")
     }
+
+    @Test func testBuildRecordsPreservesNominalSupertypeSignaturesForNonGenericClass() {
+        let encoder = MetadataEncoder()
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let kotlin = interner.intern("kotlin")
+        let myPack = interner.intern("test")
+
+        let enumBase = symbols.define(
+            kind: .class,
+            name: interner.intern("Enum"),
+            fqName: [kotlin, interner.intern("Enum")],
+            declSite: nil,
+            visibility: .public,
+            flags: []
+        )
+        let typeParamE = symbols.define(
+            kind: .typeParameter,
+            name: interner.intern("E"),
+            fqName: [kotlin, interner.intern("Enum"), interner.intern("E")],
+            declSite: nil,
+            visibility: .public,
+            flags: []
+        )
+        types.setNominalTypeParameterSymbols([typeParamE], for: enumBase)
+
+        let myEnum = symbols.define(
+            kind: .enumClass,
+            name: interner.intern("MyEnum"),
+            fqName: [myPack, interner.intern("MyEnum")],
+            declSite: nil,
+            visibility: .public,
+            flags: []
+        )
+        symbols.setDirectSupertypes([enumBase], for: myEnum)
+        let myEnumType = types.make(.classType(ClassType(classSymbol: myEnum, args: [], nullability: .nonNull)))
+        let superArgs: [TypeArg] = [.invariant(myEnumType)]
+        types.setNominalSupertypeTypeArgs(superArgs, for: myEnum, supertype: enumBase)
+
+        let records = encoder.buildRecords(
+            symbols: symbols,
+            types: types,
+            moduleName: "TestModule",
+            interner: interner,
+            functionLinkNames: [:],
+            includeSynthetic: false,
+            includeSyntheticNominalAnchors: false
+        )
+
+        let myEnumRecord = records.first { $0.fqName == "test.MyEnum" }
+        #expect(myEnumRecord != nil)
+        #expect(myEnumRecord?.nominalSupertypeSignatures.isEmpty == false)
+    }
 }
 #endif

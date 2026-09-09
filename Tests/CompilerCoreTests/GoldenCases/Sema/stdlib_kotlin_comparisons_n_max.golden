@@ -90,7 +90,6 @@ symbol fq=golden.sema.maxOfUShortVararg.$19.b kind=valueParameter vis=private fl
 symbol fq=golden.sema.maxOfUShortVararg.$19.c kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.maxOfUShortVararg.$19.d kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Comparable kind=interface vis=public flags=_
-symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
 file fstdlib_kotlin_comparisons_n_max package=golden.sema
   decl golden.sema.maxOfComparable2 fun maxOfComparable2 sym=golden.sema.maxOfComparable2
   decl golden.sema.maxOfComparableVararg fun maxOfComparableVararg sym=golden.sema.maxOfComparableVararg
