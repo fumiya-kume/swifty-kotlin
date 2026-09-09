@@ -11,7 +11,6 @@ symbol fq=golden.sema.useSortedWith.$4.comparator kind=valueParameter vis=privat
 symbol fq=golden.sema.useSortedWith.$4.values kind=valueParameter vis=private flags=_
 symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
 symbol fq=kotlin.Comparable kind=interface vis=public flags=_
-symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
 symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_sorted package=golden.sema
