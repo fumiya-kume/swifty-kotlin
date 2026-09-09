@@ -378,6 +378,77 @@ public fun CharSequence.sumByDouble(selector: (Char) -> Double): Double {
     return sum
 }
 
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("sumOfDouble")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.sumOf(selector: (Char) -> Double): Double {
+    var sum: Double = 0.toDouble()
+    var i = 0
+    while (i < this.length) {
+        sum += selector(this[i])
+        i++
+    }
+    return sum
+}
+
+@SinceKotlin("1.4")
+@kotlin.jvm.JvmName("sumOfInt")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.sumOf(selector: (Char) -> Int): Int {
+    var sum: Int = 0.toInt()
+    var i = 0
+    while (i < this.length) {
+        sum += selector(this[i])
+        i++
+    }
+    return sum
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("sumOfLong")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.sumOf(selector: (Char) -> Long): Long {
+    var sum: Long = 0.toLong()
+    var i = 0
+    while (i < this.length) {
+        sum += selector(this[i])
+        i++
+    }
+    return sum
+}
+
+@SinceKotlin("1.5")
+@kotlin.jvm.JvmName("sumOfUInt")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.sumOf(selector: (Char) -> UInt): UInt {
+    var sum: UInt = 0.toUInt()
+    var i = 0
+    while (i < this.length) {
+        sum += selector(this[i])
+        i++
+    }
+    return sum
+}
+
+@SinceKotlin("1.5")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("sumOfULong")
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.sumOf(selector: (Char) -> ULong): ULong {
+    var sum: ULong = 0.toULong()
+    var i = 0
+    while (i < this.length) {
+        sum += selector(this[i])
+        i++
+    }
+    return sum
+}
+
 public fun String.onEachIndexed(action: (index: Int, Char) -> Unit): String {
     var i = 0
     val sz = length
