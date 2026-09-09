@@ -96,35 +96,57 @@ The CI observation step is report-only. Set a Tests-specific threshold after eno
 
 ## Bundled Stdlib Injection Cost
 
-Captured on 2026-07-23 with a debug `kswiftc` build on Linux (x86_64).
+The injection cost is the paired full-phase difference, not one bundled-source
+subtotal:
 
-Display path:
-- `Driver.finalizeRun` calls `PhaseTimer.printSummary()` when `-Xfrontend time-phases` is present.
-- `PhaseTimer.phaseRecords` stores phase records and their subrecords; `printSummary()` renders the `bundled-stdlib` subrecords recorded by `Lex` and `Parse`.
-
-Command:
-
-```bash
-bash Scripts/measure_bundled_stdlib_injection.sh 5
+```text
+source-injected TOTAL - --no-stdlib TOTAL
 ```
 
-Bundled stdlib injection cost is defined here as `Lex bundled-stdlib + Parse bundled-stdlib`.
+Both commands use the same compiler binary, input, `--emit kir` mode, and
+`-Xfrontend time-phases` flag. `TOTAL` is the sum of the `PhaseTimer` phase
+records for that mode. The script computes one difference per pair and uses the
+median of those differences as the baseline. The `Lex`/`Parse`
+`bundled-stdlib` subrecords remain in the report as a diagnostic breakdown; they
+are not the injection-cost definition. The probe is the stdlib-independent
+[`Scripts/measurement_cases/bundled_stdlib_injection.kt`](../Scripts/measurement_cases/bundled_stdlib_injection.kt),
+so the same source can complete under plain `--no-stdlib`.
 
-| Run | Lex bundled-stdlib (ms) | Parse bundled-stdlib (ms) | Total (ms) |
-|---:|---:|---:|---:|
-| 1 | 29.00 | 6.94 | 35.94 |
-| 2 | 28.27 | 7.58 | 35.85 |
-| 3 | 28.83 | 7.97 | 36.80 |
-| 4 | 28.22 | 9.39 | 37.61 |
-| 5 | 28.06 | 7.78 | 35.84 |
+Controlled baseline captured on 2026-09-08 from base
+`a72cc373f859aaf408c6a4e9510404a1e21c92dc`:
 
-Median bundled stdlib injection cost: **36.05 ms**.
+```bash
+KSWIFTC=/private/tmp/swifty-todo-state001-base/.build/debug/kswiftc \
+  /opt/homebrew/bin/bash Scripts/measure_bundled_stdlib_injection.sh 5
+```
 
-Cache work trigger: start bundled stdlib caching when the same local/debug measurement regresses by **+100 ms** or more from this baseline, i.e. median total `>= 136.05 ms`. RF-STDLIB-006 did not add the `IncrementalCompilationCache` pre-parse path because the measured overhead is below the trigger.
+The exact-base debug compiler is SHA-256
+`ab80c404d9a82f2b63df4b6659984995bd5d80ac187df8f238847038441ae54b`. The
+measurement ran on macOS 27.0 (Darwin 27.0, arm64), Apple Swift 6.4, and GNU
+Bash 5.3. The script's portable wall-clock helper used `/usr/bin/python3`
+3.9.6; the exclusive batch coordinator used `/opt/homebrew/bin/python3`
+3.14.7. The five paired runs were executed baseline first and source-injected
+second under the batch's exclusive benchmark lock.
 
-The same measurement script also reports the stdlib-only `.kklib` build time and the
-shared candidate compile time for `hello.kt` with `--no-stdlib --stdlib-library <artifact>`.
-These are used to verify the diff runner speed-up before switching CI to the shared path.
+| Run | Source-injected TOTAL (ms) | `--no-stdlib` TOTAL (ms) | Difference (ms) | Lex bundled-stdlib (ms) | Parse bundled-stdlib (ms) |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 3700.97 | 216.39 | 3484.58 | 178.30 | 24.35 |
+| 2 | 3661.40 | 206.19 | 3455.21 | 179.30 | 22.63 |
+| 3 | 3674.87 | 202.60 | 3472.27 | 176.72 | 22.56 |
+| 4 | 3682.46 | 202.35 | 3480.11 | 183.46 | 21.28 |
+| 5 | 3648.78 | 200.28 | 3448.50 | 169.18 | 21.12 |
+
+The full-phase injection baseline is **3472.27 ms** (paired-difference range
+**3448.50–3484.58 ms**). The cache work trigger remains a regression of
+**+100.00 ms** or more from this baseline, so the trigger for this matched
+compiler/input/options tuple is median paired difference **≥ 3572.27 ms**.
+Re-measure the baseline when the compiler binary, input, emit mode, or frontend
+flags change; the absolute threshold is not portable across those changes.
+
+The same script also reports the stdlib-only `.kklib` build time and the shared
+candidate compile time for `hello.kt` with
+`--no-stdlib --stdlib-library <artifact>`. Those are a separate wall-clock
+check for the shared diff path and do not enter the injection-cost baseline.
 
 ## Migration API Runtime Benchmark
 
