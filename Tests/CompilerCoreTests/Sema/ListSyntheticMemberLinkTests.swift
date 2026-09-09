@@ -60,6 +60,106 @@ struct ListSyntheticMemberLinkTests {
     }
 
     @Test
+    func testListRequireNoNullsUsesListSpecificBundledSourceOverload() throws {
+        let source = """
+        fun checked(values: List<String?>): List<String> {
+            return values.requireNoNulls()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try #require(ctx.ast)
+            let sema = try #require(ctx.sema)
+            #expect(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.requireNoNulls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let callExpr = try #require(lastExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, args, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "requireNoNulls" && args.isEmpty
+            })
+            let chosenCallee = try #require(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            let signature = try #require(sema.symbols.functionSignature(for: chosenCallee))
+            let receiverType = try #require(signature.receiverType)
+            guard case let .classType(receiverClass) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) else {
+                Issue.record("Expected List.requireNoNulls receiver to be a class type")
+                return
+            }
+            let receiverName = try #require(sema.symbols.symbol(receiverClass.classSymbol)?.name)
+
+            #expect(ctx.interner.resolve(receiverName) == "List")
+            #expect(sema.symbols.isSourceBackedSymbol(chosenCallee))
+            #expect(sema.symbols.externalLinkName(for: chosenCallee) == nil)
+        }
+    }
+
+    @Test
+    func testListSliceSelectsRangeAndIterableSourceOverloads() throws {
+        let source = """
+        fun sliceValues(values: List<Int>, indices: List<Int>): List<Int> {
+            val ranged = values.slice(1..2)
+            val selected = values.slice(indices)
+            return ranged + selected
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try #require(ctx.ast)
+            let sema = try #require(ctx.sema)
+            #expect(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.slice overloads to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let sliceCalls = ast.arena.exprs.indices.compactMap { index -> ExprID? in
+                let exprID = ExprID(rawValue: Int32(index))
+                guard case let .memberCall(_, callee, _, args, range) = ast.arena.expr(exprID),
+                      ctx.interner.resolve(callee) == "slice",
+                      args.count == 1,
+                      ctx.sourceManager.path(of: range.start.file) == path
+                else {
+                    return nil
+                }
+                return exprID
+            }
+            #expect(sliceCalls.count == 2)
+
+            for callExpr in sliceCalls {
+                guard case let .memberCall(_, _, _, args, _) = ast.arena.expr(callExpr),
+                      let argument = args.first,
+                      let chosenCallee = sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                      let signature = sema.symbols.functionSignature(for: chosenCallee),
+                      let parameterType = signature.parameterTypes.first
+                else {
+                    Issue.record("Expected List.slice call to have a bound source overload")
+                    continue
+                }
+                guard case let .classType(parameterClass) = sema.types.kind(of: sema.types.makeNonNullable(parameterType)),
+                      let parameterName = sema.symbols.symbol(parameterClass.classSymbol)?.name
+                else {
+                    Issue.record("Expected List.slice parameter to be a class type")
+                    continue
+                }
+
+                #expect(sema.symbols.isSourceBackedSymbol(chosenCallee))
+                #expect(sema.symbols.externalLinkName(for: chosenCallee) == nil)
+                if sema.bindings.isRangeExpr(argument.expr) {
+                    #expect(ctx.interner.resolve(parameterName) == "IntRange")
+                } else {
+                    #expect(ctx.interner.resolve(parameterName) == "Iterable")
+                }
+            }
+        }
+    }
+
+    @Test
     func testListTransformMembersUseRuntimeExternalLinksForParameterReceivers() throws {
         let source = """
         import kotlin.random.Random
@@ -3110,7 +3210,14 @@ struct ListSyntheticMemberLinkTests {
             #expect(sema.symbols.supertypeTypeArgs(for: mutableIterableSymbol, supertype: iterableSymbol).count == 1)
 
             let iteratorMember = try #require(sema.symbols.lookup(fqName: mutableIterableFQName + [ctx.interner.intern("iterator")]))
-            #expect(try #require(sema.symbols.symbol(iteratorMember)).flags.contains(.operatorFunction))
+            let iteratorInfo = try #require(sema.symbols.symbol(iteratorMember))
+            #expect(iteratorInfo.flags.contains(.operatorFunction))
+            #expect(iteratorInfo.flags.contains(.overrideMember))
+            #expect(iteratorInfo.flags.contains(.abstractType))
+            #expect(!iteratorInfo.flags.contains(.synthetic))
+            #expect(iteratorInfo.declSite != nil)
+            let iteratorFileID = try #require(sema.symbols.sourceFileID(for: iteratorMember))
+            #expect(ctx.sourceManager.path(of: iteratorFileID) == "__bundled_kotlin/collections/MutableIterable.kt")
             let iteratorSignature = try #require(sema.symbols.functionSignature(for: iteratorMember))
             #expect(iteratorSignature.parameterTypes.isEmpty)
             guard case let .classType(iteratorReturnType) = sema.types.kind(of: iteratorSignature.returnType) else {
@@ -3119,12 +3226,109 @@ struct ListSyntheticMemberLinkTests {
             }
             #expect(iteratorReturnType.classSymbol == mutableIteratorSymbol)
 
+            let linkedHashSetFQName = collectionsPkg + [ctx.interner.intern("LinkedHashSet")]
+            let linkedHashSetSymbol = try #require(sema.symbols.lookup(fqName: linkedHashSetFQName))
+            let linkedHashSetIterator = try #require(sema.symbols.lookup(
+                fqName: linkedHashSetFQName + [ctx.interner.intern("iterator")]
+            ))
+            let linkedHashSetIteratorInfo = try #require(sema.symbols.symbol(linkedHashSetIterator))
+            #expect(!linkedHashSetIteratorInfo.flags.contains(.synthetic))
+            #expect(sema.symbols.parentSymbol(for: linkedHashSetIterator) == linkedHashSetSymbol)
+            let linkedHashSetIteratorFileID = try #require(sema.symbols.sourceFileID(for: linkedHashSetIterator))
+            #expect(ctx.sourceManager.path(of: linkedHashSetIteratorFileID) == "__bundled_kotlin/collections/CollectionAliases.kt")
+            #expect(sema.symbols.externalLinkName(for: linkedHashSetIterator) == nil)
+            let linkedHashSetIteratorSignature = try #require(sema.symbols.functionSignature(for: linkedHashSetIterator))
+            guard case let .classType(linkedHashSetIteratorReturnType) = sema.types.kind(of: linkedHashSetIteratorSignature.returnType) else {
+                Issue.record("LinkedHashSet.iterator should return MutableIterator<E>")
+                return
+            }
+            #expect(linkedHashSetIteratorReturnType.classSymbol == mutableIteratorSymbol)
+
             for collectionName in ["MutableList", "MutableSet"] {
                 let collectionSymbol = try #require(sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern(collectionName)]))
                 #expect(sema.symbols.directSupertypes(for: collectionSymbol).contains(mutableIterableSymbol))
                 #expect(sema.types.directNominalSupertypes(for: collectionSymbol).contains(mutableIterableSymbol))
                 #expect(sema.symbols.supertypeTypeArgs(for: collectionSymbol, supertype: mutableIterableSymbol).count == 1)
             }
+        }
+    }
+
+    @Test
+    func testMutableIterableIteratorCallUsesSourceBackedDeclaration() throws {
+        let source = """
+        fun probe(iterable: MutableIterable<Int>): MutableIterator<Int> {
+            val iterator: MutableIterator<Int> = iterable.iterator()
+            return iterator
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            #expect(!ctx.diagnostics.hasError, "Expected MutableIterable.iterator to type-check: \(ctx.diagnostics.diagnostics)")
+
+            let ast = try #require(ctx.ast)
+            let sema = try #require(ctx.sema)
+            let mutableIteratorSymbol = try #require(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("MutableIterator"),
+            ]))
+            let iteratorCall = try #require(firstExprID(in: ast) { exprID, expr in
+                guard isUserSourceExpr(exprID, in: ctx),
+                      case let .memberCall(_, callee, _, args, _) = expr
+                else { return false }
+                return ctx.interner.resolve(callee) == "iterator" && args.isEmpty
+            })
+            let chosenCallee = try #require(sema.bindings.callBinding(for: iteratorCall)?.chosenCallee)
+            let symbol = try #require(sema.symbols.symbol(chosenCallee))
+
+            #expect(symbol.fqName == ["kotlin", "collections", "MutableIterable", "iterator"].map(ctx.interner.intern))
+            #expect(sema.symbols.isSourceBackedSymbol(chosenCallee))
+            #expect(sema.symbols.externalLinkName(for: chosenCallee) == nil)
+            guard let callType = sema.bindings.exprType(for: iteratorCall),
+                  case let .classType(callClassType) = sema.types.kind(of: callType)
+            else {
+                Issue.record("MutableIterable.iterator should return MutableIterator<Int>")
+                return
+            }
+            #expect(callClassType.classSymbol == mutableIteratorSymbol)
+        }
+    }
+
+    @Test
+    func testMutableMapEntryIteratorRetainsMutableEntryType() throws {
+        let source = """
+        fun probe(map: MutableMap<String, Int>): String {
+            val iterator = map.entries.iterator()
+            val entry = iterator.next()
+            entry.setValue(42)
+            iterator.remove()
+            return entry.key
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            #expect(!ctx.diagnostics.hasError, "Expected mutable map entry iteration to type-check: \(ctx.diagnostics.diagnostics)")
+
+            let ast = try #require(ctx.ast)
+            let sema = try #require(ctx.sema)
+            let iteratorCall = try #require(firstExprID(in: ast) { exprID, expr in
+                guard isUserSourceExpr(exprID, in: ctx),
+                      case let .memberCall(_, callee, _, args, _) = expr
+                else { return false }
+                return ctx.interner.resolve(callee) == "iterator" && args.isEmpty
+            })
+            let callType = try #require(sema.bindings.exprType(for: iteratorCall))
+            guard case let .classType(iteratorType) = sema.types.kind(of: callType) else {
+                Issue.record("Expected MutableIterator for a mutable entry set")
+                return
+            }
+            let iteratorSymbol = try #require(sema.symbols.symbol(iteratorType.classSymbol))
+            #expect(iteratorSymbol.fqName == ["kotlin", "collections", "MutableIterator"].map(ctx.interner.intern))
         }
     }
 

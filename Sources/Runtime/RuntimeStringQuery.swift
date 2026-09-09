@@ -271,29 +271,3 @@ public func kk_string_compareTo_member(_ strRaw: Int, _ otherRaw: Int) -> Int {
 // Kotlin source (Stdlib/kotlin/text/StringComparison.kt); the
 // kk_string_compareToIgnoreCase / kk_string_contentEquals /
 // kk_string_contentEquals_ignoreCase bridges were removed.
-
-// MARK: - STDLIB-TEXT-FN-044: String.random()
-
-@_cdecl("__kk_string_random")
-public func __kk_string_random(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
-    let codeUnits = runtimeStringUTF16CodeUnits(strRaw)
-    guard !codeUnits.isEmpty else {
-        runtimeSetThrown(outThrown, runtimeAllocateNoSuchElementException(message: "Char sequence is empty."))
-        return 0
-    }
-    let index = Int.random(in: 0 ..< codeUnits.count)
-    return kk_box_char(Int(codeUnits[index]))
-}
-
-@_cdecl("__kk_string_random_random")
-public func __kk_string_random_random(_ strRaw: Int, _ randomRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
-    let codeUnits = runtimeStringUTF16CodeUnits(strRaw)
-    guard !codeUnits.isEmpty else {
-        runtimeSetThrown(outThrown, runtimeAllocateNoSuchElementException(message: "Char sequence is empty."))
-        return 0
-    }
-    let index = runtimeRandomIndex(count: codeUnits.count, randomRaw: randomRaw)
-    return kk_box_char(Int(codeUnits[index]))
-}

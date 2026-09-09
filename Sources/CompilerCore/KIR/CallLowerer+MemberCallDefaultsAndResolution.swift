@@ -206,23 +206,6 @@ extension CallLowerer {
         )
     }
 
-    /// KSP-611: a member of an interface imported from a compiled library carries the
-    /// link name of the body emitted for it in that library. For an abstract member that
-    /// body is an empty stub, so honouring the link name would silently call nothing;
-    /// interface members must dispatch through the receiver's itable instead. A
-    /// source-backed interface declaration may instead carry a private runtime bridge
-    /// such as `__kk_string_builder_append_obj`; that link is the actual implementation
-    /// and must stay on direct dispatch, just like a synthetic runtime bridge.
-    func isImportedInterfaceMember(_ callee: SymbolID, sema: SemaModule) -> Bool {
-        guard let calleeSymbol = sema.symbols.symbol(callee),
-              calleeSymbol.flags.contains(.importedLibrary),
-              let parentID = sema.symbols.parentSymbol(for: callee),
-              let parentSymbol = sema.symbols.symbol(parentID)
-        else { return false }
-        return parentSymbol.kind == .interface
-            && Self.isSourceBackedLinkName(sema.symbols.externalLinkName(for: callee))
-    }
-
     /// Callees bridged to a C runtime function (such as kk_array_get) are
     /// normally not dispatched virtually; see `kirIsRuntimeBridgedCallee`.
     func tryEmitVirtualDispatch(

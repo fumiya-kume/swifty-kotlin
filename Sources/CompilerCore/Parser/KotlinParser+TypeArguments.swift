@@ -111,7 +111,7 @@ extension KotlinParser {
         case .symbol(.lParen), .symbol(.dot), .symbol(.questionDot), .symbol(.bangBang),
              .symbol(.doubleColon), .symbol(.lessThan), .symbol(.colon), .symbol(.comma),
              .symbol(.lBrace), .symbol(.rParen), .symbol(.rBrace), .symbol(.question),
-             .symbol(.assign):
+             .symbol(.assign), .symbol(.at):
             true
         case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
             true
