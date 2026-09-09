@@ -1,5 +1,5 @@
 symbol fq=__for_0.element kind=local vis=private flags=_ type=Int
-symbol fq=__local_0.iterator kind=local vis=private flags=_ type=kotlin.collections.Iterator<out Int>
+symbol fq=__local_0.iterator kind=local vis=private flags=_ type=kotlin.collections.Iterator<Int>
 symbol fq=golden.sema.ProbeSet kind=class vis=public flags=_
 symbol fq=golden.sema.ProbeSet.contains kind=function vis=public flags=overrideMember sig=recv=golden.sema.ProbeSet params=[Int] ret=Boolean
 symbol fq=golden.sema.ProbeSet.contains.$0.element kind=valueParameter vis=private flags=_
@@ -40,9 +40,9 @@ expr e@13:9 return value=e@13:16 type=Nothing
 expr e@16:39 name(values) type=kotlin.collections.List<Int> ref=golden.sema.ProbeSet.values
 expr e@16:39#1 memberCall recv=e@16:39 callee=isEmpty args=[] type=Boolean call=kotlin.collections.List.isEmpty
 expr e@18:46 name(values) type=kotlin.collections.List<Int> ref=golden.sema.ProbeSet.values
-expr e@18:46#1 memberCall recv=e@18:46 callee=iterator args=[] type=kotlin.collections.Iterator<out Int> call=kotlin.collections.Collection.iterator
+expr e@18:46#1 memberCall recv=e@18:46 callee=iterator args=[] type=kotlin.collections.Iterator<Int> call=kotlin.collections.Collection.iterator targs=[Int]
 expr e@22:20 name(values) type=kotlin.collections.Set<Int> ref=golden.sema.inspect.$2.values
-expr e@22:20#1 memberCall recv=e@22:20 callee=iterator args=[] type=kotlin.collections.Iterator<out Int> call=kotlin.collections.Set.iterator
+expr e@22:20#1 memberCall recv=e@22:20 callee=iterator args=[] type=kotlin.collections.Iterator<Int> call=kotlin.collections.Set.iterator targs=[Int]
 expr e@22:5 localDecl iterator mutable=0 type=_ init=e@22:20#1 type=Unit ref=__local_0.iterator
 expr e@23:12 name(values) type=kotlin.collections.Set<Int> ref=golden.sema.inspect.$2.values
 expr e@23:28 int(1) type=Int
@@ -56,7 +56,7 @@ expr e@23:67 name(collection) type=kotlin.collections.Collection<Int> ref=golden
 expr e@23:87 int(1) type=Int
 expr e@23:67#1 memberCall recv=e@23:67 callee=contains args=[_:e@23:87] type=Boolean call=kotlin.collections.Collection.contains
 expr e@23:12#3 binary(logicalAnd) lhs=e@23:12#2 rhs=e@23:67#1 type=Boolean
-expr e@23:93 name(iterator) type=kotlin.collections.Iterator<out Int> ref=__local_0.iterator
+expr e@23:93 name(iterator) type=kotlin.collections.Iterator<Int> ref=__local_0.iterator
 expr e@23:93#1 memberCall recv=e@23:93 callee=hasNext args=[] type=Boolean call=kotlin.collections.Iterator.hasNext targs=[Int]
 expr e@23:12#4 binary(logicalAnd) lhs=e@23:12#3 rhs=e@23:93#1 type=Boolean
 expr e@23:5 return value=e@23:12#4 type=Nothing
