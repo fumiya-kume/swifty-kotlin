@@ -916,6 +916,21 @@ public fun <T> Iterable<T>.all(predicate: (T) -> Boolean): Boolean {
     return true
 }
 
+// KSP-986: Preserve the Collection fast path while keeping arbitrary
+// Iterable implementations on the iterator-backed source path.
+public fun <T> Iterable<T>.none(): Boolean {
+    if (this is Collection<*>) return (this as Collection<*>).isEmpty()
+    return !iterator().hasNext()
+}
+
+public inline fun <T> Iterable<T>.none(predicate: (T) -> Boolean): Boolean {
+    if (this is Collection<*> && (this as Collection<*>).isEmpty()) return true
+    for (element in this) {
+        if (predicate(element)) return false
+    }
+    return true
+}
+
 public fun <T> Iterable<T>.count(): Int {
     if (this is Collection<*>) return (this as Collection<*>).size
 

@@ -205,6 +205,7 @@ extension CallTypeChecker {
                 || isSequenceReceiver
                 || (isIterableIndexFamilyHOF && isIterableIndexReceiver)
                 || (isIterableFilterFamilyHOF && isIterableReceiver)
+                || (calleeStr == "none" && isIterableReceiver)
                 || (calleeStr == "asSequence" && isIterableReceiver)
                 || ((calleeStr == "runningReduce" || calleeStr == "runningReduceIndexed") && isIterableReceiver))
             && !(calleeStr == "binarySearch"
@@ -430,7 +431,8 @@ extension CallTypeChecker {
         ) -> Bool {
             guard !isSequenceReceiver,
                   isCollectionReceiver
-                  || (isIterableReceiver && (calleeStr == "drop"
+                  || (isIterableReceiver && (calleeStr == "none"
+                      || calleeStr == "drop"
                       || calleeStr == "dropWhile"
                       || calleeStr == "runningReduce"
                       || calleeStr == "runningReduceIndexed"
@@ -5115,13 +5117,14 @@ extension CallTypeChecker {
                     }
                 }
             }
-            // KSP-435: any/all/last/requireNoNulls on a nominal Collection/Iterable
+            // KSP-435/KSP-986: any/all/last/requireNoNulls/none on a nominal Collection/Iterable
             // receiver are bundled Kotlin source (Stdlib/kotlin/collections/Iterables.kt).
             // The name-keyed fast path above only computes a result type, so the call
             // would otherwise stay unresolved and lower to the bare member name.
             if sema.bindings.callBindings[id] == nil,
-               !isSequenceReceiver, isCollectionReceiver,
-               ["any", "all", "last", "requireNoNulls"].contains(calleeStr)
+               !isSequenceReceiver,
+               (isCollectionReceiver || (isIterableReceiver && calleeStr == "none")),
+               ["any", "all", "last", "requireNoNulls", "none"].contains(calleeStr)
             {
                 let iterableSourceTypeArguments = calleeStr == "requireNoNulls"
                     ? [sema.types.makeNonNullable(collectionElementType)]
