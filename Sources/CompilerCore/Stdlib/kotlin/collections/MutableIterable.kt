@@ -12,16 +12,14 @@ package kotlin.collections
 // here; the compiler-side shell in
 // `HeaderHelpers+SyntheticCollectionTypeFallbacks.swift` remains the fallback
 // for contexts without the bundled stdlib.
-// `iterator()` is intentionally omitted (as with `Comparable.compareTo` in
-// KSP-669) and stays a compiler residual: the covariant override of the
-// read-only `Iterable.iterator()` has to be re-typed against the reused shell's
-// type parameter, which library metadata cannot express yet (BUG-200).
 
 /**
  * Classes that inherit from this interface can be represented as a sequence of
  * elements that can be iterated over and whose iterator supports removal.
  */
-public interface MutableIterable<out T> : Iterable<T>
+public interface MutableIterable<out T> : Iterable<T> {
+    public override operator fun iterator(): MutableIterator<T>
+}
 
 /**
  * Removes all elements from this [MutableIterable] that match the given [predicate].

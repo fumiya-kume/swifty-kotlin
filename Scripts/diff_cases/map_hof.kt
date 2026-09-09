@@ -17,4 +17,6 @@ fun main() {
     println(m.maxByOrNull { it.value.length })
     println(m.minByOrNull { it.key })
     println(m.mapNotNull { if (it.key > 1) it.value else null })
+    println(m.map { (k, v) -> "$k=$v" })
+    println(m.filter { (_, v) -> v.length > 3 })
 }

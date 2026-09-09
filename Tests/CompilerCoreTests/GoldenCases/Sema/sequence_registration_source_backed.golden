@@ -1,5 +1,5 @@
 symbol fq=__local_0.value kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
-symbol fq=__local_1.iterator kind=local vis=private flags=_ type=kotlin.collections.Iterator<out Int>
+symbol fq=__local_1.iterator kind=local vis=private flags=_ type=kotlin.collections.Iterator<Int>
 symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Iterator.T kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Iterator.next kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
@@ -13,8 +13,8 @@ expr e@2:17 name(input) type=kotlin.sequences.Sequence<Int>? ref=normalize.$0.in
 expr e@2:17#1 memberCall recv=e@2:17 callee=orEmpty args=[] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.orEmpty targs=[Int]
 expr e@2:5 localDecl value mutable=0 type=_ init=e@2:17#1 type=Unit ref=__local_0.value
 expr e@3:20 name(value) type=kotlin.sequences.Sequence<Int> ref=__local_0.value
-expr e@3:20#1 memberCall recv=e@3:20 callee=iterator args=[] type=kotlin.collections.Iterator<out Int> call=kotlin.sequences.Sequence.iterator
+expr e@3:20#1 memberCall recv=e@3:20 callee=iterator args=[] type=kotlin.collections.Iterator<Int> call=kotlin.sequences.Sequence.iterator targs=[Int]
 expr e@3:5 localDecl iterator mutable=0 type=_ init=e@3:20#1 type=Unit ref=__local_1.iterator
-expr e@4:12 name(iterator) type=kotlin.collections.Iterator<out Int> ref=__local_1.iterator
+expr e@4:12 name(iterator) type=kotlin.collections.Iterator<Int> ref=__local_1.iterator
 expr e@4:12#1 memberCall recv=e@4:12 callee=next args=[] type=Int call=kotlin.collections.Iterator.next targs=[Int]
 expr e@4:5 return value=e@4:12#1 type=Nothing
