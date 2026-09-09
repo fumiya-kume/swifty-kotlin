@@ -549,6 +549,59 @@ struct NativeConcurrentSyntheticStubTests {
         ), "Expected FreezingException constructor to resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))")
     }
 
+    // MARK: - AtomicLong constructor
+
+    @Test
+    func testAtomicLongConstructorIsRegistered() throws {
+        let (sema, interner) = try sharedSema()
+        let atomicLongFQName = ["kotlin", "native", "concurrent", "AtomicLong"]
+            .map { interner.intern($0) }
+        let atomicLong = try #require(sema.symbols.lookup(fqName: atomicLongFQName))
+        let atomicLongType = sema.types.make(.classType(ClassType(
+            classSymbol: atomicLong,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        #expect(sema.symbols.symbol(atomicLong)?.kind == .class)
+        #expect(sema.symbols.symbol(atomicLong)?.flags.contains(.synthetic) == false)
+        #expect(sema.symbols.sourceFileID(for: atomicLong) != nil)
+
+        let constructors = sema.symbols.lookupAll(
+            fqName: atomicLongFQName + [interner.intern("<init>")]
+        )
+        let constructor = try #require(constructors.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.parameterTypes == [sema.types.longType]
+                && signature.returnType == atomicLongType
+        })
+        let signature = try #require(sema.symbols.functionSignature(for: constructor))
+
+        #expect(sema.symbols.symbol(constructor)?.kind == .constructor)
+        #expect(signature.valueParameterHasDefaultValues == [true])
+        #expect(sema.symbols.externalLinkName(for: constructor) == "kk_atomic_long_create")
+    }
+
+    @Test
+    func testAtomicLongConstructorResolvesInSource() {
+        let source = """
+        @file:Suppress("DEPRECATION_ERROR")
+        import kotlin.native.concurrent.AtomicLong
+
+        fun probe(): AtomicLong {
+            AtomicLong()
+            return AtomicLong(42L)
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        #expect(!(
+            ctx.diagnostics.hasError
+        ), "Expected AtomicLong constructors to resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))")
+    }
+
     // MARK: - InvalidMutabilityException class
 
     @Test
