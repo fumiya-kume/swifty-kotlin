@@ -557,17 +557,22 @@ def fuzz(
             source_path = work_dir / f"case-{case.ordinal:06d}.kt"
             output_path = work_dir / f"case-{case.ordinal:06d}.out"
             source_path.write_text(case.source, encoding="utf-8")
+            case_timeout = min(timeout_seconds, remaining)
             try:
                 result = run_compiler(
                     compiler,
                     source_path,
                     output_path,
-                    min(timeout_seconds, remaining),
+                    case_timeout,
                     stdlib_library,
                 )
             except OSError as error:
                 result = RunResult("silent", None, 0.0, None, (), f"failed to launch kswiftc: {error}")
-            finding = is_fuzzer_finding(result)
+            # A timeout observed under a truncated per-case budget (the duration
+            # deadline shortened the timeout) is inconclusive: the case never
+            # received the full timeout a legitimate compile may need.
+            budget_truncated = result.kind == "timeout" and case_timeout < timeout_seconds
+            finding = is_fuzzer_finding(result) and not budget_truncated
             if finding:
                 findings += 1
                 saved = save_finding(corpus_dir, source_path, case, result) if corpus_dir else None
@@ -579,6 +584,8 @@ def fuzz(
                 )
                 if result.output.strip():
                     print(result.output.rstrip(), file=sys.stderr)
+            elif budget_truncated:
+                print(f"CASE {case.ordinal}/{cases} timeout (budget-truncated, inconclusive)")
             else:
                 print(f"CASE {case.ordinal}/{cases} {result.kind}")
             records.append(
