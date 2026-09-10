@@ -483,7 +483,7 @@ final class ConsolePrintLoweringPass: LoweringPass, ParallelLoweringPass {
 
             if let toStringSym = toStringSymbol,
                let sym = sema.symbols.symbol(toStringSym),
-               !isSyntheticAnyToString(sym, interner: interner)
+               !isSyntheticAnyToStringSymbol(sym, interner: interner)
             {
                 let externalLinkName = sema.symbols.externalLinkName(for: toStringSym)
                 let toStringCallee: InternedString = if let externalLinkName, !externalLinkName.isEmpty {

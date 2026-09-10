@@ -143,7 +143,6 @@ extension KIRLoweringDriver {
             appendObjectItablePropertyGetterRegistrations(
                 objectValue: allocatedObj,
                 nominalSymbol: objectSymbol,
-                driver: self,
                 sema: sema,
                 arena: arena,
                 interner: interner,
@@ -153,6 +152,7 @@ extension KIRLoweringDriver {
         appendObjectVtableMethodRegistrations(
             objectValue: allocatedObj,
             nominalSymbol: objectSymbol,
+            driver: self,
             sema: sema,
             arena: arena,
             interner: interner,
