@@ -1,7 +1,6 @@
 symbol fq=golden.sema.cleanerType.$0.resource[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.cleanerType[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.native.ref.Cleaner
 symbol fq=golden.sema.weakReferenceType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.ref.WeakReference<String>?
-symbol fq=kotlin.native.ref.WeakReference.T[kind=tparam] kind=typeParameter vis=private flags=_
 file fstdlib_kotlin_native_ref_n_n package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)]
   decl golden.sema.weakReferenceType[kind=fun;params=] fun weakReferenceType sym=golden.sema.weakReferenceType[kind=fun;params=]
   decl golden.sema.cleanerType[kind=fun;params=String?] fun cleanerType sym=golden.sema.cleanerType[kind=fun;params=String?]

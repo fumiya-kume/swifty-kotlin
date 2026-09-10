@@ -4,9 +4,6 @@ symbol fq=__local_2.result[kind=local] kind=local vis=private flags=_ type=kotli
 symbol fq=__local_3.n[kind=local] kind=local vis=private flags=mutable type=Int
 symbol fq=__local_4.naturals[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
 symbol fq=__local_5.first5[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence.toList[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.toList.$0.T> params=[] ret=kotlin.collections.List<kotlin.sequences.toList.$0.T>
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fgenerate_sequence_noarg package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

@@ -13,8 +13,6 @@ symbol fq=futureState.$5.future[kind=vparam] kind=valueParameter vis=private fla
 symbol fq=futureState[kind=fun;params=kotlin.native.concurrent.Future<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=kotlin.native.concurrent.FutureState
 symbol fq=futureToString.$6.future[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=futureToString[kind=fun;params=kotlin.native.concurrent.Future<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=String
-symbol fq=kotlin.native.concurrent.Future.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.native.concurrent.FutureState[kind=enum] kind=enumClass vis=public flags=_
 file fstdlib_kotlin_native_concurrent_Future_Future_n package=_ annotations=[@file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class)]
   decl futureId[kind=fun;params=kotlin.native.concurrent.Future<Int>] fun futureId sym=futureId[kind=fun;params=kotlin.native.concurrent.Future<Int>]
   decl futureResult[kind=fun;params=kotlin.native.concurrent.Future<Int>] fun futureResult sym=futureResult[kind=fun;params=kotlin.native.concurrent.Future<Int>]

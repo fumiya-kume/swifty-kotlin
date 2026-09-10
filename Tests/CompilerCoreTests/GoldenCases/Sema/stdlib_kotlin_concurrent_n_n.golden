@@ -8,7 +8,6 @@ symbol fq=golden.sema.atomicLongType[kind=fun;params=] kind=function vis=public 
 symbol fq=golden.sema.atomicNativePtrType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.concurrent.AtomicNativePtr?
 symbol fq=golden.sema.atomicReferenceType.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.atomicReferenceType[kind=fun;params=kotlin.concurrent.AtomicReference<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.concurrent.AtomicReference<String>] ret=kotlin.concurrent.AtomicReference<String>
-symbol fq=kotlin.concurrent.AtomicReference.T[kind=tparam] kind=typeParameter vis=private flags=_
 file fstdlib_kotlin_concurrent_n_n package=golden.sema annotations=[@file:OptIn(kotlin.ExperimentalStdlibApi::class,kotlinx.cinterop.ExperimentalForeignApi::class)]
   decl golden.sema.atomicIntType[kind=fun;params=] fun atomicIntType sym=golden.sema.atomicIntType[kind=fun;params=]
   decl golden.sema.atomicLongType[kind=fun;params=] fun atomicLongType sym=golden.sema.atomicLongType[kind=fun;params=]

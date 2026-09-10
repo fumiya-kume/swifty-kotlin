@@ -7,12 +7,6 @@ symbol fq=golden.sema.acceptMutableListIterator.$2.value[kind=vparam] kind=value
 symbol fq=golden.sema.acceptMutableListIterator[kind=fun;params=kotlin.collections.MutableListIterator<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableListIterator<Int>] ret=Unit
 symbol fq=golden.sema.probe.$3.iterator[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.probe[kind=fun;params=kotlin.collections.MutableListIterator<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableListIterator<Int>] ret=Unit
-symbol fq=kotlin.collections.ListIterator.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.ListIterator[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableIterator.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableIterator[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableListIterator.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableListIterator[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_n_MutableListIterator package=golden.sema
   decl golden.sema.CustomMutableListIterator[kind=class] class CustomMutableListIterator sym=golden.sema.CustomMutableListIterator[kind=class]
   decl golden.sema.acceptListIterator[kind=fun;params=kotlin.collections.ListIterator<Int>] fun acceptListIterator sym=golden.sema.acceptListIterator[kind=fun;params=kotlin.collections.ListIterator<Int>]

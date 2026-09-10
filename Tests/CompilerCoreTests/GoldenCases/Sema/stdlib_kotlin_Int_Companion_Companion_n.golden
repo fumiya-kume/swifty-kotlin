@@ -7,8 +7,6 @@ symbol fq=__local_5.receiverMin[kind=local] kind=local vis=private flags=_ type=
 symbol fq=__local_6.receiverBits[kind=local] kind=local vis=private flags=_ type=Int
 symbol fq=__local_7.receiverBytes[kind=local] kind=local vis=private flags=_ type=Int
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Int.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.Int[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_Int_Companion_Companion_n package=golden.sema
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:21 name(Int) type=kotlin.Int.Companion ref=kotlin.Int[kind=class]

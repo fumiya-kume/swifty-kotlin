@@ -1,8 +1,6 @@
 symbol fq=__local_0.falseValue[kind=local] kind=local vis=private flags=_ type=kotlin.concurrent.AtomicBoolean
 symbol fq=__local_1.trueValue[kind=local] kind=local vis=private flags=_ type=kotlin.concurrent.AtomicBoolean
 symbol fq=golden.sema.atomicBooleanConstructorSemantics[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=kotlin.concurrent.AtomicBoolean.load[kind=fun;recv=kotlin.concurrent.AtomicBoolean;params=] kind=function vis=public flags=synthetic sig=recv=kotlin.concurrent.AtomicBoolean params=[] ret=Boolean
-symbol fq=kotlin.concurrent.AtomicBoolean[kind=class] kind=class vis=public flags=synthetic type=kotlin.concurrent.AtomicBoolean
 file fstdlib_kotlin_concurrent_atomics_AtomicBoolean_n_n package=golden.sema annotations=[@file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)]
   decl golden.sema.atomicBooleanConstructorSemantics[kind=fun;params=] fun atomicBooleanConstructorSemantics sym=golden.sema.atomicBooleanConstructorSemantics[kind=fun;params=]
 expr e@8:36 bool(false) type=Boolean

@@ -12,20 +12,6 @@ symbol fq=golden.sema.acceptReadonly[kind=fun;params=kotlin.collections.Map<Stri
 symbol fq=golden.sema.inheritedMapSurface.$2.missing[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.inheritedMapSurface.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.inheritedMapSurface[kind=fun;params=golden.sema.ProbeMutableMap,String] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.ProbeMutableMap,String] ret=Int?
-symbol fq=kotlin.collections.AbstractMap.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.AbstractMap.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.AbstractMap[kind=class;gen=2] kind=class vis=public flags=abstractType|openType type=kotlin.collections.AbstractMap<kotlin.collections.AbstractMap.K, out kotlin.collections.AbstractMap.V>
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap.putAll[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=kotlin.collections.Map<out T0,out T1>;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableMap<kotlin.collections.MutableMap.K, kotlin.collections.MutableMap.V> params=[kotlin.collections.Map<out kotlin.collections.MutableMap.K, out kotlin.collections.MutableMap.V>] ret=Unit
-symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_n_AbstractMutableMap package=golden.sema
   decl golden.sema.ProbeMutableMap[kind=class] class ProbeMutableMap sym=golden.sema.ProbeMutableMap[kind=class]
   decl golden.sema.acceptReadonly[kind=fun;params=kotlin.collections.Map<String,Int>] fun acceptReadonly sym=golden.sema.acceptReadonly[kind=fun;params=kotlin.collections.Map<String,Int>]

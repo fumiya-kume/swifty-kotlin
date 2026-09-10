@@ -8,16 +8,6 @@ symbol fq=golden.sema.ProbeSet[kind=class] kind=class vis=public flags=_
 symbol fq=golden.sema.inspect.$2.collection[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.inspect.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.inspect[kind=fun;params=kotlin.collections.Set<Int>,kotlin.collections.Collection<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int>,kotlin.collections.Collection<Int>] ret=Boolean
-symbol fq=kotlin.collections.Collection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterator.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.hasNext[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
-symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.List.isEmpty[kind=fun;recv=kotlin.collections.List<out T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[] ret=Boolean
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Set.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_n_Set_interface package=golden.sema
   decl golden.sema.ProbeSet[kind=class] class ProbeSet sym=golden.sema.ProbeSet[kind=class]
   decl golden.sema.inspect[kind=fun;params=kotlin.collections.Set<Int>,kotlin.collections.Collection<Int>] fun inspect sym=golden.sema.inspect[kind=fun;params=kotlin.collections.Set<Int>,kotlin.collections.Collection<Int>]

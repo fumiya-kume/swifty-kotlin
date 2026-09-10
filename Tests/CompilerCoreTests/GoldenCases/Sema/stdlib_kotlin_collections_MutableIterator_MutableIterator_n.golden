@@ -9,10 +9,6 @@ symbol fq=golden.sema.checksCovariance.$2.iterator[kind=vparam] kind=valueParame
 symbol fq=golden.sema.checksCovariance[kind=fun;params=kotlin.collections.MutableIterator<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableIterator<Int>] ret=Unit
 symbol fq=golden.sema.checksMutableIterable.$3.iterable[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.checksMutableIterable[kind=fun;params=kotlin.collections.MutableIterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableIterable<Int>] ret=Unit
-symbol fq=kotlin.collections.MutableIterable.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableIterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableIterator.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableIterator[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_MutableIterator_MutableIterator_n package=golden.sema
   decl golden.sema.IntIterator[kind=class] class IntIterator sym=golden.sema.IntIterator[kind=class]
   decl golden.sema.acceptsAnyIterator[kind=fun;params=kotlin.collections.MutableIterator<Any>] fun acceptsAnyIterator sym=golden.sema.acceptsAnyIterator[kind=fun;params=kotlin.collections.MutableIterator<Any>]

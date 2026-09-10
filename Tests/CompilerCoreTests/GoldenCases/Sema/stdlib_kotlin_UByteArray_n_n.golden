@@ -1,8 +1,6 @@
 symbol fq=golden.sema.makeEmptyUByteArray[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.UByteArray
 symbol fq=golden.sema.makeUByteArrayFromByteArray.$0.storage[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.makeUByteArrayFromByteArray[kind=fun;params=kotlin.ByteArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray] ret=kotlin.UByteArray
-symbol fq=kotlin.ByteArray[kind=class] kind=class vis=public flags=synthetic type=kotlin.ByteArray
-symbol fq=kotlin.UByteArray[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_UByteArray_n_n package=golden.sema annotations=[@file:Suppress("INVISIBLE_MEMBER","INVISIBLE_REFERENCE")]
   decl golden.sema.makeUByteArrayFromByteArray[kind=fun;params=kotlin.ByteArray] fun makeUByteArrayFromByteArray sym=golden.sema.makeUByteArrayFromByteArray[kind=fun;params=kotlin.ByteArray]
   decl golden.sema.makeEmptyUByteArray[kind=fun;params=] fun makeEmptyUByteArray sym=golden.sema.makeEmptyUByteArray[kind=fun;params=]

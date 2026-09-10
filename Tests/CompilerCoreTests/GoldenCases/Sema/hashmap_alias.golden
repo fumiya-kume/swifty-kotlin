@@ -8,8 +8,6 @@ symbol fq=__local_3.empty[kind=local] kind=local vis=private flags=_ type=kotlin
 symbol fq=__local_4.created[kind=local] kind=local vis=private flags=_ type=kotlin.collections.HashMap<Int, String>
 symbol fq=__local_5.holder[kind=local] kind=local vis=private flags=_ type=MapHolder
 symbol fq=createMap[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.HashMap<Int, String>
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=processMap.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=processMap[kind=fun;params=kotlin.collections.HashMap<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.HashMap<String, Int>] ret=Unit

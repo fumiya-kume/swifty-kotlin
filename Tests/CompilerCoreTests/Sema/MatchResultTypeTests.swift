@@ -13,9 +13,18 @@ struct MatchResultTypeTests {
 
     private static nonisolated(unsafe) var _sharedSema: (SemaModule, StringInterner, CompilationContext)?
 
+    // MARK: - Shared sema fixture
+
     private func sharedSema() throws -> (SemaModule, StringInterner, CompilationContext) {
         if let cached = Self._sharedSema { return cached }
-        let triple = try makeSema()
+        var result: (SemaModule, StringInterner, CompilationContext)?
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let sema = try #require(ctx.sema)
+            result = (sema, ctx.interner, ctx)
+        }
+        let triple = try #require(result)
         Self._sharedSema = triple
         return triple
     }
@@ -132,19 +141,6 @@ struct MatchResultTypeTests {
             if predicate(exprID, expr) { return exprID }
         }
         return nil
-    }
-
-    // MARK: - Shared sema fixture
-
-    private func makeSema() throws -> (SemaModule, StringInterner, CompilationContext) {
-        var result: (SemaModule, StringInterner, CompilationContext)?
-        try withTemporaryFile(contents: "fun noop() {}") { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-            let sema = try #require(ctx.sema)
-            result = (sema, ctx.interner, ctx)
-        }
-        return try #require(result)
     }
 
     private func sourcePath(

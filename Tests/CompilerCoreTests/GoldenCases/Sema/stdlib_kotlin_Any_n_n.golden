@@ -1,6 +1,4 @@
 symbol fq=golden.sema.constructAny[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
-symbol fq=kotlin.Any.<init>[kind=ctor;params=] kind=constructor vis=public flags=synthetic sig=recv=_ params=[] ret=kotlin.Any
-symbol fq=kotlin.Any[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_Any_n_n package=golden.sema
   decl golden.sema.constructAny[kind=fun;params=] fun constructAny sym=golden.sema.constructAny[kind=fun;params=]
 expr e@3:27 call callee=e@3:27#1 args=[] type=kotlin.Any call=kotlin.Any.<init>[kind=ctor;params=]

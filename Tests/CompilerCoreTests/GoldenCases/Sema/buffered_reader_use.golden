@@ -8,16 +8,6 @@ symbol fq=golden.sema.readLinesWithBufferedReader.$1.path[kind=vparam] kind=valu
 symbol fq=golden.sema.readLinesWithBufferedReader[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.collections.List<String>
 symbol fq=golden.sema.readWithBufferedReader.$2.path[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.readWithBufferedReader[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String
-symbol fq=java.io.BufferedReader.readLine[kind=fun;recv=java.io.BufferedReader;params=] kind=function vis=public flags=synthetic sig=recv=java.io.BufferedReader params=[] ret=String?
-symbol fq=java.io.BufferedReader.readLines[kind=fun;recv=java.io.BufferedReader;params=] kind=function vis=public flags=synthetic sig=recv=java.io.BufferedReader params=[] ret=kotlin.collections.List<out String>
-symbol fq=java.io.BufferedReader[kind=class] kind=class vis=public flags=synthetic type=java.io.BufferedReader
-symbol fq=java.io.File.<init>.path[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.File.<init>[kind=ctor;params=String] kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
-symbol fq=java.io.File.bufferedReader[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=java.io.BufferedReader
-symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
-symbol fq=java.io.Reader[kind=class] kind=class vis=public flags=synthetic type=java.io.Reader
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.io.readText[kind=fun;recv=java.io.Reader;params=] kind=function vis=public flags=synthetic sig=recv=java.io.Reader params=[] ret=String
 file fbuffered_reader_use package=golden.sema
   decl golden.sema.readWithBufferedReader[kind=fun;params=String] fun readWithBufferedReader sym=golden.sema.readWithBufferedReader[kind=fun;params=String]
   decl golden.sema.readLinesWithBufferedReader[kind=fun;params=String] fun readLinesWithBufferedReader sym=golden.sema.readLinesWithBufferedReader[kind=fun;params=String]

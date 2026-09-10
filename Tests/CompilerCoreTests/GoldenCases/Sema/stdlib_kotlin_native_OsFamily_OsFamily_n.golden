@@ -1,9 +1,3 @@
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.enums.EnumEntries[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.native.OsFamily.Companion.entries[kind=prop] kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.native.OsFamily>
-symbol fq=kotlin.native.OsFamily.Companion.valueOf.name[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.native.OsFamily.Companion.valueOf[kind=fun;recv=kotlin.native.OsFamily.Companion;params=String] kind=function vis=public flags=synthetic|static sig=recv=kotlin.native.OsFamily.Companion params=[String] ret=kotlin.native.OsFamily
-symbol fq=kotlin.native.OsFamily.values[kind=fun;params=] kind=function vis=public flags=synthetic|static sig=recv=_ params=[] ret=kotlin.Array<kotlin.native.OsFamily>
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_native_OsFamily_OsFamily_n package=_ annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)]
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

@@ -1,9 +1,5 @@
 symbol fq=__local_0.iterableResult[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<out String>
 symbol fq=__local_1.sequenceResult[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<out String>
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence.toList[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.toList.$0.T> params=[] ret=kotlin.collections.List<kotlin.sequences.toList.$0.T>
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fsequence_flat_map_indexed package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

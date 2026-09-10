@@ -3,12 +3,6 @@ symbol fq=__local_1.s2[kind=local] kind=local vis=private flags=_ type=kotlin.se
 symbol fq=__local_2.combined[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<out Int>
 symbol fq=__local_3.combined2[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
 symbol fq=__local_4.withElement[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<out Int>
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence.plusElement[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.plusElement.$0.T> params=[kotlin.sequences.plusElement.$0.T] ret=kotlin.sequences.Sequence<kotlin.sequences.plusElement.$0.T>
-symbol fq=kotlin.sequences.Sequence.plus[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.sequences.Sequence<kotlin.sequences.plus.$1.T> params=[kotlin.sequences.plus.$1.T] ret=kotlin.sequences.Sequence<kotlin.sequences.plus.$1.T>
-symbol fq=kotlin.sequences.Sequence.plus[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=kotlin.sequences.Sequence<T0>;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.sequences.Sequence<kotlin.sequences.plus.$2.T> params=[kotlin.sequences.Sequence<kotlin.sequences.plus.$2.T>] ret=kotlin.sequences.Sequence<kotlin.sequences.plus.$2.T>
-symbol fq=kotlin.sequences.Sequence.toList[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.toList.$3.T> params=[] ret=kotlin.collections.List<kotlin.sequences.toList.$3.T>
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fsequence_plus package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

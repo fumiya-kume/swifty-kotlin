@@ -4,9 +4,6 @@ symbol fq=__local_2.found[kind=local] kind=local vis=private flags=_ type=String
 symbol fq=__local_3.any[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_4.all[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_5.folded[kind=local] kind=local vis=private flags=_ type=String
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=transform.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=transform[kind=fun;params=kotlin.Array<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<String>] ret=Unit
 file farray_hof_map package=_

@@ -3,8 +3,6 @@ symbol fq=findFirst.$0.values[kind=vparam] kind=valueParameter vis=private flags
 symbol fq=findFirstInList.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=findFirstInList[kind=fun;params=kotlin.collections.List<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=String?
 symbol fq=findFirst[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=String?
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file fcollection_firstNotNullOfOrNull package=_
   decl findFirst[kind=fun;params=kotlin.collections.Iterable<Int>] fun findFirst sym=findFirst[kind=fun;params=kotlin.collections.Iterable<Int>]
   decl findFirstInList[kind=fun;params=kotlin.collections.List<Int>] fun findFirstInList sym=findFirstInList[kind=fun;params=kotlin.collections.List<Int>]

@@ -6,10 +6,6 @@ symbol fq=__local_2.valueChanged[kind=local] kind=local vis=private flags=_ type
 symbol fq=__local_3.durationChanged[kind=local] kind=local vis=private flags=_ type=kotlin.time.TimedValue<String>
 symbol fq=__local_4.bothChanged[kind=local] kind=local vis=private flags=_ type=kotlin.time.TimedValue<String>
 symbol fq=golden.sema.exerciseTimedValueMembers[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.time.TimedValue<String>
-symbol fq=kotlin.time.TimedValue.equals.other[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.time.TimedValue.equals[kind=fun;recv=kotlin.time.TimedValue<T0>;params=Any?;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.time.TimedValue<kotlin.time.TimedValue.$class0.T> params=[Any?] ret=Boolean
-symbol fq=kotlin.time.TimedValue.hashCode[kind=fun;recv=kotlin.time.TimedValue<T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.time.TimedValue<kotlin.time.TimedValue.$class0.T> params=[] ret=Int
-symbol fq=kotlin.time.TimedValue.toString[kind=fun;recv=kotlin.time.TimedValue<T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.time.TimedValue<kotlin.time.TimedValue.$class0.T> params=[] ret=String
 file fstdlib_kotlin_time_TimedValue_TimedValue_n package=golden.sema
   decl golden.sema.exerciseTimedValueMembers[kind=fun;params=] fun exerciseTimedValueMembers sym=golden.sema.exerciseTimedValueMembers[kind=fun;params=]
 expr e@7:25 string(hello) type=String

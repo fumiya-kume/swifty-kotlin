@@ -6,7 +6,6 @@ symbol fq=golden.sema.maxOf3ArgString.$1.b[kind=vparam] kind=valueParameter vis=
 symbol fq=golden.sema.maxOf3ArgString.$1.c[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.maxOf3ArgString[kind=fun;params=String,String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String,String] ret=String
 symbol fq=golden.sema.maxOfVarargString[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fmaxof_comparable package=golden.sema
   decl golden.sema.maxOf2ArgString[kind=fun;params=String,String] fun maxOf2ArgString sym=golden.sema.maxOf2ArgString[kind=fun;params=String,String]
   decl golden.sema.maxOf3ArgString[kind=fun;params=String,String,String] fun maxOf3ArgString sym=golden.sema.maxOf3ArgString[kind=fun;params=String,String,String]

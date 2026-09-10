@@ -11,8 +11,6 @@ symbol fq=golden.sema.isRuntimeException[kind=fun;params=kotlin.NumberFormatExce
 symbol fq=golden.sema.message.$2.m[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.message[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.NumberFormatException
 symbol fq=golden.sema.noArg[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.NumberFormatException
-symbol fq=kotlin.Exception[kind=class] kind=class vis=public flags=openType type=kotlin.Exception
-symbol fq=kotlin.RuntimeException[kind=class] kind=class vis=public flags=openType
 file fstdlib_kotlin_NumberFormatException_n_n package=golden.sema
   decl golden.sema.noArg[kind=fun;params=] fun noArg sym=golden.sema.noArg[kind=fun;params=]
   decl golden.sema.message[kind=fun;params=String?] fun message sym=golden.sema.message[kind=fun;params=String?]

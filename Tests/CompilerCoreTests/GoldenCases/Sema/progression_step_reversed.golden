@@ -2,9 +2,6 @@ symbol fq=__local_0.stepped[kind=local] kind=local vis=private flags=_ type=kotl
 symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.CharProgression
 symbol fq=__local_2.reversed[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntProgression
 symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntProgression
-symbol fq=kotlin.ranges.CharProgression.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.ranges.CharProgression[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ranges.IntProgression.reversed[kind=fun;recv=kotlin.ranges.IntProgression;params=] kind=function vis=public flags=synthetic sig=recv=kotlin.ranges.IntProgression params=[] ret=kotlin.ranges.IntProgression
 symbol fq=reversedProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=steppedProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fprogression_step_reversed package=_

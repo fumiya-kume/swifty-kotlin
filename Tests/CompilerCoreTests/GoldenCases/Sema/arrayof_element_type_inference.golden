@@ -7,7 +7,6 @@ symbol fq=__local_5.checked[kind=local] kind=local vis=private flags=_ type=kotl
 symbol fq=arrayOfInts[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=arrayOfMixed[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=arrayOfStrings[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
 file farrayof_element_type_inference package=_
   decl arrayOfInts[kind=fun;params=] fun arrayOfInts sym=arrayOfInts[kind=fun;params=]
   decl arrayOfStrings[kind=fun;params=] fun arrayOfStrings sym=arrayOfStrings[kind=fun;params=]

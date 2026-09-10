@@ -22,14 +22,6 @@ symbol fq=charArrayOfLiteral[kind=fun;params=] kind=function vis=public flags=_ 
 symbol fq=doubleArrayOfLiteral[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=floatArrayOfLiteral[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=intArrayOfLiteral[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.BooleanArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ByteArray[kind=class] kind=class vis=public flags=synthetic type=kotlin.ByteArray
-symbol fq=kotlin.CharArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.DoubleArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.FloatArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.IntArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.LongArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ShortArray[kind=class] kind=class vis=public flags=synthetic
 symbol fq=longArrayOfLiteral[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=shortArrayOfValues.$1.first[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=shortArrayOfValues.$1.second[kind=vparam] kind=valueParameter vis=private flags=_

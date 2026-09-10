@@ -46,6 +46,15 @@ extension CallTypeChecker {
         // Skip lambda literals and callable refs so that their first inference
         // happens inside prepareCallArguments with a contextual expected type,
         // preventing a stale no-expectedType binding from poisoning the cache.
+        let isLongRangeLiteralContainsCall = interner.resolve(calleeName) == "contains"
+            && args.count == 1
+            && MemberRuntimeDispatch.rangeReceiverKind(
+                receiverExpr: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner
+            ) == .longRange
+            && driver.callChecker.isContextualizableIntegerLiteral(args[0].expr, ast: ast)
         let isULongRangeLiteralContainsCall = interner.resolve(calleeName) == "contains"
             && args.count == 1
             && MemberRuntimeDispatch.rangeReceiverKind(
@@ -63,6 +72,14 @@ extension CallTypeChecker {
                 default:
                     break
                 }
+            }
+            if isLongRangeLiteralContainsCall {
+                return driver.inferExpr(
+                    arg.expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: sema.types.longType
+                )
             }
             if isULongRangeLiteralContainsCall {
                 return driver.inferExpr(
@@ -151,8 +168,18 @@ extension CallTypeChecker {
             }
         }
 
+        let isULongProgressionFirstLastMember = ["first", "firstOrNull", "last", "lastOrNull"]
+            .contains(interner.resolve(calleeName))
+            && args.isEmpty
+            && sourceLevelRangeMemberReceiverKind(
+                receiverExpr: receiverID,
+                receiverType: lookupReceiverType,
+                sema: sema,
+                interner: interner
+            ) == .ulongProgression
         let rangeSourceMemberLookupType: TypeID? = if !isSuperCall,
-                                                      isBundledRangeSourceMember(calleeName, interner: interner)
+                                                      (isBundledRangeSourceMember(calleeName, interner: interner)
+                                                          || isULongProgressionFirstLastMember)
         {
             sourceLevelRangeMemberLookupType(
                 receiverExpr: receiverID,
@@ -805,28 +832,56 @@ extension CallTypeChecker {
             // companion fallback via collectMemberFunctionCandidates.
             let allowedOwnerSymbols = isSuperCall && !supertypeSymbols.isEmpty ?
                 (qualifiedSuperType != nil ? [qualifiedSuperType!] : supertypeSymbols) : nil
-            let rangeSourceCandidates = rangeSourceMemberLookupType.map {
-                collectRangeSourceExtensionCandidates(
-                    named: calleeName,
-                    receiverType: $0,
-                    sema: sema,
-                    interner: interner
-                )
-            } ?? []
+            let hasScopedExactRangeExtension = rangeSourceMemberLookupType.map { sourceReceiverType in
+                guard isULongProgressionFirstLastMember,
+                      let sourceReceiverSymbol = driver.helpers.nominalSymbol(
+                    of: sema.types.makeNonNullable(sourceReceiverType),
+                    types: sema.types
+                ) else {
+                    return false
+                }
+                return ctx.cachedScopeLookup(calleeName).contains { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate),
+                          symbol.kind == .function,
+                          !symbol.flags.contains(.synthetic),
+                          let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.parameterTypes.count == args.count,
+                          let declaredReceiver = signature.receiverType,
+                          let declaredReceiverSymbol = driver.helpers.nominalSymbol(
+                              of: sema.types.makeNonNullable(declaredReceiver),
+                              types: sema.types
+                          )
+                    else {
+                        return false
+                    }
+                    return declaredReceiverSymbol == sourceReceiverSymbol
+                }
+            } ?? false
+            let rangeSourceCandidates = hasScopedExactRangeExtension
+                ? []
+                : rangeSourceMemberLookupType.map {
+                    collectRangeSourceExtensionCandidates(
+                        named: calleeName,
+                        receiverType: $0,
+                        sema: sema,
+                        interner: interner
+                    )
+                } ?? []
             // Source-backed range overloads are recovered from the bundled
             // declaration index because their extensions are not generally
             // visible through member lookup. A same-named extension in the
             // active Kotlin scope still has normal overload priority, though;
             // keep it ahead of the bundled candidates so a user declaration
             // is not silently replaced by the stdlib fallback.
+            let rangeReceiverKind = MemberRuntimeDispatch.rangeReceiverKind(
+                receiverExpr: receiverID,
+                receiverType: lookupReceiverType,
+                sema: sema,
+                interner: interner
+            )
             let scopedRangeUserCandidates: [SymbolID] = if interner.resolve(calleeName) == "contains",
                                                                let rangeSourceMemberLookupType,
-                                                               MemberRuntimeDispatch.rangeReceiverKind(
-                                                                   receiverExpr: receiverID,
-                                                                   receiverType: lookupReceiverType,
-                                                                   sema: sema,
-                                                                   interner: interner
-                                                               ) == .intRange
+                                                               rangeReceiverKind == .intRange
             {
                 collectScopedRangeUserExtensionCandidates(
                     named: calleeName,
@@ -840,6 +895,36 @@ extension CallTypeChecker {
                           argTypes.count == 1,
                           let signature = sema.symbols.functionSignature(for: candidate),
                           signature.parameterTypes[0] == argTypes[0]
+                    else {
+                        return false
+                    }
+                    guard let label = args[0].label else { return true }
+                    guard signature.valueParameterSymbols.count == 1,
+                          let parameter = sema.symbols.symbol(signature.valueParameterSymbols[0])
+                    else {
+                        return false
+                    }
+                    return parameter.name == label
+                }
+            } else if interner.resolve(calleeName) == "contains",
+                      let rangeSourceMemberLookupType,
+                      rangeReceiverKind == .longRange,
+                      !isLongRangeLiteralContainsCall
+            {
+                collectScopedRangeUserExtensionCandidates(
+                    named: calleeName,
+                    receiverType: rangeSourceMemberLookupType,
+                    ctx: ctx,
+                    sema: sema,
+                    interner: interner
+                ).filter { candidate in
+                    guard args.count == 1,
+                          argTypes.count == 1,
+                          let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.parameterTypes.count == 1,
+                          signature.parameterTypes[0] == argTypes[0],
+                          [sema.types.byteType, sema.types.intType, sema.types.shortType]
+                              .contains(signature.parameterTypes[0])
                     else {
                         return false
                     }
@@ -1566,9 +1651,15 @@ extension CallTypeChecker {
             args: args,
             candidates: candidates,
             preInferredNonLambdaArgTypes: cachedNonLambdaArgTypes,
-            expectedTypeOverrides: isULongRangeLiteralContainsCall
-                ? [0: sema.types.ulongType]
-                : [:],
+            expectedTypeOverrides: {
+                if isLongRangeLiteralContainsCall {
+                    return [0: sema.types.longType]
+                }
+                if isULongRangeLiteralContainsCall {
+                    return [0: sema.types.ulongType]
+                }
+                return [:]
+            }(),
             explicitTypeArgs: explicitTypeArgs,
             receiverType: effectiveReceiverType,
             ctx: ctx,
@@ -2277,13 +2368,23 @@ extension CallTypeChecker {
         let isUIntRangeMigrationMember = isUIntRangeReceiver
             && ["iterator", "step", "take", "drop", "chunked", "windowed"]
                 .contains(interner.resolve(calleeName))
+        let isULongProgressionReceiver: Bool = {
+            guard let (_, symbol) = resolveClassTypeSymbol(nonNullReceiver, sema: sema) else {
+                return false
+            }
+            return interner.resolve(symbol.name) == "ULongProgression"
+        }()
+        let isULongProgressionFirstLastMember = isULongProgressionReceiver
+            && ["first", "firstOrNull", "last", "lastOrNull"]
+                .contains(interner.resolve(calleeName))
         return sema.symbols.lookupAll(fqName: rangesFQName + [calleeName])
             .filter { candidate in
                 guard let symbol = sema.symbols.symbol(candidate),
                       symbol.kind == .function,
                       (!symbol.flags.contains(.synthetic) || sema.symbols.isSourceBackedSymbol(candidate)),
                       (sema.symbols.parentSymbol(for: candidate) == rangesPackageSymbol
-                          || (isUIntRangeMigrationMember && sema.symbols.isSourceBackedSymbol(candidate))),
+                          || ((isUIntRangeMigrationMember || isULongProgressionFirstLastMember)
+                              && sema.symbols.isSourceBackedSymbol(candidate))),
                       let signature = sema.symbols.functionSignature(for: candidate),
                       let declaredReceiver = signature.receiverType
                 else {

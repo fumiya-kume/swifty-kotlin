@@ -1,12 +1,6 @@
 symbol fq=__local_0.entry[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap.MutableEntry<String, Int>
 symbol fq=golden.sema.updateMutableEntry.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.updateMutableEntry[kind=fun;params=kotlin.collections.MutableMap<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int>] ret=Int
-symbol fq=kotlin.collections.Iterator.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.next[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
-symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableIterator[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableMap.MutableEntry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_collections_MutableMap_MutableEntry_MutableEntry_n package=golden.sema
   decl golden.sema.updateMutableEntry[kind=fun;params=kotlin.collections.MutableMap<String,Int>] fun updateMutableEntry sym=golden.sema.updateMutableEntry[kind=fun;params=kotlin.collections.MutableMap<String,Int>]
 expr e@4:17 name(values) type=kotlin.collections.MutableMap<String, Int> ref=golden.sema.updateMutableEntry.$0.values[kind=vparam]

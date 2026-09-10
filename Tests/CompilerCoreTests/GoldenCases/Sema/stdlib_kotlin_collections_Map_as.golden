@@ -13,10 +13,6 @@ symbol fq=golden.sema.mapAsIterable.$3.values[kind=vparam] kind=valueParameter v
 symbol fq=golden.sema.mapAsIterable[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=kotlin.collections.Iterable<out kotlin.collections.Map.Entry<out String?, out Int?>>
 symbol fq=golden.sema.mapAsSequence.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.mapAsSequence[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=kotlin.sequences.Sequence<out kotlin.collections.Map.Entry<out String?, out Int?>>
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Map_as package=golden.sema
   decl golden.sema.CustomMap[kind=class] class CustomMap sym=golden.sema.CustomMap[kind=class]
   decl golden.sema.mapAsIterable[kind=fun;params=kotlin.collections.Map<String?,Int?>] fun mapAsIterable sym=golden.sema.mapAsIterable[kind=fun;params=kotlin.collections.Map<String?,Int?>]

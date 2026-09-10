@@ -4,11 +4,6 @@ symbol fq=__local_2.containsNull[kind=local] kind=local vis=private flags=_ type
 symbol fq=__local_3.iteratorHasNext[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=golden.sema.inspect.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.inspect[kind=fun;params=kotlin.collections.Set<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int?>] ret=String
-symbol fq=kotlin.collections.Iterator.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.hasNext[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
-symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Set_Set_n package=golden.sema
   decl golden.sema.inspect[kind=fun;params=kotlin.collections.Set<Int?>] fun inspect sym=golden.sema.inspect[kind=fun;params=kotlin.collections.Set<Int?>]
 expr e@4:16 name(values) type=kotlin.collections.Set<Int?> ref=golden.sema.inspect.$0.values[kind=vparam]

@@ -5,7 +5,6 @@ symbol fq=golden.sema.assign.$0.property[kind=vparam] kind=valueParameter vis=pr
 symbol fq=golden.sema.assign.$0.receiver[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.assign.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.assign[kind=fun;params=kotlin.reflect.KMutableProperty1<T0,T1>,T0,T1;gen=2] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KMutableProperty1<golden.sema.assign.$0.T, golden.sema.assign.$0.V>,golden.sema.assign.$0.T,golden.sema.assign.$0.V] ret=Unit
-symbol fq=kotlin.reflect.KProperty[kind=iface] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_KMutableProperty1_n package=golden.sema
   decl golden.sema.Counter[kind=class] class Counter sym=golden.sema.Counter[kind=class]
   decl golden.sema.assign[kind=fun;params=kotlin.reflect.KMutableProperty1<T0,T1>,T0,T1;gen=2] fun assign sym=golden.sema.assign[kind=fun;params=kotlin.reflect.KMutableProperty1<T0,T1>,T0,T1;gen=2]

@@ -5,7 +5,6 @@ symbol fq=golden.sema.useRemoveSuffix[kind=fun;params=] kind=function vis=public
 symbol fq=golden.sema.useRemoveSurrounding1[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.useRemoveSurrounding2[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.useStartsWith[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstring_affixes package=golden.sema
   decl golden.sema.useStartsWith[kind=fun;params=] fun useStartsWith sym=golden.sema.useStartsWith[kind=fun;params=]
   decl golden.sema.useEndsWith[kind=fun;params=] fun useEndsWith sym=golden.sema.useEndsWith[kind=fun;params=]

@@ -6,15 +6,6 @@ symbol fq=golden.sema.appendWithBufferedWriter[kind=fun;params=String,String] ki
 symbol fq=golden.sema.writeWithBufferedWriter.$1.path[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.writeWithBufferedWriter.$1.text[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.writeWithBufferedWriter[kind=fun;params=String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=Unit
-symbol fq=java.io.BufferedWriter.flush[kind=fun;recv=java.io.BufferedWriter;params=] kind=function vis=public flags=synthetic sig=recv=java.io.BufferedWriter params=[] ret=Unit
-symbol fq=java.io.BufferedWriter.newLine[kind=fun;recv=java.io.BufferedWriter;params=] kind=function vis=public flags=synthetic sig=recv=java.io.BufferedWriter params=[] ret=Unit
-symbol fq=java.io.BufferedWriter.write.text[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.BufferedWriter.write[kind=fun;recv=java.io.BufferedWriter;params=String] kind=function vis=public flags=synthetic sig=recv=java.io.BufferedWriter params=[String] ret=Unit
-symbol fq=java.io.BufferedWriter[kind=class] kind=class vis=public flags=synthetic type=java.io.BufferedWriter
-symbol fq=java.io.File.<init>.path[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.File.<init>[kind=ctor;params=String] kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
-symbol fq=java.io.File.bufferedWriter[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=java.io.BufferedWriter
-symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
 file fbuffered_writer_use package=golden.sema
   decl golden.sema.writeWithBufferedWriter[kind=fun;params=String,String] fun writeWithBufferedWriter sym=golden.sema.writeWithBufferedWriter[kind=fun;params=String,String]
   decl golden.sema.appendWithBufferedWriter[kind=fun;params=String,String] fun appendWithBufferedWriter sym=golden.sema.appendWithBufferedWriter[kind=fun;params=String,String]

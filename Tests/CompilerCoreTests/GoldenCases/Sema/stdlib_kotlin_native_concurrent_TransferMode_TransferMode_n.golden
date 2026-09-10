@@ -2,12 +2,6 @@ symbol fq=golden.sema.transferModeEntries[kind=fun;params=] kind=function vis=pu
 symbol fq=golden.sema.transferModeValueOf[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.TransferMode
 symbol fq=golden.sema.transferModeValue[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.transferModeValues[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.native.concurrent.TransferMode>
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.enums.EnumEntries[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.native.concurrent.TransferMode.Companion.entries[kind=prop] kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.native.concurrent.TransferMode>
-symbol fq=kotlin.native.concurrent.TransferMode.Companion.valueOf.name[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.native.concurrent.TransferMode.Companion.valueOf[kind=fun;recv=kotlin.native.concurrent.TransferMode.Companion;params=String] kind=function vis=public flags=synthetic|static sig=recv=kotlin.native.concurrent.TransferMode.Companion params=[String] ret=kotlin.native.concurrent.TransferMode
-symbol fq=kotlin.native.concurrent.TransferMode.values[kind=fun;params=] kind=function vis=public flags=synthetic|static sig=recv=_ params=[] ret=kotlin.Array<kotlin.native.concurrent.TransferMode>
 file fstdlib_kotlin_native_concurrent_TransferMode_TransferMode_n package=golden.sema annotations=[@file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class)]
   decl golden.sema.transferModeEntries[kind=fun;params=] fun transferModeEntries sym=golden.sema.transferModeEntries[kind=fun;params=]
   decl golden.sema.transferModeValue[kind=fun;params=] fun transferModeValue sym=golden.sema.transferModeValue[kind=fun;params=]

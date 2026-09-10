@@ -2,8 +2,6 @@ symbol fq=golden.sema.useEqualsIgnoreCase[kind=fun;params=] kind=function vis=pu
 symbol fq=golden.sema.useEquals[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 symbol fq=golden.sema.useLowercase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.useUppercase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.text.equals.other[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.text.equals[kind=fun;recv=String;params=String?] kind=function vis=public flags=synthetic sig=recv=String params=[String?] ret=Boolean
 file fstring_case_equals package=golden.sema
   decl golden.sema.useLowercase[kind=fun;params=] fun useLowercase sym=golden.sema.useLowercase[kind=fun;params=]
   decl golden.sema.useUppercase[kind=fun;params=] fun useUppercase sym=golden.sema.useUppercase[kind=fun;params=]

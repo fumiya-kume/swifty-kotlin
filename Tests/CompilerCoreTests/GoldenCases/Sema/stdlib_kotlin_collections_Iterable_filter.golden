@@ -6,10 +6,6 @@ symbol fq=__local_4.destination[kind=local] kind=local vis=private flags=_ type=
 symbol fq=filterFamily.$0.nullable[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=filterFamily.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=filterFamily[kind=fun;params=kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>] ret=Unit
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_filter package=_
   decl filterFamily[kind=fun;params=kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>] fun filterFamily sym=filterFamily[kind=fun;params=kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>]
 expr e@2:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]

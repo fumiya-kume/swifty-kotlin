@@ -2,12 +2,6 @@ symbol fq=golden.sema.cpuArchitectureBitness[kind=fun;params=] kind=function vis
 symbol fq=golden.sema.cpuArchitectureEntries[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.native.CpuArchitecture>
 symbol fq=golden.sema.cpuArchitectureValueOf[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.CpuArchitecture
 symbol fq=golden.sema.cpuArchitectureValues[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.native.CpuArchitecture>
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.enums.EnumEntries[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.native.CpuArchitecture.Companion.entries[kind=prop] kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.native.CpuArchitecture>
-symbol fq=kotlin.native.CpuArchitecture.Companion.valueOf.name[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.native.CpuArchitecture.Companion.valueOf[kind=fun;recv=kotlin.native.CpuArchitecture.Companion;params=String] kind=function vis=public flags=synthetic|static sig=recv=kotlin.native.CpuArchitecture.Companion params=[String] ret=kotlin.native.CpuArchitecture
-symbol fq=kotlin.native.CpuArchitecture.values[kind=fun;params=] kind=function vis=public flags=synthetic|static sig=recv=_ params=[] ret=kotlin.Array<kotlin.native.CpuArchitecture>
 file fstdlib_kotlin_native_CpuArchitecture_CpuArchitecture_n package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)]
   decl golden.sema.cpuArchitectureEntries[kind=fun;params=] fun cpuArchitectureEntries sym=golden.sema.cpuArchitectureEntries[kind=fun;params=]
   decl golden.sema.cpuArchitectureBitness[kind=fun;params=] fun cpuArchitectureBitness sym=golden.sema.cpuArchitectureBitness[kind=fun;params=]

@@ -1,5 +1,4 @@
 symbol fq=__local_0.grouping[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Grouping<String, Int>
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=testSequenceGroupingByContracts.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=testSequenceGroupingByContracts[kind=fun;params=kotlin.sequences.Sequence<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<String>] ret=kotlin.collections.Grouping<String, Int>
 file fstdlib_kotlin_sequences_Sequence_grouping package=_

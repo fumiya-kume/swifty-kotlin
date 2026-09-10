@@ -4,10 +4,6 @@ symbol fq=inspectOverloads.$0.values[kind=vparam] kind=valueParameter vis=privat
 symbol fq=inspectOverloads[kind=fun;params=kotlin.collections.List<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=Unit
 symbol fq=inspectRunning.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=inspectRunning[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence.toList[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.toList.$2.T> params=[] ret=kotlin.collections.List<kotlin.sequences.toList.$2.T>
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_running package=_
   decl inspectRunning[kind=fun;params=kotlin.collections.Iterable<Int>] fun inspectRunning sym=inspectRunning[kind=fun;params=kotlin.collections.Iterable<Int>]
   decl inspectOverloads[kind=fun;params=kotlin.collections.List<Int>] fun inspectOverloads sym=inspectOverloads[kind=fun;params=kotlin.collections.List<Int>]

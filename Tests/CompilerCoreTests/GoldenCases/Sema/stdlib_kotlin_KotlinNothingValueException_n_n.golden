@@ -1,6 +1,5 @@
 symbol fq=golden.sema.constructKotlinNothingValueException.$0.cause[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.constructKotlinNothingValueException[kind=fun;params=kotlin.Throwable] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Throwable] ret=kotlin.Throwable
-symbol fq=kotlin.Throwable[kind=class] kind=class vis=public flags=openType
 file fstdlib_kotlin_KotlinNothingValueException_n_n package=golden.sema
   decl golden.sema.constructKotlinNothingValueException[kind=fun;params=kotlin.Throwable] fun constructKotlinNothingValueException sym=golden.sema.constructKotlinNothingValueException[kind=fun;params=kotlin.Throwable]
 expr e@4:5 call callee=e@4:5#1 args=[] type=kotlin.KotlinNothingValueException call=kotlin.KotlinNothingValueException.<init>[kind=ctor;recv=kotlin.KotlinNothingValueException;params=]

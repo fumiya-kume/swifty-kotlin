@@ -13,14 +13,6 @@ symbol fq=addAllOverloads.$1.iterable[kind=vparam] kind=valueParameter vis=priva
 symbol fq=addAllOverloads.$1.sequence[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=addAllOverloads.$1.target[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=addAllOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableCollection<Int>,kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>] ret=Unit
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Collection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=plusAssignOverloads.$2.element[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=plusAssignOverloads.$2.target[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=plusAssignOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,Int] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableCollection<Int>,Int] ret=Unit

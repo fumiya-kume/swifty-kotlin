@@ -31,8 +31,6 @@ symbol fq=golden.sema.intRangeContainsShortIn.$10.range[kind=vparam] kind=valueP
 symbol fq=golden.sema.intRangeContainsShortIn.$10.value[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.intRangeContainsShortIn[kind=fun;params=kotlin.ranges.IntRange,Short] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.IntRange,Short] ret=Boolean
 symbol fq=golden.sema.intRangeContainsShort[kind=fun;params=kotlin.ranges.IntRange,Short] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.IntRange,Short] ret=Boolean
-symbol fq=kotlin.ranges.IntRange.contains[kind=fun;recv=kotlin.ranges.IntRange;params=Int] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.ranges.IntRange params=[Int] ret=Boolean
-symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_ranges_IntRange_cross_contains_n package=golden.sema
   decl golden.sema.intRangeContainsByte[kind=fun;params=kotlin.ranges.IntRange,Byte] fun intRangeContainsByte sym=golden.sema.intRangeContainsByte[kind=fun;params=kotlin.ranges.IntRange,Byte]
   decl golden.sema.intRangeContainsLong[kind=fun;params=kotlin.ranges.IntRange,Long] fun intRangeContainsLong sym=golden.sema.intRangeContainsLong[kind=fun;params=kotlin.ranges.IntRange,Long]

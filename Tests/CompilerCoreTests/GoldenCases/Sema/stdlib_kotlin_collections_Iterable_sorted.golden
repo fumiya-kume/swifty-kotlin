@@ -9,10 +9,6 @@ symbol fq=golden.sema.useSortedWith.$4.comparator[kind=vparam] kind=valueParamet
 symbol fq=golden.sema.useSortedWith.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.useSortedWith[kind=fun;params=kotlin.collections.Iterable<String?>,kotlin.Comparator<in String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>,kotlin.Comparator<in String?>] ret=kotlin.collections.List<String?>
 symbol fq=golden.sema.useSorted[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.List<Int>
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_sorted package=golden.sema
   decl golden.sema.useSorted[kind=fun;params=kotlin.collections.Iterable<Int>] fun useSorted sym=golden.sema.useSorted[kind=fun;params=kotlin.collections.Iterable<Int>]
   decl golden.sema.useSortedBy[kind=fun;params=kotlin.collections.Iterable<String>] fun useSortedBy sym=golden.sema.useSortedBy[kind=fun;params=kotlin.collections.Iterable<String>]

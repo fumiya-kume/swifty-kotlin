@@ -13,8 +13,6 @@ symbol fq=golden.sema.uuidInstanceApiSurface.$0.a[kind=vparam] kind=valueParamet
 symbol fq=golden.sema.uuidInstanceApiSurface.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.uuidInstanceApiSurface.$0.other[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.uuidInstanceApiSurface[kind=fun;params=kotlin.uuid.Uuid,kotlin.uuid.Uuid,Any?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.uuid.Uuid,kotlin.uuid.Uuid,Any?] ret=String
-symbol fq=kotlin.ByteArray[kind=class] kind=class vis=public flags=synthetic type=kotlin.ByteArray
-symbol fq=kotlin.UByteArray[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_uuid_Uuid_Uuid_n package=golden.sema annotations=[@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class,kotlin.ExperimentalUnsignedTypes::class)]
   decl golden.sema.uuidInstanceApiSurface[kind=fun;params=kotlin.uuid.Uuid,kotlin.uuid.Uuid,Any?] fun uuidInstanceApiSurface sym=golden.sema.uuidInstanceApiSurface[kind=fun;params=kotlin.uuid.Uuid,kotlin.uuid.Uuid,Any?]
 expr e@8:14 name(a) type=kotlin.uuid.Uuid ref=golden.sema.uuidInstanceApiSurface.$0.a[kind=vparam]

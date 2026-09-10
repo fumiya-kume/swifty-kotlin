@@ -11,9 +11,6 @@ symbol fq=golden.sema.customCount[kind=fun;params=golden.sema.CountingCharSequen
 symbol fq=golden.sema.emptyCount[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.stringBuilderCount[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.stringCount[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.text.get.index[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.text.get[kind=fun;recv=String;params=Int] kind=function vis=public flags=synthetic|operatorFunction sig=recv=String params=[Int] ret=Char
 file fstdlib_kotlin_text_CharSequence_count package=golden.sema
   decl golden.sema.charSequenceCount[kind=fun;params=kotlin.CharSequence] fun charSequenceCount sym=golden.sema.charSequenceCount[kind=fun;params=kotlin.CharSequence]
   decl golden.sema.stringCount[kind=fun;params=] fun stringCount sym=golden.sema.stringCount[kind=fun;params=]

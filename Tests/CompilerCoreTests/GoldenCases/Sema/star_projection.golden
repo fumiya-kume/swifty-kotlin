@@ -19,7 +19,6 @@ symbol fq=golden.sema.readOutBox.$3.b[kind=vparam] kind=valueParameter vis=priva
 symbol fq=golden.sema.readOutBox[kind=fun;params=golden.sema.OutBox<*>] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.OutBox<*>] ret=Any?
 symbol fq=golden.sema.readWrapper.$4.w[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.readWrapper[kind=fun;params=golden.sema.Wrapper<*>] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Wrapper<*>] ret=Unit
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstar_projection package=golden.sema
   decl golden.sema.Container[kind=class;gen=1] class Container sym=golden.sema.Container[kind=class;gen=1]
   decl golden.sema.readContainer[kind=fun;params=golden.sema.Container<*>] fun readContainer sym=golden.sema.readContainer[kind=fun;params=golden.sema.Container<*>]

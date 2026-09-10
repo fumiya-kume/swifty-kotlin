@@ -21,16 +21,6 @@ symbol fq=golden.sema.ulongRangeCrossContains.$1.range[kind=vparam] kind=valuePa
 symbol fq=golden.sema.ulongRangeCrossContains.$1.shortValue[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.ulongRangeCrossContains.$1.uintValue[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.ulongRangeCrossContains[kind=fun;params=kotlin.ranges.ULongRange,UByte,UInt,UShort] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.ULongRange,UByte,UInt,UShort] ret=Boolean
-symbol fq=kotlin.UByte.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.UByte[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.UInt.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.UInt[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ULong.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.ULong[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.UShort.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.UShort[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ranges.ULongRange.contains[kind=fun;recv=kotlin.ranges.ULongRange;params=ULong] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.ranges.ULongRange params=[ULong] ret=Boolean
-symbol fq=kotlin.ranges.ULongRange[kind=class] kind=class vis=public flags=_
 file fstdlib_kotlin_ranges_ULongRange_n package=golden.sema
   decl golden.sema.contains[kind=fun;recv=kotlin.ranges.ULongRange;params=UInt] fun contains sym=golden.sema.contains[kind=fun;recv=kotlin.ranges.ULongRange;params=UInt]
   decl golden.sema.ulongRangeCrossContains[kind=fun;params=kotlin.ranges.ULongRange,UByte,UInt,UShort] fun ulongRangeCrossContains sym=golden.sema.ulongRangeCrossContains[kind=fun;params=kotlin.ranges.ULongRange,UByte,UInt,UShort]

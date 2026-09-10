@@ -14,19 +14,6 @@ symbol fq=__local_8.fromArray[kind=local] kind=local vis=private flags=_ type=Bo
 symbol fq=__local_9.checkedArray[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_10.fromCollection[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_11.checkedCollection[kind=local] kind=local vis=private flags=_ type=Boolean
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Collection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableCollection.remove.element[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.MutableCollection.removeAll.elements[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.MutableCollection.removeAll[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=kotlin.collections.Collection<out T0>;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.Collection<out kotlin.collections.MutableCollection.E>] ret=Boolean
-symbol fq=kotlin.collections.MutableCollection.remove[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.MutableCollection.E] ret=Boolean
-symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=minusAssignOverloads.$1.element[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=minusAssignOverloads.$1.target[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=minusAssignOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,Int] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableCollection<Int>,Int] ret=Unit

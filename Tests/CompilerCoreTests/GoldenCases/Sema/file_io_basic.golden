@@ -1,13 +1,6 @@
 symbol fq=__local_0.f[kind=local] kind=local vis=private flags=_ type=java.io.File
 symbol fq=__local_1.content[kind=local] kind=local vis=private flags=_ type=String
 symbol fq=__local_2.lines[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=java.io.File.<init>.path[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.File.<init>[kind=ctor;params=String] kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
-symbol fq=java.io.File.readText[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=String
-symbol fq=java.io.File.writeText.text[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.File.writeText[kind=fun;recv=java.io.File;params=String] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[String] ret=Unit
-symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ffile_io_basic package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

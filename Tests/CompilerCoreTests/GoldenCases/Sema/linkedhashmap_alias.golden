@@ -12,7 +12,6 @@ symbol fq=__local_6.holder[kind=local] kind=local vis=private flags=_ type=Order
 symbol fq=__local_7.scores[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
 symbol fq=__local_8.labels[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, String>
 symbol fq=createLinkedMap[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.MutableMap<Int, String>
-symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=processLinkedMap.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=processLinkedMap[kind=fun;params=kotlin.collections.MutableMap<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int>] ret=Unit
