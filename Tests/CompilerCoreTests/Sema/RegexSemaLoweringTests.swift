@@ -177,7 +177,7 @@ struct RegexSemaLoweringTests {
 
     private static nonisolated(unsafe) var _sharedRegexKIRCtx: CompilationContext?
 
-    private func sharedRegexKIRCtx(at _: Int) throws -> CompilationContext {
+    private func sharedRegexKIRCtx() throws -> CompilationContext {
         if let cached = Self._sharedRegexKIRCtx {
             return cached
         }
@@ -488,7 +488,7 @@ struct RegexSemaLoweringTests {
     // MARK: - 5. KIR lowering: constructor calls emit correct KIR callees
 
     @Test func testSingleArgRegexConstructorLowersToKkRegexCreate() throws {
-        let ctx = try sharedRegexKIRCtx(at: 0)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase0", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -499,7 +499,7 @@ struct RegexSemaLoweringTests {
     }
 
     @Test func testTwoArgOptionRegexConstructorLowersToKkRegexCreateWithOption() throws {
-        let ctx = try sharedRegexKIRCtx(at: 1)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase1", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -510,7 +510,7 @@ struct RegexSemaLoweringTests {
     }
 
     @Test func testSetOptionsRegexConstructorLowersToKkRegexCreateWithOptions() throws {
-        let ctx = try sharedRegexKIRCtx(at: 2)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase2", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -523,7 +523,7 @@ struct RegexSemaLoweringTests {
     // MARK: - 6. KIR lowering: member calls emit correct KIR callees
 
     @Test func testRegexMatchesLowersToKkRegexMatches() throws {
-        let ctx = try sharedRegexKIRCtx(at: 3)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase3", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -531,7 +531,7 @@ struct RegexSemaLoweringTests {
     }
 
     @Test func testRegexContainsMatchInLowersToKkRegexContainsMatchIn() throws {
-        let ctx = try sharedRegexKIRCtx(at: 4)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase4", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -539,7 +539,7 @@ struct RegexSemaLoweringTests {
     }
 
     @Test func testRegexFindLowersToKkRegexFind() throws {
-        let ctx = try sharedRegexKIRCtx(at: 5)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase5", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -547,7 +547,7 @@ struct RegexSemaLoweringTests {
     }
 
     @Test func testRegexFindAllLowersToKkRegexFindAll() throws {
-        let ctx = try sharedRegexKIRCtx(at: 6)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase6", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -555,7 +555,7 @@ struct RegexSemaLoweringTests {
     }
 
     @Test func testRegexMatchEntireLowersToKkRegexMatchEntire() throws {
-        let ctx = try sharedRegexKIRCtx(at: 7)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase7", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -563,7 +563,7 @@ struct RegexSemaLoweringTests {
     }
 
     @Test func testRegexReplaceWithLambdaLowersToKkRegexReplaceLambda() throws {
-        let ctx = try sharedRegexKIRCtx(at: 8)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase8", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -573,7 +573,7 @@ struct RegexSemaLoweringTests {
     // MARK: - 7. KIR lowering: String.toRegex()
 
     @Test func testStringToRegexLowersToKkStringToRegex() throws {
-        let ctx = try sharedRegexKIRCtx(at: 9)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase9", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -583,7 +583,7 @@ struct RegexSemaLoweringTests {
     // MARK: - 8. KIR lowering: String.toRegex(option) / String.toRegex(options)
 
     @Test func testStringToRegexWithOptionLowersToKkStringToRegexWithOption() throws {
-        let ctx = try sharedRegexKIRCtx(at: 10)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase10", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -594,7 +594,7 @@ struct RegexSemaLoweringTests {
     }
 
     @Test func testStringToRegexWithOptionsSetLowersToKkStringToRegexWithOptions() throws {
-        let ctx = try sharedRegexKIRCtx(at: 11)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase11", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -607,7 +607,7 @@ struct RegexSemaLoweringTests {
     // MARK: - 9. KIR lowering: String.split(Regex) and String.contains(Regex)
 
     @Test func testStringSplitWithRegexUsesSourceBackedWrapper() throws {
-        let ctx = try sharedRegexKIRCtx(at: 12)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase12", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -619,7 +619,7 @@ struct RegexSemaLoweringTests {
     }
 
     @Test func testStringContainsWithRegexLowersToKkStringContainsRegex() throws {
-        let ctx = try sharedRegexKIRCtx(at: 13)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase13", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -629,7 +629,7 @@ struct RegexSemaLoweringTests {
     // MARK: - 9. KIR lowering: Regex.fromLiteral (companion)
 
     @Test func testRegexFromLiteralLowersToKkRegexFromLiteral() throws {
-        let ctx = try sharedRegexKIRCtx(at: 14)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase14", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -639,7 +639,7 @@ struct RegexSemaLoweringTests {
     // MARK: - 10. KIR lowering: group access goes through the raw match-data bridges
 
     @Test func testNamedGroupAccessChainLowersToGroupIndexOfNameBridge() throws {
-        let ctx = try sharedRegexKIRCtx(at: 15)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase15", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -655,7 +655,7 @@ struct RegexSemaLoweringTests {
     }
 
     @Test func testGroupsByIndexLowersToGroupPositionBridges() throws {
-        let ctx = try sharedRegexKIRCtx(at: 16)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase16", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
@@ -675,7 +675,7 @@ struct RegexSemaLoweringTests {
     @Test func testMatchResultComponent1LowersCorrectly() throws {
         // Call component1() and component2() explicitly rather than via destructuring,
         // since the compiler lowers val (a, b) = m differently.
-        let ctx = try sharedRegexKIRCtx(at: 17)
+        let ctx = try sharedRegexKIRCtx()
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase17", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
