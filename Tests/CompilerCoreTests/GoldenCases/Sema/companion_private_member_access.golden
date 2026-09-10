@@ -1,0 +1,26 @@
+symbol fq=golden.sema.Database.Companion.check.$0.db[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Database.Companion.getConnection.$1.db[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Database.connection[kind=prop] kind=property vis=private flags=_ type=String
+symbol fq=golden.sema.Database.ping[kind=fun;recv=golden.sema.Database;params=] kind=function vis=private flags=_ sig=recv=golden.sema.Database params=[] ret=Boolean
+symbol fq=golden.sema.Database[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.OuterClass.Companion.companionSecret[kind=prop] kind=property vis=private flags=_ type=String
+symbol fq=golden.sema.OuterClass.Companion.getOuterSecret.$2.outer[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.OuterClass.Companion[kind=obj] kind=object vis=public flags=_
+symbol fq=golden.sema.OuterClass.outerSecret[kind=prop] kind=property vis=private flags=_ type=String
+symbol fq=golden.sema.OuterClass[kind=class] kind=class vis=public flags=_
+file fcompanion_private_member_access package=golden.sema
+  decl golden.sema.Database[kind=class] class Database sym=golden.sema.Database[kind=class]
+  decl golden.sema.OuterClass[kind=class] class OuterClass sym=golden.sema.OuterClass[kind=class]
+expr e@9:38 string(jdbc:default) type=String
+expr e@10:35 bool(true) type=Boolean
+expr e@13:51 name(db) type=golden.sema.Database ref=golden.sema.Database.Companion.getConnection.$1.db[kind=vparam]
+expr e@13:51#1 memberCall recv=e@13:51 callee=connection args=[] type=String ref=golden.sema.Database.connection[kind=prop]
+expr e@14:44 name(db) type=golden.sema.Database ref=golden.sema.Database.Companion.check.$0.db[kind=vparam]
+expr e@14:44#1 memberCall recv=e@14:44 callee=ping args=[] type=Boolean call=golden.sema.Database.ping[kind=fun;recv=golden.sema.Database;params=]
+expr e@19:39 string(outer) type=String
+expr e@22:47 string(companion) type=String
+expr e@24:57 name(outer) type=golden.sema.OuterClass ref=golden.sema.OuterClass.Companion.getOuterSecret.$2.outer[kind=vparam]
+expr e@24:57#1 memberCall recv=e@24:57 callee=outerSecret args=[] type=String ref=golden.sema.OuterClass.outerSecret[kind=prop]
+expr e@25:44 name(companionSecret) type=String ref=golden.sema.OuterClass.Companion.companionSecret[kind=prop]
+expr e@28:49 name(Companion) type=golden.sema.OuterClass.Companion ref=golden.sema.OuterClass.Companion[kind=obj]
+expr e@28:49#1 memberCall recv=e@28:49 callee=companionSecret args=[] type=String ref=golden.sema.OuterClass.Companion.companionSecret[kind=prop]

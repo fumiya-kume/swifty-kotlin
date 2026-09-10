@@ -1,0 +1,25 @@
+symbol fq=golden.sema.Product.<init>.$0.id[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Product.<init>.$0.price[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Product.<init>[kind=ctor;recv=golden.sema.Product;params=String,Double] kind=constructor vis=private flags=_ sig=recv=golden.sema.Product params=[String,Double] ret=golden.sema.Product
+symbol fq=golden.sema.Product.Companion.create.$1.id[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Product.Companion.create.$1.price[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Product[kind=class] kind=class vis=public flags=dataType
+symbol fq=golden.sema.User.<init>.$2.age[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.User.<init>.$2.name[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.User.<init>[kind=ctor;recv=golden.sema.User;params=String,Int] kind=constructor vis=private flags=_ sig=recv=golden.sema.User params=[String,Int] ret=golden.sema.User
+symbol fq=golden.sema.User.Companion.createAdult.$3.name[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.User.Companion.fromNameAndAge.$4.age[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.User.Companion.fromNameAndAge.$4.name[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.User[kind=class] kind=class vis=public flags=_
+file fcompanion_private_constructor package=golden.sema
+  decl golden.sema.User[kind=class] class User sym=golden.sema.User[kind=class]
+  decl golden.sema.Product[kind=class] class Product sym=golden.sema.Product[kind=class]
+expr e@9:52 name(name) type=String ref=golden.sema.User.Companion.createAdult.$3.name[kind=vparam]
+expr e@9:58 int(18) type=Int
+expr e@9:47 call callee=e@9:47#1 args=[_:e@9:52,_:e@9:58] type=golden.sema.User call=golden.sema.User.<init>[kind=ctor;recv=golden.sema.User;params=String,Int]
+expr e@10:65 name(name) type=String ref=golden.sema.User.Companion.fromNameAndAge.$4.name[kind=vparam]
+expr e@10:71 name(age) type=Int ref=golden.sema.User.Companion.fromNameAndAge.$4.age[kind=vparam]
+expr e@10:60 call callee=e@10:60#1 args=[_:e@10:65,_:e@10:71] type=golden.sema.User call=golden.sema.User.<init>[kind=ctor;recv=golden.sema.User;params=String,Int]
+expr e@19:66 name(id) type=String ref=golden.sema.Product.Companion.create.$1.id[kind=vparam]
+expr e@19:70 name(price) type=Double ref=golden.sema.Product.Companion.create.$1.price[kind=vparam]
+expr e@19:58 call callee=e@19:58#1 args=[_:e@19:66,_:e@19:70] type=golden.sema.Product call=golden.sema.Product.<init>[kind=ctor;recv=golden.sema.Product;params=String,Double]
