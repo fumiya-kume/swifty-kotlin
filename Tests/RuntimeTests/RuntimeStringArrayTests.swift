@@ -1039,9 +1039,10 @@ struct RuntimeStringArrayTests {
         // Regression test: runtimeElementToString (used by kk_any_to_string, which
         // string template interpolation and the `+` concatenation operator lower to)
         // used to be missing a RuntimeThrowableBox case and fell through to printing
-        // the raw pointer bit pattern instead of "Throwable(ExceptionName: message)".
+        // the raw pointer bit pattern instead of the Throwable rendering.
+        // JDK-rooted exceptions keep their `java.lang.` prefix, matching kotlinc.
         let throwableRaw = runtimeAllocateIllegalStateException(message: "boom")
-        let expected = "Throwable(IllegalStateException: boom)"
+        let expected = "java.lang.IllegalStateException: boom"
 
         #expect(runtimeElementToString(throwableRaw) == expected)
         #expect(runtimeRenderAnyForPrint(throwableRaw) == expected)

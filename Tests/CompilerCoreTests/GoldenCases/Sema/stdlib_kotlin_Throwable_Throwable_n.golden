@@ -1,0 +1,139 @@
+symbol fq=__local_0.value kind=local vis=private flags=_ type=Any
+symbol fq=__local_1.value kind=local vis=private flags=_ type=kotlin.Throwable
+symbol fq=__local_2.value kind=local vis=private flags=_ type=kotlin.Throwable
+symbol fq=__local_3.value kind=local vis=private flags=_ type=Any
+symbol fq=__local_4.value kind=local vis=private flags=_ type=Any
+symbol fq=__try_0_catch_0.error kind=local vis=internal flags=_ type=kotlin.Throwable
+symbol fq=golden.sema.MessageCauseThrowable kind=class vis=private flags=_
+symbol fq=golden.sema.MessageCauseThrowable.<init> kind=constructor vis=private flags=_ sig=recv=golden.sema.MessageCauseThrowable params=[String?,kotlin.Throwable?] ret=golden.sema.MessageCauseThrowable
+symbol fq=golden.sema.MessageCauseThrowable.<init>.$0.cause kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.MessageCauseThrowable.<init>.$0.message kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.NamedThrowable kind=class vis=private flags=_
+symbol fq=golden.sema.NamedThrowable.<init> kind=constructor vis=private flags=_ sig=recv=golden.sema.NamedThrowable params=[String?] ret=golden.sema.NamedThrowable
+symbol fq=golden.sema.NamedThrowable.<init>.$1.message kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.NoArgThrowable kind=class vis=private flags=_
+symbol fq=golden.sema.NoArgThrowable.<init> kind=constructor vis=private flags=_ sig=recv=golden.sema.NoArgThrowable params=[] ret=golden.sema.NoArgThrowable
+symbol fq=golden.sema.OverridingThrowable kind=class vis=private flags=_
+symbol fq=golden.sema.OverridingThrowable.<init> kind=constructor vis=private flags=_ sig=recv=golden.sema.OverridingThrowable params=[] ret=golden.sema.OverridingThrowable
+symbol fq=golden.sema.OverridingThrowable.toString kind=function vis=public flags=overrideMember sig=recv=golden.sema.OverridingThrowable params=[] ret=String
+symbol fq=golden.sema.throwableAnyToString kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String
+symbol fq=golden.sema.throwableAnyToString.$2.message kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.throwableAsThrowableToString kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String
+symbol fq=golden.sema.throwableAsThrowableToString.$3.message kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.throwableCaughtToString kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String
+symbol fq=golden.sema.throwableCaughtToString.$4.message kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.throwableDirectToString kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=String
+symbol fq=golden.sema.throwableDirectToString.$5.message kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.throwableMessageCauseCause kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.throwableMessageCauseMessage kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.throwableMessageCauseToString kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.throwableNoArgIsThrowable kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.throwableNoArgToString kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.throwableOverrideAsAnyToString kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.throwableOverrideAsThrowableToString kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.throwableOverrideToString kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.throwableStackTraceSize kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.throwableSubclassToString kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String
+symbol fq=golden.sema.throwableSubclassToString.$6.message kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.throwableWithCauseToString kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Throwable kind=class vis=public flags=openType
+file fstdlib_kotlin_Throwable_Throwable_n package=golden.sema
+  decl golden.sema.NamedThrowable class NamedThrowable sym=golden.sema.NamedThrowable
+  decl golden.sema.NoArgThrowable class NoArgThrowable sym=golden.sema.NoArgThrowable
+  decl golden.sema.MessageCauseThrowable class MessageCauseThrowable sym=golden.sema.MessageCauseThrowable
+  decl golden.sema.OverridingThrowable class OverridingThrowable sym=golden.sema.OverridingThrowable
+  decl golden.sema.throwableDirectToString fun throwableDirectToString sym=golden.sema.throwableDirectToString
+  decl golden.sema.throwableAnyToString fun throwableAnyToString sym=golden.sema.throwableAnyToString
+  decl golden.sema.throwableAsThrowableToString fun throwableAsThrowableToString sym=golden.sema.throwableAsThrowableToString
+  decl golden.sema.throwableOverrideToString fun throwableOverrideToString sym=golden.sema.throwableOverrideToString
+  decl golden.sema.throwableOverrideAsThrowableToString fun throwableOverrideAsThrowableToString sym=golden.sema.throwableOverrideAsThrowableToString
+  decl golden.sema.throwableOverrideAsAnyToString fun throwableOverrideAsAnyToString sym=golden.sema.throwableOverrideAsAnyToString
+  decl golden.sema.throwableSubclassToString fun throwableSubclassToString sym=golden.sema.throwableSubclassToString
+  decl golden.sema.throwableCaughtToString fun throwableCaughtToString sym=golden.sema.throwableCaughtToString
+  decl golden.sema.throwableWithCauseToString fun throwableWithCauseToString sym=golden.sema.throwableWithCauseToString
+  decl golden.sema.throwableNoArgToString fun throwableNoArgToString sym=golden.sema.throwableNoArgToString
+  decl golden.sema.throwableNoArgIsThrowable fun throwableNoArgIsThrowable sym=golden.sema.throwableNoArgIsThrowable
+  decl golden.sema.throwableMessageCauseToString fun throwableMessageCauseToString sym=golden.sema.throwableMessageCauseToString
+  decl golden.sema.throwableMessageCauseMessage fun throwableMessageCauseMessage sym=golden.sema.throwableMessageCauseMessage
+  decl golden.sema.throwableMessageCauseCause fun throwableMessageCauseCause sym=golden.sema.throwableMessageCauseCause
+  decl golden.sema.throwableStackTraceSize fun throwableStackTraceSize sym=golden.sema.throwableStackTraceSize
+expr e@3:60 name(message) type=String? ref=golden.sema.NamedThrowable.<init>.$1.message
+expr e@7:86 name(message) type=String? ref=golden.sema.MessageCauseThrowable.<init>.$0.message
+expr e@7:95 name(cause) type=kotlin.Throwable? ref=golden.sema.MessageCauseThrowable.<init>.$0.cause
+expr e@10:39 string(override) type=String
+expr e@9:47 string(base) type=String
+expr e@13:67 name(message) type=String? ref=golden.sema.throwableDirectToString.$5.message
+expr e@13:57 call callee=e@13:57#1 args=[_:e@13:67] type=kotlin.Throwable call=kotlin.Throwable.<init>#1
+expr e@13:57#2 memberCall recv=e@13:57 callee=toString args=[] type=String call=kotlin.Throwable.toString
+expr e@16:32 name(message) type=String ref=golden.sema.throwableAnyToString.$2.message
+expr e@16:22 call callee=e@16:22#1 args=[_:e@16:32] type=kotlin.Throwable call=kotlin.Throwable.<init>#1
+expr e@16:5 localDecl value mutable=0 type=Any init=e@16:22 type=Unit ref=__local_0.value
+expr e@17:12 name(value) type=Any ref=__local_0.value
+expr e@17:12#1 memberCall recv=e@17:12 callee=toString args=[] type=String
+expr e@17:5 return value=e@17:12#1 type=Nothing
+expr e@21:38 name(message) type=String ref=golden.sema.throwableAsThrowableToString.$3.message
+expr e@21:28 call callee=e@21:28#1 args=[_:e@21:38] type=kotlin.Throwable call=kotlin.Throwable.<init>#1
+expr e@21:5 localDecl value mutable=0 type=Throwable init=e@21:28 type=Unit ref=__local_1.value
+expr e@22:12 name(value) type=kotlin.Throwable ref=__local_1.value
+expr e@22:12#1 memberCall recv=e@22:12 callee=toString args=[] type=String call=kotlin.Throwable.toString
+expr e@22:5 return value=e@22:12#1 type=Nothing
+expr e@25:43 call callee=e@25:43#1 args=[] type=golden.sema.OverridingThrowable call=golden.sema.OverridingThrowable.<init>
+expr e@25:43#2 memberCall recv=e@25:43 callee=toString args=[] type=String call=golden.sema.OverridingThrowable.toString
+expr e@28:28 call callee=e@28:28#1 args=[] type=golden.sema.OverridingThrowable call=golden.sema.OverridingThrowable.<init>
+expr e@28:5 localDecl value mutable=0 type=Throwable init=e@28:28 type=Unit ref=__local_2.value
+expr e@29:12 name(value) type=kotlin.Throwable ref=__local_2.value
+expr e@29:12#1 memberCall recv=e@29:12 callee=toString args=[] type=String call=kotlin.Throwable.toString
+expr e@29:5 return value=e@29:12#1 type=Nothing
+expr e@33:22 call callee=e@33:22#1 args=[] type=golden.sema.OverridingThrowable call=golden.sema.OverridingThrowable.<init>
+expr e@33:5 localDecl value mutable=0 type=Any init=e@33:22 type=Unit ref=__local_3.value
+expr e@34:12 name(value) type=Any ref=__local_3.value
+expr e@34:12#1 memberCall recv=e@34:12 callee=toString args=[] type=String
+expr e@34:5 return value=e@34:12#1 type=Nothing
+expr e@37:73 name(message) type=String ref=golden.sema.throwableSubclassToString.$6.message
+expr e@37:58 call callee=e@37:58#1 args=[_:e@37:73] type=golden.sema.NamedThrowable call=golden.sema.NamedThrowable.<init>
+expr e@37:58#2 memberCall recv=e@37:58 callee=toString args=[] type=String call=kotlin.Throwable.toString
+expr e@41:25 name(message) type=String ref=golden.sema.throwableCaughtToString.$4.message
+expr e@41:15 call callee=e@41:15#1 args=[_:e@41:25] type=kotlin.Throwable call=kotlin.Throwable.<init>#1
+expr e@41:9 throw value=e@41:15 type=Nothing
+expr e@40:9 blockExpr stmts=[] trailing=e@41:9 type=Nothing
+expr e@43:9 name(error) type=kotlin.Throwable ref=__try_0_catch_0.error
+expr e@43:9#1 memberCall recv=e@43:9 callee=toString args=[] type=String call=kotlin.Throwable.toString
+expr e@42:32 blockExpr stmts=[] trailing=e@43:9#1 type=String ref=__try_0_catch_0.error
+expr e@40:5 try body=e@40:9 catches=[e@42:32] finally=_ type=String
+expr e@47:15 string(outer) type=String
+expr e@47:34 string(inner) type=String
+expr e@47:24 call callee=e@47:24#1 args=[_:e@47:34] type=kotlin.Throwable call=kotlin.Throwable.<init>#1
+expr e@47:5 call callee=e@47:5#1 args=[_:e@47:15,_:e@47:24] type=kotlin.Throwable call=kotlin.Throwable.<init>#2
+expr e@47:5#2 memberCall recv=e@47:5 callee=toString args=[] type=String call=kotlin.Throwable.toString
+expr e@49:40 call callee=e@49:40#1 args=[] type=golden.sema.NoArgThrowable call=golden.sema.NoArgThrowable.<init>
+expr e@49:40#2 memberCall recv=e@49:40 callee=toString args=[] type=String call=kotlin.Throwable.toString
+expr e@52:22 call callee=e@52:22#1 args=[] type=golden.sema.NoArgThrowable call=golden.sema.NoArgThrowable.<init>
+expr e@52:5 localDecl value mutable=0 type=Any init=e@52:22 type=Unit ref=__local_4.value
+expr e@53:12 name(value) type=Any ref=__local_4.value
+expr e@53:12#1 isCheck expr=e@53:12 type=kotlin.Throwable type=Boolean
+expr e@53:5 return value=e@53:12#1 type=Nothing
+expr e@57:27 string(message) type=String
+expr e@57:48 string(cause) type=String
+expr e@57:38 call callee=e@57:38#1 args=[_:e@57:48] type=kotlin.Throwable call=kotlin.Throwable.<init>#1
+expr e@57:5 call callee=e@57:5#1 args=[_:e@57:27,_:e@57:38] type=golden.sema.MessageCauseThrowable call=golden.sema.MessageCauseThrowable.<init>
+expr e@57:5#2 memberCall recv=e@57:5 callee=toString args=[] type=String call=kotlin.Throwable.toString
+expr e@60:27 string(message) type=String
+expr e@60:48 string(cause) type=String
+expr e@60:38 call callee=e@60:38#1 args=[_:e@60:48] type=kotlin.Throwable call=kotlin.Throwable.<init>#1
+expr e@60:5 call callee=e@60:5#1 args=[_:e@60:27,_:e@60:38] type=golden.sema.MessageCauseThrowable call=golden.sema.MessageCauseThrowable.<init>
+expr e@60:5#2 memberCall recv=e@60:5 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@60:69 string(null) type=String
+expr e@60:5#3 binary(elvis) lhs=e@60:5#2 rhs=e@60:69 type=String
+expr e@63:27 string(message) type=String
+expr e@63:48 string(cause) type=String
+expr e@63:38 call callee=e@63:38#1 args=[_:e@63:48] type=kotlin.Throwable call=kotlin.Throwable.<init>#1
+expr e@63:5 call callee=e@63:5#1 args=[_:e@63:27,_:e@63:38] type=golden.sema.MessageCauseThrowable call=golden.sema.MessageCauseThrowable.<init>
+expr e@63:5#2 memberCall recv=e@63:5 callee=cause args=[] type=kotlin.Throwable? ref=kotlin.Throwable.cause
+expr e@63:5#3 safeMemberCall recv=e@63:5#2 callee=toString args=[] type=String? call=kotlin.Throwable.toString
+expr e@63:79 string(null) type=String
+expr e@63:5#4 binary(elvis) lhs=e@63:5#3 rhs=e@63:79 type=String
+expr e@65:48 string(trace) type=String
+expr e@65:38 call callee=e@65:38#1 args=[_:e@65:48] type=kotlin.Throwable call=kotlin.Throwable.<init>#1
+expr e@65:38#2 memberCall recv=e@65:38 callee=getStackTrace args=[] type=kotlin.Array<String> call=kotlin.Throwable.getStackTrace
+expr e@65:38#3 memberCall recv=e@65:38#2 callee=size args=[] type=Int call=kotlin.collections.size.$get#0

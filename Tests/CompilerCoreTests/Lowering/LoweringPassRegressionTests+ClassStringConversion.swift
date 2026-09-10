@@ -148,6 +148,40 @@ extension LoweringPassRegressionTests {
         }
     }
 
+    // A derived class that does not redeclare toString() must resolve the
+    // inherited implementation before selecting the virtual dispatch path.
+    @Test
+    func testInheritedClassConcatenationResolvesSuperclassToString() throws {
+        let source = """
+        open class Base {
+            override fun toString(): String = "Base!"
+        }
+        class Derived : Base()
+        fun render(d: Derived): String {
+            return "derived=" + d
+        }
+        fun main() {
+            println(render(Derived()))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "InheritedClassConcatenation", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            #expect(!ctx.diagnostics.hasError)
+
+            let module = try #require(ctx.kir)
+            let body = try findKIRFunctionBody(named: "render", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            let virtualCallees = extractVirtualCallees(from: body, interner: ctx.interner)
+
+            #expect(virtualCallees.contains("toString"),
+                    "an inherited open-class toString() must use virtual dispatch; virtualCallees: \(virtualCallees)")
+            #expect(!callees.contains("kk_any_to_string"),
+                    "an inherited class value must not reach the generic Any conversion; callees: \(callees)")
+        }
+    }
+
     // A data class's toString() is synthesized (by DataEnumSealedSynthesisPass,
     // a later lowering pass) rather than source-declared, but Sema registers
     // its signature at header-collection time -- well before this BuildKIR-time

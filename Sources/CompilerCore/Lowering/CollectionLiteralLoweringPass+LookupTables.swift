@@ -56,10 +56,8 @@ struct CollectionLiteralLookupTables {
     var mutableListOfName: InternedString { listLookup.mutableListOfName }
     var arrayListOfName: InternedString { listLookup.arrayListOfName }
     var emptyListName: InternedString { listLookup.emptyListName }
-    var listOfNotNullName: InternedString { listLookup.listOfNotNullName }
     var arrayListName: InternedString { listLookup.arrayListName }
     var kkListOfName: InternedString { listLookup.kkListOfName }
-    var kkListOfNotNullName: InternedString { listLookup.kkListOfNotNullName }
     var kkEmptyListName: InternedString { listLookup.kkEmptyListName }
     var kkListSizeName: InternedString { listLookup.kkListSizeName }
     var kkListGetName: InternedString { listLookup.kkListGetName }
@@ -152,6 +150,8 @@ struct CollectionLiteralLookupTables {
     var kkSetIsEmptyName: InternedString { setLookup.kkSetIsEmptyName }
     var kkSetToStringName: InternedString { setLookup.kkSetToStringName }
     var kkIterableToMutableSetName: InternedString { setLookup.kkIterableToMutableSetName }
+    var kkHashSetOfName: InternedString { setLookup.kkHashSetOfName }
+    var kkIterableToHashSetName: InternedString { setLookup.kkIterableToHashSetName }
     var setFactoryNames: Set<InternedString> { setLookup.setFactoryNames }
     var mutableSetConstructorNames: Set<InternedString> { setLookup.mutableSetConstructorNames }
 
@@ -205,12 +205,10 @@ struct CollectionLiteralLookupTables {
     var kkIteratorBuilderBuildName: InternedString { sequenceLookup.kkIteratorBuilderBuildName }
     var kkIteratorBuilderHasNextName: InternedString { sequenceLookup.kkIteratorBuilderHasNextName }
     var kkIteratorBuilderNextName: InternedString { sequenceLookup.kkIteratorBuilderNextName }
-    var kkSequenceForEachName: InternedString { sequenceLookup.kkSequenceForEachName }
     var kkSequenceFlatMapName: InternedString { sequenceLookup.kkSequenceFlatMapName }
     var kkSequenceFlatMapIndexedName: InternedString { sequenceLookup.kkSequenceFlatMapIndexedName }
     var kkSequenceShuffledName: InternedString { sequenceLookup.kkSequenceShuffledName }
     var kkSequenceShuffledRandomName: InternedString { sequenceLookup.kkSequenceShuffledRandomName }
-    var kkSequenceForEachIndexedName: InternedString { sequenceLookup.kkSequenceForEachIndexedName }
     var kkSequenceScanName: InternedString { sequenceLookup.kkSequenceScanName }
     var kkSequenceRunningFoldName: InternedString { sequenceLookup.kkSequenceRunningFoldName }
     var kkSequenceRunningReduceName: InternedString { sequenceLookup.kkSequenceRunningReduceName }
@@ -222,8 +220,6 @@ struct CollectionLiteralLookupTables {
     var kkSequenceMaxOrNullName: InternedString { sequenceLookup.kkSequenceMaxOrNullName }
     var kkSequenceMinOrNullName: InternedString { sequenceLookup.kkSequenceMinOrNullName }
     var kkSequenceFlattenName: InternedString { sequenceLookup.kkSequenceFlattenName }
-    var kkSequenceFoldName: InternedString { sequenceLookup.kkSequenceFoldName }
-    var kkSequenceFoldIndexedName: InternedString { sequenceLookup.kkSequenceFoldIndexedName }
     var kkSequenceRunningFoldIndexedName: InternedString { sequenceLookup.kkSequenceRunningFoldIndexedName }
     var kkSequenceScanIndexedName: InternedString { sequenceLookup.kkSequenceScanIndexedName }
     var kkSequenceReduceIndexedName: InternedString { sequenceLookup.kkSequenceReduceIndexedName }
@@ -289,6 +285,9 @@ struct CollectionLiteralLookupTables {
     var kkArrayOfName: InternedString { arrayLookup.kkArrayOfName }
     var toMutableListName: InternedString { arrayLookup.toMutableListName }
     var toTypedArrayName: InternedString { arrayLookup.toTypedArrayName }
+    var sliceArrayName: InternedString { arrayLookup.sliceArrayName }
+    var reversedArrayName: InternedString { arrayLookup.reversedArrayName }
+    var asListName: InternedString { arrayLookup.asListName }
     var copyOfName: InternedString { arrayLookup.copyOfName }
     var copyOfRangeName: InternedString { arrayLookup.copyOfRangeName }
     var fillName: InternedString { arrayLookup.fillName }

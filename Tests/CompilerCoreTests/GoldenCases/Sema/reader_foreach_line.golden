@@ -10,7 +10,7 @@ symbol fq=java.io.File kind=class vis=public flags=synthetic type=java.io.File
 symbol fq=java.io.File.<init>#0 kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
 symbol fq=java.io.File.<init>.path kind=valueParameter vis=private flags=synthetic
 symbol fq=java.io.File.bufferedReader kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=java.io.BufferedReader
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableList.add#1 kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[kotlin.collections.MutableList.E] ret=Boolean

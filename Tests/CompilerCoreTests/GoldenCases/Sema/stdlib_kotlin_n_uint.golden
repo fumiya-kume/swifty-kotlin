@@ -1,0 +1,56 @@
+symbol fq=__local_0.values kind=local vis=private flags=_ type=kotlin.UIntArray
+symbol fq=__local_1.divisor kind=local vis=private flags=_ type=UInt
+symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.UIntArray#0 kind=class vis=public flags=synthetic
+file fstdlib_kotlin_n_uint package=golden.sema
+  decl golden.sema.main fun main sym=golden.sema.main
+expr e@4:30 uint(1) type=UInt
+expr e@4:34 uint(2147483648) type=UInt
+expr e@4:47 uint(4294967295) type=UInt
+expr e@4:18 call callee=e@4:18#1 args=[_:e@4:30,_:e@4:34,_:e@4:47] type=kotlin.UIntArray call=kotlin.uintArrayOf
+expr e@4:5 localDecl values mutable=0 type=_ init=e@4:18 type=Unit ref=__local_0.values
+expr e@5:19 uint(17) type=UInt
+expr e@5:5 localDecl divisor mutable=0 type=_ init=e@5:19 type=Unit ref=__local_1.divisor
+expr e@6:13 name(values) type=kotlin.UIntArray ref=__local_0.values
+expr e@6:13#1 memberCall recv=e@6:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#10
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println#1
+expr e@7:13 name(values) type=kotlin.UIntArray ref=__local_0.values
+expr e@7:20 int(1) type=Int
+expr e@7:13#1 indexedAccess receiver=e@7:13 indices=[e@7:20] type=UInt
+expr e@7:25 name(divisor) type=UInt ref=__local_1.divisor
+expr e@7:13#2 binary(divide) lhs=e@7:13#1 rhs=e@7:25 type=UInt
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#2] type=Unit call=kotlin.io.println#1
+expr e@8:13 name(values) type=kotlin.UIntArray ref=__local_0.values
+expr e@8:20 int(2) type=Int
+expr e@8:13#1 indexedAccess receiver=e@8:13 indices=[e@8:20] type=UInt
+expr e@8:25 name(divisor) type=UInt ref=__local_1.divisor
+expr e@8:13#2 binary(modulo) lhs=e@8:13#1 rhs=e@8:25 type=UInt
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#2] type=Unit call=kotlin.io.println#1
+expr e@9:13 name(values) type=kotlin.UIntArray ref=__local_0.values
+expr e@9:20 int(2) type=Int
+expr e@9:13#1 indexedAccess receiver=e@9:13 indices=[e@9:20] type=UInt
+expr e@9:25 name(values) type=kotlin.UIntArray ref=__local_0.values
+expr e@9:32 int(0) type=Int
+expr e@9:25#1 indexedAccess receiver=e@9:25 indices=[e@9:32] type=UInt
+expr e@9:13#2 binary(greaterThan) lhs=e@9:13#1 rhs=e@9:25#1 type=Boolean
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#2] type=Unit call=kotlin.io.println#1
+expr e@10:13 name(values) type=kotlin.UIntArray ref=__local_0.values
+expr e@10:20 int(2) type=Int
+expr e@10:13#1 indexedAccess receiver=e@10:13 indices=[e@10:20] type=UInt
+expr e@10:13#2 memberCall recv=e@10:13#1 callee=toLong args=[] type=Long
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#2] type=Unit call=kotlin.io.println#1
+expr e@11:13 name(values) type=kotlin.UIntArray ref=__local_0.values
+expr e@11:20 int(2) type=Int
+expr e@11:13#1 indexedAccess receiver=e@11:13 indices=[e@11:20] type=UInt
+expr e@11:13#2 memberCall recv=e@11:13#1 callee=toULong args=[] type=ULong
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#2] type=Unit call=kotlin.io.println#1
+expr e@12:13 name(values) type=kotlin.UIntArray ref=__local_0.values
+expr e@12:20 int(2) type=Int
+expr e@12:13#1 indexedAccess receiver=e@12:13 indices=[e@12:20] type=UInt
+expr e@12:13#2 memberCall recv=e@12:13#1 callee=toFloat args=[] type=Float
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#2] type=Unit call=kotlin.io.println#1
+expr e@13:13 name(values) type=kotlin.UIntArray ref=__local_0.values
+expr e@13:20 int(2) type=Int
+expr e@13:13#1 indexedAccess receiver=e@13:13 indices=[e@13:20] type=UInt
+expr e@13:13#2 memberCall recv=e@13:13#1 callee=toDouble args=[] type=Double
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#2] type=Unit call=kotlin.io.println#1

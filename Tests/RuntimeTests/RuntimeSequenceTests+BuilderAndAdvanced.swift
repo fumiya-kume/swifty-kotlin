@@ -805,42 +805,6 @@ extension RuntimeSequenceTests {
     }
 
     @Test
-    func testSequenceForEachVisitsElementsInOrder() {
-        let seq = makeSequence([1, 2, 3])
-        _lazyTestYieldCounter = 0
-        let action: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
-            _lazyTestYieldCounter = _lazyTestYieldCounter * 10 + value
-            return 0
-        }
-
-        let result = kk_sequence_forEach(
-            seq,
-            unsafeBitCast(action, to: Int.self),
-            0
-        )
-
-        #expect(result == 0)
-        #expect(_lazyTestYieldCounter == 123)
-    }
-    @Test
-    func testSequenceFoldAccumulatesInOrder() {
-        let seq = makeSequence([1, 2, 3])
-        let foldFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, acc, value, _ in
-            acc * 10 + value
-        }
-
-        let result = kk_sequence_fold(
-            seq,
-            0,
-            unsafeBitCast(foldFn, to: Int.self),
-            0,
-            nil
-        )
-
-        #expect(result == 123)
-    }
-
-    @Test
     func testSequenceWithIndexCorrectness() {
         // Test correctness of withIndex
         let seq = makeSequence([10, 20, 30])

@@ -183,6 +183,22 @@ public external fun IntRange.reversed(): IntRange
 
 public fun IntRange.toIntArray(): IntArray = toList().toIntArray()
 
+// KSP-1285: Kotlin exposes exact IntRange overloads for the other signed
+// primitive integer types. Long values must be range-checked before narrowing.
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Byte): Boolean =
+    contains(value.toInt())
+
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Long): Boolean {
+    if (value < -2147483648L || value > 2147483647L) return false
+    return contains(value.toInt())
+}
+
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Short): Boolean =
+    contains(value.toInt())
+
 public fun IntRange.average(): Double {
     if (isEmpty()) return Double.NaN
     var sum = 0.0
@@ -1128,6 +1144,64 @@ public fun UIntRange.none(predicate: (UInt) -> Boolean): Boolean {
     return true
 }
 
+public fun UIntRange.take(n: Int): List<UInt> {
+    require(n >= 0) { "Requested element count $n is less than zero." }
+    val result = mutableListOf<UInt>()
+    var count = 0
+    for (element in this) {
+        if (count >= n) break
+        result.add(element)
+        count++
+    }
+    return result
+}
+
+public fun UIntRange.drop(n: Int): List<UInt> {
+    require(n >= 0) { "Requested element count $n is less than zero." }
+    val result = mutableListOf<UInt>()
+    var count = 0
+    for (element in this) {
+        if (count < n) { count++; continue }
+        result.add(element)
+    }
+    return result
+}
+
+public fun UIntRange.chunked(size: Int): List<List<UInt>> {
+    require(size > 0) { "size $size must be greater than zero." }
+    val result = mutableListOf<List<UInt>>()
+    var current = mutableListOf<UInt>()
+    for (element in this) {
+        current.add(element)
+        if (current.size == size) {
+            result.add(current)
+            current = mutableListOf<UInt>()
+        }
+    }
+    if (current.isNotEmpty()) result.add(current)
+    return result
+}
+
+public fun UIntRange.windowed(size: Int, step: Int = 1, partialWindows: Boolean = false): List<List<UInt>> {
+    require(size > 0 && step > 0) { "Both size $size and step $step must be greater than zero." }
+    val result = mutableListOf<List<UInt>>()
+    val values = toList()
+    var i = 0
+    while (i < values.size) {
+        val end = i + size
+        if (end > values.size && !partialWindows) break
+        val window = mutableListOf<UInt>()
+        var j = i
+        while (j < values.size && j < end) {
+            window.add(values[j])
+            j++
+        }
+        result.add(window)
+        i += step
+    }
+    return result
+}
+
 public fun <R> UIntRange.map(transform: (UInt) -> R): List<R> {
     val result = mutableListOf<R>()
     for (element in this) { result.add(transform(element)) }
@@ -1243,6 +1317,64 @@ public fun UIntProgression.filterNot(predicate: (UInt) -> Boolean): List<UInt> {
     return result
 }
 
+public fun UIntProgression.take(n: Int): List<UInt> {
+    require(n >= 0) { "Requested element count $n is less than zero." }
+    val result = mutableListOf<UInt>()
+    var count = 0
+    for (element in this) {
+        if (count >= n) break
+        result.add(element)
+        count++
+    }
+    return result
+}
+
+public fun UIntProgression.drop(n: Int): List<UInt> {
+    require(n >= 0) { "Requested element count $n is less than zero." }
+    val result = mutableListOf<UInt>()
+    var count = 0
+    for (element in this) {
+        if (count < n) { count++; continue }
+        result.add(element)
+    }
+    return result
+}
+
+public fun UIntProgression.chunked(size: Int): List<List<UInt>> {
+    require(size > 0) { "size $size must be greater than zero." }
+    val result = mutableListOf<List<UInt>>()
+    var current = mutableListOf<UInt>()
+    for (element in this) {
+        current.add(element)
+        if (current.size == size) {
+            result.add(current)
+            current = mutableListOf<UInt>()
+        }
+    }
+    if (current.isNotEmpty()) result.add(current)
+    return result
+}
+
+public fun UIntProgression.windowed(size: Int, step: Int = 1, partialWindows: Boolean = false): List<List<UInt>> {
+    require(size > 0 && step > 0) { "Both size $size and step $step must be greater than zero." }
+    val result = mutableListOf<List<UInt>>()
+    val values = toList()
+    var i = 0
+    while (i < values.size) {
+        val end = i + size
+        if (end > values.size && !partialWindows) break
+        val window = mutableListOf<UInt>()
+        var j = i
+        while (j < values.size && j < end) {
+            window.add(values[j])
+            j++
+        }
+        result.add(window)
+        i += step
+    }
+    return result
+}
+
 public fun UIntProgression.filterIndexed(predicate: (Int, UInt) -> Boolean): List<UInt> {
     val result = mutableListOf<UInt>()
     var index = 0
@@ -1352,6 +1484,23 @@ public fun ULongRange.toList(): List<ULong> {
         }
     }
     return result
+}
+
+// KSP-1292: Kotlin 2.3.10 widens unsigned values before using the native
+// ULong overload, preserving the exact range membership and boundary rules.
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UByte): Boolean {
+    return contains(value.toULong())
+}
+
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UInt): Boolean {
+    return contains(value.toULong())
+}
+
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UShort): Boolean {
+    return contains(value.toULong())
 }
 
 @KsSymbolName("__kk_range_count")

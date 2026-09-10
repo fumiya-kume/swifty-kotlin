@@ -35,7 +35,7 @@ struct ListIteratorSourceMigrationTests {
         #expect(sema.types.nominalTypeParameterVariances(for: listIterator) == [.out])
         #expect(sema.symbols.directSupertypes(for: listIterator) == [iterator])
 
-        for name in ["hasPrevious", "previous", "nextIndex", "previousIndex"] {
+        for name in ["hasNext", "hasPrevious", "next", "nextIndex", "previous", "previousIndex"] {
             let member = try #require(
                 sema.symbols.lookup(fqName: listIteratorFQName + [interner.intern(name)])
             )
@@ -68,7 +68,8 @@ struct ListIteratorSourceMigrationTests {
         }
 
         fun consume(iterator: ListIterator<Int>): Int {
-            return iterator.nextIndex() + iterator.previousIndex()
+            val next = if (iterator.hasNext()) iterator.next() else iterator.previous()
+            return next + iterator.nextIndex() + iterator.previousIndex()
         }
 
         fun makeIterator(): ListIterator<Int> = ProbeListIterator()

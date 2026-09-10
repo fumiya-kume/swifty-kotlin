@@ -15,8 +15,23 @@ public final class StringInterner: @unchecked Sendable {
     private var map: [String: Int32] = [:]
     private var values: [String] = []
     private let lock = NSLock()
+    private let compilerNamesLock = NSLock()
+    private var compilerNames: KnownCompilerNames?
 
     public init() {}
+
+    /// Keep compiler-name IDs local to this interner and initialize them only
+    /// when first requested. Use a separate lock because creation calls intern().
+    func cachedCompilerNames(create: () -> KnownCompilerNames) -> KnownCompilerNames {
+        compilerNamesLock.lock()
+        defer { compilerNamesLock.unlock() }
+        if let compilerNames {
+            return compilerNames
+        }
+        let names = create()
+        compilerNames = names
+        return names
+    }
 
     public func intern(_ string: String) -> InternedString {
         lock.lock()

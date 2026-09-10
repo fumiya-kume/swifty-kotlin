@@ -1,7 +1,7 @@
 import RuntimeABI
 
 /// Synthetic stubs for residual `Sequence` member operations (`random`, `randomOrNull`,
-/// `forEach`, `forEachIndexed`, `firstNotNullOf`, `firstNotNullOfOrNull`, `takeLast`,
+/// `firstNotNullOf`, `firstNotNullOfOrNull`, `takeLast`,
 /// `takeLastWhile`, `shuffled`, and `reversed`) that are not yet migrated
 /// to bundled Kotlin source.
 ///
@@ -79,13 +79,6 @@ extension DataFlowSemaPhase {
             interner.intern("List"),
         ], elementType: typeParamType)
 
-        let actionType = types.make(.functionType(FunctionType(
-            params: [typeParamType],
-            returnType: types.unitType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-
         // random(): T
         registerSequenceMemberStub(
             named: "random",
@@ -108,40 +101,6 @@ extension DataFlowSemaPhase {
             receiverType: receiverType,
             parameters: [],
             returnType: types.makeNullable(typeParamType),
-            sequenceSymbol: sequenceSymbol,
-            sequenceFQName: sequenceFQName,
-            typeParamSymbol: typeParamSymbol,
-            symbols: symbols,
-            interner: interner
-        )
-
-        // forEach(action: (T) -> Unit): Unit
-        registerSequenceMemberStub(
-            named: "forEach",
-            externalLinkName: "kk_sequence_forEach",
-            receiverType: receiverType,
-            parameters: [("action", actionType)],
-            returnType: types.unitType,
-            sequenceSymbol: sequenceSymbol,
-            sequenceFQName: sequenceFQName,
-            typeParamSymbol: typeParamSymbol,
-            symbols: symbols,
-            interner: interner
-        )
-
-        // forEachIndexed(action: (Int, T) -> Unit): Unit
-        let forEachIndexedActionType = types.make(.functionType(FunctionType(
-            params: [types.intType, typeParamType],
-            returnType: types.unitType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        registerSequenceMemberStub(
-            named: "forEachIndexed",
-            externalLinkName: "kk_sequence_forEachIndexed",
-            receiverType: receiverType,
-            parameters: [("action", forEachIndexedActionType)],
-            returnType: types.unitType,
             sequenceSymbol: sequenceSymbol,
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,

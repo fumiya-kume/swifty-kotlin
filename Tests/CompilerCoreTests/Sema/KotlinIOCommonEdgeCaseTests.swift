@@ -718,10 +718,11 @@ struct KotlinIOCommonEdgeCaseTests {
             sema.symbols.lookupAll(fqName: propertyFQN).first { symbolID in
                 sema.symbols.symbol(symbolID)?.kind == .property
             },
-            "kotlin.io.DEFAULT_BUFFER_SIZE should be registered as a synthetic top-level property"
+            "kotlin.io.DEFAULT_BUFFER_SIZE should be registered from bundled Kotlin source"
         )
         #expect(sema.symbols.propertyType(for: propertySymbol) == sema.types.intType)
-        #expect(sema.symbols.externalLinkName(for: propertySymbol) == "kk_io_default_buffer_size")
+        #expect(sema.symbols.isSourceBackedSymbol(propertySymbol))
+        #expect(sema.symbols.externalLinkName(for: propertySymbol) == nil)
         #expect(sema.symbols.symbol(propertySymbol)?.flags.contains(.constValue) == true)
         #expect(sema.symbols.constValueExprKind(for: propertySymbol) == .intLiteral(8192))
     }

@@ -11,7 +11,7 @@ symbol fq=golden.sema.ListProvider.$class0.T kind=typeParameter vis=private flag
 symbol fq=golden.sema.NumberHolder kind=class vis=public flags=openType
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=kotlin.RuntimeException kind=class vis=public flags=openType
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 file foverride_generic_covariant_return package=golden.sema
   decl golden.sema.ListProvider class ListProvider sym=golden.sema.ListProvider
   decl golden.sema.IntListProvider class IntListProvider sym=golden.sema.IntListProvider

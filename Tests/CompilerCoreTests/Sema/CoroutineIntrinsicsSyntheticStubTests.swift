@@ -13,7 +13,11 @@ struct CoroutineIntrinsicsSyntheticStubTests {
         }
         var result: (SemaModule, StringInterner)?
         try withTemporaryFile(contents: "fun noop() {}") { path in
-            let ctx = makeCompilationContext(inputs: [path])
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                includeStdlib: false,
+                allowDefaultStdlibLibrary: false
+            )
             try runSema(ctx)
             result = (try #require(ctx.sema), ctx.interner)
         }
@@ -78,6 +82,55 @@ struct CoroutineIntrinsicsSyntheticStubTests {
         #expect(signature.returnType == functionTypeParamType)
     }
 
+    @Test
+    func testSourceBackedCoroutineIntrinsicsReplaceResidualStubs() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                includeStdlib: true,
+                allowDefaultStdlibLibrary: false
+            )
+            try runSema(ctx)
+
+            let sema = try #require(ctx.sema)
+            let interner = ctx.interner
+            let package = [
+                interner.intern("kotlin"),
+                interner.intern("coroutines"),
+                interner.intern("intrinsics"),
+            ]
+
+            func symbols(named name: String) -> [SymbolID] {
+                sema.symbols.lookupAll(fqName: package + [interner.intern(name)])
+            }
+
+            let suspendedName = interner.intern("COROUTINE_SUSPENDED")
+            #expect(sema.bundledIndex.contains(ownerFQName: package, name: suspendedName, arity: 0))
+            let suspendedSymbols = symbols(named: "COROUTINE_SUSPENDED")
+            #expect(suspendedSymbols.count == 1)
+            #expect(suspendedSymbols.allSatisfy { sema.symbols.symbol($0)?.flags.contains(.synthetic) == false })
+
+            let singletonSymbols = symbols(named: "CoroutineSingletons")
+            #expect(singletonSymbols.count == 1)
+            let singletonSymbol = try #require(singletonSymbols.first)
+            #expect(sema.symbols.symbol(singletonSymbol)?.kind == .enumClass)
+
+            let fallbackSymbols = symbols(named: "startCoroutineUninterceptedOrReturnFallback")
+            #expect(fallbackSymbols.count == 2)
+            #expect(fallbackSymbols.allSatisfy { sema.symbols.symbol($0)?.flags.contains(.synthetic) == false })
+
+            let suspendName = interner.intern("suspendCoroutineUninterceptedOrReturn")
+            #expect(sema.bundledIndex.contains(ownerFQName: package, name: suspendName, arity: 1))
+            let suspendSymbols = symbols(named: "suspendCoroutineUninterceptedOrReturn")
+            #expect(suspendSymbols.count == 1)
+            #expect(suspendSymbols.allSatisfy { sema.symbols.symbol($0)?.flags.contains(.synthetic) == false })
+
+            let wrapperSymbols = symbols(named: "wrapWithContinuationImpl")
+            #expect(wrapperSymbols.count == 1)
+            #expect(wrapperSymbols.allSatisfy { sema.symbols.symbol($0)?.flags.contains(.synthetic) == false })
+        }
+    }
+
     // MARK: - Shared context for call-site tests
 
     private static nonisolated(unsafe) var _sharedCtx: CompilationContext?
@@ -91,7 +144,11 @@ struct CoroutineIntrinsicsSyntheticStubTests {
         var paths: [String] = []
         try withTemporaryFiles(contents: Self.sharedSources) { p in
             paths = p
-            let ctx = makeCompilationContext(inputs: paths)
+            let ctx = makeCompilationContext(
+                inputs: paths,
+                includeStdlib: false,
+                allowDefaultStdlibLibrary: false
+            )
             try runSema(ctx)
             result = ctx
         }
