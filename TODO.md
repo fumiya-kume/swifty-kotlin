@@ -4310,7 +4310,7 @@
     - `kotlin.text.asIterable` — fun CharSequence.asIterable(): Iterable  -- `final fun (kotlin/CharSequence).kotlin.text/asIterable(): kotlin.collections/Iterable<kotlin/Char>`
     - `kotlin.text.asSequence` — fun CharSequence.asSequence(): Sequence  -- `final fun (kotlin/CharSequence).kotlin.text/asSequence(): kotlin.sequences/Sequence<kotlin/Char>`
 
-- [ ] KSP-1366: kotlin.text.CharSequence.associate-family の未実装 stdlib API を実装する（8 件）
+- [~] KSP-1366: kotlin.text.CharSequence.associate-family の実装・focused検証済み（8 件、全体G待ち）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `associate`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -4412,9 +4412,12 @@
     - `kotlin.text.firstOrNull` — fun CharSequence.firstOrNull(): Char  -- `final fun (kotlin/CharSequence).kotlin.text/firstOrNull(): kotlin/Char?`
     - `kotlin.text.firstOrNull` — fun CharSequence.firstOrNull(Function1): Char  -- `final inline fun (kotlin/CharSequence).kotlin.text/firstOrNull(kotlin/Function1<kotlin/Char, kotlin/Boolean>): kotlin/Char?`
 
-- [ ] KSP-1375: kotlin.text.CharSequence.flat-family の未実装 stdlib API を実装する（4 件）
+- [~] KSP-1375: kotlin.text.CharSequence.flat-family の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `flat`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
+  - 実装済み（ゲート保留）: `flatMap` / `flatMapIndexed` / `flatMapTo` / `flatMapIndexedTo` の4 APIをKotlin 2.3.10 source contractに沿って追加。indexed accessでcustom CharSequenceの`get` dispatchと反復中の`length`再評価を保持し、destinationの順序・同一性・nullable/primitive要素を回帰する。
+  - 実装上の制約: 現コンパイラでgeneric `for` / `addAll` のsource body loweringが成立しないため、各要素のindexed accessと戻りIterableのiterator/addへ展開した。標準Iterableの順序・全要素走査・destination戻り値は保持し、別APIのbridgeは追加していない。
+  - 検証保留: inline transformのnon-local return SemaはKSP-1374の共通修正を親ブランチとして検証する。全体Golden / 全diff / ABIゲートはこのPR headでは未実行。
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_text_CharSequence_flat.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_text_CharSequence_flat.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_text_CharSequence_flat.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
@@ -4460,7 +4463,7 @@
     - `kotlin.text.getOrElse` — fun CharSequence.getOrElse(Int, Function1): Char  -- `final inline fun (kotlin/CharSequence).kotlin.text/getOrElse(kotlin/Int, kotlin/Function1<kotlin/Int, kotlin/Char>): kotlin/Char`
     - `kotlin.text.getOrNull` — fun CharSequence.getOrNull(Int): Char  -- `final fun (kotlin/CharSequence).kotlin.text/getOrNull(kotlin/Int): kotlin/Char?`
 
-- [ ] KSP-1379: kotlin.text.CharSequence.group-family の未実装 stdlib API を実装する（4 件）
+- [~] KSP-1379: kotlin.text.CharSequence.group-family の実装・focused検証済み（4 件、全体G待ち）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `group`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -4527,9 +4530,12 @@
     - `kotlin.text.lastOrNull` — fun CharSequence.lastOrNull(): Char  -- `final fun (kotlin/CharSequence).kotlin.text/lastOrNull(): kotlin/Char?`
     - `kotlin.text.lastOrNull` — fun CharSequence.lastOrNull(Function1): Char  -- `final inline fun (kotlin/CharSequence).kotlin.text/lastOrNull(kotlin/Function1<kotlin/Char, kotlin/Boolean>): kotlin/Char?`
 
-- [ ] KSP-1385: kotlin.text.CharSequence.map-family の未実装 stdlib API を実装する（5 件）
+- [~] KSP-1385: kotlin.text.CharSequence.map-family の未実装 stdlib API を実装する（5 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `map`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
+  - 実装済み（ゲート保留）: Kotlin 2.3.10 source contractに合わせ、`mapIndexedNotNull` / `mapIndexedNotNullTo` / `mapIndexedTo` / `mapNotNullTo` / `mapTo` を追加。custom CharSequenceのindexed `get` dispatch・反復中の`length`再評価、callback順序、destination同一性、nullable/primitive結果を回帰する。
+  - 実装境界: upstreamの`for` / `forEach`を、KSP-1377の未統合APIに依存しないindexed loopへ展開し、destinationへ要素単位で`add`する。既存のmap/mapIndexed/mapNotNull実装、synthetic bridge、Runtime ABIは変更しない。
+  - 検証保留: #6702 の共通Sema修正を親祖先としてnon-local transformを確認する。全体Golden / 全diff / ABIゲートはこのPR headでは未実行。
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_text_CharSequence_map.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_text_CharSequence_map.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_text_CharSequence_map.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
@@ -4775,7 +4781,7 @@
     - `kotlin.text.substring` — fun CharSequence.substring(IntRange): String  -- `final fun (kotlin/CharSequence).kotlin.text/substring(kotlin.ranges/IntRange): kotlin/String`
     - `kotlin.text.substring` — fun CharSequence.substring(Int, Int): String  -- `final inline fun (kotlin/CharSequence).kotlin.text/substring(kotlin/Int, kotlin/Int = ...): kotlin/String`
 
-- [ ] KSP-1404: kotlin.text.CharSequence.sum-family の未実装 stdlib API を実装する（5 件）
+- [~] KSP-1404: kotlin.text.CharSequence.sum-family の未実装 stdlib API を実装する（5 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `sum`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -4788,6 +4794,8 @@
     - `kotlin.text.sumOf` — fun CharSequence.sumOf(Function1): Long  -- `final inline fun (kotlin/CharSequence).kotlin.text/sumOf(kotlin/Function1<kotlin/Char, kotlin/Long>): kotlin/Long`
     - `kotlin.text.sumOf` — fun CharSequence.sumOf(Function1): UInt  -- `final inline fun (kotlin/CharSequence).kotlin.text/sumOf(kotlin/Function1<kotlin/Char, kotlin/UInt>): kotlin/UInt`
     - `kotlin.text.sumOf` — fun CharSequence.sumOf(Function1): ULong  -- `final inline fun (kotlin/CharSequence).kotlin.text/sumOf(kotlin/Function1<kotlin/Char, kotlin/ULong>): kotlin/ULong`
+  - 実装メモ: StringHOF.kt に Kotlin source-backed の Double/Int/Long/UInt/ULong overload を追加。専用 Sema/Golden/diff を実行中。
+  - 保留ゲート: common head 全体の Golden/diff は未完了のため、完了状態にはしない。
 
 - [ ] KSP-1405: kotlin.text.CharSequence.take-family の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `take`
