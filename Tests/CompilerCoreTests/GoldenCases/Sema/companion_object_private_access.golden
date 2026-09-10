@@ -206,10 +206,10 @@ expr e@73:20 name(null) type=Nothing?
 expr e@73:13 return value=e@73:20 type=Nothing
 expr e@77:20 name(address) type=String ref=golden.sema.EmailAddress.Companion.isValidEmail.$7.address
 expr e@77:37 string(@) type=String
-expr e@77:20#1 memberCall recv=e@77:20 callee=contains args=[_:e@77:37] type=Boolean call=kotlin.text.contains#1
+expr e@77:20#1 memberCall recv=e@77:20 callee=contains args=[_:e@77:37] type=Boolean call=kotlin.text.contains#3
 expr e@77:45 name(address) type=String ref=golden.sema.EmailAddress.Companion.isValidEmail.$7.address
 expr e@77:62 string(.) type=String
-expr e@77:45#1 memberCall recv=e@77:45 callee=contains args=[_:e@77:62] type=Boolean call=kotlin.text.contains#1
+expr e@77:45#1 memberCall recv=e@77:45 callee=contains args=[_:e@77:62] type=Boolean call=kotlin.text.contains#3
 expr e@77:20#2 binary(logicalAnd) lhs=e@77:20#1 rhs=e@77:45#1 type=Boolean
 expr e@77:13 return value=e@77:20#2 type=Nothing
 expr e@81:39 name(address) type=String ref=golden.sema.EmailAddress.address
