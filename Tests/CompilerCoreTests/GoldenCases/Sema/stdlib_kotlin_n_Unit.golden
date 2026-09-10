@@ -1,8 +1,8 @@
-symbol fq=golden.sema.acceptUnit kind=function vis=public flags=_ sig=recv=_ params=[Unit] ret=Unit
-symbol fq=golden.sema.acceptUnit.$0.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.exposeUnitObject kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
+symbol fq=golden.sema.acceptUnit.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptUnit[kind=fun;params=Unit] kind=function vis=public flags=_ sig=recv=_ params=[Unit] ret=Unit
+symbol fq=golden.sema.exposeUnitObject[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
 file fstdlib_kotlin_n_Unit package=golden.sema
-  decl golden.sema.acceptUnit fun acceptUnit sym=golden.sema.acceptUnit
-  decl golden.sema.exposeUnitObject fun exposeUnitObject sym=golden.sema.exposeUnitObject
-expr e@3:37 name(value) type=Unit ref=golden.sema.acceptUnit.$0.value
-expr e@5:31 name(Unit) type=Unit ref=kotlin.Unit
+  decl golden.sema.acceptUnit[kind=fun;params=Unit] fun acceptUnit sym=golden.sema.acceptUnit[kind=fun;params=Unit]
+  decl golden.sema.exposeUnitObject[kind=fun;params=] fun exposeUnitObject sym=golden.sema.exposeUnitObject[kind=fun;params=]
+expr e@3:37 name(value) type=Unit ref=golden.sema.acceptUnit.$0.value[kind=vparam]
+expr e@5:31 name(Unit) type=Unit ref=kotlin.Unit[kind=obj]

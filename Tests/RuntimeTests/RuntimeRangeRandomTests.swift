@@ -39,8 +39,7 @@ struct RuntimeRangeRandomTests {
 
     // KSP-466: kk_random_create_seeded no longer exists — Random(seed) now
     // constructs a real compiled Kotlin object that Swift test code cannot
-    // fabricate the way the old SeededRandomBox could (see
-    // RuntimeStringRandomTests.swift for the same note). Additionally, a
+    // fabricate the way the old SeededRandomBox could. Additionally, a
     // pre-existing bug (confirmed independent of this migration, present on
     // the pre-KSP-466 baseline too) makes the shared range-random rejection
     // sampling helpers these two tests exercised hang indefinitely for some

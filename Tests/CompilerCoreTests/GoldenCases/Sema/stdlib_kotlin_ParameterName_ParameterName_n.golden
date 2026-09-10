@@ -1,10 +1,10 @@
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.readParameterName kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ParameterName] ret=String
-symbol fq=golden.sema.readParameterName.$0.parameterName kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.readParameterName.$0.parameterName[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.readParameterName[kind=fun;params=kotlin.ParameterName] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ParameterName] ret=String
 file fstdlib_kotlin_ParameterName_ParameterName_n package=golden.sema
-  decl golden.sema.readParameterName fun readParameterName sym=golden.sema.readParameterName
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@3:63 name(parameterName) type=kotlin.ParameterName ref=golden.sema.readParameterName.$0.parameterName
-expr e@3:63#1 memberCall recv=e@3:63 callee=name args=[] type=String ref=kotlin.ParameterName.name
+  decl golden.sema.readParameterName[kind=fun;params=kotlin.ParameterName] fun readParameterName sym=golden.sema.readParameterName[kind=fun;params=kotlin.ParameterName]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@3:63 name(parameterName) type=kotlin.ParameterName ref=golden.sema.readParameterName.$0.parameterName[kind=vparam]
+expr e@3:63#1 memberCall recv=e@3:63 callee=name args=[] type=String ref=kotlin.ParameterName.name[kind=prop]
 expr e@6:13 string(ok) type=String
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println#2
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println[kind=fun;params=String]

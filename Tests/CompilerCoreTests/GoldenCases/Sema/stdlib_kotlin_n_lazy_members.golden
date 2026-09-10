@@ -1,28 +1,28 @@
-symbol fq=__local_0.l kind=local vis=private flags=_ type=kotlin.Lazy<Int>
-symbol fq=__local_1.l kind=local vis=private flags=_ type=kotlin.Lazy<Int>
-symbol fq=__local_2.x kind=local vis=private flags=_ type=Int
-symbol fq=golden.sema.useLazyBy kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useLazyIsInitialized kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useLazyValue kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=__local_0.l[kind=local] kind=local vis=private flags=_ type=kotlin.Lazy<Int>
+symbol fq=__local_1.l[kind=local] kind=local vis=private flags=_ type=kotlin.Lazy<Int>
+symbol fq=__local_2.x[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=golden.sema.useLazyBy[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useLazyIsInitialized[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useLazyValue[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_n_lazy_members package=golden.sema
-  decl golden.sema.useLazyValue fun useLazyValue sym=golden.sema.useLazyValue
-  decl golden.sema.useLazyIsInitialized fun useLazyIsInitialized sym=golden.sema.useLazyIsInitialized
-  decl golden.sema.useLazyBy fun useLazyBy sym=golden.sema.useLazyBy
+  decl golden.sema.useLazyValue[kind=fun;params=] fun useLazyValue sym=golden.sema.useLazyValue[kind=fun;params=]
+  decl golden.sema.useLazyIsInitialized[kind=fun;params=] fun useLazyIsInitialized sym=golden.sema.useLazyIsInitialized[kind=fun;params=]
+  decl golden.sema.useLazyBy[kind=fun;params=] fun useLazyBy sym=golden.sema.useLazyBy[kind=fun;params=]
 expr e@4:20 int(42) type=Int
-expr e@4:13 call callee=e@4:13#1 args=[_:e@4:20] type=kotlin.Lazy<Int> call=kotlin.lazyOf targs=[Int]
-expr e@4:5 localDecl l mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.l
-expr e@5:12 name(l) type=kotlin.Lazy<Int> ref=__local_0.l
-expr e@5:12#1 memberCall recv=e@5:12 callee=value args=[] type=Int ref=kotlin.Lazy.value
+expr e@4:13 call callee=e@4:13#1 args=[_:e@4:20] type=kotlin.Lazy<Int> call=kotlin.lazyOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@4:5 localDecl l mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.l[kind=local]
+expr e@5:12 name(l) type=kotlin.Lazy<Int> ref=__local_0.l[kind=local]
+expr e@5:12#1 memberCall recv=e@5:12 callee=value args=[] type=Int ref=kotlin.Lazy.value[kind=prop]
 expr e@5:5 return value=e@5:12#1 type=Nothing
 expr e@9:20 int(42) type=Int
-expr e@9:13 call callee=e@9:13#1 args=[_:e@9:20] type=kotlin.Lazy<Int> call=kotlin.lazyOf targs=[Int]
-expr e@9:5 localDecl l mutable=0 type=_ init=e@9:13 type=Unit ref=__local_1.l
-expr e@10:12 name(l) type=kotlin.Lazy<Int> ref=__local_1.l
-expr e@10:12#1 memberCall recv=e@10:12 callee=isInitialized args=[] type=Boolean call=kotlin.Lazy.isInitialized targs=[Int]
+expr e@9:13 call callee=e@9:13#1 args=[_:e@9:20] type=kotlin.Lazy<Int> call=kotlin.lazyOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@9:5 localDecl l mutable=0 type=_ init=e@9:13 type=Unit ref=__local_1.l[kind=local]
+expr e@10:12 name(l) type=kotlin.Lazy<Int> ref=__local_1.l[kind=local]
+expr e@10:12#1 memberCall recv=e@10:12 callee=isInitialized args=[] type=Boolean call=kotlin.Lazy.isInitialized[kind=fun;recv=kotlin.Lazy<T0>;params=;gen=1] targs=[Int]
 expr e@10:5 return value=e@10:12#1 type=Nothing
 expr e@14:21 int(42) type=Int
 expr e@14:19 lambda params=[] body=e@14:21 label=lazy type=() -> Int
-expr e@14:14 call callee=e@14:14#1 args=[_:e@14:19] type=kotlin.Lazy<Int> call=kotlin.lazy#0 targs=[Int]
-expr e@14:5 localDecl x mutable=0 type=_ init=e@14:14 delegated=1 type=Unit ref=__local_2.x
-expr e@15:12 name(x) type=Int ref=__local_2.x
+expr e@14:14 call callee=e@14:14#1 args=[_:e@14:19] type=kotlin.Lazy<Int> call=kotlin.lazy[kind=fun;params=fn{p=;ret=T0};gen=1] targs=[Int]
+expr e@14:5 localDecl x mutable=0 type=_ init=e@14:14 delegated=1 type=Unit ref=__local_2.x[kind=local]
+expr e@15:12 name(x) type=Int ref=__local_2.x[kind=local]
 expr e@15:5 return value=e@15:12 type=Nothing

@@ -1,10 +1,8 @@
-symbol fq=golden.sema.construct kind=function vis=public flags=_ sig=recv=_ params=[Any,Any] ret=kotlin.RuntimeException
-symbol fq=golden.sema.construct.$0.blocker kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.construct.$0.toFreeze kind=valueParameter vis=private flags=_
-symbol fq=kotlin.RuntimeException kind=class vis=public flags=openType
-symbol fq=kotlin.native.concurrent.FreezingException kind=class vis=public flags=_ type=kotlin.native.concurrent.FreezingException
+symbol fq=golden.sema.construct.$0.blocker[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.construct.$0.toFreeze[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.construct[kind=fun;params=Any,Any] kind=function vis=public flags=_ sig=recv=_ params=[Any,Any] ret=kotlin.RuntimeException
 file fstdlib_kotlin_native_concurrent_FreezingException_n_n package=golden.sema
-  decl golden.sema.construct fun construct sym=golden.sema.construct
-expr e@5:48 name(toFreeze) type=Any ref=golden.sema.construct.$0.toFreeze
-expr e@5:58 name(blocker) type=Any ref=golden.sema.construct.$0.blocker
-expr e@5:5 memberCall recv=e@5:5#1 callee=FreezingException args=[_:e@5:48,_:e@5:58] type=kotlin.native.concurrent.FreezingException call=kotlin.native.concurrent.FreezingException.<init>
+  decl golden.sema.construct[kind=fun;params=Any,Any] fun construct sym=golden.sema.construct[kind=fun;params=Any,Any]
+expr e@5:48 name(toFreeze) type=Any ref=golden.sema.construct.$0.toFreeze[kind=vparam]
+expr e@5:58 name(blocker) type=Any ref=golden.sema.construct.$0.blocker[kind=vparam]
+expr e@5:5 memberCall recv=e@5:5#1 callee=FreezingException args=[_:e@5:48,_:e@5:58] type=kotlin.native.concurrent.FreezingException call=kotlin.native.concurrent.FreezingException.<init>[kind=ctor;recv=kotlin.native.concurrent.FreezingException;params=Any,Any]

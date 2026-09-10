@@ -1,9 +1,9 @@
-symbol fq=golden.sema.platform#0 kind=function vis=public flags=expectDeclaration sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.platform#1 kind=function vis=public flags=actualDeclaration sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.unresolved kind=function vis=public flags=expectDeclaration sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.platform[kind=fun;params=;scope=expect_actual@4.1] kind=function vis=public flags=expectDeclaration sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.platform[kind=fun;params=;scope=expect_actual@5.1] kind=function vis=public flags=actualDeclaration sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.unresolved[kind=fun;params=] kind=function vis=public flags=expectDeclaration sig=recv=_ params=[] ret=Int
 file fexpect_actual package=golden.sema
-  decl golden.sema.platform#0 fun platform sym=golden.sema.platform#0
-  decl golden.sema.platform#1 fun platform sym=golden.sema.platform#1
-  decl golden.sema.unresolved fun unresolved sym=golden.sema.unresolved
+  decl golden.sema.platform[kind=fun;params=;scope=expect_actual@4.1] fun platform sym=golden.sema.platform[kind=fun;params=;scope=expect_actual@4.1]
+  decl golden.sema.platform[kind=fun;params=;scope=expect_actual@5.1] fun platform sym=golden.sema.platform[kind=fun;params=;scope=expect_actual@5.1]
+  decl golden.sema.unresolved[kind=fun;params=] fun unresolved sym=golden.sema.unresolved[kind=fun;params=]
 expr e@5:33 string(ok) type=String
 diagnostic severity=error code=KSWIFTK-MPP-UNRESOLVED at=8:1 msg=Missing matching 'actual' declaration for expect symbol 'golden.sema.unresolved'. No actual candidates found with same FQ name.

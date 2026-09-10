@@ -803,7 +803,10 @@ struct BuildKIRCodegenRegressionTests {
 
             let makeBody = try findKIRFunctionBody(named: "make", in: module, interner: ctx.interner)
             let makeCallNames = extractCallees(from: makeBody, interner: ctx.interner)
-            #expect(makeCallNames.contains("kk_array_of"))
+            #expect(makeCallNames.contains("kk_array_new"))
+            #expect(makeCallNames.filter { $0 == "kk_array_set" }.count == 2)
+            #expect(!makeCallNames.contains("kk_array_of"))
+            #expect(!makeCallNames.contains("uintArrayOf"))
         }
     }
 

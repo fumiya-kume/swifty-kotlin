@@ -1,0 +1,91 @@
+symbol fq=__local_0.ints[kind=local] kind=local vis=private flags=_ type=kotlin.IntArray
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.IntArray
+symbol fq=__local_2.longs[kind=local] kind=local vis=private flags=_ type=kotlin.LongArray
+symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=kotlin.LongArray
+symbol fq=__local_4.doubles[kind=local] kind=local vis=private flags=_ type=kotlin.DoubleArray
+symbol fq=__local_5.checked[kind=local] kind=local vis=private flags=_ type=kotlin.DoubleArray
+symbol fq=__local_6.floats[kind=local] kind=local vis=private flags=_ type=kotlin.FloatArray
+symbol fq=__local_7.checked[kind=local] kind=local vis=private flags=_ type=kotlin.FloatArray
+symbol fq=__local_8.booleans[kind=local] kind=local vis=private flags=_ type=kotlin.BooleanArray
+symbol fq=__local_9.checked[kind=local] kind=local vis=private flags=_ type=kotlin.BooleanArray
+symbol fq=__local_10.chars[kind=local] kind=local vis=private flags=_ type=kotlin.CharArray
+symbol fq=__local_11.checked[kind=local] kind=local vis=private flags=_ type=kotlin.CharArray
+symbol fq=__local_12.shorts[kind=local] kind=local vis=private flags=_ type=kotlin.ShortArray
+symbol fq=__local_13.checked[kind=local] kind=local vis=private flags=_ type=kotlin.ShortArray
+symbol fq=__local_14.bytes[kind=local] kind=local vis=private flags=_ type=kotlin.ByteArray
+symbol fq=__local_15.checked[kind=local] kind=local vis=private flags=_ type=kotlin.ByteArray
+symbol fq=booleanArrayOfLiteral[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=byteArrayOfValues.$0.first[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=byteArrayOfValues.$0.second[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=byteArrayOfValues[kind=fun;params=Byte,Byte] kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte] ret=Unit
+symbol fq=charArrayOfLiteral[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=doubleArrayOfLiteral[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=floatArrayOfLiteral[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=intArrayOfLiteral[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=longArrayOfLiteral[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=shortArrayOfValues.$1.first[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=shortArrayOfValues.$1.second[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=shortArrayOfValues[kind=fun;params=Short,Short] kind=function vis=public flags=_ sig=recv=_ params=[Short,Short] ret=Unit
+file fprimitive_array_factories package=_
+  decl intArrayOfLiteral[kind=fun;params=] fun intArrayOfLiteral sym=intArrayOfLiteral[kind=fun;params=]
+  decl longArrayOfLiteral[kind=fun;params=] fun longArrayOfLiteral sym=longArrayOfLiteral[kind=fun;params=]
+  decl doubleArrayOfLiteral[kind=fun;params=] fun doubleArrayOfLiteral sym=doubleArrayOfLiteral[kind=fun;params=]
+  decl floatArrayOfLiteral[kind=fun;params=] fun floatArrayOfLiteral sym=floatArrayOfLiteral[kind=fun;params=]
+  decl booleanArrayOfLiteral[kind=fun;params=] fun booleanArrayOfLiteral sym=booleanArrayOfLiteral[kind=fun;params=]
+  decl charArrayOfLiteral[kind=fun;params=] fun charArrayOfLiteral sym=charArrayOfLiteral[kind=fun;params=]
+  decl shortArrayOfValues[kind=fun;params=Short,Short] fun shortArrayOfValues sym=shortArrayOfValues[kind=fun;params=Short,Short]
+  decl byteArrayOfValues[kind=fun;params=Byte,Byte] fun byteArrayOfValues sym=byteArrayOfValues[kind=fun;params=Byte,Byte]
+expr e@6:27 int(10) type=Int
+expr e@6:31 int(20) type=Int
+expr e@6:35 int(30) type=Int
+expr e@6:16 call callee=e@6:16#1 args=[_:e@6:27,_:e@6:31,_:e@6:35] type=kotlin.IntArray call=kotlin.intArrayOf[kind=fun;params=*Int]
+expr e@6:5 localDecl ints mutable=0 type=_ init=e@6:16 type=Unit ref=__local_0.ints[kind=local]
+expr e@7:29 name(ints) type=kotlin.IntArray ref=__local_0.ints[kind=local]
+expr e@7:5 localDecl checked mutable=0 type=IntArray init=e@7:29 type=Unit ref=__local_1.checked[kind=local]
+expr e@11:29 long(1) type=Long
+expr e@11:33 long(2) type=Long
+expr e@11:37 long(3) type=Long
+expr e@11:17 call callee=e@11:17#1 args=[_:e@11:29,_:e@11:33,_:e@11:37] type=kotlin.LongArray call=kotlin.longArrayOf[kind=fun;params=*Long]
+expr e@11:5 localDecl longs mutable=0 type=_ init=e@11:17 type=Unit ref=__local_2.longs[kind=local]
+expr e@12:30 name(longs) type=kotlin.LongArray ref=__local_2.longs[kind=local]
+expr e@12:5 localDecl checked mutable=0 type=LongArray init=e@12:30 type=Unit ref=__local_3.checked[kind=local]
+expr e@16:33 double(1.5) type=Double
+expr e@16:38 double(2.5) type=Double
+expr e@16:43 double(3.5) type=Double
+expr e@16:19 call callee=e@16:19#1 args=[_:e@16:33,_:e@16:38,_:e@16:43] type=kotlin.DoubleArray call=kotlin.doubleArrayOf[kind=fun;params=*Double]
+expr e@16:5 localDecl doubles mutable=0 type=_ init=e@16:19 type=Unit ref=__local_4.doubles[kind=local]
+expr e@17:32 name(doubles) type=kotlin.DoubleArray ref=__local_4.doubles[kind=local]
+expr e@17:5 localDecl checked mutable=0 type=DoubleArray init=e@17:32 type=Unit ref=__local_5.checked[kind=local]
+expr e@21:31 float(1.5) type=Float
+expr e@21:37 float(2.5) type=Float
+expr e@21:43 float(3.5) type=Float
+expr e@21:18 call callee=e@21:18#1 args=[_:e@21:31,_:e@21:37,_:e@21:43] type=kotlin.FloatArray call=kotlin.floatArrayOf[kind=fun;params=*Float]
+expr e@21:5 localDecl floats mutable=0 type=_ init=e@21:18 type=Unit ref=__local_6.floats[kind=local]
+expr e@22:31 name(floats) type=kotlin.FloatArray ref=__local_6.floats[kind=local]
+expr e@22:5 localDecl checked mutable=0 type=FloatArray init=e@22:31 type=Unit ref=__local_7.checked[kind=local]
+expr e@26:35 bool(true) type=Boolean
+expr e@26:41 bool(false) type=Boolean
+expr e@26:48 bool(true) type=Boolean
+expr e@26:20 call callee=e@26:20#1 args=[_:e@26:35,_:e@26:41,_:e@26:48] type=kotlin.BooleanArray call=kotlin.booleanArrayOf[kind=fun;params=*Boolean]
+expr e@26:5 localDecl booleans mutable=0 type=_ init=e@26:20 type=Unit ref=__local_8.booleans[kind=local]
+expr e@27:33 name(booleans) type=kotlin.BooleanArray ref=__local_8.booleans[kind=local]
+expr e@27:5 localDecl checked mutable=0 type=BooleanArray init=e@27:33 type=Unit ref=__local_9.checked[kind=local]
+expr e@31:29 char(97) type=Char
+expr e@31:34 char(98) type=Char
+expr e@31:39 char(99) type=Char
+expr e@31:17 call callee=e@31:17#1 args=[_:e@31:29,_:e@31:34,_:e@31:39] type=kotlin.CharArray call=kotlin.charArrayOf[kind=fun;params=*Char]
+expr e@31:5 localDecl chars mutable=0 type=_ init=e@31:17 type=Unit ref=__local_10.chars[kind=local]
+expr e@32:30 name(chars) type=kotlin.CharArray ref=__local_10.chars[kind=local]
+expr e@32:5 localDecl checked mutable=0 type=CharArray init=e@32:30 type=Unit ref=__local_11.checked[kind=local]
+expr e@36:31 name(first) type=Short ref=shortArrayOfValues.$1.first[kind=vparam]
+expr e@36:38 name(second) type=Short ref=shortArrayOfValues.$1.second[kind=vparam]
+expr e@36:18 call callee=e@36:18#1 args=[_:e@36:31,_:e@36:38] type=kotlin.ShortArray call=kotlin.shortArrayOf[kind=fun;params=*Short]
+expr e@36:5 localDecl shorts mutable=0 type=_ init=e@36:18 type=Unit ref=__local_12.shorts[kind=local]
+expr e@37:31 name(shorts) type=kotlin.ShortArray ref=__local_12.shorts[kind=local]
+expr e@37:5 localDecl checked mutable=0 type=ShortArray init=e@37:31 type=Unit ref=__local_13.checked[kind=local]
+expr e@41:29 name(first) type=Byte ref=byteArrayOfValues.$0.first[kind=vparam]
+expr e@41:36 name(second) type=Byte ref=byteArrayOfValues.$0.second[kind=vparam]
+expr e@41:17 call callee=e@41:17#1 args=[_:e@41:29,_:e@41:36] type=kotlin.ByteArray call=kotlin.byteArrayOf[kind=fun;params=*Byte]
+expr e@41:5 localDecl bytes mutable=0 type=_ init=e@41:17 type=Unit ref=__local_14.bytes[kind=local]
+expr e@42:30 name(bytes) type=kotlin.ByteArray ref=__local_14.bytes[kind=local]
+expr e@42:5 localDecl checked mutable=0 type=ByteArray init=e@42:30 type=Unit ref=__local_15.checked[kind=local]

@@ -41,6 +41,65 @@ public fun String.commonSuffixWith(other: String, ignoreCase: Boolean = false): 
     return this.substring(this.length - i)
 }
 
+/**
+ * Returns the longest common prefix of this char sequence and [other], without splitting a
+ * surrogate pair at the boundary.
+ *
+ * @param ignoreCase `true` to ignore character case when matching a character. By default `false`.
+ */
+public fun CharSequence.commonPrefixWith(other: CharSequence, ignoreCase: Boolean = false): String {
+    val shortestLength = minOf(this.length, other.length)
+    var i = 0
+    while (i < shortestLength && __kkCharsEqual(this[i], other[i], ignoreCase)) {
+        i++
+    }
+    if (__kkHasSurrogatePairAt(this, i - 1) || __kkHasSurrogatePairAt(other, i - 1)) {
+        i--
+    }
+    return __kkCharSequenceRange(this, 0, i)
+}
+
+/**
+ * Returns the longest common suffix of this char sequence and [other], without splitting a
+ * surrogate pair at the boundary.
+ *
+ * @param ignoreCase `true` to ignore character case when matching a character. By default `false`.
+ */
+public fun CharSequence.commonSuffixWith(other: CharSequence, ignoreCase: Boolean = false): String {
+    val thisLength = this.length
+    val otherLength = other.length
+    val shortestLength = minOf(thisLength, otherLength)
+    var i = 0
+    while (i < shortestLength &&
+        __kkCharsEqual(this[thisLength - i - 1], other[otherLength - i - 1], ignoreCase)
+    ) {
+        i++
+    }
+    if (__kkHasSurrogatePairAt(this, thisLength - i - 1) ||
+        __kkHasSurrogatePairAt(other, otherLength - i - 1)
+    ) {
+        i--
+    }
+    return __kkCharSequenceRange(this, thisLength - i, thisLength)
+}
+
+private fun __kkHasSurrogatePairAt(value: CharSequence, index: Int): Boolean =
+    index >= 0 && index < value.length - 1 &&
+        value[index].isHighSurrogate() && value[index + 1].isLowSurrogate()
+
+private fun __kkCharSequenceRange(value: CharSequence, startIndex: Int, endIndex: Int): String {
+    // Build through CharArray so UTF-16 surrogate units survive for arbitrary CharSequence receivers.
+    val chars = CharArray(endIndex - startIndex)
+    var index = startIndex
+    while (index < endIndex) {
+        chars[index - startIndex] = value[index]
+        index++
+    }
+    val result = StringBuilder()
+    result.append(chars)
+    return result.toString()
+}
+
 // KSP-413: compareTo(ignoreCase) / contentEquals / equals(ignoreCase) moved off the
 // Swift runtime.
 //
@@ -90,6 +149,50 @@ internal fun __kkRegionMatches(
     }
     return true
 }
+
+// KSP-1392: keep the CharSequence path on the interface's UTF-16 indexed
+// operations. Converting through toString() would bypass custom receivers.
+private fun __kkRegionMatches(
+    self: CharSequence,
+    thisOffset: Int,
+    other: CharSequence,
+    otherOffset: Int,
+    length: Int,
+    ignoreCase: Boolean
+): Boolean {
+    if ((otherOffset < 0) || (thisOffset < 0) ||
+        (thisOffset > self.length - length) ||
+        (otherOffset > other.length - length)
+    ) {
+        return false
+    }
+
+    var index = 0
+    while (index < length) {
+        if (!__kkCharsEqual(self[thisOffset + index], other[otherOffset + index], ignoreCase)) {
+            return false
+        }
+        index++
+    }
+    return true
+}
+
+/**
+ * Returns whether the specified ranges of this and [other] contain equal characters.
+ *
+ * @param thisOffset the start offset in this char sequence.
+ * @param other the char sequence whose range is compared.
+ * @param otherOffset the start offset in [other].
+ * @param length the number of characters to compare.
+ * @param ignoreCase whether character case should be ignored.
+ */
+public fun CharSequence.regionMatches(
+    thisOffset: Int,
+    other: CharSequence,
+    otherOffset: Int,
+    length: Int,
+    ignoreCase: Boolean = false
+): Boolean = __kkRegionMatches(this, thisOffset, other, otherOffset, length, ignoreCase)
 
 private fun __kkContentEquals(self: List<Char>, other: List<Char>, ignoreCase: Boolean): Boolean {
     if (self.size != other.size) return false

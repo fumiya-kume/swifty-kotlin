@@ -1079,6 +1079,7 @@ struct CodegenBackendAtomicExtendedEdgeCasesTests {
     @Test
     func testCodegenKotlinConcurrentAtomicIntArrayOperations() throws {
         let source = """
+        @file:OptIn(kotlin.ExperimentalStdlibApi::class)
         import kotlin.concurrent.AtomicIntArray
 
         fun main() {
@@ -1097,6 +1098,7 @@ struct CodegenBackendAtomicExtendedEdgeCasesTests {
     @Test
     func testCodegenKotlinConcurrentAtomicLongArrayOperations() throws {
         let source = """
+        @file:OptIn(kotlin.ExperimentalStdlibApi::class)
         import kotlin.concurrent.AtomicLongArray
 
         fun main() {

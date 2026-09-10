@@ -1,0 +1,31 @@
+symbol fq=golden.sema.useFirstOrNull[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char?
+symbol fq=golden.sema.useFirst[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char
+symbol fq=golden.sema.useFormat[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useIsBlank[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useIsEmpty[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useIsNotBlank[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useIsNotEmpty[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+file fstring_format_blankness package=golden.sema
+  decl golden.sema.useFormat[kind=fun;params=] fun useFormat sym=golden.sema.useFormat[kind=fun;params=]
+  decl golden.sema.useIsEmpty[kind=fun;params=] fun useIsEmpty sym=golden.sema.useIsEmpty[kind=fun;params=]
+  decl golden.sema.useIsNotEmpty[kind=fun;params=] fun useIsNotEmpty sym=golden.sema.useIsNotEmpty[kind=fun;params=]
+  decl golden.sema.useIsBlank[kind=fun;params=] fun useIsBlank sym=golden.sema.useIsBlank[kind=fun;params=]
+  decl golden.sema.useIsNotBlank[kind=fun;params=] fun useIsNotBlank sym=golden.sema.useIsNotBlank[kind=fun;params=]
+  decl golden.sema.useFirst[kind=fun;params=] fun useFirst sym=golden.sema.useFirst[kind=fun;params=]
+  decl golden.sema.useFirstOrNull[kind=fun;params=] fun useFirstOrNull sym=golden.sema.useFirstOrNull[kind=fun;params=]
+expr e@4:27 string(%s:%d) type=String
+expr e@4:42 string(age) type=String
+expr e@4:49 int(7) type=Int
+expr e@4:27#1 memberCall recv=e@4:27 callee=format args=[_:e@4:42,_:e@4:49] type=String call=kotlin.text.format[kind=fun;recv=String;params=*Any?]
+expr e@6:29 string() type=String
+expr e@6:29#1 memberCall recv=e@6:29 callee=isEmpty args=[] type=Boolean call=kotlin.text.isEmpty[kind=fun;recv=kotlin.CharSequence;params=]
+expr e@8:32 string(x) type=String
+expr e@8:32#1 memberCall recv=e@8:32 callee=isNotEmpty args=[] type=Boolean call=kotlin.text.isNotEmpty[kind=fun;recv=kotlin.CharSequence;params=]
+expr e@10:29 string(  ) type=String
+expr e@10:29#1 memberCall recv=e@10:29 callee=isBlank args=[] type=Boolean call=kotlin.text.isBlank[kind=fun;recv=kotlin.CharSequence;params=]
+expr e@12:32 string(x) type=String
+expr e@12:32#1 memberCall recv=e@12:32 callee=isNotBlank args=[] type=Boolean call=kotlin.text.isNotBlank[kind=fun;recv=kotlin.CharSequence;params=]
+expr e@14:24 string(hello) type=String
+expr e@14:24#1 memberCall recv=e@14:24 callee=first args=[] type=Char call=kotlin.text.first[kind=fun;recv=String;params=]
+expr e@16:31 string() type=String
+expr e@16:31#1 memberCall recv=e@16:31 callee=firstOrNull args=[] type=Char? call=kotlin.text.firstOrNull[kind=fun;recv=String;params=]

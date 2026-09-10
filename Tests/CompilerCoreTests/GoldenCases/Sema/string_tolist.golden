@@ -1,13 +1,11 @@
-symbol fq=charSequenceToList kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.List<Char>
-symbol fq=charSequenceToList.$0.cs kind=valueParameter vis=private flags=_
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=stringToList kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.collections.List<Char>
-symbol fq=stringToList.$1.s kind=valueParameter vis=private flags=_
+symbol fq=charSequenceToList.$0.cs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=charSequenceToList[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.List<Char>
+symbol fq=stringToList.$1.s[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=stringToList[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.collections.List<Char>
 file fstring_tolist package=_
-  decl stringToList fun stringToList sym=stringToList
-  decl charSequenceToList fun charSequenceToList sym=charSequenceToList
-expr e@4:43 name(s) type=String ref=stringToList.$1.s
-expr e@4:43#1 memberCall recv=e@4:43 callee=toList args=[] type=kotlin.collections.List<Char> call=kotlin.text.toList#0
-expr e@5:56 name(cs) type=kotlin.CharSequence ref=charSequenceToList.$0.cs
-expr e@5:56#1 memberCall recv=e@5:56 callee=toList args=[] type=kotlin.collections.List<Char> call=kotlin.text.toList#0
+  decl stringToList[kind=fun;params=String] fun stringToList sym=stringToList[kind=fun;params=String]
+  decl charSequenceToList[kind=fun;params=kotlin.CharSequence] fun charSequenceToList sym=charSequenceToList[kind=fun;params=kotlin.CharSequence]
+expr e@4:43 name(s) type=String ref=stringToList.$1.s[kind=vparam]
+expr e@4:43#1 memberCall recv=e@4:43 callee=toList args=[] type=kotlin.collections.List<Char> call=kotlin.text.toList[kind=fun;recv=kotlin.CharSequence;params=]
+expr e@5:56 name(cs) type=kotlin.CharSequence ref=charSequenceToList.$0.cs[kind=vparam]
+expr e@5:56#1 memberCall recv=e@5:56 callee=toList args=[] type=kotlin.collections.List<Char> call=kotlin.text.toList[kind=fun;recv=kotlin.CharSequence;params=]

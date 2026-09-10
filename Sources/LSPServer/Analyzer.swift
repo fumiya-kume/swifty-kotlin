@@ -26,20 +26,34 @@ public final class Analyzer: @unchecked Sendable {
 
     private let driver = CompilerDriver()
     private let moduleName: String
+    /// Explicit stdlib artifact used by the LSP process, when one is prepared
+    /// by its startup entry point. Keeping this per-analyzer avoids relying on
+    /// the process-global CompilerOptions default while documents are analyzed
+    /// concurrently.
+    private let stdlibLibraryPath: String?
     private let analysisLock = NSLock()
     private let cacheLock = NSLock()
     private let analysisEvent: (@Sendable (AnalysisEvent) -> Void)?
     private var cache: [String: Analysis] = [:]
 
-    public convenience init(moduleName: String = "LSPModule") {
-        self.init(moduleName: moduleName, analysisEvent: nil)
+    public convenience init(
+        moduleName: String = "LSPModule",
+        stdlibLibraryPath: String? = nil
+    ) {
+        self.init(
+            moduleName: moduleName,
+            stdlibLibraryPath: stdlibLibraryPath,
+            analysisEvent: nil
+        )
     }
 
     init(
         moduleName: String = "LSPModule",
+        stdlibLibraryPath: String? = nil,
         analysisEvent: (@Sendable (AnalysisEvent) -> Void)?
     ) {
         self.moduleName = moduleName
+        self.stdlibLibraryPath = stdlibLibraryPath
         self.analysisEvent = analysisEvent
     }
 
@@ -83,7 +97,9 @@ public final class Analyzer: @unchecked Sendable {
             inputs: [path],
             outputPath: "/dev/null",
             emit: .object,
-            target: .hostDefault()
+            target: .hostDefault(),
+            stdlibLibraryPath: stdlibLibraryPath,
+            allowDefaultStdlibLibrary: false
         )
         let result = driver.runFrontend(
             options: options,

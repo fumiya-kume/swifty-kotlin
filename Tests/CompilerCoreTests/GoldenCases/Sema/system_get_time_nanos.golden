@@ -1,13 +1,13 @@
-symbol fq=__local_0.t1 kind=local vis=private flags=_ type=Long
-symbol fq=__local_1.t2 kind=local vis=private flags=_ type=Long
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.t1[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_1.t2[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fsystem_get_time_nanos package=_
-  decl main fun main sym=main
-expr e@4:20 call callee=e@4:20#1 args=[] type=Long call=kotlin.system.getTimeNanos
-expr e@4:5 localDecl t1 mutable=0 type=Long init=e@4:20 type=Unit ref=__local_0.t1
-expr e@5:20 call callee=e@5:20#1 args=[] type=Long call=kotlin.system.getTimeNanos
-expr e@5:5 localDecl t2 mutable=0 type=Long init=e@5:20 type=Unit ref=__local_1.t2
-expr e@6:13 name(t2) type=Long ref=__local_1.t2
-expr e@6:19 name(t1) type=Long ref=__local_0.t1
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+expr e@4:20 call callee=e@4:20#1 args=[] type=Long call=kotlin.system.getTimeNanos[kind=fun;params=]
+expr e@4:5 localDecl t1 mutable=0 type=Long init=e@4:20 type=Unit ref=__local_0.t1[kind=local]
+expr e@5:20 call callee=e@5:20#1 args=[] type=Long call=kotlin.system.getTimeNanos[kind=fun;params=]
+expr e@5:5 localDecl t2 mutable=0 type=Long init=e@5:20 type=Unit ref=__local_1.t2[kind=local]
+expr e@6:13 name(t2) type=Long ref=__local_1.t2[kind=local]
+expr e@6:19 name(t1) type=Long ref=__local_0.t1[kind=local]
 expr e@6:13#1 binary(greaterOrEqual) lhs=e@6:13 rhs=e@6:19 type=Boolean
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println#1
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

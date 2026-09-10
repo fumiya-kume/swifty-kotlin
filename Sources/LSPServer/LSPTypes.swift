@@ -129,6 +129,71 @@ public struct PublishDiagnosticsParams: Codable {
     }
 }
 
+// MARK: - Code actions
+
+/// A text replacement in LSP UTF-16 document coordinates.
+public struct LSPTextEdit: Codable, Equatable {
+    public var range: LSPRange
+    public var newText: String
+
+    public init(range: LSPRange, newText: String) {
+        self.range = range
+        self.newText = newText
+    }
+}
+
+/// A collection of edits grouped by document URI.
+public struct WorkspaceEdit: Codable, Equatable {
+    public var changes: [String: [LSPTextEdit]]?
+
+    public init(changes: [String: [LSPTextEdit]]? = nil) {
+        self.changes = changes
+    }
+}
+
+/// The diagnostic context supplied with a `textDocument/codeAction` request.
+public struct CodeActionContext: Codable, Equatable {
+    public var diagnostics: [LSPDiagnostic]
+    public var only: [String]?
+
+    public init(diagnostics: [LSPDiagnostic], only: [String]? = nil) {
+        self.diagnostics = diagnostics
+        self.only = only
+    }
+}
+
+public struct CodeActionParams: Codable {
+    public var textDocument: TextDocumentIdentifier
+    public var range: LSPRange
+    public var context: CodeActionContext
+
+    public init(textDocument: TextDocumentIdentifier, range: LSPRange, context: CodeActionContext) {
+        self.textDocument = textDocument
+        self.range = range
+        self.context = context
+    }
+}
+
+/// An LSP code action carrying an applicable workspace edit.
+public struct LSPCodeAction: Codable, Equatable {
+    public var title: String
+    public var kind: String?
+    public var diagnostics: [LSPDiagnostic]?
+    public var edit: WorkspaceEdit?
+
+    public init(
+        title: String,
+        kind: String? = nil,
+        diagnostics: [LSPDiagnostic]? = nil,
+        edit: WorkspaceEdit? = nil
+    ) {
+        self.title = title
+        self.kind = kind
+        self.diagnostics = diagnostics
+        self.edit = edit
+    }
+}
+
 // MARK: - Hover
 
 public struct MarkupContent: Codable {
@@ -222,6 +287,7 @@ public struct ServerCapabilities: Codable {
     public var hoverProvider: Bool
     public var definitionProvider: Bool
     public var documentSymbolProvider: Bool
+    public var codeActionProvider: Bool
 }
 
 public struct InitializeResult: Codable {
