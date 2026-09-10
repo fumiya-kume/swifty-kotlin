@@ -840,12 +840,21 @@ final class RuntimeArrayDequeBox {
         }
     }
 
-    init(elements: [Int]) {
-        let capacity = max(Self.minimumCapacity, elements.count)
-        buffer = elements.map { RuntimeValue(raw: $0) }
-            + Array(repeating: RuntimeValue(raw: 0), count: capacity - elements.count)
+    init(capacity: Int) {
+        buffer = Array(
+            repeating: RuntimeValue(raw: 0),
+            count: max(Self.minimumCapacity, capacity)
+        )
         head = 0
-        count = elements.count
+        count = 0
+    }
+
+    init(values: [RuntimeValue]) {
+        let capacity = max(Self.minimumCapacity, values.count)
+        buffer = values
+            + Array(repeating: RuntimeValue(raw: 0), count: capacity - values.count)
+        head = 0
+        count = values.count
     }
 
     func element(at index: Int) -> RuntimeValue? {

@@ -1,0 +1,28 @@
+symbol fq=__local_0.empty kind=local vis=private flags=_ type=kotlin.collections.ArrayDeque<Int>
+symbol fq=__local_1.copied kind=local vis=private flags=_ type=kotlin.collections.ArrayDeque<Int>
+symbol fq=__local_2.sized kind=local vis=private flags=_ type=kotlin.collections.ArrayDeque<Int>
+symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+file fstdlib_kotlin_collections_ArrayDeque_n_n package=golden.sema
+  decl golden.sema.main fun main sym=golden.sema.main
+expr e@4:17 call callee=e@4:17#1 args=[] type=kotlin.collections.ArrayDeque<Int> call=kotlin.collections.ArrayDeque.<init>#0 targs=[Int]
+expr e@4:5 localDecl empty mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.empty
+expr e@5:41 int(1) type=Int
+expr e@5:44 int(2) type=Int
+expr e@5:47 int(3) type=Int
+expr e@5:34 call callee=e@5:34#1 args=[_:e@5:41,_:e@5:44,_:e@5:47] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@5:18 call callee=e@5:18#1 args=[_:e@5:34] type=kotlin.collections.ArrayDeque<Int> call=kotlin.collections.ArrayDeque.<init>#2 targs=[Int]
+expr e@5:5 localDecl copied mutable=0 type=_ init=e@5:18 type=Unit ref=__local_1.copied
+expr e@6:33 int(4) type=Int
+expr e@6:17 call callee=e@6:17#1 args=[_:e@6:33] type=kotlin.collections.ArrayDeque<Int> call=kotlin.collections.ArrayDeque.<init>#1 targs=[Int]
+expr e@6:5 localDecl sized mutable=0 type=_ init=e@6:17 type=Unit ref=__local_2.sized
+expr e@7:13 name(empty) type=kotlin.collections.ArrayDeque<Int> ref=__local_0.empty
+expr e@7:13#1 memberCall recv=e@7:13 callee=size args=[] type=Int ref=kotlin.collections.ArrayDeque.size
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println#1
+expr e@8:13 name(copied) type=kotlin.collections.ArrayDeque<Int> ref=__local_1.copied
+expr e@8:13#1 memberCall recv=e@8:13 callee=first args=[] type=Int call=kotlin.collections.ArrayDeque.first targs=[Int]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println#1
+expr e@9:13 name(sized) type=kotlin.collections.ArrayDeque<Int> ref=__local_2.sized
+expr e@9:13#1 memberCall recv=e@9:13 callee=size args=[] type=Int ref=kotlin.collections.ArrayDeque.size
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#1

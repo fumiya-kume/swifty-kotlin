@@ -9,11 +9,33 @@
 // `first` / `last` / `isEmpty` / `toString` and the emptiness checks that guard
 // `removeFirst` / `removeLast` now live in
 // `Sources/CompilerCore/Stdlib/kotlin/collections/ArrayDeque.kt`; only the
-// element-storage mutation primitives remain here.
+// allocation, construction, and element-storage mutation primitives remain
+// here.
 
 @_cdecl("__kk_arraydeque_new")
 public func __kk_arraydeque_new() -> Int {
-    registerRuntimeObject(RuntimeArrayDequeBox(elements: []))
+    registerRuntimeObject(RuntimeArrayDequeBox(capacity: 0))
+}
+
+@_cdecl("__kk_arraydeque_new_with_capacity")
+public func __kk_arraydeque_new_with_capacity(
+    _ capacity: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard capacity >= 0 else {
+        runtimeSetThrown(
+            outThrown,
+            runtimeAllocateIllegalArgumentException(message: "Illegal Capacity: \(capacity)")
+        )
+        return 0
+    }
+    return registerRuntimeObject(RuntimeArrayDequeBox(capacity: capacity))
+}
+
+@_cdecl("__kk_arraydeque_new_from_collection")
+public func __kk_arraydeque_new_from_collection(_ collectionRaw: Int) -> Int {
+    let values = runtimeIterableValues(from: collectionRaw) ?? []
+    return registerRuntimeObject(RuntimeArrayDequeBox(values: values))
 }
 
 @_cdecl("__kk_arraydeque_addFirst")

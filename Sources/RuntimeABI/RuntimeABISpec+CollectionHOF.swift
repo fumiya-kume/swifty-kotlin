@@ -508,6 +508,24 @@ public extension RuntimeABISpec {
                     isThrowing: false
                 ),
                 RuntimeABIFunctionSpec(
+                    name: "__kk_arraydeque_new_with_capacity",
+                    parameters: [
+                        RuntimeABIParameter(name: "capacity", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "__kk_arraydeque_new_from_collection",
+                    parameters: [
+                        RuntimeABIParameter(name: "collectionRaw", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection",
+                    isThrowing: false
+                ),
+                RuntimeABIFunctionSpec(
                     name: "__kk_arraydeque_addFirst",
                     parameters: [
                         RuntimeABIParameter(name: "dequeRaw", type: .intptr),
