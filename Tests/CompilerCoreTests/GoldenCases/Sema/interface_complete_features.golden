@@ -1,20 +1,20 @@
-symbol fq=golden.sema.CompanionImpl kind=class vis=public flags=_
-symbol fq=golden.sema.InterfaceProperties kind=interface vis=public flags=_
-symbol fq=golden.sema.InterfaceSuperCalls kind=interface vis=public flags=_
-symbol fq=golden.sema.LeftSuper kind=interface vis=public flags=_
-symbol fq=golden.sema.LeftSuper.greet kind=function vis=public flags=overrideMember sig=recv=golden.sema.LeftSuper params=[] ret=String
-symbol fq=golden.sema.RightSuper kind=interface vis=public flags=_
-symbol fq=golden.sema.RightSuper.greet kind=function vis=public flags=overrideMember sig=recv=golden.sema.RightSuper params=[] ret=String
-symbol fq=golden.sema.WithCompanion kind=interface vis=public flags=_
-symbol fq=golden.sema.WithSuperCall kind=class vis=public flags=_
+symbol fq=golden.sema.CompanionImpl[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.InterfaceProperties[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.InterfaceSuperCalls[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.LeftSuper.greet[kind=fun;recv=golden.sema.LeftSuper;params=] kind=function vis=public flags=overrideMember sig=recv=golden.sema.LeftSuper params=[] ret=String
+symbol fq=golden.sema.LeftSuper[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.RightSuper.greet[kind=fun;recv=golden.sema.RightSuper;params=] kind=function vis=public flags=overrideMember sig=recv=golden.sema.RightSuper params=[] ret=String
+symbol fq=golden.sema.RightSuper[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.WithCompanion[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.WithSuperCall[kind=class] kind=class vis=public flags=_
 file finterface_complete_features package=golden.sema
-  decl golden.sema.InterfaceProperties interface InterfaceProperties sym=golden.sema.InterfaceProperties
-  decl golden.sema.InterfaceSuperCalls interface InterfaceSuperCalls sym=golden.sema.InterfaceSuperCalls
-  decl golden.sema.LeftSuper interface LeftSuper sym=golden.sema.LeftSuper
-  decl golden.sema.RightSuper interface RightSuper sym=golden.sema.RightSuper
-  decl golden.sema.WithSuperCall class WithSuperCall sym=golden.sema.WithSuperCall
-  decl golden.sema.WithCompanion interface WithCompanion sym=golden.sema.WithCompanion
-  decl golden.sema.CompanionImpl class CompanionImpl sym=golden.sema.CompanionImpl
+  decl golden.sema.InterfaceProperties[kind=iface] interface InterfaceProperties sym=golden.sema.InterfaceProperties[kind=iface]
+  decl golden.sema.InterfaceSuperCalls[kind=iface] interface InterfaceSuperCalls sym=golden.sema.InterfaceSuperCalls[kind=iface]
+  decl golden.sema.LeftSuper[kind=iface] interface LeftSuper sym=golden.sema.LeftSuper[kind=iface]
+  decl golden.sema.RightSuper[kind=iface] interface RightSuper sym=golden.sema.RightSuper[kind=iface]
+  decl golden.sema.WithSuperCall[kind=class] class WithSuperCall sym=golden.sema.WithSuperCall[kind=class]
+  decl golden.sema.WithCompanion[kind=iface] interface WithCompanion sym=golden.sema.WithCompanion[kind=iface]
+  decl golden.sema.CompanionImpl[kind=class] class CompanionImpl sym=golden.sema.CompanionImpl[kind=class]
 expr e@8:17 string(default) type=String
 expr e@10:17 int(42) type=Int
 expr e@14:17 string(computed) type=String
@@ -23,11 +23,11 @@ expr e@22:27 string(Hello) type=String
 expr e@26:36 string(Left) type=String
 expr e@30:36 string(Right) type=String
 expr e@34:36 super<LeftSuper> type=golden.sema.LeftSuper
-expr e@34:36#1 memberCall recv=e@34:36 callee=greet args=[] type=String call=golden.sema.LeftSuper.greet
+expr e@34:36#1 memberCall recv=e@34:36 callee=greet args=[] type=String call=golden.sema.LeftSuper.greet[kind=fun;recv=golden.sema.LeftSuper;params=]
 expr e@34:63 string( and ) type=String
 expr e@34:36#2 binary(add) lhs=e@34:36#1 rhs=e@34:63 type=String
 expr e@34:73 super<RightSuper> type=golden.sema.RightSuper
-expr e@34:73#1 memberCall recv=e@34:73 callee=greet args=[] type=String call=golden.sema.RightSuper.greet
+expr e@34:73#1 memberCall recv=e@34:73 callee=greet args=[] type=String call=golden.sema.RightSuper.greet[kind=fun;recv=golden.sema.RightSuper;params=]
 expr e@34:36#3 binary(add) lhs=e@34:36#2 rhs=e@34:73#1 type=String
 expr e@39:24 string(test) type=String
 expr e@40:32 string(helper) type=String

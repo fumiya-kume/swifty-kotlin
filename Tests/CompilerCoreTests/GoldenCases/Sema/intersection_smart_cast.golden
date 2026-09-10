@@ -1,32 +1,32 @@
-symbol fq=golden.sema.A kind=interface vis=public flags=_
-symbol fq=golden.sema.A.a kind=function vis=public flags=abstractType sig=recv=golden.sema.A params=[] ret=String
-symbol fq=golden.sema.B kind=interface vis=public flags=_
-symbol fq=golden.sema.B.b kind=function vis=public flags=abstractType sig=recv=golden.sema.B params=[] ret=Int
-symbol fq=golden.sema.directValue kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.directValue.$0.T & Any] ret=Int bounds=[Any?]
-symbol fq=golden.sema.directValue.$0.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.directValue.$0.x kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.idTag kind=function vis=public flags=_ sig=recv=Any params=[] ret=Int
-symbol fq=golden.sema.intersect kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=String
-symbol fq=golden.sema.intersect.$1.x kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.safeValue kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.safeValue.$2.T & Any] ret=Int? bounds=[Any?]
-symbol fq=golden.sema.safeValue.$2.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.safeValue.$2.x kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.A.a[kind=fun;recv=golden.sema.A;params=] kind=function vis=public flags=abstractType sig=recv=golden.sema.A params=[] ret=String
+symbol fq=golden.sema.A[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.B.b[kind=fun;recv=golden.sema.B;params=] kind=function vis=public flags=abstractType sig=recv=golden.sema.B params=[] ret=Int
+symbol fq=golden.sema.B[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.directValue.$0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.directValue.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.directValue[kind=fun;params=is{Any;T0};gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.directValue.$0.T & Any] ret=Int bounds=[Any?]
+symbol fq=golden.sema.idTag[kind=fun;recv=Any;params=] kind=function vis=public flags=_ sig=recv=Any params=[] ret=Int
+symbol fq=golden.sema.intersect.$1.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.intersect[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=String
+symbol fq=golden.sema.safeValue.$2.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.safeValue.$2.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.safeValue[kind=fun;params=is{Any;T0};gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.safeValue.$2.T & Any] ret=Int? bounds=[Any?]
 file fintersection_smart_cast package=golden.sema
-  decl golden.sema.A interface A sym=golden.sema.A
-  decl golden.sema.B interface B sym=golden.sema.B
-  decl golden.sema.intersect fun intersect sym=golden.sema.intersect
-  decl golden.sema.idTag fun idTag sym=golden.sema.idTag
-  decl golden.sema.directValue fun directValue sym=golden.sema.directValue
-  decl golden.sema.safeValue fun safeValue sym=golden.sema.safeValue
-expr e@12:9 name(x) type=Any ref=golden.sema.intersect.$1.x
+  decl golden.sema.A[kind=iface] interface A sym=golden.sema.A[kind=iface]
+  decl golden.sema.B[kind=iface] interface B sym=golden.sema.B[kind=iface]
+  decl golden.sema.intersect[kind=fun;params=Any] fun intersect sym=golden.sema.intersect[kind=fun;params=Any]
+  decl golden.sema.idTag[kind=fun;recv=Any;params=] fun idTag sym=golden.sema.idTag[kind=fun;recv=Any;params=]
+  decl golden.sema.directValue[kind=fun;params=is{Any;T0};gen=1] fun directValue sym=golden.sema.directValue[kind=fun;params=is{Any;T0};gen=1]
+  decl golden.sema.safeValue[kind=fun;params=is{Any;T0};gen=1] fun safeValue sym=golden.sema.safeValue[kind=fun;params=is{Any;T0};gen=1]
+expr e@12:9 name(x) type=Any ref=golden.sema.intersect.$1.x[kind=vparam]
 expr e@12:9#1 isCheck expr=e@12:9 type=golden.sema.A type=Boolean
-expr e@12:19 name(x) type=golden.sema.A ref=golden.sema.intersect.$1.x
+expr e@12:19 name(x) type=golden.sema.A ref=golden.sema.intersect.$1.x[kind=vparam]
 expr e@12:19#1 isCheck expr=e@12:19 type=golden.sema.B type=Boolean
 expr e@12:9#2 binary(logicalAnd) lhs=e@12:9#1 rhs=e@12:19#1 type=Boolean
-expr e@13:16 name(x) type=golden.sema.A & golden.sema.B ref=golden.sema.intersect.$1.x
-expr e@13:16#1 memberCall recv=e@13:16 callee=a args=[] type=String call=golden.sema.A.a
-expr e@13:24 name(x) type=golden.sema.A & golden.sema.B ref=golden.sema.intersect.$1.x
-expr e@13:24#1 memberCall recv=e@13:24 callee=b args=[] type=Int call=golden.sema.B.b
+expr e@13:16 name(x) type=golden.sema.A & golden.sema.B ref=golden.sema.intersect.$1.x[kind=vparam]
+expr e@13:16#1 memberCall recv=e@13:16 callee=a args=[] type=String call=golden.sema.A.a[kind=fun;recv=golden.sema.A;params=]
+expr e@13:24 name(x) type=golden.sema.A & golden.sema.B ref=golden.sema.intersect.$1.x[kind=vparam]
+expr e@13:24#1 memberCall recv=e@13:24 callee=b args=[] type=Int call=golden.sema.B.b[kind=fun;recv=golden.sema.B;params=]
 expr e@13:24#2 memberCall recv=e@13:24#1 callee=toString args=[] type=String
 expr e@13:16#2 binary(add) lhs=e@13:16#1 rhs=e@13:24#2 type=String
 expr e@13:9 return value=e@13:16#2 type=Nothing
@@ -35,7 +35,7 @@ expr e@12:5 if cond=e@12:9#2 then=e@12:27 else=_ type=Unit
 expr e@15:12 string(unknown) type=String
 expr e@15:5 return value=e@15:12 type=Nothing
 expr e@18:24 int(7) type=Int
-expr e@20:47 name(x) type=golden.sema.directValue.$0.T & Any ref=golden.sema.directValue.$0.x
-expr e@20:47#1 memberCall recv=e@20:47 callee=idTag args=[] type=Int call=golden.sema.idTag
-expr e@21:46 name(x) type=golden.sema.safeValue.$2.T & Any ref=golden.sema.safeValue.$2.x
-expr e@21:46#1 safeMemberCall recv=e@21:46 callee=idTag args=[] type=Int? call=golden.sema.idTag
+expr e@20:47 name(x) type=golden.sema.directValue.$0.T & Any ref=golden.sema.directValue.$0.x[kind=vparam]
+expr e@20:47#1 memberCall recv=e@20:47 callee=idTag args=[] type=Int call=golden.sema.idTag[kind=fun;recv=Any;params=]
+expr e@21:46 name(x) type=golden.sema.safeValue.$2.T & Any ref=golden.sema.safeValue.$2.x[kind=vparam]
+expr e@21:46#1 safeMemberCall recv=e@21:46 callee=idTag args=[] type=Int? call=golden.sema.idTag[kind=fun;recv=Any;params=]

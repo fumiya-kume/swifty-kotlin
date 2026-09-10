@@ -1,14 +1,14 @@
-symbol fq=__local_0.by kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.by2 kind=local vis=private flags=mutable type=String
-symbol fq=__local_2.by3 kind=local vis=private flags=_ type=Int
-symbol fq=useSoftKeywordAsByIdentifier kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.by[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.by2[kind=local] kind=local vis=private flags=mutable type=String
+symbol fq=__local_2.by3[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=useSoftKeywordAsByIdentifier[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fby_as_local_identifier package=_
-  decl useSoftKeywordAsByIdentifier fun useSoftKeywordAsByIdentifier sym=useSoftKeywordAsByIdentifier
+  decl useSoftKeywordAsByIdentifier[kind=fun;params=] fun useSoftKeywordAsByIdentifier sym=useSoftKeywordAsByIdentifier[kind=fun;params=]
 expr e@2:14 int(1) type=Int
-expr e@2:5 localDecl by mutable=0 type=_ init=e@2:14 type=Unit ref=__local_0.by
+expr e@2:5 localDecl by mutable=0 type=_ init=e@2:14 type=Unit ref=__local_0.by[kind=local]
 expr e@3:15 string(hello) type=String
-expr e@3:5 localDecl by2 mutable=1 type=_ init=e@3:15 type=Unit ref=__local_1.by2
+expr e@3:5 localDecl by2 mutable=1 type=_ init=e@3:15 type=Unit ref=__local_1.by2[kind=local]
 expr e@4:20 int(5) type=Int
-expr e@4:5 localDecl by3 mutable=0 type=Int init=e@4:20 type=Unit ref=__local_2.by3
-expr e@5:13 name(by) type=Int ref=__local_0.by
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13] type=Unit call=kotlin.io.println#1
+expr e@4:5 localDecl by3 mutable=0 type=Int init=e@4:20 type=Unit ref=__local_2.by3[kind=local]
+expr e@5:13 name(by) type=Int ref=__local_0.by[kind=local]
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
