@@ -6,6 +6,8 @@ import Testing
 extension BuildKIRRegressionTests {
     // BUG-211: an interface property read must remain an itable dispatch in
     // KIR. The backend then boxes the receiver before doing the dynamic lookup.
+    // CharSequence.length is the property getter after `get` (slot 0) and
+    // `subSequence` (slot 1), so KIR must use method slot 2.
     @Test func testBug211CharSequenceLengthUsesDynamicItableDispatch() throws {
         let source = """
         fun lengthOf(value: CharSequence): Int = value.length
@@ -25,7 +27,7 @@ extension BuildKIRRegressionTests {
             }
 
             #expect(dispatches.contains { dispatch in
-                if case .itableDynamic(_, 1) = dispatch { return true }
+                if case .itableDynamic(_, 2) = dispatch { return true }
                 return false
             })
         }
