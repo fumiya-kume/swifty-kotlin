@@ -2680,7 +2680,7 @@
     - `kotlin.coroutines.CoroutineContext.Element.key` — val Element.key: Key  -- `abstract val key`
     - `kotlin.coroutines.CoroutineContext.Element.minusKey` — fun Element.minusKey(Key): CoroutineContext  -- `open fun minusKey(kotlin.coroutines/CoroutineContext.Key<*>): kotlin.coroutines/CoroutineContext`
 
-- [ ] KSP-1145: kotlin.coroutines.EmptyCoroutineContext.EmptyCoroutineContext の未実装 stdlib API を実装する（6 件）
+- [x] KSP-1145: kotlin.coroutines.EmptyCoroutineContext.EmptyCoroutineContext の未実装 stdlib API を実装する（6 件）
   - 対象: `kotlin.coroutines.EmptyCoroutineContext` / receiver `EmptyCoroutineContext`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/coroutines/EmptyCoroutineContext/EmptyCoroutineContext.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。

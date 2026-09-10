@@ -89,8 +89,13 @@ private func delegateStubRegistryEntries() -> [SyntheticDelegateStubRegistryEntr
         SyntheticDelegateStubRegistryEntry(bucket: .sourceBackedMigration, name: "Math") { phase, symbols, types, interner, _ in
             phase.registerSyntheticMathStubs(symbols: symbols, types: types, interner: interner)
         },
-        SyntheticDelegateStubRegistryEntry(bucket: .residualCompilerSurface, name: "Coroutine") { phase, symbols, types, interner, _ in
-            phase.registerSyntheticCoroutineStubs(symbols: symbols, types: types, interner: interner)
+        SyntheticDelegateStubRegistryEntry(bucket: .residualCompilerSurface, name: "Coroutine") { phase, symbols, types, interner, context in
+            phase.registerSyntheticCoroutineStubs(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                bundledIndex: context.bundledIndex
+            )
         },
         SyntheticDelegateStubRegistryEntry(bucket: .residualCompilerSurface, name: "Exception") { phase, symbols, types, interner, context in
             phase.registerSyntheticExceptionStubs(symbols: symbols, types: types, interner: interner, kotlinPkg: context.kotlinPkg)

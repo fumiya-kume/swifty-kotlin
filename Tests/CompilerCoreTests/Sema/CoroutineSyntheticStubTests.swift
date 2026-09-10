@@ -145,7 +145,7 @@ struct CoroutineSyntheticStubTests {
             let interner = ctx.interner
             _ = (ast, sema, interner)
 
-            // testEmptyCoroutineContextIsRegisteredAsSyntheticObject
+            // testEmptyCoroutineContextIsRegisteredAsBundledSourceObject
             do {
 
 
@@ -163,21 +163,84 @@ struct CoroutineSyntheticStubTests {
                 )
                 let emptyCoroutineContextInfo = try #require(sema.symbols.symbol(emptyCoroutineContextSymbol))
                 #expect(emptyCoroutineContextInfo.kind == .object)
-                #expect(emptyCoroutineContextInfo.flags.contains(.synthetic))
+                #expect(!emptyCoroutineContextInfo.flags.contains(.synthetic))
+                #expect(emptyCoroutineContextInfo.declSite != nil)
 
-                let expectedEmptyCoroutineContextType = sema.types.make(.classType(ClassType(
-                    classSymbol: emptyCoroutineContextSymbol,
+                #expect(
+                    sema.symbols.directSupertypes(for: emptyCoroutineContextSymbol).contains(coroutineContextSymbol)
+                )
+
+                let coroutineContextType = sema.types.make(.classType(ClassType(
+                    classSymbol: coroutineContextSymbol,
                     args: [],
                     nullability: .nonNull
                 )))
-                #expect(
-                    sema.symbols.propertyType(for: emptyCoroutineContextSymbol) ==
-                    expectedEmptyCoroutineContextType
+                let coroutineContextElementSymbol = try #require(
+                    sema.symbols.lookup(fqName: coroutineContextFQName + [interner.intern("Element")])
                 )
-                #expect(
-                    sema.symbols.directSupertypes(for: emptyCoroutineContextSymbol) ==
-                    [coroutineContextSymbol]
+                let coroutineContextElementType = sema.types.make(.classType(ClassType(
+                    classSymbol: coroutineContextElementSymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                let coroutineContextKeySymbol = try #require(
+                    sema.symbols.lookup(fqName: coroutineContextFQName + [interner.intern("Key")])
                 )
+                let coroutineContextKeyStarType = sema.types.make(.classType(ClassType(
+                    classSymbol: coroutineContextKeySymbol,
+                    args: [.star],
+                    nullability: .nonNull
+                )))
+                let expectedMembers: [(String, Int)] = [
+                    ("get", 1),
+                    ("fold", 2),
+                    ("plus", 1),
+                    ("minusKey", 1),
+                    ("hashCode", 0),
+                    ("toString", 0),
+                ]
+                for (name, arity) in expectedMembers {
+                    let memberFQName = emptyCoroutineContextFQName + [interner.intern(name)]
+                    let sourceMembers = sema.symbols.lookupAll(fqName: memberFQName).filter { symbolID in
+                        guard let symbol = sema.symbols.symbol(symbolID),
+                              symbol.kind == .function,
+                              sema.symbols.functionSignature(for: symbolID)?.parameterTypes.count == arity
+                        else {
+                            return false
+                        }
+                        return sema.symbols.isSourceBackedSymbol(symbolID)
+                    }
+                    #expect(sourceMembers.count == 1, "Expected one source-backed EmptyCoroutineContext.$name")
+                    if let sourceMember = sourceMembers.first {
+                        #expect(sema.symbols.symbol(sourceMember)?.declSite != nil)
+                        #expect(sema.symbols.externalLinkName(for: sourceMember) == nil)
+                        let signature = try #require(sema.symbols.functionSignature(for: sourceMember))
+                        switch name {
+                        case "get":
+                            #expect(signature.typeParameterSymbols.count == 1)
+                            if let typeParameter = signature.typeParameterSymbols.first {
+                                #expect(sema.symbols.typeParameterUpperBounds(for: typeParameter) == [coroutineContextElementType])
+                            }
+                            #expect(sema.types.nullability(of: signature.returnType) == .nullable)
+                        case "fold":
+                            #expect(signature.typeParameterSymbols.count == 1)
+                            #expect(signature.parameterTypes.count == 2)
+                        case "plus":
+                            #expect(signature.parameterTypes == [coroutineContextType])
+                            #expect(signature.returnType == coroutineContextType)
+                            #expect(sema.symbols.symbol(sourceMember)?.flags.contains(.operatorFunction) == true)
+                        case "minusKey":
+                            #expect(signature.parameterTypes == [coroutineContextKeyStarType])
+                            #expect(signature.returnType == coroutineContextType)
+                        case "hashCode":
+                            #expect(signature.returnType == sema.types.intType)
+                        case "toString":
+                            #expect(signature.returnType == sema.types.stringType)
+                        default:
+                            break
+                        }
+                    }
+                }
             }
 
             // testCoroutineSuspendedTopLevelValIsRegistered

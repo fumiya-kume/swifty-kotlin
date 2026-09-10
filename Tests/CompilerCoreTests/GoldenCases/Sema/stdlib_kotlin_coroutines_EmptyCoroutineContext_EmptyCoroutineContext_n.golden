@@ -1,0 +1,51 @@
+symbol fq=golden.sema.emptyFold kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.emptyGet kind=function vis=public flags=_ sig=recv=_ params=[kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.CoroutineContext.Element>] ret=kotlin.coroutines.CoroutineContext.Element?
+symbol fq=golden.sema.emptyGet.$0.key kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.emptyHashCode kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.emptyMinusKey kind=function vis=public flags=_ sig=recv=_ params=[kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.CoroutineContext.Element>] ret=kotlin.coroutines.CoroutineContext
+symbol fq=golden.sema.emptyMinusKey.$1.key kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.emptyPlus kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.coroutines.CoroutineContext
+symbol fq=golden.sema.emptyToString kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.coroutines.CoroutineContext kind=interface vis=public flags=synthetic type=kotlin.coroutines.CoroutineContext
+symbol fq=kotlin.coroutines.CoroutineContext.Element kind=interface vis=internal flags=synthetic type=kotlin.coroutines.CoroutineContext.Element
+symbol fq=kotlin.coroutines.CoroutineContext.Key kind=interface vis=internal flags=synthetic type=kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.CoroutineContext.Key.$synthetic.E>
+symbol fq=kotlin.coroutines.CoroutineContext.Key.$synthetic.E kind=typeParameter vis=private flags=synthetic
+file fstdlib_kotlin_coroutines_EmptyCoroutineContext_EmptyCoroutineContext_n package=golden.sema
+  decl golden.sema.emptyGet fun emptyGet sym=golden.sema.emptyGet
+  decl golden.sema.emptyFold fun emptyFold sym=golden.sema.emptyFold
+  decl golden.sema.emptyPlus fun emptyPlus sym=golden.sema.emptyPlus
+  decl golden.sema.emptyMinusKey fun emptyMinusKey sym=golden.sema.emptyMinusKey
+  decl golden.sema.emptyHashCode fun emptyHashCode sym=golden.sema.emptyHashCode
+  decl golden.sema.emptyToString fun emptyToString sym=golden.sema.emptyToString
+  decl golden.sema.main fun main sym=golden.sema.main
+expr e@7:5 name(EmptyCoroutineContext) type=kotlin.coroutines.EmptyCoroutineContext ref=kotlin.coroutines.EmptyCoroutineContext
+expr e@7:31 name(key) type=kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.CoroutineContext.Element> ref=golden.sema.emptyGet.$0.key
+expr e@7:5#1 memberCall recv=e@7:5 callee=get args=[_:e@7:31] type=kotlin.coroutines.CoroutineContext.Element? call=kotlin.coroutines.EmptyCoroutineContext.get targs=[kotlin.coroutines.CoroutineContext.Element]
+expr e@9:24 name(EmptyCoroutineContext) type=kotlin.coroutines.EmptyCoroutineContext ref=kotlin.coroutines.EmptyCoroutineContext
+expr e@9:51 int(7) type=Int
+expr e@9:66 name(acc) type=Int ref=s-0
+expr e@9:72 int(1) type=Int
+expr e@9:66#1 binary(add) lhs=e@9:66 rhs=e@9:72 type=Int
+expr e@9:54 lambda params=[acc,_] body=e@9:66#1 label=fold type=(Int, kotlin.coroutines.CoroutineContext.Element) -> Int
+expr e@9:24#1 memberCall recv=e@9:24 callee=fold args=[_:e@9:51,_:e@9:54] type=Int call=kotlin.coroutines.EmptyCoroutineContext.fold targs=[Int]
+expr e@11:19 name(EmptyCoroutineContext) type=kotlin.coroutines.EmptyCoroutineContext ref=kotlin.coroutines.EmptyCoroutineContext
+expr e@11:43 name(EmptyCoroutineContext) type=kotlin.coroutines.EmptyCoroutineContext ref=kotlin.coroutines.EmptyCoroutineContext
+expr e@11:19#1 binary(add) lhs=e@11:19 rhs=e@11:43 type=kotlin.coroutines.CoroutineContext call=kotlin.coroutines.EmptyCoroutineContext.plus
+expr e@14:5 name(EmptyCoroutineContext) type=kotlin.coroutines.EmptyCoroutineContext ref=kotlin.coroutines.EmptyCoroutineContext
+expr e@14:36 name(key) type=kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.CoroutineContext.Element> ref=golden.sema.emptyMinusKey.$1.key
+expr e@14:5#1 memberCall recv=e@14:5 callee=minusKey args=[_:e@14:36] type=kotlin.coroutines.CoroutineContext call=kotlin.coroutines.EmptyCoroutineContext.minusKey
+expr e@16:28 name(EmptyCoroutineContext) type=kotlin.coroutines.EmptyCoroutineContext ref=kotlin.coroutines.EmptyCoroutineContext
+expr e@16:28#1 memberCall recv=e@16:28 callee=hashCode args=[] type=Int call=kotlin.coroutines.EmptyCoroutineContext.hashCode
+expr e@18:31 name(EmptyCoroutineContext) type=kotlin.coroutines.EmptyCoroutineContext ref=kotlin.coroutines.EmptyCoroutineContext
+expr e@18:31#1 memberCall recv=e@18:31 callee=toString args=[] type=String call=kotlin.coroutines.EmptyCoroutineContext.toString
+expr e@21:13 call callee=e@21:13#1 args=[] type=Int call=golden.sema.emptyFold
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13] type=Unit call=kotlin.io.println#1
+expr e@22:13 call callee=e@22:13#1 args=[] type=kotlin.coroutines.CoroutineContext call=golden.sema.emptyPlus
+expr e@22:29 name(EmptyCoroutineContext) type=kotlin.coroutines.EmptyCoroutineContext ref=kotlin.coroutines.EmptyCoroutineContext
+expr e@22:13#2 binary(identityEqual) lhs=e@22:13 rhs=e@22:29 type=Boolean
+expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13#2] type=Unit call=kotlin.io.println#1
+expr e@23:13 call callee=e@23:13#1 args=[] type=Int call=golden.sema.emptyHashCode
+expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println#1
+expr e@24:13 call callee=e@24:13#1 args=[] type=String call=golden.sema.emptyToString
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println#2

@@ -6,7 +6,8 @@ extension DataFlowSemaPhase {
     func registerSyntheticCoroutineStubs(
         symbols: SymbolTable,
         types: TypeSystem,
-        interner: StringInterner
+        interner: StringInterner,
+        bundledIndex: BundledDeclarationIndex = .empty
     ) {
         let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
         if symbols.lookup(fqName: kotlinPkg) == nil {
@@ -2357,20 +2358,31 @@ extension DataFlowSemaPhase {
         // runtime entry points via @KsSymbolName. No synthetic stubs are
         // registered for them here.
 
-        let emptyCoroutineContextSymbol = ensureSyntheticObjectSymbol(
-            named: "EmptyCoroutineContext",
-            in: kotlinCoroutinesPkg,
-            symbols: symbols,
-            interner: interner
+        // KSP-1145: the public object and its six members are bundled Kotlin
+        // source. Keep the synthetic object only for configurations that do
+        // not inject/import that source.
+        let emptyCoroutineContextFQName = kotlinCoroutinesPkg + [interner.intern("EmptyCoroutineContext")]
+        let hasSourceBackedEmptyCoroutineContext = bundledIndex.contains(
+            ownerFQName: emptyCoroutineContextFQName,
+            name: interner.intern("fold"),
+            arity: 2
         )
-        let emptyCoroutineContextType = types.make(.classType(ClassType(
-            classSymbol: emptyCoroutineContextSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(emptyCoroutineContextType, for: emptyCoroutineContextSymbol)
-        symbols.setDirectSupertypes([kotlinCoroutineContextSymbol], for: emptyCoroutineContextSymbol)
-        types.setNominalDirectSupertypes([kotlinCoroutineContextSymbol], for: emptyCoroutineContextSymbol)
+        if !hasSourceBackedEmptyCoroutineContext {
+            let emptyCoroutineContextSymbol = ensureSyntheticObjectSymbol(
+                named: "EmptyCoroutineContext",
+                in: kotlinCoroutinesPkg,
+                symbols: symbols,
+                interner: interner
+            )
+            let emptyCoroutineContextType = types.make(.classType(ClassType(
+                classSymbol: emptyCoroutineContextSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            symbols.setPropertyType(emptyCoroutineContextType, for: emptyCoroutineContextSymbol)
+            symbols.setDirectSupertypes([kotlinCoroutineContextSymbol], for: emptyCoroutineContextSymbol)
+            types.setNominalDirectSupertypes([kotlinCoroutineContextSymbol], for: emptyCoroutineContextSymbol)
+        }
 
         // Mutex (kotlinx.coroutines.sync.Mutex)
         let syncPkg = ensureSyntheticCoroutinePackage(
