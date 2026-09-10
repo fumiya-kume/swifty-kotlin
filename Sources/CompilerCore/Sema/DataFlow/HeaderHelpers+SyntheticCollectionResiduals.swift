@@ -169,7 +169,9 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             mapInterfaceSymbol: mapSymbols.mapSymbol,
             keyTypeParamSymbol: mapSymbols.keyTypeParamSymbol,
-            valueTypeParamSymbol: mapSymbols.valueTypeParamSymbol
+            valueTypeParamSymbol: mapSymbols.valueTypeParamSymbol,
+            bundledIndex: bundledIndex,
+            skipStats: skipStats
         )
         registerMapHigherOrderMembers(
             symbols: symbols, types: types, interner: interner,

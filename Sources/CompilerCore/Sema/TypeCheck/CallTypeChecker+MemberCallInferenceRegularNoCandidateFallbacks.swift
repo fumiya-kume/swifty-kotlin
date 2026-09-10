@@ -663,19 +663,6 @@ extension CallTypeChecker {
         let stringHOFReceiverType = safeCall
             ? sema.types.makeNonNullable(lookupReceiverType)
             : lookupReceiverType
-        if let boundType = tryBindStringChunkedTransform(
-            id,
-            calleeName: calleeName,
-            receiverType: stringHOFReceiverType,
-            args: args,
-            safeCall: safeCall,
-            ast: ast,
-            ctx: ctx,
-            locals: &locals,
-            explicitTypeArgs: explicitTypeArgs
-        ) {
-            return boundType
-        }
         if let boundType = tryBindStringWindowedTransform(
             id,
             calleeName: calleeName,

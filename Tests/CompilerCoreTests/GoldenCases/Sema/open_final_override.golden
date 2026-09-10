@@ -1,10 +1,10 @@
-symbol fq=golden.sema.Base kind=class vis=public flags=openType
-symbol fq=golden.sema.Derived kind=class vis=public flags=_
-symbol fq=golden.sema.InternalDerived kind=class vis=public flags=_
+symbol fq=golden.sema.Base[kind=class] kind=class vis=public flags=openType
+symbol fq=golden.sema.Derived[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.InternalDerived[kind=class] kind=class vis=public flags=_
 file fopen_final_override package=golden.sema
-  decl golden.sema.Base class Base sym=golden.sema.Base
-  decl golden.sema.Derived class Derived sym=golden.sema.Derived
-  decl golden.sema.InternalDerived class InternalDerived sym=golden.sema.InternalDerived
+  decl golden.sema.Base[kind=class] class Base sym=golden.sema.Base[kind=class]
+  decl golden.sema.Derived[kind=class] class Derived sym=golden.sema.Derived[kind=class]
+  decl golden.sema.InternalDerived[kind=class] class InternalDerived sym=golden.sema.InternalDerived[kind=class]
 expr e@4:27 int(1) type=Int
 expr e@5:22 int(2) type=Int
 expr e@9:31 int(10) type=Int

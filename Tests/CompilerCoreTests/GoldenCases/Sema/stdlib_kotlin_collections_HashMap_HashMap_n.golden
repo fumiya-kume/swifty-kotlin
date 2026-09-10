@@ -1,0 +1,50 @@
+symbol fq=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.hashMapReceiverMembers.$0.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.hashMapReceiverMembers[kind=fun;params=kotlin.collections.HashMap<String,Int?>,kotlin.collections.Map<String,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.HashMap<String, Int?>,kotlin.collections.Map<String, Int?>] ret=Any?
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableMap.MutableEntry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableSet[kind=iface;gen=1] kind=interface vis=public flags=synthetic
+file fstdlib_kotlin_collections_HashMap_HashMap_n package=golden.sema
+  decl golden.sema.hashMapReceiverMembers[kind=fun;params=kotlin.collections.HashMap<String,Int?>,kotlin.collections.Map<String,Int?>] fun hashMapReceiverMembers sym=golden.sema.hashMapReceiverMembers[kind=fun;params=kotlin.collections.HashMap<String,Int?>,kotlin.collections.Map<String,Int?>]
+expr e@4:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@4:5#1 memberCall recv=e@4:5 callee=clear args=[] type=Unit call=kotlin.collections.HashMap.clear[kind=fun;recv=kotlin.collections.HashMap<T0,T1>;params=;gen=2] targs=[String,Int?]
+expr e@5:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@5:21 string(key) type=String
+expr e@5:5#1 memberCall recv=e@5:5 callee=containsKey args=[_:e@5:21] type=Boolean call=kotlin.collections.HashMap.containsKey[kind=fun;recv=kotlin.collections.HashMap<T0,T1>;params=T0;gen=2]
+expr e@6:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@6:23 name(null) type=Nothing?
+expr e@6:5#1 memberCall recv=e@6:5 callee=containsValue args=[_:e@6:23] type=Boolean call=kotlin.collections.HashMap.containsValue[kind=fun;recv=kotlin.collections.HashMap<T0,T1>;params=T1;gen=2]
+expr e@7:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@7:5#1 memberCall recv=e@7:5 callee=entries args=[] type=kotlin.collections.MutableSet<kotlin.collections.MutableMap.MutableEntry<String, Int?>> ref=kotlin.collections.HashMap.entries[kind=prop]
+expr e@8:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@8:16 name(other) type=kotlin.collections.Map<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.other[kind=vparam]
+expr e@8:5#1 memberCall recv=e@8:5 callee=equals args=[_:e@8:16] type=Boolean call=kotlin.collections.HashMap.equals[kind=fun;recv=kotlin.collections.HashMap<T0,T1>;params=Any?;gen=2] targs=[String,Int?]
+expr e@9:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@9:13 string(key) type=String
+expr e@9:5#1 memberCall recv=e@9:5 callee=get args=[_:e@9:13] type=Int? call=kotlin.collections.HashMap.get[kind=fun;recv=kotlin.collections.HashMap<T0,T1>;params=T0;gen=2] targs=[String,Int?]
+expr e@10:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@10:5#1 memberCall recv=e@10:5 callee=hashCode args=[] type=Int call=kotlin.collections.HashMap.hashCode[kind=fun;recv=kotlin.collections.HashMap<T0,T1>;params=;gen=2] targs=[String,Int?]
+expr e@11:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@11:5#1 memberCall recv=e@11:5 callee=isEmpty args=[] type=Boolean call=kotlin.collections.HashMap.isEmpty[kind=fun;recv=kotlin.collections.HashMap<T0,T1>;params=;gen=2]
+expr e@12:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@12:5#1 memberCall recv=e@12:5 callee=keys args=[] type=kotlin.collections.MutableSet<String> ref=kotlin.collections.HashMap.keys[kind=prop]
+expr e@13:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@13:13 string(key) type=String
+expr e@13:20 int(1) type=Int
+expr e@13:5#1 memberCall recv=e@13:5 callee=put args=[_:e@13:13,_:e@13:20] type=Int? call=kotlin.collections.HashMap.put[kind=fun;recv=kotlin.collections.HashMap<T0,T1>;params=T0,T1;gen=2] targs=[String,Int?]
+expr e@14:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@14:16 name(other) type=kotlin.collections.Map<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.other[kind=vparam]
+expr e@14:5#1 memberCall recv=e@14:5 callee=putAll args=[_:e@14:16] type=Unit call=kotlin.collections.HashMap.putAll[kind=fun;recv=kotlin.collections.HashMap<T0,T1>;params=kotlin.collections.Map<out T0,T1>;gen=2] targs=[String,Int?]
+expr e@15:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@15:16 string(key) type=String
+expr e@15:5#1 memberCall recv=e@15:5 callee=remove args=[_:e@15:16] type=Int? call=kotlin.collections.remove[kind=fun;recv=kotlin.collections.MutableMap<out T0,T1>;params=T0;gen=2] targs=[String,Int?]
+expr e@16:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@16:5#1 memberCall recv=e@16:5 callee=size args=[] type=Int ref=kotlin.collections.HashMap.size[kind=prop]
+expr e@17:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@17:5#1 memberCall recv=e@17:5 callee=toString args=[] type=String call=kotlin.collections.HashMap.toString[kind=fun;recv=kotlin.collections.HashMap<T0,T1>;params=;gen=2] targs=[String,Int?]
+expr e@18:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@18:5#1 memberCall recv=e@18:5 callee=values args=[] type=kotlin.collections.MutableCollection<Int?> ref=kotlin.collections.HashMap.values[kind=prop]
+expr e@19:12 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam]
+expr e@19:5 return value=e@19:12 type=Nothing

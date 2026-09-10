@@ -1,106 +1,105 @@
-symbol fq=golden.sema.mapMinBy kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=kotlin.collections.Map.Entry<out String, out Int>
-symbol fq=golden.sema.mapMinBy.$0.map kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapMinOfComparable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=String
-symbol fq=golden.sema.mapMinOfComparable.$1.map kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapMinOfDouble kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Double
-symbol fq=golden.sema.mapMinOfDouble.$2.map kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapMinOfFloat kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Float
-symbol fq=golden.sema.mapMinOfFloat.$3.map kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapMinOfOrNullComparable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=String?
-symbol fq=golden.sema.mapMinOfOrNullComparable.$4.map kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapMinOfOrNullDouble kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Double?
-symbol fq=golden.sema.mapMinOfOrNullDouble.$5.map kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapMinOfOrNullFloat kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Float?
-symbol fq=golden.sema.mapMinOfOrNullFloat.$6.map kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapMinOfWith kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Int
-symbol fq=golden.sema.mapMinOfWith.$7.map kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapMinOfWithOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Int?
-symbol fq=golden.sema.mapMinOfWithOrNull.$8.map kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapMinWith kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=kotlin.collections.Map.Entry<out String, out Int>
-symbol fq=golden.sema.mapMinWith.$9.map kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapMinWithOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=kotlin.collections.Map.Entry<out String, out Int>?
-symbol fq=golden.sema.mapMinWithOrNull.$10.map kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
-symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.mapMinBy.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapMinBy[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=kotlin.collections.Map.Entry<out String, out Int>
+symbol fq=golden.sema.mapMinOfComparable.$1.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapMinOfComparable[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=String
+symbol fq=golden.sema.mapMinOfDouble.$2.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapMinOfDouble[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Double
+symbol fq=golden.sema.mapMinOfFloat.$3.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapMinOfFloat[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Float
+symbol fq=golden.sema.mapMinOfOrNullComparable.$4.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapMinOfOrNullComparable[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=String?
+symbol fq=golden.sema.mapMinOfOrNullDouble.$5.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapMinOfOrNullDouble[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Double?
+symbol fq=golden.sema.mapMinOfOrNullFloat.$6.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapMinOfOrNullFloat[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Float?
+symbol fq=golden.sema.mapMinOfWith.$7.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapMinOfWithOrNull.$8.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapMinOfWithOrNull[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Int?
+symbol fq=golden.sema.mapMinOfWith[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Int
+symbol fq=golden.sema.mapMinWith.$9.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapMinWithOrNull.$10.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapMinWithOrNull[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=kotlin.collections.Map.Entry<out String, out Int>?
+symbol fq=golden.sema.mapMinWith[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=kotlin.collections.Map.Entry<out String, out Int>
+symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
+symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
+symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Map_min package=golden.sema
-  decl golden.sema.mapMinBy fun mapMinBy sym=golden.sema.mapMinBy
-  decl golden.sema.mapMinOfComparable fun mapMinOfComparable sym=golden.sema.mapMinOfComparable
-  decl golden.sema.mapMinOfDouble fun mapMinOfDouble sym=golden.sema.mapMinOfDouble
-  decl golden.sema.mapMinOfFloat fun mapMinOfFloat sym=golden.sema.mapMinOfFloat
-  decl golden.sema.mapMinOfOrNullComparable fun mapMinOfOrNullComparable sym=golden.sema.mapMinOfOrNullComparable
-  decl golden.sema.mapMinOfOrNullDouble fun mapMinOfOrNullDouble sym=golden.sema.mapMinOfOrNullDouble
-  decl golden.sema.mapMinOfOrNullFloat fun mapMinOfOrNullFloat sym=golden.sema.mapMinOfOrNullFloat
-  decl golden.sema.mapMinOfWith fun mapMinOfWith sym=golden.sema.mapMinOfWith
-  decl golden.sema.mapMinOfWithOrNull fun mapMinOfWithOrNull sym=golden.sema.mapMinOfWithOrNull
-  decl golden.sema.mapMinWith fun mapMinWith sym=golden.sema.mapMinWith
-  decl golden.sema.mapMinWithOrNull fun mapMinWithOrNull sym=golden.sema.mapMinWithOrNull
-expr e@3:39 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinBy.$0.map
+  decl golden.sema.mapMinBy[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinBy sym=golden.sema.mapMinBy[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapMinOfComparable[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinOfComparable sym=golden.sema.mapMinOfComparable[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapMinOfDouble[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinOfDouble sym=golden.sema.mapMinOfDouble[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapMinOfFloat[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinOfFloat sym=golden.sema.mapMinOfFloat[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapMinOfOrNullComparable[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinOfOrNullComparable sym=golden.sema.mapMinOfOrNullComparable[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapMinOfOrNullDouble[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinOfOrNullDouble sym=golden.sema.mapMinOfOrNullDouble[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapMinOfOrNullFloat[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinOfOrNullFloat sym=golden.sema.mapMinOfOrNullFloat[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapMinOfWith[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinOfWith sym=golden.sema.mapMinOfWith[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapMinOfWithOrNull[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinOfWithOrNull sym=golden.sema.mapMinOfWithOrNull[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapMinWith[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinWith sym=golden.sema.mapMinWith[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapMinWithOrNull[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinWithOrNull sym=golden.sema.mapMinWithOrNull[kind=fun;params=kotlin.collections.Map<String,Int>]
+expr e@3:39 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinBy.$0.map[kind=vparam]
 expr e@3:51 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-0
-expr e@3:51#1 memberCall recv=e@3:51 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@3:51#1 memberCall recv=e@3:51 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
 expr e@3:49 lambda params=[] body=e@3:51#1 label=minBy type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
-expr e@3:39#1 memberCall recv=e@3:39 callee=minBy args=[_:e@3:49] type=kotlin.collections.Map.Entry<out String, out Int> call=kotlin.collections.minBy#1 targs=[String,Int,Int]
-expr e@5:57 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfComparable.$1.map
+expr e@3:39#1 memberCall recv=e@3:39 callee=minBy args=[_:e@3:49] type=kotlin.collections.Map.Entry<out String, out Int> call=kotlin.collections.minBy[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=T2};gen=3] targs=[String,Int,Int]
+expr e@5:57 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfComparable.$1.map[kind=vparam]
 expr e@5:69 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-1
-expr e@5:69#1 memberCall recv=e@5:69 callee=key args=[] type=String call=kotlin.collections.Map.Entry.key targs=[String,Int]
+expr e@5:69#1 memberCall recv=e@5:69 callee=key args=[] type=String call=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
 expr e@5:67 lambda params=[] body=e@5:69#1 label=minOf type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
-expr e@5:57#1 memberCall recv=e@5:57 callee=minOf args=[_:e@5:67] type=String call=kotlin.collections.minOf#3 targs=[String,Int,String]
-expr e@7:53 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfDouble.$2.map
+expr e@5:57#1 memberCall recv=e@5:57 callee=minOf args=[_:e@5:67] type=String call=kotlin.collections.minOf[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=T2};gen=3] targs=[String,Int,String]
+expr e@7:53 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfDouble.$2.map[kind=vparam]
 expr e@7:65 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-2
-expr e@7:65#1 memberCall recv=e@7:65 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
-expr e@7:65#2 memberCall recv=e@7:65#1 callee=toDouble args=[] type=Double call=kotlin.toDouble#1
+expr e@7:65#1 memberCall recv=e@7:65 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
+expr e@7:65#2 memberCall recv=e@7:65#1 callee=toDouble args=[] type=Double call=kotlin.toDouble[kind=fun;recv=Int;params=]
 expr e@7:63 lambda params=[] body=e@7:65#2 label=minOf type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
-expr e@7:53#1 memberCall recv=e@7:53 callee=minOf args=[_:e@7:63] type=Double call=kotlin.collections.minOf#1 targs=[String,Int]
-expr e@9:51 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfFloat.$3.map
+expr e@7:53#1 memberCall recv=e@7:53 callee=minOf args=[_:e@7:63] type=Double call=kotlin.collections.minOf[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=Double};gen=2] targs=[String,Int]
+expr e@9:51 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfFloat.$3.map[kind=vparam]
 expr e@9:63 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-3
-expr e@9:63#1 memberCall recv=e@9:63 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@9:63#1 memberCall recv=e@9:63 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
 expr e@9:63#2 memberCall recv=e@9:63#1 callee=toFloat args=[] type=Float
 expr e@9:61 lambda params=[] body=e@9:63#2 label=minOf type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
-expr e@9:51#1 memberCall recv=e@9:51 callee=minOf args=[_:e@9:61] type=Float call=kotlin.collections.minOf#2 targs=[String,Int]
-expr e@11:64 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfOrNullComparable.$4.map
+expr e@9:51#1 memberCall recv=e@9:51 callee=minOf args=[_:e@9:61] type=Float call=kotlin.collections.minOf[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=Float};gen=2] targs=[String,Int]
+expr e@11:64 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfOrNullComparable.$4.map[kind=vparam]
 expr e@11:82 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-4
-expr e@11:82#1 memberCall recv=e@11:82 callee=key args=[] type=String call=kotlin.collections.Map.Entry.key targs=[String,Int]
+expr e@11:82#1 memberCall recv=e@11:82 callee=key args=[] type=String call=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
 expr e@11:80 lambda params=[] body=e@11:82#1 label=minOfOrNull type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
-expr e@11:64#1 memberCall recv=e@11:64 callee=minOfOrNull args=[_:e@11:80] type=String? call=kotlin.collections.minOfOrNull#3 targs=[String,Int,String]
-expr e@13:60 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfOrNullDouble.$5.map
+expr e@11:64#1 memberCall recv=e@11:64 callee=minOfOrNull args=[_:e@11:80] type=String? call=kotlin.collections.minOfOrNull[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=T2};gen=3] targs=[String,Int,String]
+expr e@13:60 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfOrNullDouble.$5.map[kind=vparam]
 expr e@13:78 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-5
-expr e@13:78#1 memberCall recv=e@13:78 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
-expr e@13:78#2 memberCall recv=e@13:78#1 callee=toDouble args=[] type=Double call=kotlin.toDouble#1
+expr e@13:78#1 memberCall recv=e@13:78 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
+expr e@13:78#2 memberCall recv=e@13:78#1 callee=toDouble args=[] type=Double call=kotlin.toDouble[kind=fun;recv=Int;params=]
 expr e@13:76 lambda params=[] body=e@13:78#2 label=minOfOrNull type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
-expr e@13:60#1 memberCall recv=e@13:60 callee=minOfOrNull args=[_:e@13:76] type=Double? call=kotlin.collections.minOfOrNull#1 targs=[String,Int]
-expr e@15:58 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfOrNullFloat.$6.map
+expr e@13:60#1 memberCall recv=e@13:60 callee=minOfOrNull args=[_:e@13:76] type=Double? call=kotlin.collections.minOfOrNull[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=Double};gen=2] targs=[String,Int]
+expr e@15:58 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfOrNullFloat.$6.map[kind=vparam]
 expr e@15:76 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-6
-expr e@15:76#1 memberCall recv=e@15:76 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@15:76#1 memberCall recv=e@15:76 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
 expr e@15:76#2 memberCall recv=e@15:76#1 callee=toFloat args=[] type=Float
 expr e@15:74 lambda params=[] body=e@15:76#2 label=minOfOrNull type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
-expr e@15:58#1 memberCall recv=e@15:58 callee=minOfOrNull args=[_:e@15:74] type=Float? call=kotlin.collections.minOfOrNull#2 targs=[String,Int]
-expr e@18:5 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfWith.$7.map
-expr e@18:19 call callee=e@18:19#1 args=[] type=kotlin.Comparator<Int> call=kotlin.comparisons.naturalOrder targs=[Int]
+expr e@15:58#1 memberCall recv=e@15:58 callee=minOfOrNull args=[_:e@15:74] type=Float? call=kotlin.collections.minOfOrNull[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=Float};gen=2] targs=[String,Int]
+expr e@18:5 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfWith.$7.map[kind=vparam]
+expr e@18:19 call callee=e@18:19#1 args=[] type=kotlin.Comparator<Int> call=kotlin.comparisons.naturalOrder[kind=fun;params=;gen=1] targs=[Int]
 expr e@18:42 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-7
-expr e@18:42#1 memberCall recv=e@18:42 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@18:42#1 memberCall recv=e@18:42 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
 expr e@18:40 lambda params=[] body=e@18:42#1 label=minOfWith type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
-expr e@18:5#1 memberCall recv=e@18:5 callee=minOfWith args=[_:e@18:19,_:e@18:40] type=Int call=kotlin.collections.minOfWith#1 targs=[String,Int,Int]
-expr e@21:5 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfWithOrNull.$8.map
-expr e@21:25 call callee=e@21:25#1 args=[] type=kotlin.Comparator<Int> call=kotlin.comparisons.naturalOrder targs=[Int]
+expr e@18:5#1 memberCall recv=e@18:5 callee=minOfWith args=[_:e@18:19,_:e@18:40] type=Int call=kotlin.collections.minOfWith[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=kotlin.Comparator<in T2>,fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=T2};gen=3] targs=[String,Int,Int]
+expr e@21:5 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinOfWithOrNull.$8.map[kind=vparam]
+expr e@21:25 call callee=e@21:25#1 args=[] type=kotlin.Comparator<Int> call=kotlin.comparisons.naturalOrder[kind=fun;params=;gen=1] targs=[Int]
 expr e@21:48 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-8
-expr e@21:48#1 memberCall recv=e@21:48 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@21:48#1 memberCall recv=e@21:48 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
 expr e@21:46 lambda params=[] body=e@21:48#1 label=minOfWithOrNull type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
-expr e@21:5#1 memberCall recv=e@21:5 callee=minOfWithOrNull args=[_:e@21:25,_:e@21:46] type=Int? call=kotlin.collections.minOfWithOrNull#1 targs=[String,Int,Int]
-expr e@24:5 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinWith.$9.map
+expr e@21:5#1 memberCall recv=e@21:5 callee=minOfWithOrNull args=[_:e@21:25,_:e@21:46] type=Int? call=kotlin.collections.minOfWithOrNull[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=kotlin.Comparator<in T2>,fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=T2};gen=3] targs=[String,Int,Int]
+expr e@24:5 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinWith.$9.map[kind=vparam]
 expr e@24:29 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-9
-expr e@24:29#1 memberCall recv=e@24:29 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@24:29#1 memberCall recv=e@24:29 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
 expr e@24:27 lambda params=[] body=e@24:29#1 label=compareBy type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any?
-expr e@24:17 call callee=e@24:17#1 args=[_:e@24:27] type=kotlin.Comparator<kotlin.collections.Map.Entry<out String, out Int>> call=kotlin.comparisons.compareBy#0 targs=[kotlin.collections.Map.Entry<out String, out Int>]
-expr e@24:5#1 memberCall recv=e@24:5 callee=minWith args=[_:e@24:17] type=kotlin.collections.Map.Entry<out String, out Int> call=kotlin.collections.minWith#1 targs=[String,Int]
-expr e@27:5 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinWithOrNull.$10.map
+expr e@24:17 call callee=e@24:17#1 args=[_:e@24:27] type=kotlin.Comparator<kotlin.collections.Map.Entry<out String, out Int>> call=kotlin.comparisons.compareBy[kind=fun;params=fn{p=T0;ret=kotlin.Comparable<*>?};gen=1] targs=[kotlin.collections.Map.Entry<out String, out Int>]
+expr e@24:5#1 memberCall recv=e@24:5 callee=minWith args=[_:e@24:17] type=kotlin.collections.Map.Entry<out String, out Int> call=kotlin.collections.minWith[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=kotlin.Comparator<in kotlin.collections.Map.Entry<T0,T1>>;gen=2] targs=[String,Int]
+expr e@27:5 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapMinWithOrNull.$10.map[kind=vparam]
 expr e@27:35 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-10
-expr e@27:35#1 memberCall recv=e@27:35 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@27:35#1 memberCall recv=e@27:35 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
 expr e@27:33 lambda params=[] body=e@27:35#1 label=compareBy type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any?
-expr e@27:23 call callee=e@27:23#1 args=[_:e@27:33] type=kotlin.Comparator<kotlin.collections.Map.Entry<out String, out Int>> call=kotlin.comparisons.compareBy#0 targs=[kotlin.collections.Map.Entry<out String, out Int>]
-expr e@27:5#1 memberCall recv=e@27:5 callee=minWithOrNull args=[_:e@27:23] type=kotlin.collections.Map.Entry<out String, out Int>? call=kotlin.collections.minWithOrNull#1 targs=[String,Int]
+expr e@27:23 call callee=e@27:23#1 args=[_:e@27:33] type=kotlin.Comparator<kotlin.collections.Map.Entry<out String, out Int>> call=kotlin.comparisons.compareBy[kind=fun;params=fn{p=T0;ret=kotlin.Comparable<*>?};gen=1] targs=[kotlin.collections.Map.Entry<out String, out Int>]
+expr e@27:5#1 memberCall recv=e@27:5 callee=minWithOrNull args=[_:e@27:23] type=kotlin.collections.Map.Entry<out String, out Int>? call=kotlin.collections.minWithOrNull[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=kotlin.Comparator<in kotlin.collections.Map.Entry<T0,T1>>;gen=2] targs=[String,Int]
 diagnostic severity=error code=KSWIFTK-TYPE-0001 at=26:1 msg=Type constraint could not be satisfied.

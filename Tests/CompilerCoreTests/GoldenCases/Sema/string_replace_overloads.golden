@@ -1,28 +1,28 @@
-symbol fq=golden.sema.useReplaceChar kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useReplaceCharCaseSensitive kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useReplaceCharIgnoreCase kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useReplaceStringIgnoreCase kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplaceCharCaseSensitive[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplaceCharIgnoreCase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplaceChar[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplaceStringIgnoreCase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstring_replace_overloads package=golden.sema
-  decl golden.sema.useReplaceChar fun useReplaceChar sym=golden.sema.useReplaceChar
-  decl golden.sema.useReplaceStringIgnoreCase fun useReplaceStringIgnoreCase sym=golden.sema.useReplaceStringIgnoreCase
-  decl golden.sema.useReplaceCharIgnoreCase fun useReplaceCharIgnoreCase sym=golden.sema.useReplaceCharIgnoreCase
-  decl golden.sema.useReplaceCharCaseSensitive fun useReplaceCharCaseSensitive sym=golden.sema.useReplaceCharCaseSensitive
+  decl golden.sema.useReplaceChar[kind=fun;params=] fun useReplaceChar sym=golden.sema.useReplaceChar[kind=fun;params=]
+  decl golden.sema.useReplaceStringIgnoreCase[kind=fun;params=] fun useReplaceStringIgnoreCase sym=golden.sema.useReplaceStringIgnoreCase[kind=fun;params=]
+  decl golden.sema.useReplaceCharIgnoreCase[kind=fun;params=] fun useReplaceCharIgnoreCase sym=golden.sema.useReplaceCharIgnoreCase[kind=fun;params=]
+  decl golden.sema.useReplaceCharCaseSensitive[kind=fun;params=] fun useReplaceCharCaseSensitive sym=golden.sema.useReplaceCharCaseSensitive[kind=fun;params=]
 expr e@3:32 string(hello world) type=String
 expr e@3:54 char(108) type=Char
 expr e@3:59 char(114) type=Char
-expr e@3:32#1 memberCall recv=e@3:32 callee=replace args=[_:e@3:54,_:e@3:59] type=String call=kotlin.text.replace#0
+expr e@3:32#1 memberCall recv=e@3:32 callee=replace args=[_:e@3:54,_:e@3:59] type=String call=kotlin.text.replace[kind=fun;recv=String;params=Char,Char,Boolean]
 expr e@5:44 string(Hello World) type=String
 expr e@5:66 string(hello) type=String
 expr e@5:75 string(Hi) type=String
 expr e@5:94 bool(true) type=Boolean
-expr e@5:44#1 memberCall recv=e@5:44 callee=replace args=[_:e@5:66,_:e@5:75,ignoreCase:e@5:94] type=String call=kotlin.text.replace#1
+expr e@5:44#1 memberCall recv=e@5:44 callee=replace args=[_:e@5:66,_:e@5:75,ignoreCase:e@5:94] type=String call=kotlin.text.replace[kind=fun;recv=String;params=String,String,Boolean]
 expr e@7:42 string(Hello World) type=String
 expr e@7:64 char(104) type=Char
 expr e@7:69 char(74) type=Char
 expr e@7:87 bool(true) type=Boolean
-expr e@7:42#1 memberCall recv=e@7:42 callee=replace args=[_:e@7:64,_:e@7:69,ignoreCase:e@7:87] type=String call=kotlin.text.replace#0
+expr e@7:42#1 memberCall recv=e@7:42 callee=replace args=[_:e@7:64,_:e@7:69,ignoreCase:e@7:87] type=String call=kotlin.text.replace[kind=fun;recv=String;params=Char,Char,Boolean]
 expr e@9:45 string(Hello World) type=String
 expr e@9:67 char(72) type=Char
 expr e@9:72 char(74) type=Char
 expr e@9:90 bool(false) type=Boolean
-expr e@9:45#1 memberCall recv=e@9:45 callee=replace args=[_:e@9:67,_:e@9:72,ignoreCase:e@9:90] type=String call=kotlin.text.replace#0
+expr e@9:45#1 memberCall recv=e@9:45 callee=replace args=[_:e@9:67,_:e@9:72,ignoreCase:e@9:90] type=String call=kotlin.text.replace[kind=fun;recv=String;params=Char,Char,Boolean]

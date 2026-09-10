@@ -1,39 +1,39 @@
-symbol fq=__local_0.x kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.y kind=local vis=private flags=_ type=Int
-symbol fq=__local_2.z kind=local vis=private flags=mutable type=Int
-symbol fq=__local_3.a kind=local vis=private flags=_ type=Int
-symbol fq=__local_4.b kind=local vis=private flags=mutable type=Int
-symbol fq=deferredValInit kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=inferredLocal kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=mutableTyped kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=typedLocal kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=useBeforeInit kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.x[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.y[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.z[kind=local] kind=local vis=private flags=mutable type=Int
+symbol fq=__local_3.a[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_4.b[kind=local] kind=local vis=private flags=mutable type=Int
+symbol fq=deferredValInit[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=inferredLocal[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=mutableTyped[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=typedLocal[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=useBeforeInit[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file flocal_decl package=_
-  decl typedLocal fun typedLocal sym=typedLocal
-  decl inferredLocal fun inferredLocal sym=inferredLocal
-  decl mutableTyped fun mutableTyped sym=mutableTyped
-  decl deferredValInit fun deferredValInit sym=deferredValInit
-  decl useBeforeInit fun useBeforeInit sym=useBeforeInit
+  decl typedLocal[kind=fun;params=] fun typedLocal sym=typedLocal[kind=fun;params=]
+  decl inferredLocal[kind=fun;params=] fun inferredLocal sym=inferredLocal[kind=fun;params=]
+  decl mutableTyped[kind=fun;params=] fun mutableTyped sym=mutableTyped[kind=fun;params=]
+  decl deferredValInit[kind=fun;params=] fun deferredValInit sym=deferredValInit[kind=fun;params=]
+  decl useBeforeInit[kind=fun;params=] fun useBeforeInit sym=useBeforeInit[kind=fun;params=]
 expr e@2:18 int(10) type=Int
-expr e@2:5 localDecl x mutable=0 type=Int init=e@2:18 type=Unit ref=__local_0.x
-expr e@3:13 name(x) type=Int ref=__local_0.x
-expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13] type=Unit call=kotlin.io.println#1
+expr e@2:5 localDecl x mutable=0 type=Int init=e@2:18 type=Unit ref=__local_0.x[kind=local]
+expr e@3:13 name(x) type=Int ref=__local_0.x[kind=local]
+expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@7:13 int(20) type=Int
-expr e@7:5 localDecl y mutable=0 type=_ init=e@7:13 type=Unit ref=__local_1.y
-expr e@8:13 name(y) type=Int ref=__local_1.y
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println#1
+expr e@7:5 localDecl y mutable=0 type=_ init=e@7:13 type=Unit ref=__local_1.y[kind=local]
+expr e@8:13 name(y) type=Int ref=__local_1.y[kind=local]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@12:18 int(30) type=Int
-expr e@12:5 localDecl z mutable=1 type=Int init=e@12:18 type=Unit ref=__local_2.z
+expr e@12:5 localDecl z mutable=1 type=Int init=e@12:18 type=Unit ref=__local_2.z[kind=local]
 expr e@13:9 int(40) type=Int
-expr e@13:5 localAssign z value=e@13:9 type=Unit ref=__local_2.z
-expr e@14:13 name(z) type=Int ref=__local_2.z
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13] type=Unit call=kotlin.io.println#1
-expr e@18:5 localDecl a mutable=0 type=Int init=_ type=Unit ref=__local_3.a
+expr e@13:5 localAssign z value=e@13:9 type=Unit ref=__local_2.z[kind=local]
+expr e@14:13 name(z) type=Int ref=__local_2.z[kind=local]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@18:5 localDecl a mutable=0 type=Int init=_ type=Unit ref=__local_3.a[kind=local]
 expr e@19:9 int(5) type=Int
-expr e@19:5 localAssign a value=e@19:9 type=Unit ref=__local_3.a
-expr e@20:13 name(a) type=Int ref=__local_3.a
-expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13] type=Unit call=kotlin.io.println#1
-expr e@24:5 localDecl b mutable=1 type=Int init=_ type=Unit ref=__local_4.b
-expr e@25:13 name(b) type=Int ref=__local_4.b
-expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println#1
+expr e@19:5 localAssign a value=e@19:9 type=Unit ref=__local_3.a[kind=local]
+expr e@20:13 name(a) type=Int ref=__local_3.a[kind=local]
+expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@24:5 localDecl b mutable=1 type=Int init=_ type=Unit ref=__local_4.b[kind=local]
+expr e@25:13 name(b) type=Int ref=__local_4.b[kind=local]
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 diagnostic severity=error code=KSWIFTK-SEMA-0031 at=25:13 msg=Variable 'b' must be initialized before use.

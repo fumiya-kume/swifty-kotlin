@@ -16,12 +16,16 @@ jobs:
   mutation-fuzzer:
     name: Bounded mutation fuzzer and crash corpus replay
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     env:
       FUZZ_SEED: "23023"
       FUZZ_CASES: "64"
-      FUZZ_DURATION_SECONDS: "600"
-      FUZZ_TIMEOUT_SECONDS: "30"
+      FUZZ_DURATION_SECONDS: "900"
+      # A single kswiftc compile (sema through link) legitimately takes tens of
+      # seconds on this runner; the CI diff job allows 180s per compile for the
+      # same kswiftc + KSwiftKStdlib.kklib path. A smaller budget turns every
+      # compilable case into a bogus "timeout" finding.
+      FUZZ_TIMEOUT_SECONDS: "180"
     steps:
       - uses: actions/checkout@v7
       - name: Run mutation-generator smoke test
@@ -57,6 +61,25 @@ jobs:
             --stdlib-library "$RUNNER_TEMP/nightly-mutation-fuzzer/KSwiftKStdlib.kklib" \
             --timeout-seconds "$FUZZ_TIMEOUT_SECONDS" \
             --workers 1
+      - name: Baseline compile sanity check
+        env:
+          KSWIFTC: ${{ github.workspace }}/.build/release/kswiftc
+        run: |
+          # Guardrail: an unmutated known-good input must compile within the
+          # fuzz timeout. Otherwise every compilable mutation case is reported
+          # as a bogus timeout finding instead of a real signal.
+          start=$(date +%s)
+          if timeout "$FUZZ_TIMEOUT_SECONDS" "$KSWIFTC" \
+            --no-stdlib \
+            --stdlib-library "$RUNNER_TEMP/nightly-mutation-fuzzer/KSwiftKStdlib.kklib" \
+            Scripts/diff_cases/hello.kt \
+            -o "$RUNNER_TEMP/nightly-mutation-fuzzer/baseline-hello"; then
+            echo "Baseline hello.kt compile finished in $(( $(date +%s) - start ))s (budget: ${FUZZ_TIMEOUT_SECONDS}s)"
+          else
+            rc=$?
+            echo "::error::Baseline compile of Scripts/diff_cases/hello.kt failed or exceeded the ${FUZZ_TIMEOUT_SECONDS}s fuzz timeout (rc=$rc). Raise FUZZ_TIMEOUT_SECONDS or fix the environment before trusting timeout findings."
+            exit "$rc"
+          fi
       - name: Run bounded mutation fuzzer
         env:
           KSWIFTC: ${{ github.workspace }}/.build/release/kswiftc

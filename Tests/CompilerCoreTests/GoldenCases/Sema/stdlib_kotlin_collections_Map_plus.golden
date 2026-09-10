@@ -1,55 +1,55 @@
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=minusIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.collections.Iterable<String>] ret=kotlin.collections.Map<String, Int>
-symbol fq=minusIterable.$0.keys kind=valueParameter vis=private flags=_
-symbol fq=minusIterable.$0.source kind=valueParameter vis=private flags=_
-symbol fq=minusKey kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,String] ret=kotlin.collections.Map<String, Int>
-symbol fq=minusKey.$1.key kind=valueParameter vis=private flags=_
-symbol fq=minusKey.$1.source kind=valueParameter vis=private flags=_
-symbol fq=plusArray kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.Array<out kotlin.Pair<String, Int>>] ret=kotlin.collections.Map<String, Int>
-symbol fq=plusArray.$2.pairs kind=valueParameter vis=private flags=_
-symbol fq=plusArray.$2.source kind=valueParameter vis=private flags=_
-symbol fq=plusIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.collections.Iterable<kotlin.Pair<String, Int>>] ret=kotlin.collections.Map<String, Int>
-symbol fq=plusIterable.$3.pairs kind=valueParameter vis=private flags=_
-symbol fq=plusIterable.$3.source kind=valueParameter vis=private flags=_
-symbol fq=plusMap kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.collections.Map<String, Int>] ret=kotlin.collections.Map<String, Int>
-symbol fq=plusMap.$4.other kind=valueParameter vis=private flags=_
-symbol fq=plusMap.$4.source kind=valueParameter vis=private flags=_
-symbol fq=plusPair kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.Pair<String, Int>] ret=kotlin.collections.Map<String, Int>
-symbol fq=plusPair.$5.pair kind=valueParameter vis=private flags=_
-symbol fq=plusPair.$5.source kind=valueParameter vis=private flags=_
-symbol fq=plusSequence kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.sequences.Sequence<kotlin.Pair<String, Int>>] ret=kotlin.collections.Map<String, Int>
-symbol fq=plusSequence.$6.pairs kind=valueParameter vis=private flags=_
-symbol fq=plusSequence.$6.source kind=valueParameter vis=private flags=_
+symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
+symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
+symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=minusIterable.$0.keys[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=minusIterable.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=minusIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.Iterable<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.collections.Iterable<String>] ret=kotlin.collections.Map<String, Int>
+symbol fq=minusKey.$1.key[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=minusKey.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=minusKey[kind=fun;params=kotlin.collections.Map<String,Int>,String] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,String] ret=kotlin.collections.Map<String, Int>
+symbol fq=plusArray.$2.pairs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusArray.$2.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusArray[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.Array<out kotlin.Pair<String,Int>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.Array<out kotlin.Pair<String, Int>>] ret=kotlin.collections.Map<String, Int>
+symbol fq=plusIterable.$3.pairs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusIterable.$3.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.Iterable<kotlin.Pair<String,Int>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.collections.Iterable<kotlin.Pair<String, Int>>] ret=kotlin.collections.Map<String, Int>
+symbol fq=plusMap.$4.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusMap.$4.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusMap[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.collections.Map<String, Int>] ret=kotlin.collections.Map<String, Int>
+symbol fq=plusPair.$5.pair[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusPair.$5.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusPair[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.Pair<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.Pair<String, Int>] ret=kotlin.collections.Map<String, Int>
+symbol fq=plusSequence.$6.pairs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusSequence.$6.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusSequence[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.sequences.Sequence<kotlin.Pair<String,Int>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.sequences.Sequence<kotlin.Pair<String, Int>>] ret=kotlin.collections.Map<String, Int>
 file fstdlib_kotlin_collections_Map_plus package=_
-  decl plusPair fun plusPair sym=plusPair
-  decl plusMap fun plusMap sym=plusMap
-  decl plusIterable fun plusIterable sym=plusIterable
-  decl plusSequence fun plusSequence sym=plusSequence
-  decl plusArray fun plusArray sym=plusArray
-  decl minusKey fun minusKey sym=minusKey
-  decl minusIterable fun minusIterable sym=minusIterable
-expr e@1:85 name(source) type=kotlin.collections.Map<String, Int> ref=plusPair.$5.source
-expr e@1:94 name(pair) type=kotlin.Pair<String, Int> ref=plusPair.$5.pair
-expr e@1:85#1 binary(add) lhs=e@1:85 rhs=e@1:94 type=kotlin.collections.Map<String, Int> call=kotlin.collections.plus#8 targs=[String,Int]
-expr e@3:84 name(source) type=kotlin.collections.Map<String, Int> ref=plusMap.$4.source
-expr e@3:93 name(other) type=kotlin.collections.Map<String, Int> ref=plusMap.$4.other
-expr e@3:84#1 binary(add) lhs=e@3:84 rhs=e@3:93 type=kotlin.collections.Map<String, Int> call=kotlin.collections.plus#9 targs=[String,Int]
-expr e@8:23 name(source) type=kotlin.collections.Map<String, Int> ref=plusIterable.$3.source
-expr e@8:32 name(pairs) type=kotlin.collections.Iterable<kotlin.Pair<String, Int>> ref=plusIterable.$3.pairs
-expr e@8:23#1 binary(add) lhs=e@8:23 rhs=e@8:32 type=kotlin.collections.Map<String, Int> call=kotlin.collections.plus#10 targs=[String,Int]
-expr e@13:23 name(source) type=kotlin.collections.Map<String, Int> ref=plusSequence.$6.source
-expr e@13:35 name(pairs) type=kotlin.sequences.Sequence<kotlin.Pair<String, Int>> ref=plusSequence.$6.pairs
-expr e@13:23#1 memberCall recv=e@13:23 callee=plus args=[_:e@13:35] type=kotlin.collections.Map<String, Int> call=kotlin.collections.plus#11 targs=[String,Int]
-expr e@18:23 name(source) type=kotlin.collections.Map<String, Int> ref=plusArray.$2.source
-expr e@18:32 name(pairs) type=kotlin.Array<out kotlin.Pair<String, Int>> ref=plusArray.$2.pairs
-expr e@18:23#1 binary(add) lhs=e@18:23 rhs=e@18:32 type=kotlin.collections.Map<String, Int> call=kotlin.collections.plus#12 targs=[String,Int]
-expr e@20:73 name(source) type=kotlin.collections.Map<String, Int> ref=minusKey.$1.source
-expr e@20:82 name(key) type=String ref=minusKey.$1.key
-expr e@20:73#1 binary(subtract) lhs=e@20:73 rhs=e@20:82 type=kotlin.collections.Map<String, Int> call=kotlin.collections.minus#4 targs=[String,Int]
-expr e@22:89 name(source) type=kotlin.collections.Map<String, Int> ref=minusIterable.$0.source
-expr e@22:98 name(keys) type=kotlin.collections.Iterable<String> ref=minusIterable.$0.keys
-expr e@22:89#1 binary(subtract) lhs=e@22:89 rhs=e@22:98 type=kotlin.collections.Map<String, Int> call=kotlin.collections.minus#5 targs=[String,Int]
+  decl plusPair[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.Pair<String,Int>] fun plusPair sym=plusPair[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.Pair<String,Int>]
+  decl plusMap[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.Map<String,Int>] fun plusMap sym=plusMap[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.Map<String,Int>]
+  decl plusIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.Iterable<kotlin.Pair<String,Int>>] fun plusIterable sym=plusIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.Iterable<kotlin.Pair<String,Int>>]
+  decl plusSequence[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.sequences.Sequence<kotlin.Pair<String,Int>>] fun plusSequence sym=plusSequence[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.sequences.Sequence<kotlin.Pair<String,Int>>]
+  decl plusArray[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.Array<out kotlin.Pair<String,Int>>] fun plusArray sym=plusArray[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.Array<out kotlin.Pair<String,Int>>]
+  decl minusKey[kind=fun;params=kotlin.collections.Map<String,Int>,String] fun minusKey sym=minusKey[kind=fun;params=kotlin.collections.Map<String,Int>,String]
+  decl minusIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.Iterable<String>] fun minusIterable sym=minusIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.Iterable<String>]
+expr e@1:85 name(source) type=kotlin.collections.Map<String, Int> ref=plusPair.$5.source[kind=vparam]
+expr e@1:94 name(pair) type=kotlin.Pair<String, Int> ref=plusPair.$5.pair[kind=vparam]
+expr e@1:85#1 binary(add) lhs=e@1:85 rhs=e@1:94 type=kotlin.collections.Map<String, Int> call=kotlin.collections.plus[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=kotlin.Pair<T0,T1>;gen=2] targs=[String,Int]
+expr e@3:84 name(source) type=kotlin.collections.Map<String, Int> ref=plusMap.$4.source[kind=vparam]
+expr e@3:93 name(other) type=kotlin.collections.Map<String, Int> ref=plusMap.$4.other[kind=vparam]
+expr e@3:84#1 binary(add) lhs=e@3:84 rhs=e@3:93 type=kotlin.collections.Map<String, Int> call=kotlin.collections.plus[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=kotlin.collections.Map<T0,T1>;gen=2] targs=[String,Int]
+expr e@8:23 name(source) type=kotlin.collections.Map<String, Int> ref=plusIterable.$3.source[kind=vparam]
+expr e@8:32 name(pairs) type=kotlin.collections.Iterable<kotlin.Pair<String, Int>> ref=plusIterable.$3.pairs[kind=vparam]
+expr e@8:23#1 binary(add) lhs=e@8:23 rhs=e@8:32 type=kotlin.collections.Map<String, Int> call=kotlin.collections.plus[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=kotlin.collections.Iterable<kotlin.Pair<T0,T1>>;gen=2] targs=[String,Int]
+expr e@13:23 name(source) type=kotlin.collections.Map<String, Int> ref=plusSequence.$6.source[kind=vparam]
+expr e@13:35 name(pairs) type=kotlin.sequences.Sequence<kotlin.Pair<String, Int>> ref=plusSequence.$6.pairs[kind=vparam]
+expr e@13:23#1 memberCall recv=e@13:23 callee=plus args=[_:e@13:35] type=kotlin.collections.Map<String, Int> call=kotlin.collections.plus[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=kotlin.sequences.Sequence<kotlin.Pair<T0,T1>>;gen=2] targs=[String,Int]
+expr e@18:23 name(source) type=kotlin.collections.Map<String, Int> ref=plusArray.$2.source[kind=vparam]
+expr e@18:32 name(pairs) type=kotlin.Array<out kotlin.Pair<String, Int>> ref=plusArray.$2.pairs[kind=vparam]
+expr e@18:23#1 binary(add) lhs=e@18:23 rhs=e@18:32 type=kotlin.collections.Map<String, Int> call=kotlin.collections.plus[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=kotlin.Array<out kotlin.Pair<T0,T1>>;gen=2] targs=[String,Int]
+expr e@20:73 name(source) type=kotlin.collections.Map<String, Int> ref=minusKey.$1.source[kind=vparam]
+expr e@20:82 name(key) type=String ref=minusKey.$1.key[kind=vparam]
+expr e@20:73#1 binary(subtract) lhs=e@20:73 rhs=e@20:82 type=kotlin.collections.Map<String, Int> call=kotlin.collections.minus[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=T0;gen=2] targs=[String,Int]
+expr e@22:89 name(source) type=kotlin.collections.Map<String, Int> ref=minusIterable.$0.source[kind=vparam]
+expr e@22:98 name(keys) type=kotlin.collections.Iterable<String> ref=minusIterable.$0.keys[kind=vparam]
+expr e@22:89#1 binary(subtract) lhs=e@22:89 rhs=e@22:98 type=kotlin.collections.Map<String, Int> call=kotlin.collections.minus[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=kotlin.collections.Iterable<T0>;gen=2] targs=[String,Int]

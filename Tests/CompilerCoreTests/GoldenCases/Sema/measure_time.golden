@@ -1,31 +1,31 @@
-symbol fq=__local_0.x kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.x kind=local vis=private flags=_ type=Int
-symbol fq=__local_2.x kind=local vis=private flags=_ type=Int
-symbol fq=useMeasureNanoTime kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
-symbol fq=useMeasureTimeMicros kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
-symbol fq=useMeasureTimeMillis kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
+symbol fq=__local_0.x[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.x[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.x[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=useMeasureNanoTime[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
+symbol fq=useMeasureTimeMicros[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
+symbol fq=useMeasureTimeMillis[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
 file fmeasure_time package=_
-  decl useMeasureNanoTime fun useMeasureNanoTime sym=useMeasureNanoTime
-  decl useMeasureTimeMicros fun useMeasureTimeMicros sym=useMeasureTimeMicros
-  decl useMeasureTimeMillis fun useMeasureTimeMillis sym=useMeasureTimeMillis
+  decl useMeasureNanoTime[kind=fun;params=] fun useMeasureNanoTime sym=useMeasureNanoTime[kind=fun;params=]
+  decl useMeasureTimeMicros[kind=fun;params=] fun useMeasureTimeMicros sym=useMeasureTimeMicros[kind=fun;params=]
+  decl useMeasureTimeMillis[kind=fun;params=] fun useMeasureTimeMillis sym=useMeasureTimeMillis[kind=fun;params=]
 expr e@6:13 int(1) type=Int
 expr e@6:17 int(2) type=Int
 expr e@6:13#1 binary(add) lhs=e@6:13 rhs=e@6:17 type=Int
-expr e@6:5 localDecl x mutable=0 type=_ init=e@6:13#1 type=Unit ref=__local_0.x
+expr e@6:5 localDecl x mutable=0 type=_ init=e@6:13#1 type=Unit ref=__local_0.x[kind=local]
 expr e@6:5#1 blockExpr stmts=[e@6:5] trailing=_ type=Unit
 expr e@5:50 lambda params=[] body=e@6:5#1 label=measureNanoTime type=() -> Unit
-expr e@5:34 call callee=e@5:34#1 args=[_:e@5:50] type=Long call=kotlin.system.measureNanoTime
+expr e@5:34 call callee=e@5:34#1 args=[_:e@5:50] type=Long call=kotlin.system.measureNanoTime[kind=fun;params=fn{p=;ret=Unit}]
 expr e@10:13 int(1) type=Int
 expr e@10:17 int(2) type=Int
 expr e@10:13#1 binary(add) lhs=e@10:13 rhs=e@10:17 type=Int
-expr e@10:5 localDecl x mutable=0 type=_ init=e@10:13#1 type=Unit ref=__local_1.x
+expr e@10:5 localDecl x mutable=0 type=_ init=e@10:13#1 type=Unit ref=__local_1.x[kind=local]
 expr e@10:5#1 blockExpr stmts=[e@10:5] trailing=_ type=Unit
 expr e@9:54 lambda params=[] body=e@10:5#1 label=measureTimeMicros type=() -> Unit
-expr e@9:36 call callee=e@9:36#1 args=[_:e@9:54] type=Long call=kotlin.system.measureTimeMicros
+expr e@9:36 call callee=e@9:36#1 args=[_:e@9:54] type=Long call=kotlin.system.measureTimeMicros[kind=fun;params=fn{p=;ret=Unit}]
 expr e@14:13 int(1) type=Int
 expr e@14:17 int(2) type=Int
 expr e@14:13#1 binary(add) lhs=e@14:13 rhs=e@14:17 type=Int
-expr e@14:5 localDecl x mutable=0 type=_ init=e@14:13#1 type=Unit ref=__local_2.x
+expr e@14:5 localDecl x mutable=0 type=_ init=e@14:13#1 type=Unit ref=__local_2.x[kind=local]
 expr e@14:5#1 blockExpr stmts=[e@14:5] trailing=_ type=Unit
 expr e@13:54 lambda params=[] body=e@14:5#1 label=measureTimeMillis type=() -> Unit
-expr e@13:36 call callee=e@13:36#1 args=[_:e@13:54] type=Long call=kotlin.system.measureTimeMillis
+expr e@13:36 call callee=e@13:36#1 args=[_:e@13:54] type=Long call=kotlin.system.measureTimeMillis[kind=fun;params=fn{p=;ret=Unit}]

@@ -1,13 +1,13 @@
-symbol fq=golden.sema.counter kind=property vis=public flags=mutable type=Int
-symbol fq=golden.sema.increment kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.pi kind=property vis=public flags=_ type=Double
+symbol fq=golden.sema.counter[kind=prop] kind=property vis=public flags=mutable type=Int
+symbol fq=golden.sema.increment[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.pi[kind=prop] kind=property vis=public flags=_ type=Double
 file ftop_level_property package=golden.sema
-  decl golden.sema.pi property pi var=0 sym=golden.sema.pi
-  decl golden.sema.counter property counter var=1 sym=golden.sema.counter
-  decl golden.sema.increment fun increment sym=golden.sema.increment
+  decl golden.sema.pi[kind=prop] property pi var=0 sym=golden.sema.pi[kind=prop]
+  decl golden.sema.counter[kind=prop] property counter var=1 sym=golden.sema.counter[kind=prop]
+  decl golden.sema.increment[kind=fun;params=] fun increment sym=golden.sema.increment[kind=fun;params=]
 expr e@3:18 double(3.14) type=Double
 expr e@4:20 int(0) type=Int
-expr e@7:15 name(counter) type=Int ref=golden.sema.counter
+expr e@7:15 name(counter) type=Int ref=golden.sema.counter[kind=prop]
 expr e@7:25 int(1) type=Int
 expr e@7:15#1 binary(add) lhs=e@7:15 rhs=e@7:25 type=Int
-expr e@7:5 localAssign counter value=e@7:15#1 type=Unit ref=golden.sema.counter
+expr e@7:5 localAssign counter value=e@7:15#1 type=Unit ref=golden.sema.counter[kind=prop]
