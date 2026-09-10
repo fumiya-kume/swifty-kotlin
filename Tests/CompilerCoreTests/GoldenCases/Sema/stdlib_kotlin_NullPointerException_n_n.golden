@@ -1,22 +1,22 @@
-symbol fq=__try_0_catch_0.e kind=local vis=internal flags=_ type=kotlin.NullPointerException
-symbol fq=golden.sema.catchNull kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.message kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.NullPointerException
-symbol fq=golden.sema.message.$0.m kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.noArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.NullPointerException
+symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.NullPointerException
+symbol fq=golden.sema.catchNull[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.message.$0.m[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.message[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.NullPointerException
+symbol fq=golden.sema.noArg[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.NullPointerException
 file fstdlib_kotlin_NullPointerException_n_n package=golden.sema
-  decl golden.sema.noArg fun noArg sym=golden.sema.noArg
-  decl golden.sema.message fun message sym=golden.sema.message
-  decl golden.sema.catchNull fun catchNull sym=golden.sema.catchNull
-expr e@3:37 call callee=e@3:37#1 args=[] type=kotlin.NullPointerException call=kotlin.NullPointerException.<init>#0
-expr e@4:70 name(m) type=String? ref=golden.sema.message.$0.m
-expr e@4:49 call callee=e@4:49#1 args=[_:e@4:70] type=kotlin.NullPointerException call=kotlin.NullPointerException.<init>#1
+  decl golden.sema.noArg[kind=fun;params=] fun noArg sym=golden.sema.noArg[kind=fun;params=]
+  decl golden.sema.message[kind=fun;params=String?] fun message sym=golden.sema.message[kind=fun;params=String?]
+  decl golden.sema.catchNull[kind=fun;params=] fun catchNull sym=golden.sema.catchNull[kind=fun;params=]
+expr e@3:37 call callee=e@3:37#1 args=[] type=kotlin.NullPointerException call=kotlin.NullPointerException.<init>[kind=ctor;recv=kotlin.NullPointerException;params=]
+expr e@4:70 name(m) type=String? ref=golden.sema.message.$0.m[kind=vparam]
+expr e@4:49 call callee=e@4:49#1 args=[_:e@4:70] type=kotlin.NullPointerException call=kotlin.NullPointerException.<init>[kind=ctor;recv=kotlin.NullPointerException;params=String?]
 expr e@8:36 string(null pointer) type=String
-expr e@8:15 call callee=e@8:15#1 args=[_:e@8:36] type=kotlin.NullPointerException call=kotlin.NullPointerException.<init>#1
+expr e@8:15 call callee=e@8:15#1 args=[_:e@8:36] type=kotlin.NullPointerException call=kotlin.NullPointerException.<init>[kind=ctor;recv=kotlin.NullPointerException;params=String?]
 expr e@8:9 throw value=e@8:15 type=Nothing
 expr e@7:9 blockExpr stmts=[] trailing=e@8:9 type=Nothing
-expr e@10:9 name(e) type=kotlin.NullPointerException ref=__try_0_catch_0.e
-expr e@10:9#1 memberCall recv=e@10:9 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@10:9 name(e) type=kotlin.NullPointerException ref=__try_0_catch_0.e[kind=local]
+expr e@10:9#1 memberCall recv=e@10:9 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@10:22 string(caught) type=String
 expr e@10:9#2 binary(elvis) lhs=e@10:9#1 rhs=e@10:22 type=String
-expr e@9:39 blockExpr stmts=[] trailing=e@10:9#2 type=String ref=__try_0_catch_0.e
+expr e@9:39 blockExpr stmts=[] trailing=e@10:9#2 type=String ref=__try_0_catch_0.e[kind=local]
 expr e@7:5 try body=e@7:9 catches=[e@9:39] finally=_ type=String

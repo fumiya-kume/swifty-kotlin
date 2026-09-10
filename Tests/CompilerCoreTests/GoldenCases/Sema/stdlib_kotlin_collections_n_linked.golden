@@ -1,26 +1,26 @@
-symbol fq=__local_0.set kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<Int>
-symbol fq=__local_1.emptySet kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<String>
-symbol fq=__local_2.map kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
-symbol fq=__local_3.emptyMap kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=linkedFactoryTypes kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.set[kind=local] kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<Int>
+symbol fq=__local_1.emptySet[kind=local] kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<String>
+symbol fq=__local_2.map[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
+symbol fq=__local_3.emptyMap[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
+symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
+symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=linkedFactoryTypes[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_n_linked package=_
-  decl linkedFactoryTypes fun linkedFactoryTypes sym=linkedFactoryTypes
+  decl linkedFactoryTypes[kind=fun;params=] fun linkedFactoryTypes sym=linkedFactoryTypes[kind=fun;params=]
 expr e@2:47 int(1) type=Int
 expr e@2:50 int(2) type=Int
 expr e@2:53 int(1) type=Int
-expr e@2:35 call callee=e@2:35#1 args=[_:e@2:47,_:e@2:50,_:e@2:53] type=kotlin.collections.LinkedHashSet<Int> call=kotlin.collections.linkedSetOf#1 targs=[Int]
-expr e@2:5 localDecl set mutable=0 type=LinkedHashSet<Int> init=e@2:35 type=Unit ref=__local_0.set
-expr e@3:43 call callee=e@3:43#1 args=[] type=kotlin.collections.LinkedHashSet<String> call=kotlin.collections.linkedSetOf#0 targs=[String]
-expr e@3:5 localDecl emptySet mutable=0 type=LinkedHashSet<String> init=e@3:43 type=Unit ref=__local_1.emptySet
+expr e@2:35 call callee=e@2:35#1 args=[_:e@2:47,_:e@2:50,_:e@2:53] type=kotlin.collections.LinkedHashSet<Int> call=kotlin.collections.linkedSetOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@2:5 localDecl set mutable=0 type=LinkedHashSet<Int> init=e@2:35 type=Unit ref=__local_0.set[kind=local]
+expr e@3:43 call callee=e@3:43#1 args=[] type=kotlin.collections.LinkedHashSet<String> call=kotlin.collections.linkedSetOf[kind=fun;params=;gen=1] targs=[String]
+expr e@3:5 localDecl emptySet mutable=0 type=LinkedHashSet<String> init=e@3:43 type=Unit ref=__local_1.emptySet[kind=local]
 expr e@4:55 string(a) type=String
 expr e@4:62 int(1) type=Int
-expr e@4:55#1 memberCall recv=e@4:55 callee=to args=[_:e@4:62] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
+expr e@4:55#1 memberCall recv=e@4:55 callee=to args=[_:e@4:62] type=kotlin.Pair<String, Int> call=kotlin.to[kind=fun;recv=T0;params=T1;gen=2] targs=[String,Int]
 expr e@4:65 string(a) type=String
 expr e@4:72 int(2) type=Int
-expr e@4:65#1 memberCall recv=e@4:65 callee=to args=[_:e@4:72] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
-expr e@4:43 call callee=e@4:43#1 args=[_:e@4:55#1,_:e@4:65#1] type=kotlin.collections.MutableMap<String, Int> call=kotlin.collections.linkedMapOf#1 targs=[String,Int]
-expr e@4:5 localDecl map mutable=0 type=LinkedHashMap<String,Int> init=e@4:43 type=Unit ref=__local_2.map
-expr e@5:48 call callee=e@5:48#1 args=[] type=kotlin.collections.MutableMap<String, Int> call=kotlin.collections.linkedMapOf#0 targs=[String,Int]
-expr e@5:5 localDecl emptyMap mutable=0 type=LinkedHashMap<String,Int> init=e@5:48 type=Unit ref=__local_3.emptyMap
+expr e@4:65#1 memberCall recv=e@4:65 callee=to args=[_:e@4:72] type=kotlin.Pair<String, Int> call=kotlin.to[kind=fun;recv=T0;params=T1;gen=2] targs=[String,Int]
+expr e@4:43 call callee=e@4:43#1 args=[_:e@4:55#1,_:e@4:65#1] type=kotlin.collections.MutableMap<String, Int> call=kotlin.collections.linkedMapOf[kind=fun;params=*kotlin.Pair<T0,T1>;gen=2] targs=[String,Int]
+expr e@4:5 localDecl map mutable=0 type=LinkedHashMap<String,Int> init=e@4:43 type=Unit ref=__local_2.map[kind=local]
+expr e@5:48 call callee=e@5:48#1 args=[] type=kotlin.collections.MutableMap<String, Int> call=kotlin.collections.linkedMapOf[kind=fun;params=;gen=2] targs=[String,Int]
+expr e@5:5 localDecl emptyMap mutable=0 type=LinkedHashMap<String,Int> init=e@5:48 type=Unit ref=__local_3.emptyMap[kind=local]

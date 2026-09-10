@@ -1,13 +1,13 @@
-symbol fq=golden.sema.add kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=golden.sema.add.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.add.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.add.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.add.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.add[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file ffunctions package=golden.sema
-  decl golden.sema.add fun add sym=golden.sema.add
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@3:27 name(a) type=Int ref=golden.sema.add.$0.a
-expr e@3:31 name(b) type=Int ref=golden.sema.add.$0.b
+  decl golden.sema.add[kind=fun;params=Int,Int] fun add sym=golden.sema.add[kind=fun;params=Int,Int]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@3:27 name(a) type=Int ref=golden.sema.add.$0.a[kind=vparam]
+expr e@3:31 name(b) type=Int ref=golden.sema.add.$0.b[kind=vparam]
 expr e@3:27#1 binary(add) lhs=e@3:27 rhs=e@3:31 type=Int
 expr e@4:18 int(40) type=Int
 expr e@4:22 int(2) type=Int
-expr e@4:14 call callee=e@4:14#1 args=[_:e@4:18,_:e@4:22] type=Int call=golden.sema.add
+expr e@4:14 call callee=e@4:14#1 args=[_:e@4:18,_:e@4:22] type=Int call=golden.sema.add[kind=fun;params=Int,Int]

@@ -47,6 +47,28 @@ struct RuntimeKTypeProjectionTests {
         #expect(box.typeRaw == 0)
     }
 
+    @Test func sourceBackedAccessorsExposeKotlinProjectionSurface() throws {
+        let typeRaw = 1
+        for (varianceOrdinal, expectedVarianceOrdinal) in [(0, 0), (1, 1), (2, 2)] {
+            let boxedVariance = kk_enum_box_ordinal(varianceOrdinal, 0, 0)
+            var thrown = 0
+            let raw = __kk_ktypeprojection_create_checked(boxedVariance, typeRaw, &thrown)
+            #expect(thrown == 0)
+            #expect(__kk_ktypeprojection_get_variance(raw) == expectedVarianceOrdinal)
+            #expect(__kk_ktypeprojection_get_type(raw) == typeRaw)
+        }
+
+        var thrown = 0
+        let starRaw = __kk_ktypeprojection_create_checked(
+            runtimeNullSentinelInt,
+            runtimeNullSentinelInt,
+            &thrown
+        )
+        #expect(thrown == 0)
+        #expect(__kk_ktypeprojection_get_variance(starRaw) == runtimeNullSentinelInt)
+        #expect(__kk_ktypeprojection_get_type(starRaw) == runtimeNullSentinelInt)
+    }
+
     @Test func mismatchedNullablePairReportsKotlinValidationErrors() throws {
         let boxedIn = kk_enum_box_ordinal(1, 0, 0)
         var varianceThrown = 0

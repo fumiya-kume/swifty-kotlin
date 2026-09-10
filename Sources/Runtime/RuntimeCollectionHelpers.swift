@@ -462,11 +462,21 @@ func registerIteratorItable(
     }
 }
 
-/// Register the four `ListIterator` methods on a runtime-backed list iterator.
-/// The inherited `Iterator` methods occupy slots 0 and 1, so the source-backed
-/// `ListIterator` members begin at slots 2 through 5.
+/// Register the six `ListIterator` methods on a runtime-backed list iterator.
+/// KSP-1064: `next`/`hasNext` are now declared directly on `ListIterator`
+/// (rather than purely inherited from `Iterator`), so member calls through a
+/// `ListIterator`/`MutableListIterator`-typed receiver resolve them as
+/// `ListIterator`'s own vtable slots 0/1 — the same layout that assigns
+/// `hasPrevious`/`previous`/`nextIndex`/`previousIndex` to slots 2 through 5.
+/// Both slot ranges must be registered under this same itable (ifaceSlot 1),
+/// even though slots 0/1 duplicate the `Iterator` itable already registered
+/// at ifaceSlot 0 for the plain `Iterator<T>` receiver case.
 func registerListIteratorItable(raw: Int) {
     _ = kk_object_register_itable_iface(raw, Int(runtimeListIteratorInterfaceTypeID), 1)
+    let nextPtr = unsafeBitCast(runtimeListIteratorNextThunk, to: Int.self)
+    _ = kk_object_register_itable_method(raw, 1, 0, nextPtr)
+    let hasNextPtr = unsafeBitCast(runtimeListIteratorHasNextThunk, to: Int.self)
+    _ = kk_object_register_itable_method(raw, 1, 1, hasNextPtr)
     let hasPreviousPtr = unsafeBitCast(runtimeListIteratorHasPreviousThunk, to: Int.self)
     _ = kk_object_register_itable_method(raw, 1, 2, hasPreviousPtr)
     let previousPtr = unsafeBitCast(runtimeListIteratorPreviousThunk, to: Int.self)
@@ -626,7 +636,14 @@ func registerRuntimeObject(_ box: RuntimeListIteratorBox) -> Int {
     let raw = registerRuntimeObject(box as AnyObject)
     registerIteratorItable(raw: raw, hasNext: runtimeListIteratorHasNextThunk, next: runtimeListIteratorNextThunk)
     if box.removeAction != nil {
-        registerMutableIteratorItable(raw: raw, remove: runtimeListIteratorRemoveThunk)
+        // KSP-1064: `registerListIteratorItable` below always claims ifaceSlot 1
+        // for this same object's `ListIterator` itable. `MutableIterator`'s
+        // default ifaceSlot (1) would collide with it — both tables would then
+        // share method slot 0, so a `MutableListIterator.next()` call (now
+        // itable-dispatched since ListIterator declares `next`/`hasNext`
+        // itself) landed on `MutableIterator.remove` instead. Slot 2 is unused
+        // on this object (0=Iterator, 1=ListIterator).
+        registerMutableIteratorItable(raw: raw, remove: runtimeListIteratorRemoveThunk, ifaceSlot: 2)
     }
     return raw
 }

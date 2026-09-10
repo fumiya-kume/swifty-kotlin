@@ -1,6 +1,6 @@
-symbol fq=charIsSurrogate kind=function vis=public flags=_ sig=recv=_ params=[Char] ret=Boolean
-symbol fq=charIsSurrogate.$0.c kind=valueParameter vis=private flags=_
+symbol fq=charIsSurrogate.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=charIsSurrogate[kind=fun;params=Char] kind=function vis=public flags=_ sig=recv=_ params=[Char] ret=Boolean
 file fchar_is_surrogate package=_
-  decl charIsSurrogate fun charIsSurrogate sym=charIsSurrogate
-expr e@1:41 name(c) type=Char ref=charIsSurrogate.$0.c
-expr e@1:41#1 memberCall recv=e@1:41 callee=isSurrogate args=[] type=Boolean call=kotlin.text.isSurrogate
+  decl charIsSurrogate[kind=fun;params=Char] fun charIsSurrogate sym=charIsSurrogate[kind=fun;params=Char]
+expr e@1:41 name(c) type=Char ref=charIsSurrogate.$0.c[kind=vparam]
+expr e@1:41#1 memberCall recv=e@1:41 callee=isSurrogate args=[] type=Boolean call=kotlin.text.isSurrogate[kind=fun;recv=Char;params=]

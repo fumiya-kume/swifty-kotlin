@@ -58,14 +58,25 @@ extension KotlinLexer {
     }
 
     func starts(with literal: String, at position: Int) -> Bool {
-        let utf8 = Array(literal.utf8)
-        guard position + utf8.count <= byteCount() else {
-            return false
+        starts(with: literal.utf8, at: position)
+    }
+
+    func starts<Bytes: Collection>(with literal: Bytes, at position: Int) -> Bool where Bytes.Element == UInt8 {
+        // Compare the UTF-8 view or precomputed symbol bytes directly, without
+        // allocating a temporary array for each prefix check.
+        bytes.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
+            guard position >= 0, position <= buffer.count,
+                  literal.count <= buffer.count - position
+            else {
+                return false
+            }
+            var cursor = position
+            for expected in literal {
+                guard buffer[cursor] == expected else { return false }
+                cursor += 1
+            }
+            return true
         }
-        for index in 0 ..< utf8.count where byte(at: position + index) != utf8[index] {
-            return false
-        }
-        return true
     }
 
     func text(from range: Range<Int>) -> String {

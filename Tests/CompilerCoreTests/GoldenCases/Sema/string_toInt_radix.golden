@@ -1,28 +1,28 @@
-symbol fq=__local_0.a kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.b kind=local vis=private flags=_ type=Int
-symbol fq=__local_2.c kind=local vis=private flags=_ type=Int
-symbol fq=__local_3.d kind=local vis=private flags=_ type=Int
-symbol fq=__local_4.e kind=local vis=private flags=_ type=String
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.a[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.b[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.c[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_3.d[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_4.e[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstring_toInt_radix package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:13 string(ff) type=String
 expr e@2:24 int(16) type=Int
-expr e@2:13#1 memberCall recv=e@2:13 callee=toInt args=[_:e@2:24] type=Int call=kotlin.text.toInt#1
-expr e@2:5 localDecl a mutable=0 type=_ init=e@2:13#1 type=Unit ref=__local_0.a
+expr e@2:13#1 memberCall recv=e@2:13 callee=toInt args=[_:e@2:24] type=Int call=kotlin.text.toInt[kind=fun;recv=String;params=Int]
+expr e@2:5 localDecl a mutable=0 type=_ init=e@2:13#1 type=Unit ref=__local_0.a[kind=local]
 expr e@3:13 string(1010) type=String
 expr e@3:26 int(2) type=Int
-expr e@3:13#1 memberCall recv=e@3:13 callee=toInt args=[_:e@3:26] type=Int call=kotlin.text.toInt#1
-expr e@3:5 localDecl b mutable=0 type=_ init=e@3:13#1 type=Unit ref=__local_1.b
+expr e@3:13#1 memberCall recv=e@3:13 callee=toInt args=[_:e@3:26] type=Int call=kotlin.text.toInt[kind=fun;recv=String;params=Int]
+expr e@3:5 localDecl b mutable=0 type=_ init=e@3:13#1 type=Unit ref=__local_1.b[kind=local]
 expr e@4:13 string(77) type=String
 expr e@4:24 int(8) type=Int
-expr e@4:13#1 memberCall recv=e@4:13 callee=toInt args=[_:e@4:24] type=Int call=kotlin.text.toInt#1
-expr e@4:5 localDecl c mutable=0 type=_ init=e@4:13#1 type=Unit ref=__local_2.c
+expr e@4:13#1 memberCall recv=e@4:13 callee=toInt args=[_:e@4:24] type=Int call=kotlin.text.toInt[kind=fun;recv=String;params=Int]
+expr e@4:5 localDecl c mutable=0 type=_ init=e@4:13#1 type=Unit ref=__local_2.c[kind=local]
 expr e@5:13 string(42) type=String
 expr e@5:24 int(10) type=Int
-expr e@5:13#1 memberCall recv=e@5:13 callee=toInt args=[_:e@5:24] type=Int call=kotlin.text.toInt#1
-expr e@5:5 localDecl d mutable=0 type=_ init=e@5:13#1 type=Unit ref=__local_3.d
+expr e@5:13#1 memberCall recv=e@5:13 callee=toInt args=[_:e@5:24] type=Int call=kotlin.text.toInt[kind=fun;recv=String;params=Int]
+expr e@5:5 localDecl d mutable=0 type=_ init=e@5:13#1 type=Unit ref=__local_3.d[kind=local]
 expr e@6:13 int(255) type=Int
 expr e@6:26 int(16) type=Int
 expr e@6:13#1 memberCall recv=e@6:13 callee=toString args=[_:e@6:26] type=String
-expr e@6:5 localDecl e mutable=0 type=_ init=e@6:13#1 type=Unit ref=__local_4.e
+expr e@6:5 localDecl e mutable=0 type=_ init=e@6:13#1 type=Unit ref=__local_4.e[kind=local]

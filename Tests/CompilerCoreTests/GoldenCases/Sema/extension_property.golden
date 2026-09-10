@@ -1,11 +1,11 @@
-symbol fq=golden.sema.doubled kind=property vis=public flags=_ type=Int
-symbol fq=golden.sema.doubled.$get kind=function vis=public flags=synthetic sig=recv=Int params=[] ret=Int
-symbol fq=golden.sema.isPositive kind=property vis=public flags=_ type=Boolean
-symbol fq=golden.sema.useExtProp kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.doubled.$get[kind=fun;recv=Int;params=] kind=function vis=public flags=synthetic sig=recv=Int params=[] ret=Int
+symbol fq=golden.sema.doubled[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.isPositive[kind=prop] kind=property vis=public flags=_ type=Boolean
+symbol fq=golden.sema.useExtProp[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fextension_property package=golden.sema
-  decl golden.sema.doubled property doubled var=0 sym=golden.sema.doubled
-  decl golden.sema.isPositive property isPositive var=0 sym=golden.sema.isPositive
-  decl golden.sema.useExtProp fun useExtProp sym=golden.sema.useExtProp
+  decl golden.sema.doubled[kind=prop] property doubled var=0 sym=golden.sema.doubled[kind=prop]
+  decl golden.sema.isPositive[kind=prop] property isPositive var=0 sym=golden.sema.isPositive[kind=prop]
+  decl golden.sema.useExtProp[kind=fun;params=] fun useExtProp sym=golden.sema.useExtProp[kind=fun;params=]
 expr e@4:13 this type=Int
 expr e@4:20 int(2) type=Int
 expr e@4:13#1 binary(multiply) lhs=e@4:13 rhs=e@4:20 type=Int
@@ -13,4 +13,4 @@ expr e@7:13 this type=Int
 expr e@7:20 int(0) type=Int
 expr e@7:13#1 binary(greaterThan) lhs=e@7:13 rhs=e@7:20 type=Boolean
 expr e@9:25 int(5) type=Int
-expr e@9:25#1 memberCall recv=e@9:25 callee=doubled args=[] type=Int call=golden.sema.doubled.$get
+expr e@9:25#1 memberCall recv=e@9:25 callee=doubled args=[] type=Int call=golden.sema.doubled.$get[kind=fun;recv=Int;params=]

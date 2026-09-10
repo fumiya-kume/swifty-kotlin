@@ -1,104 +1,104 @@
-symbol fq=__local_0.c1 kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.c2 kind=local vis=private flags=_ type=String
-symbol fq=__local_2.m1 kind=local vis=private flags=_ type=Int
-symbol fq=__local_3.m2 kind=local vis=private flags=_ type=String
-symbol fq=__local_4.p1 kind=local vis=private flags=_ type=String
-symbol fq=__local_5.p2 kind=local vis=private flags=_ type=String
-symbol fq=__local_6.box kind=local vis=private flags=_ type=golden.sema.BoundedBox<Int>
-symbol fq=__local_7.lt kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_8.gt kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_9.desc kind=local vis=private flags=_ type=String
-symbol fq=golden.sema.BoundedBox kind=class vis=public flags=_
-symbol fq=golden.sema.BoundedBox.$class0.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.BoundedBox.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.BoundedBox<golden.sema.BoundedBox.$class0.T> params=[golden.sema.BoundedBox.$class0.T] ret=golden.sema.BoundedBox<golden.sema.BoundedBox.$class0.T>
-symbol fq=golden.sema.BoundedBox.<init>.$0.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.BoundedBox.describe kind=function vis=public flags=_ sig=recv=golden.sema.BoundedBox<golden.sema.BoundedBox.$class0.T> params=[] ret=String bounds=[kotlin.Comparable<golden.sema.BoundedBox.$class0.T>]
-symbol fq=golden.sema.BoundedBox.isGreaterThan kind=function vis=public flags=_ sig=recv=golden.sema.BoundedBox<golden.sema.BoundedBox.$class0.T> params=[golden.sema.BoundedBox.$class0.T] ret=Boolean bounds=[kotlin.Comparable<golden.sema.BoundedBox.$class0.T>]
-symbol fq=golden.sema.BoundedBox.isGreaterThan.$1.other kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.BoundedBox.isLessThan kind=function vis=public flags=_ sig=recv=golden.sema.BoundedBox<golden.sema.BoundedBox.$class0.T> params=[golden.sema.BoundedBox.$class0.T] ret=Boolean bounds=[kotlin.Comparable<golden.sema.BoundedBox.$class0.T>]
-symbol fq=golden.sema.BoundedBox.isLessThan.$2.other kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.BoundedBox.value kind=property vis=public flags=_ type=golden.sema.BoundedBox.$class0.T
-symbol fq=golden.sema.clamp kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.clamp.$3.T,golden.sema.clamp.$3.T,golden.sema.clamp.$3.T] ret=golden.sema.clamp.$3.T bounds=[kotlin.Comparable<golden.sema.clamp.$3.T>]
-symbol fq=golden.sema.clamp.$3.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.clamp.$3.max kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.clamp.$3.min kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.clamp.$3.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxItem kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.maxItem.$4.T,golden.sema.maxItem.$4.T] ret=golden.sema.maxItem.$4.T bounds=[kotlin.Comparable<golden.sema.maxItem.$4.T>]
-symbol fq=golden.sema.maxItem.$4.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.maxItem.$4.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxItem.$4.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.processItem kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.processItem.$5.T] ret=String bounds=[kotlin.Comparable<golden.sema.processItem.$5.T>&Any]
-symbol fq=golden.sema.processItem.$5.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.processItem.$5.v kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.useConstraints kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
+symbol fq=__local_0.c1[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.c2[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_2.m1[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_3.m2[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_4.p1[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_5.p2[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_6.box[kind=local] kind=local vis=private flags=_ type=golden.sema.BoundedBox<Int>
+symbol fq=__local_7.lt[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_8.gt[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_9.desc[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=golden.sema.BoundedBox.$class0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.BoundedBox.<init>.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.BoundedBox.<init>[kind=ctor;recv=golden.sema.BoundedBox<T0>;params=T0;gen=1] kind=constructor vis=public flags=_ sig=recv=golden.sema.BoundedBox<golden.sema.BoundedBox.$class0.T> params=[golden.sema.BoundedBox.$class0.T] ret=golden.sema.BoundedBox<golden.sema.BoundedBox.$class0.T>
+symbol fq=golden.sema.BoundedBox.describe[kind=fun;recv=golden.sema.BoundedBox<T0>;params=;gen=1] kind=function vis=public flags=_ sig=recv=golden.sema.BoundedBox<golden.sema.BoundedBox.$class0.T> params=[] ret=String bounds=[kotlin.Comparable<golden.sema.BoundedBox.$class0.T>]
+symbol fq=golden.sema.BoundedBox.isGreaterThan.$1.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.BoundedBox.isGreaterThan[kind=fun;recv=golden.sema.BoundedBox<T0>;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=golden.sema.BoundedBox<golden.sema.BoundedBox.$class0.T> params=[golden.sema.BoundedBox.$class0.T] ret=Boolean bounds=[kotlin.Comparable<golden.sema.BoundedBox.$class0.T>]
+symbol fq=golden.sema.BoundedBox.isLessThan.$2.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.BoundedBox.isLessThan[kind=fun;recv=golden.sema.BoundedBox<T0>;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=golden.sema.BoundedBox<golden.sema.BoundedBox.$class0.T> params=[golden.sema.BoundedBox.$class0.T] ret=Boolean bounds=[kotlin.Comparable<golden.sema.BoundedBox.$class0.T>]
+symbol fq=golden.sema.BoundedBox.value[kind=prop] kind=property vis=public flags=_ type=golden.sema.BoundedBox.$class0.T
+symbol fq=golden.sema.BoundedBox[kind=class;gen=1] kind=class vis=public flags=_
+symbol fq=golden.sema.clamp.$3.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.clamp.$3.max[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.clamp.$3.min[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.clamp.$3.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.clamp[kind=fun;params=T0,T0,T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.clamp.$3.T,golden.sema.clamp.$3.T,golden.sema.clamp.$3.T] ret=golden.sema.clamp.$3.T bounds=[kotlin.Comparable<golden.sema.clamp.$3.T>]
+symbol fq=golden.sema.maxItem.$4.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.maxItem.$4.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxItem.$4.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxItem[kind=fun;params=T0,T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.maxItem.$4.T,golden.sema.maxItem.$4.T] ret=golden.sema.maxItem.$4.T bounds=[kotlin.Comparable<golden.sema.maxItem.$4.T>]
+symbol fq=golden.sema.processItem.$5.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.processItem.$5.v[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.processItem[kind=fun;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.processItem.$5.T] ret=String bounds=[kotlin.Comparable<golden.sema.processItem.$5.T>&Any]
+symbol fq=golden.sema.useConstraints[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
 file ftype_constraints package=golden.sema
-  decl golden.sema.clamp fun clamp sym=golden.sema.clamp
-  decl golden.sema.maxItem fun maxItem sym=golden.sema.maxItem
-  decl golden.sema.processItem fun processItem sym=golden.sema.processItem
-  decl golden.sema.BoundedBox class BoundedBox sym=golden.sema.BoundedBox
-  decl golden.sema.useConstraints fun useConstraints sym=golden.sema.useConstraints
-expr e@5:5 name(value) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.value
-expr e@5:13 name(min) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.min
-expr e@5:5#1 binary(lessThan) lhs=e@5:5 rhs=e@5:13 type=Boolean call=kotlin.Comparable.compareTo targs=[golden.sema.clamp.$3.T]
-expr e@5:20 name(min) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.min
-expr e@6:5 name(value) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.value
-expr e@6:13 name(max) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.max
-expr e@6:5#1 binary(greaterThan) lhs=e@6:5 rhs=e@6:13 type=Boolean call=kotlin.Comparable.compareTo targs=[golden.sema.clamp.$3.T]
-expr e@6:20 name(max) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.max
-expr e@7:13 name(value) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.value
+  decl golden.sema.clamp[kind=fun;params=T0,T0,T0;gen=1] fun clamp sym=golden.sema.clamp[kind=fun;params=T0,T0,T0;gen=1]
+  decl golden.sema.maxItem[kind=fun;params=T0,T0;gen=1] fun maxItem sym=golden.sema.maxItem[kind=fun;params=T0,T0;gen=1]
+  decl golden.sema.processItem[kind=fun;params=T0;gen=1] fun processItem sym=golden.sema.processItem[kind=fun;params=T0;gen=1]
+  decl golden.sema.BoundedBox[kind=class;gen=1] class BoundedBox sym=golden.sema.BoundedBox[kind=class;gen=1]
+  decl golden.sema.useConstraints[kind=fun;params=] fun useConstraints sym=golden.sema.useConstraints[kind=fun;params=]
+expr e@5:5 name(value) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.value[kind=vparam]
+expr e@5:13 name(min) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.min[kind=vparam]
+expr e@5:5#1 binary(lessThan) lhs=e@5:5 rhs=e@5:13 type=Boolean call=kotlin.Comparable.compareTo[kind=fun;recv=kotlin.Comparable<T0>;params=T0;gen=1] targs=[golden.sema.clamp.$3.T]
+expr e@5:20 name(min) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.min[kind=vparam]
+expr e@6:5 name(value) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.value[kind=vparam]
+expr e@6:13 name(max) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.max[kind=vparam]
+expr e@6:5#1 binary(greaterThan) lhs=e@6:5 rhs=e@6:13 type=Boolean call=kotlin.Comparable.compareTo[kind=fun;recv=kotlin.Comparable<T0>;params=T0;gen=1] targs=[golden.sema.clamp.$3.T]
+expr e@6:20 name(max) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.max[kind=vparam]
+expr e@7:13 name(value) type=golden.sema.clamp.$3.T ref=golden.sema.clamp.$3.value[kind=vparam]
 expr e@4:62 when subject=_ branches=[e@5:5#1->e@5:20,e@6:5#1->e@6:20] else=e@7:13 type=golden.sema.clamp.$3.T
-expr e@11:62 name(a) type=golden.sema.maxItem.$4.T ref=golden.sema.maxItem.$4.a
-expr e@11:66 name(b) type=golden.sema.maxItem.$4.T ref=golden.sema.maxItem.$4.b
-expr e@11:62#1 binary(greaterThan) lhs=e@11:62 rhs=e@11:66 type=Boolean call=kotlin.Comparable.compareTo targs=[golden.sema.maxItem.$4.T]
-expr e@11:69 name(a) type=golden.sema.maxItem.$4.T ref=golden.sema.maxItem.$4.a
-expr e@11:76 name(b) type=golden.sema.maxItem.$4.T ref=golden.sema.maxItem.$4.b
+expr e@11:62 name(a) type=golden.sema.maxItem.$4.T ref=golden.sema.maxItem.$4.a[kind=vparam]
+expr e@11:66 name(b) type=golden.sema.maxItem.$4.T ref=golden.sema.maxItem.$4.b[kind=vparam]
+expr e@11:62#1 binary(greaterThan) lhs=e@11:62 rhs=e@11:66 type=Boolean call=kotlin.Comparable.compareTo[kind=fun;recv=kotlin.Comparable<T0>;params=T0;gen=1] targs=[golden.sema.maxItem.$4.T]
+expr e@11:69 name(a) type=golden.sema.maxItem.$4.T ref=golden.sema.maxItem.$4.a[kind=vparam]
+expr e@11:76 name(b) type=golden.sema.maxItem.$4.T ref=golden.sema.maxItem.$4.b[kind=vparam]
 expr e@11:58 if cond=e@11:62#1 then=e@11:69 else=e@11:76 type=golden.sema.maxItem.$4.T
-expr e@14:70 name(v) type=golden.sema.processItem.$5.T ref=golden.sema.processItem.$5.v
+expr e@14:70 name(v) type=golden.sema.processItem.$5.T ref=golden.sema.processItem.$5.v[kind=vparam]
 expr e@14:70#1 memberCall recv=e@14:70 callee=toString args=[] type=String
-expr e@18:41 name(value) type=golden.sema.BoundedBox.$class0.T ref=golden.sema.BoundedBox.value
-expr e@18:49 name(other) type=golden.sema.BoundedBox.$class0.T ref=golden.sema.BoundedBox.isLessThan.$2.other
-expr e@18:41#1 binary(lessThan) lhs=e@18:41 rhs=e@18:49 type=Boolean call=kotlin.Comparable.compareTo targs=[golden.sema.BoundedBox.$class0.T]
-expr e@19:44 name(value) type=golden.sema.BoundedBox.$class0.T ref=golden.sema.BoundedBox.value
-expr e@19:52 name(other) type=golden.sema.BoundedBox.$class0.T ref=golden.sema.BoundedBox.isGreaterThan.$1.other
-expr e@19:44#1 binary(greaterThan) lhs=e@19:44 rhs=e@19:52 type=Boolean call=kotlin.Comparable.compareTo targs=[golden.sema.BoundedBox.$class0.T]
-expr e@20:30 name(value) type=golden.sema.BoundedBox.$class0.T ref=golden.sema.BoundedBox.value
+expr e@18:41 name(value) type=golden.sema.BoundedBox.$class0.T ref=golden.sema.BoundedBox.value[kind=prop]
+expr e@18:49 name(other) type=golden.sema.BoundedBox.$class0.T ref=golden.sema.BoundedBox.isLessThan.$2.other[kind=vparam]
+expr e@18:41#1 binary(lessThan) lhs=e@18:41 rhs=e@18:49 type=Boolean call=kotlin.Comparable.compareTo[kind=fun;recv=kotlin.Comparable<T0>;params=T0;gen=1] targs=[golden.sema.BoundedBox.$class0.T]
+expr e@19:44 name(value) type=golden.sema.BoundedBox.$class0.T ref=golden.sema.BoundedBox.value[kind=prop]
+expr e@19:52 name(other) type=golden.sema.BoundedBox.$class0.T ref=golden.sema.BoundedBox.isGreaterThan.$1.other[kind=vparam]
+expr e@19:44#1 binary(greaterThan) lhs=e@19:44 rhs=e@19:52 type=Boolean call=kotlin.Comparable.compareTo[kind=fun;recv=kotlin.Comparable<T0>;params=T0;gen=1] targs=[golden.sema.BoundedBox.$class0.T]
+expr e@20:30 name(value) type=golden.sema.BoundedBox.$class0.T ref=golden.sema.BoundedBox.value[kind=prop]
 expr e@20:30#1 memberCall recv=e@20:30 callee=toString args=[] type=String
 expr e@24:20 int(5) type=Int
 expr e@24:23 int(1) type=Int
 expr e@24:26 int(10) type=Int
-expr e@24:14 call callee=e@24:14#1 args=[_:e@24:20,_:e@24:23,_:e@24:26] type=Int call=golden.sema.clamp targs=[Int]
-expr e@24:5 localDecl c1 mutable=0 type=_ init=e@24:14 type=Unit ref=__local_0.c1
+expr e@24:14 call callee=e@24:14#1 args=[_:e@24:20,_:e@24:23,_:e@24:26] type=Int call=golden.sema.clamp[kind=fun;params=T0,T0,T0;gen=1] targs=[Int]
+expr e@24:5 localDecl c1 mutable=0 type=_ init=e@24:14 type=Unit ref=__local_0.c1[kind=local]
 expr e@25:20 string(b) type=String
 expr e@25:25 string(a) type=String
 expr e@25:30 string(c) type=String
-expr e@25:14 call callee=e@25:14#1 args=[_:e@25:20,_:e@25:25,_:e@25:30] type=String call=golden.sema.clamp targs=[String]
-expr e@25:5 localDecl c2 mutable=0 type=_ init=e@25:14 type=Unit ref=__local_1.c2
+expr e@25:14 call callee=e@25:14#1 args=[_:e@25:20,_:e@25:25,_:e@25:30] type=String call=golden.sema.clamp[kind=fun;params=T0,T0,T0;gen=1] targs=[String]
+expr e@25:5 localDecl c2 mutable=0 type=_ init=e@25:14 type=Unit ref=__local_1.c2[kind=local]
 expr e@26:22 int(3) type=Int
 expr e@26:25 int(7) type=Int
-expr e@26:14 call callee=e@26:14#1 args=[_:e@26:22,_:e@26:25] type=Int call=golden.sema.maxItem targs=[Int]
-expr e@26:5 localDecl m1 mutable=0 type=_ init=e@26:14 type=Unit ref=__local_2.m1
+expr e@26:14 call callee=e@26:14#1 args=[_:e@26:22,_:e@26:25] type=Int call=golden.sema.maxItem[kind=fun;params=T0,T0;gen=1] targs=[Int]
+expr e@26:5 localDecl m1 mutable=0 type=_ init=e@26:14 type=Unit ref=__local_2.m1[kind=local]
 expr e@27:22 string(apple) type=String
 expr e@27:31 string(banana) type=String
-expr e@27:14 call callee=e@27:14#1 args=[_:e@27:22,_:e@27:31] type=String call=golden.sema.maxItem targs=[String]
-expr e@27:5 localDecl m2 mutable=0 type=_ init=e@27:14 type=Unit ref=__local_3.m2
+expr e@27:14 call callee=e@27:14#1 args=[_:e@27:22,_:e@27:31] type=String call=golden.sema.maxItem[kind=fun;params=T0,T0;gen=1] targs=[String]
+expr e@27:5 localDecl m2 mutable=0 type=_ init=e@27:14 type=Unit ref=__local_3.m2[kind=local]
 expr e@28:26 int(42) type=Int
-expr e@28:14 call callee=e@28:14#1 args=[_:e@28:26] type=String call=golden.sema.processItem targs=[Int]
-expr e@28:5 localDecl p1 mutable=0 type=_ init=e@28:14 type=Unit ref=__local_4.p1
+expr e@28:14 call callee=e@28:14#1 args=[_:e@28:26] type=String call=golden.sema.processItem[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@28:5 localDecl p1 mutable=0 type=_ init=e@28:14 type=Unit ref=__local_4.p1[kind=local]
 expr e@29:26 string(hello) type=String
-expr e@29:14 call callee=e@29:14#1 args=[_:e@29:26] type=String call=golden.sema.processItem targs=[String]
-expr e@29:5 localDecl p2 mutable=0 type=_ init=e@29:14 type=Unit ref=__local_5.p2
+expr e@29:14 call callee=e@29:14#1 args=[_:e@29:26] type=String call=golden.sema.processItem[kind=fun;params=T0;gen=1] targs=[String]
+expr e@29:5 localDecl p2 mutable=0 type=_ init=e@29:14 type=Unit ref=__local_5.p2[kind=local]
 expr e@30:26 int(5) type=Int
-expr e@30:15 call callee=e@30:15#1 args=[_:e@30:26] type=golden.sema.BoundedBox<Int> call=golden.sema.BoundedBox.<init> targs=[Int]
-expr e@30:5 localDecl box mutable=0 type=_ init=e@30:15 type=Unit ref=__local_6.box
-expr e@31:14 name(box) type=golden.sema.BoundedBox<Int> ref=__local_6.box
+expr e@30:15 call callee=e@30:15#1 args=[_:e@30:26] type=golden.sema.BoundedBox<Int> call=golden.sema.BoundedBox.<init>[kind=ctor;recv=golden.sema.BoundedBox<T0>;params=T0;gen=1] targs=[Int]
+expr e@30:5 localDecl box mutable=0 type=_ init=e@30:15 type=Unit ref=__local_6.box[kind=local]
+expr e@31:14 name(box) type=golden.sema.BoundedBox<Int> ref=__local_6.box[kind=local]
 expr e@31:29 int(10) type=Int
-expr e@31:14#1 memberCall recv=e@31:14 callee=isLessThan args=[_:e@31:29] type=Boolean call=golden.sema.BoundedBox.isLessThan targs=[Int]
-expr e@31:5 localDecl lt mutable=0 type=_ init=e@31:14#1 type=Unit ref=__local_7.lt
-expr e@32:14 name(box) type=golden.sema.BoundedBox<Int> ref=__local_6.box
+expr e@31:14#1 memberCall recv=e@31:14 callee=isLessThan args=[_:e@31:29] type=Boolean call=golden.sema.BoundedBox.isLessThan[kind=fun;recv=golden.sema.BoundedBox<T0>;params=T0;gen=1] targs=[Int]
+expr e@31:5 localDecl lt mutable=0 type=_ init=e@31:14#1 type=Unit ref=__local_7.lt[kind=local]
+expr e@32:14 name(box) type=golden.sema.BoundedBox<Int> ref=__local_6.box[kind=local]
 expr e@32:32 int(3) type=Int
-expr e@32:14#1 memberCall recv=e@32:14 callee=isGreaterThan args=[_:e@32:32] type=Boolean call=golden.sema.BoundedBox.isGreaterThan targs=[Int]
-expr e@32:5 localDecl gt mutable=0 type=_ init=e@32:14#1 type=Unit ref=__local_8.gt
-expr e@33:16 name(box) type=golden.sema.BoundedBox<Int> ref=__local_6.box
-expr e@33:16#1 memberCall recv=e@33:16 callee=describe args=[] type=String call=golden.sema.BoundedBox.describe targs=[Int]
-expr e@33:5 localDecl desc mutable=0 type=_ init=e@33:16#1 type=Unit ref=__local_9.desc
+expr e@32:14#1 memberCall recv=e@32:14 callee=isGreaterThan args=[_:e@32:32] type=Boolean call=golden.sema.BoundedBox.isGreaterThan[kind=fun;recv=golden.sema.BoundedBox<T0>;params=T0;gen=1] targs=[Int]
+expr e@32:5 localDecl gt mutable=0 type=_ init=e@32:14#1 type=Unit ref=__local_8.gt[kind=local]
+expr e@33:16 name(box) type=golden.sema.BoundedBox<Int> ref=__local_6.box[kind=local]
+expr e@33:16#1 memberCall recv=e@33:16 callee=describe args=[] type=String call=golden.sema.BoundedBox.describe[kind=fun;recv=golden.sema.BoundedBox<T0>;params=;gen=1] targs=[Int]
+expr e@33:5 localDecl desc mutable=0 type=_ init=e@33:16#1 type=Unit ref=__local_9.desc[kind=local]

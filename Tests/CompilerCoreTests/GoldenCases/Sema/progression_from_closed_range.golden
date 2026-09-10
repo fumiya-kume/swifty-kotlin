@@ -1,0 +1,69 @@
+symbol fq=__local_0.progression[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntProgression
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntProgression
+symbol fq=__local_2.progression[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.LongProgression
+symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.LongProgression
+symbol fq=__local_4.progression[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.CharProgression
+symbol fq=__local_5.checked[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.CharProgression
+symbol fq=__local_6.progression[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.UIntProgression
+symbol fq=__local_7.checked[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.UIntProgression
+symbol fq=__local_8.progression[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.ULongProgression
+symbol fq=__local_9.checked[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.ULongProgression
+symbol fq=charProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=intProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.ranges.CharProgression.Companion[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.ranges.CharProgression[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.ranges.LongProgression.Companion[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.ranges.LongProgression[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.ranges.UIntProgression.Companion[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.ranges.UIntProgression[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.ranges.ULongProgression.Companion[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.ranges.ULongProgression[kind=class] kind=class vis=public flags=synthetic|openType
+symbol fq=longProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=uintProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=ulongProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+file fprogression_from_closed_range package=_
+  decl intProgression[kind=fun;params=] fun intProgression sym=intProgression[kind=fun;params=]
+  decl longProgression[kind=fun;params=] fun longProgression sym=longProgression[kind=fun;params=]
+  decl charProgression[kind=fun;params=] fun charProgression sym=charProgression[kind=fun;params=]
+  decl uintProgression[kind=fun;params=] fun uintProgression sym=uintProgression[kind=fun;params=]
+  decl ulongProgression[kind=fun;params=] fun ulongProgression sym=ulongProgression[kind=fun;params=]
+expr e@7:23 name(IntProgression) type=kotlin.ranges.IntProgression.Companion ref=kotlin.ranges.IntProgression[kind=class]
+expr e@7:54 int(1) type=Int
+expr e@7:57 int(10) type=Int
+expr e@7:61 int(2) type=Int
+expr e@7:23#1 memberCall recv=e@7:23 callee=fromClosedRange args=[_:e@7:54,_:e@7:57,_:e@7:61] type=kotlin.ranges.IntProgression call=kotlin.ranges.fromClosedRange[kind=fun;recv=kotlin.ranges.IntProgression.Companion;params=Int,Int,Int]
+expr e@7:5 localDecl progression mutable=0 type=_ init=e@7:23#1 type=Unit ref=__local_0.progression[kind=local]
+expr e@8:35 name(progression) type=kotlin.ranges.IntProgression ref=__local_0.progression[kind=local]
+expr e@8:5 localDecl checked mutable=0 type=IntProgression init=e@8:35 type=Unit ref=__local_1.checked[kind=local]
+expr e@12:23 name(LongProgression) type=kotlin.ranges.LongProgression.Companion ref=kotlin.ranges.LongProgression[kind=class]
+expr e@12:55 long(1) type=Long
+expr e@12:59 long(10) type=Long
+expr e@12:64 int(3) type=Int
+expr e@12:23#1 memberCall recv=e@12:23 callee=fromClosedRange args=[_:e@12:55,_:e@12:59,_:e@12:64] type=kotlin.ranges.LongProgression call=kotlin.ranges.fromClosedRange[kind=fun;recv=kotlin.ranges.LongProgression.Companion;params=Long,Long,Int]
+expr e@12:5 localDecl progression mutable=0 type=_ init=e@12:23#1 type=Unit ref=__local_2.progression[kind=local]
+expr e@13:36 name(progression) type=kotlin.ranges.LongProgression ref=__local_2.progression[kind=local]
+expr e@13:5 localDecl checked mutable=0 type=LongProgression init=e@13:36 type=Unit ref=__local_3.checked[kind=local]
+expr e@17:23 name(CharProgression) type=kotlin.ranges.CharProgression.Companion ref=kotlin.ranges.CharProgression[kind=class]
+expr e@17:55 char(97) type=Char
+expr e@17:60 char(103) type=Char
+expr e@17:65 int(2) type=Int
+expr e@17:23#1 memberCall recv=e@17:23 callee=fromClosedRange args=[_:e@17:55,_:e@17:60,_:e@17:65] type=kotlin.ranges.CharProgression call=kotlin.ranges.fromClosedRange[kind=fun;recv=kotlin.ranges.CharProgression.Companion;params=Char,Char,Int]
+expr e@17:5 localDecl progression mutable=0 type=_ init=e@17:23#1 type=Unit ref=__local_4.progression[kind=local]
+expr e@18:36 name(progression) type=kotlin.ranges.CharProgression ref=__local_4.progression[kind=local]
+expr e@18:5 localDecl checked mutable=0 type=CharProgression init=e@18:36 type=Unit ref=__local_5.checked[kind=local]
+expr e@22:23 name(UIntProgression) type=kotlin.ranges.UIntProgression.Companion ref=kotlin.ranges.UIntProgression[kind=class]
+expr e@22:55 uint(1) type=UInt
+expr e@22:59 uint(10) type=UInt
+expr e@22:64 int(2) type=Int
+expr e@22:23#1 memberCall recv=e@22:23 callee=fromClosedRange args=[_:e@22:55,_:e@22:59,_:e@22:64] type=kotlin.ranges.UIntProgression call=kotlin.ranges.fromClosedRange[kind=fun;recv=kotlin.ranges.UIntProgression.Companion;params=UInt,UInt,Int]
+expr e@22:5 localDecl progression mutable=0 type=_ init=e@22:23#1 type=Unit ref=__local_6.progression[kind=local]
+expr e@23:36 name(progression) type=kotlin.ranges.UIntProgression ref=__local_6.progression[kind=local]
+expr e@23:5 localDecl checked mutable=0 type=UIntProgression init=e@23:36 type=Unit ref=__local_7.checked[kind=local]
+expr e@27:23 name(ULongProgression) type=kotlin.ranges.ULongProgression.Companion ref=kotlin.ranges.ULongProgression[kind=class]
+expr e@27:56 ulong(1) type=ULong
+expr e@27:61 ulong(10) type=ULong
+expr e@27:67 int(3) type=Int
+expr e@27:23#1 memberCall recv=e@27:23 callee=fromClosedRange args=[_:e@27:56,_:e@27:61,_:e@27:67] type=kotlin.ranges.ULongProgression call=kotlin.ranges.fromClosedRange[kind=fun;recv=kotlin.ranges.ULongProgression.Companion;params=ULong,ULong,Int]
+expr e@27:5 localDecl progression mutable=0 type=_ init=e@27:23#1 type=Unit ref=__local_8.progression[kind=local]
+expr e@28:37 name(progression) type=kotlin.ranges.ULongProgression ref=__local_8.progression[kind=local]
+expr e@28:5 localDecl checked mutable=0 type=ULongProgression init=e@28:37 type=Unit ref=__local_9.checked[kind=local]

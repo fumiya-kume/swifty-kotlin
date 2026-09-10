@@ -1,15 +1,15 @@
-symbol fq=__local_0.rng kind=local vis=private flags=_ type=kotlin.random.Random.Default
-symbol fq=__local_1.a kind=local vis=private flags=_ type=Int
-symbol fq=__local_2.b kind=local vis=private flags=_ type=Long
-symbol fq=useRandomDefault kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.rng[kind=local] kind=local vis=private flags=_ type=kotlin.random.Random.Default
+symbol fq=__local_1.a[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.b[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=useRandomDefault[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file frandom_default package=_
-  decl useRandomDefault fun useRandomDefault sym=useRandomDefault
-expr e@4:15 name(Random) type=kotlin.random.Random ref=kotlin.random.Random#0
-expr e@4:15#1 memberCall recv=e@4:15 callee=Default args=[] type=kotlin.random.Random.Default ref=kotlin.random.Random.Default
-expr e@4:5 localDecl rng mutable=0 type=_ init=e@4:15#1 type=Unit ref=__local_0.rng
-expr e@5:13 name(rng) type=kotlin.random.Random.Default ref=__local_0.rng
-expr e@5:13#1 memberCall recv=e@5:13 callee=nextInt args=[] type=Int call=kotlin.random.Random.Default.nextInt#0
-expr e@5:5 localDecl a mutable=0 type=_ init=e@5:13#1 type=Unit ref=__local_1.a
-expr e@6:13 name(rng) type=kotlin.random.Random.Default ref=__local_0.rng
-expr e@6:13#1 memberCall recv=e@6:13 callee=nextLong args=[] type=Long call=kotlin.random.Random.Default.nextLong#0
-expr e@6:5 localDecl b mutable=0 type=_ init=e@6:13#1 type=Unit ref=__local_2.b
+  decl useRandomDefault[kind=fun;params=] fun useRandomDefault sym=useRandomDefault[kind=fun;params=]
+expr e@4:15 name(Random) type=kotlin.random.Random ref=kotlin.random.Random[kind=class]
+expr e@4:15#1 memberCall recv=e@4:15 callee=Default args=[] type=kotlin.random.Random.Default ref=kotlin.random.Random.Default[kind=obj]
+expr e@4:5 localDecl rng mutable=0 type=_ init=e@4:15#1 type=Unit ref=__local_0.rng[kind=local]
+expr e@5:13 name(rng) type=kotlin.random.Random.Default ref=__local_0.rng[kind=local]
+expr e@5:13#1 memberCall recv=e@5:13 callee=nextInt args=[] type=Int call=kotlin.random.Random.Default.nextInt[kind=fun;recv=kotlin.random.Random.Default;params=]
+expr e@5:5 localDecl a mutable=0 type=_ init=e@5:13#1 type=Unit ref=__local_1.a[kind=local]
+expr e@6:13 name(rng) type=kotlin.random.Random.Default ref=__local_0.rng[kind=local]
+expr e@6:13#1 memberCall recv=e@6:13 callee=nextLong args=[] type=Long call=kotlin.random.Random.Default.nextLong[kind=fun;recv=kotlin.random.Random.Default;params=]
+expr e@6:5 localDecl b mutable=0 type=_ init=e@6:13#1 type=Unit ref=__local_2.b[kind=local]

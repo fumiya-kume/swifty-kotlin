@@ -1,5 +1,5 @@
-symbol fq=golden.sema.constructExperimentalUuidApi kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.uuid.ExperimentalUuidApi
+symbol fq=golden.sema.constructExperimentalUuidApi[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.uuid.ExperimentalUuidApi
 file fstdlib_kotlin_uuid_ExperimentalUuidApi_n_n package=golden.sema
-  decl golden.sema.constructExperimentalUuidApi fun constructExperimentalUuidApi sym=golden.sema.constructExperimentalUuidApi
-expr e@6:12 call callee=e@6:12#1 args=[] type=kotlin.uuid.ExperimentalUuidApi call=kotlin.uuid.ExperimentalUuidApi.<init>
+  decl golden.sema.constructExperimentalUuidApi[kind=fun;params=] fun constructExperimentalUuidApi sym=golden.sema.constructExperimentalUuidApi[kind=fun;params=]
+expr e@6:12 call callee=e@6:12#1 args=[] type=kotlin.uuid.ExperimentalUuidApi call=kotlin.uuid.ExperimentalUuidApi.<init>[kind=ctor;recv=kotlin.uuid.ExperimentalUuidApi;params=]
 expr e@6:5 return value=e@6:12 type=Nothing

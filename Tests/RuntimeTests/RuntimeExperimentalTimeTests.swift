@@ -44,4 +44,11 @@ struct RuntimeExperimentalTimeTests {
         let second = kk_clock_now(clock)
         #expect(kk_instant_compare(second, first) >= 0)
     }
+
+    @Test func clockNowBridgeUsesSystemFallbackForUnknownReceiver() {
+        let now = kk_clock_now(0)
+
+        #expect(now != 0)
+        #expect(kk_instant_epoch_seconds(now) > 1_500_000_000)
+    }
 }
