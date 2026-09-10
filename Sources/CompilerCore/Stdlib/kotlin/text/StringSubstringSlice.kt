@@ -32,6 +32,13 @@ public fun String.substring(startIndex: Int, endIndex: Int): String {
     return buildStringFromCharRange(chars, startIndex, endIndex)
 }
 
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.substring(startIndex: Int, endIndex: Int = length): String =
+    this.subSequence(startIndex, endIndex).toString()
+
+public fun CharSequence.substring(range: IntRange): String =
+    this.subSequence(range.start, range.endInclusive + 1).toString()
+
 @Deprecated(
     "Use substring(startIndex, endIndex) instead.",
     ReplaceWith("substring(startIndex, endIndex)")
@@ -42,6 +49,9 @@ public fun String.subSequence(startIndex: Int, endIndex: Int): String =
 // BUG-152: members reached through a value statically typed as `CharSequence`.
 public fun CharSequence.subSequence(startIndex: Int, endIndex: Int): CharSequence =
     this.toString().substring(startIndex, endIndex)
+
+public fun CharSequence.subSequence(range: IntRange): CharSequence =
+    this.subSequence(range.start, range.endInclusive + 1)
 
 public fun String.slice(indices: IntRange): String {
     if (indices.isEmpty()) return ""

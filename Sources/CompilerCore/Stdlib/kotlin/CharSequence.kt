@@ -9,10 +9,11 @@ package kotlin
 
 // KSP-724: nominal `kotlin.CharSequence` declaration migrated out of the
 // synthetic self-registration; on bundle load it reuses the synthetic shell.
-// `subSequence` remains an extension function in `kotlin.text`; `get` is a
-// nominal interface member so user-defined CharSequence implementations and
-// interface-typed receivers use the normal member-dispatch path.
+// `get`, `length`, and `subSequence` are nominal interface members so
+// user-defined CharSequence implementations and interface-typed receivers use
+// the normal member-dispatch path.
 public interface CharSequence {
     public val length: Int
     public operator fun get(index: Int): Char
+    public fun subSequence(startIndex: Int, endIndex: Int): CharSequence
 }

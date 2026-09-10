@@ -23,11 +23,15 @@ struct RuntimeStringBuilderTests {
         let interfaceTypeID = Int(runtimeStableNominalTypeID(fqName: "kotlin.CharSequence"))
         let getRaw = kk_itable_lookup_dynamic(builder, interfaceTypeID, 0)
         let stringGetRaw = kk_itable_lookup_dynamic(string, interfaceTypeID, 0)
-        let lengthRaw = kk_itable_lookup_dynamic(builder, interfaceTypeID, 1)
-        let stringLengthRaw = kk_itable_lookup_dynamic(string, interfaceTypeID, 1)
+        let subSequenceRaw = kk_itable_lookup_dynamic(builder, interfaceTypeID, 1)
+        let stringSubSequenceRaw = kk_itable_lookup_dynamic(string, interfaceTypeID, 1)
+        let lengthRaw = kk_itable_lookup_dynamic(builder, interfaceTypeID, 2)
+        let stringLengthRaw = kk_itable_lookup_dynamic(string, interfaceTypeID, 2)
 
         #expect(getRaw != 0)
         #expect(stringGetRaw != 0)
+        #expect(subSequenceRaw != 0)
+        #expect(stringSubSequenceRaw != 0)
         #expect(lengthRaw != 0)
         #expect(stringLengthRaw != 0)
 
@@ -46,6 +50,48 @@ struct RuntimeStringBuilderTests {
         var lengthThrown = 0
         #expect(length(builder, &lengthThrown) == 3)
         #expect(lengthThrown == 0)
+
+        let subSequence = unsafeBitCast(
+            subSequenceRaw,
+            to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+        )
+        var subSequenceThrown = 0
+        let suffix = subSequence(builder, 1, 3, &subSequenceThrown)
+        #expect(subSequenceThrown == 0)
+        #expect(runtimeStringValue(suffix) == "bc")
+
+        let stringSubSequence = unsafeBitCast(
+            stringSubSequenceRaw,
+            to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+        )
+        var stringSubSequenceThrown = 0
+        let stringSuffix = stringSubSequence(string, 1, 5, &stringSubSequenceThrown)
+        #expect(stringSubSequenceThrown == 0)
+        #expect(runtimeStringValue(stringSuffix) == "ello")
+
+        let empty = makeRuntimeString("")
+        var emptyLengthThrown = 0
+        #expect(length(empty, &emptyLengthThrown) == 0)
+        #expect(emptyLengthThrown == 0)
+        var emptySubSequenceThrown = 0
+        let emptySubSequence = subSequence(empty, 0, 0, &emptySubSequenceThrown)
+        #expect(emptySubSequenceThrown == 0)
+        #expect(runtimeStringValue(emptySubSequence) == "")
+
+        var invalidRangeThrown = 0
+        _ = subSequence(string, 2, 1, &invalidRangeThrown)
+        #expect(invalidRangeThrown != 0)
+
+        let emojiBuilder = makeBuilder("🥦")
+        let emojiString = makeRuntimeString("🥦")
+        var emojiBuilderGetThrown = 0
+        var emojiStringGetThrown = 0
+        #expect(get(emojiBuilder, 0, &emojiBuilderGetThrown) == 55358)
+        #expect(get(emojiBuilder, 1, &emojiBuilderGetThrown) == 56678)
+        #expect(get(emojiString, 0, &emojiStringGetThrown) == 55358)
+        #expect(get(emojiString, 1, &emojiStringGetThrown) == 56678)
+        #expect(emojiBuilderGetThrown == 0)
+        #expect(emojiStringGetThrown == 0)
     }
 
     // KSP-817: temporary String boxes created through the low-level UTF-8
@@ -57,7 +103,7 @@ struct RuntimeStringBuilderTests {
             Int(bitPattern: kk_string_from_utf8(buffer.baseAddress!, Int32(buffer.count)))
         }
         let interfaceTypeID = Int(runtimeStableNominalTypeID(fqName: "kotlin.CharSequence"))
-        let getterRaw = kk_itable_lookup_dynamic(raw, interfaceTypeID, 1)
+        let getterRaw = kk_itable_lookup_dynamic(raw, interfaceTypeID, 2)
 
         #expect(getterRaw != 0)
 
