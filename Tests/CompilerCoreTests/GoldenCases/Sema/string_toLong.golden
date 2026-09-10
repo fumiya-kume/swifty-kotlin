@@ -1,11 +1,11 @@
-symbol fq=__local_0.a kind=local vis=private flags=_ type=Long
-symbol fq=__local_1.b kind=local vis=private flags=_ type=Long
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.a[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_1.b[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstring_toLong package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:13 string(42) type=String
-expr e@2:13#1 memberCall recv=e@2:13 callee=toLong args=[] type=Long call=kotlin.text.toLong
-expr e@2:5 localDecl a mutable=0 type=_ init=e@2:13#1 type=Unit ref=__local_0.a
+expr e@2:13#1 memberCall recv=e@2:13 callee=toLong args=[] type=Long call=kotlin.text.toLong[kind=fun;recv=String;params=]
+expr e@2:5 localDecl a mutable=0 type=_ init=e@2:13#1 type=Unit ref=__local_0.a[kind=local]
 expr e@3:13 string(9999999999) type=String
-expr e@3:13#1 memberCall recv=e@3:13 callee=toLong args=[] type=Long call=kotlin.text.toLong
-expr e@3:5 localDecl b mutable=0 type=_ init=e@3:13#1 type=Unit ref=__local_1.b
+expr e@3:13#1 memberCall recv=e@3:13 callee=toLong args=[] type=Long call=kotlin.text.toLong[kind=fun;recv=String;params=]
+expr e@3:5 localDecl b mutable=0 type=_ init=e@3:13#1 type=Unit ref=__local_1.b[kind=local]

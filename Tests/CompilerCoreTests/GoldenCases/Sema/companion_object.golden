@@ -1,21 +1,21 @@
-symbol fq=__local_0.f kind=local vis=private flags=_ type=golden.sema.Foo
-symbol fq=__local_1.m kind=local vis=private flags=_ type=Int
-symbol fq=golden.sema.Foo kind=class vis=public flags=_
-symbol fq=golden.sema.Foo.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.Foo params=[Int] ret=golden.sema.Foo
-symbol fq=golden.sema.Foo.<init>.$0.x kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Foo.Companion kind=object vis=public flags=_
-symbol fq=golden.sema.Foo.Companion.MAX_COUNT kind=property vis=public flags=constValue type=Int
-symbol fq=golden.sema.Foo.Companion.create kind=function vis=public flags=_ sig=recv=golden.sema.Foo.Companion params=[] ret=golden.sema.Foo
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.f[kind=local] kind=local vis=private flags=_ type=golden.sema.Foo
+symbol fq=__local_1.m[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=golden.sema.Foo.<init>.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Foo.<init>[kind=ctor;recv=golden.sema.Foo;params=Int] kind=constructor vis=public flags=_ sig=recv=golden.sema.Foo params=[Int] ret=golden.sema.Foo
+symbol fq=golden.sema.Foo.Companion.MAX_COUNT[kind=prop] kind=property vis=public flags=constValue type=Int
+symbol fq=golden.sema.Foo.Companion.create[kind=fun;recv=golden.sema.Foo.Companion;params=] kind=function vis=public flags=_ sig=recv=golden.sema.Foo.Companion params=[] ret=golden.sema.Foo
+symbol fq=golden.sema.Foo.Companion[kind=obj] kind=object vis=public flags=_
+symbol fq=golden.sema.Foo[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fcompanion_object package=golden.sema
-  decl golden.sema.Foo class Foo sym=golden.sema.Foo
-  decl golden.sema.main fun main sym=golden.sema.main
+  decl golden.sema.Foo[kind=class] class Foo sym=golden.sema.Foo[kind=class]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@5:36 int(100) type=Int
 expr e@6:33 int(0) type=Int
-expr e@6:29 call callee=e@6:29#1 args=[_:e@6:33] type=golden.sema.Foo call=golden.sema.Foo.<init>
-expr e@11:18 name(Foo) type=golden.sema.Foo.Companion ref=golden.sema.Foo
-expr e@11:18#1 memberCall recv=e@11:18 callee=create args=[] type=golden.sema.Foo call=golden.sema.Foo.Companion.create
-expr e@11:5 localDecl f mutable=0 type=Foo init=e@11:18#1 type=Unit ref=__local_0.f
-expr e@12:18 name(Foo) type=golden.sema.Foo.Companion ref=golden.sema.Foo
-expr e@12:18#1 memberCall recv=e@12:18 callee=MAX_COUNT args=[] type=Int ref=golden.sema.Foo.Companion.MAX_COUNT
-expr e@12:5 localDecl m mutable=0 type=Int init=e@12:18#1 type=Unit ref=__local_1.m
+expr e@6:29 call callee=e@6:29#1 args=[_:e@6:33] type=golden.sema.Foo call=golden.sema.Foo.<init>[kind=ctor;recv=golden.sema.Foo;params=Int]
+expr e@11:18 name(Foo) type=golden.sema.Foo.Companion ref=golden.sema.Foo[kind=class]
+expr e@11:18#1 memberCall recv=e@11:18 callee=create args=[] type=golden.sema.Foo call=golden.sema.Foo.Companion.create[kind=fun;recv=golden.sema.Foo.Companion;params=]
+expr e@11:5 localDecl f mutable=0 type=Foo init=e@11:18#1 type=Unit ref=__local_0.f[kind=local]
+expr e@12:18 name(Foo) type=golden.sema.Foo.Companion ref=golden.sema.Foo[kind=class]
+expr e@12:18#1 memberCall recv=e@12:18 callee=MAX_COUNT args=[] type=Int ref=golden.sema.Foo.Companion.MAX_COUNT[kind=prop]
+expr e@12:5 localDecl m mutable=0 type=Int init=e@12:18#1 type=Unit ref=__local_1.m[kind=local]

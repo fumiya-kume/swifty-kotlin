@@ -602,13 +602,9 @@ extension DataEnumSealedSynthesisPass {
                     thrownResult: nil
                 ))
 
-                // Tag only disambiguates Boolean's JVM-matching 1231/1237 sentinel from a raw
-                // int/long/char bit pattern; pointer-shaped values (String/class instances) are
-                // dispatched by kk_any_hashCode via runtime type inspection regardless of tag.
-                let tagValue: Int64 = switch sema.types.kind(of: sema.types.makeNonNullable(propType)) {
-                case .primitive(.boolean, _): 2
-                default: 1
-                }
+                // Keep the synthetic hashCode tag in sync with every other
+                // Any-fallback call site, including the numeric raw-value tags.
+                let tagValue = computeAnyFallbackTag(for: propType, sema: sema)
                 let tagExpr = module.arena.appendTemporary(type: intType
                 )
                 body.append(.constValue(result: tagExpr, value: .intLiteral(tagValue)))

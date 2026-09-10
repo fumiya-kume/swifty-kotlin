@@ -99,10 +99,17 @@ public fun <T> List<T>.dropLastWhile(predicate: (T) -> Boolean): List<T> {
     return emptyList()
 }
 
-// IntRange is Iterable<Int>, so a single Iterable overload handles both
-// IntRange and generic Iterable arguments. Keeping a separate IntRange
-// overload triggers an overload-resolution bug in KSwiftK where a List<Int>
-// argument is incorrectly dispatched to the IntRange overload.
+// KSP-1001: Keep the stdlib IntRange overload alongside the Iterable overload.
+// The List<Int> argument below remains an unambiguous match for Iterable<Int>.
+public fun <T> List<T>.slice(indices: IntRange): List<T> {
+    if (indices.isEmpty()) return emptyList()
+    val result = mutableListOf<T>()
+    for (index in indices) {
+        result.add(this[index])
+    }
+    return result
+}
+
 public fun <T> List<T>.slice(indices: Iterable<Int>): List<T> {
     val result = mutableListOf<T>()
     for (index in indices) {

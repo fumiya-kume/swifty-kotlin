@@ -1,0 +1,38 @@
+symbol fq=__local_0.iterableNone[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_1.iterableNonePredicate[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_2.nullableNone[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_3.listNone[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_4.listNonePredicate[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=probe.$0.list[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe.$0.nullable[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<String?>,kotlin.collections.List<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<String?>,kotlin.collections.List<Int>] ret=Unit
+file fstdlib_kotlin_collections_Iterable_none package=_
+  decl probe[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<String?>,kotlin.collections.List<Int>] fun probe sym=probe[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<String?>,kotlin.collections.List<Int>]
+expr e@2:24 name(values) type=kotlin.collections.Iterable<Int> ref=probe.$0.values[kind=vparam]
+expr e@2:24#1 memberCall recv=e@2:24 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
+expr e@2:5 localDecl iterableNone mutable=0 type=_ init=e@2:24#1 type=Unit ref=__local_0.iterableNone[kind=local]
+expr e@3:33 name(values) type=kotlin.collections.Iterable<Int> ref=probe.$0.values[kind=vparam]
+expr e@3:47 name(it) type=Int ref=s-0
+expr e@3:52 int(1) type=Int
+expr e@3:47#1 binary(greaterThan) lhs=e@3:47 rhs=e@3:52 type=Boolean
+expr e@3:45 lambda params=[] body=e@3:47#1 label=none type=(Int) -> Boolean
+expr e@3:33#1 memberCall recv=e@3:33 callee=none args=[_:e@3:45] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
+expr e@3:5 localDecl iterableNonePredicate mutable=0 type=_ init=e@3:33#1 type=Unit ref=__local_1.iterableNonePredicate[kind=local]
+expr e@4:24 name(nullable) type=kotlin.collections.Iterable<String?> ref=probe.$0.nullable[kind=vparam]
+expr e@4:40 name(it) type=String? ref=s-1
+expr e@4:46 name(null) type=Nothing?
+expr e@4:40#1 binary(equal) lhs=e@4:40 rhs=e@4:46 type=Boolean
+expr e@4:38 lambda params=[] body=e@4:40#1 label=none type=(String?) -> Boolean
+expr e@4:24#1 memberCall recv=e@4:24 callee=none args=[_:e@4:38] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[String?]
+expr e@4:5 localDecl nullableNone mutable=0 type=_ init=e@4:24#1 type=Unit ref=__local_2.nullableNone[kind=local]
+expr e@5:20 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list[kind=vparam]
+expr e@5:20#1 memberCall recv=e@5:20 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.List<T0>;params=;gen=1] targs=[Int]
+expr e@5:5 localDecl listNone mutable=0 type=_ init=e@5:20#1 type=Unit ref=__local_3.listNone[kind=local]
+expr e@6:29 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list[kind=vparam]
+expr e@6:41 name(it) type=Int ref=s-2
+expr e@6:46 int(1) type=Int
+expr e@6:41#1 binary(greaterThan) lhs=e@6:41 rhs=e@6:46 type=Boolean
+expr e@6:39 lambda params=[] body=e@6:41#1 label=none type=(Int) -> Boolean
+expr e@6:29#1 memberCall recv=e@6:29 callee=none args=[_:e@6:39] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.List<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
+expr e@6:5 localDecl listNonePredicate mutable=0 type=_ init=e@6:29#1 type=Unit ref=__local_4.listNonePredicate[kind=local]

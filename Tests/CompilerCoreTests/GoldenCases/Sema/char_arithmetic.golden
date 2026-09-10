@@ -1,50 +1,50 @@
-symbol fq=__local_0.c kind=local vis=private flags=_ type=Char
-symbol fq=__local_1.next kind=local vis=private flags=_ type=Char
-symbol fq=__local_2.c kind=local vis=private flags=_ type=Char
-symbol fq=__local_3.prev kind=local vis=private flags=_ type=Char
-symbol fq=__local_4.diff kind=local vis=private flags=_ type=Int
-symbol fq=__local_5.lt kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_6.eq kind=local vis=private flags=_ type=Boolean
-symbol fq=charComparison kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=charMinusChar kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=charMinusInt kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=charPlusInt kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.c[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_1.next[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_2.c[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_3.prev[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_4.diff[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_5.lt[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_6.eq[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=charComparison[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=charMinusChar[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=charMinusInt[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=charPlusInt[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fchar_arithmetic package=_
-  decl charPlusInt fun charPlusInt sym=charPlusInt
-  decl charMinusInt fun charMinusInt sym=charMinusInt
-  decl charMinusChar fun charMinusChar sym=charMinusChar
-  decl charComparison fun charComparison sym=charComparison
+  decl charPlusInt[kind=fun;params=] fun charPlusInt sym=charPlusInt[kind=fun;params=]
+  decl charMinusInt[kind=fun;params=] fun charMinusInt sym=charMinusInt[kind=fun;params=]
+  decl charMinusChar[kind=fun;params=] fun charMinusChar sym=charMinusChar[kind=fun;params=]
+  decl charComparison[kind=fun;params=] fun charComparison sym=charComparison[kind=fun;params=]
 expr e@2:19 char(97) type=Char
-expr e@2:5 localDecl c mutable=0 type=Char init=e@2:19 type=Unit ref=__local_0.c
-expr e@3:16 name(c) type=Char ref=__local_0.c
+expr e@2:5 localDecl c mutable=0 type=Char init=e@2:19 type=Unit ref=__local_0.c[kind=local]
+expr e@3:16 name(c) type=Char ref=__local_0.c[kind=local]
 expr e@3:20 int(1) type=Int
 expr e@3:16#1 binary(add) lhs=e@3:16 rhs=e@3:20 type=Char
-expr e@3:5 localDecl next mutable=0 type=_ init=e@3:16#1 type=Unit ref=__local_1.next
-expr e@4:13 name(next) type=Char ref=__local_1.next
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13] type=Unit call=kotlin.io.println#1
+expr e@3:5 localDecl next mutable=0 type=_ init=e@3:16#1 type=Unit ref=__local_1.next[kind=local]
+expr e@4:13 name(next) type=Char ref=__local_1.next[kind=local]
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@8:19 char(122) type=Char
-expr e@8:5 localDecl c mutable=0 type=Char init=e@8:19 type=Unit ref=__local_2.c
-expr e@9:16 name(c) type=Char ref=__local_2.c
+expr e@8:5 localDecl c mutable=0 type=Char init=e@8:19 type=Unit ref=__local_2.c[kind=local]
+expr e@9:16 name(c) type=Char ref=__local_2.c[kind=local]
 expr e@9:20 int(1) type=Int
 expr e@9:16#1 binary(subtract) lhs=e@9:16 rhs=e@9:20 type=Char
-expr e@9:5 localDecl prev mutable=0 type=_ init=e@9:16#1 type=Unit ref=__local_3.prev
-expr e@10:13 name(prev) type=Char ref=__local_3.prev
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println#1
+expr e@9:5 localDecl prev mutable=0 type=_ init=e@9:16#1 type=Unit ref=__local_3.prev[kind=local]
+expr e@10:13 name(prev) type=Char ref=__local_3.prev[kind=local]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@14:16 char(122) type=Char
 expr e@14:22 char(97) type=Char
 expr e@14:16#1 binary(subtract) lhs=e@14:16 rhs=e@14:22 type=Int
-expr e@14:5 localDecl diff mutable=0 type=_ init=e@14:16#1 type=Unit ref=__local_4.diff
-expr e@15:13 name(diff) type=Int ref=__local_4.diff
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13] type=Unit call=kotlin.io.println#1
+expr e@14:5 localDecl diff mutable=0 type=_ init=e@14:16#1 type=Unit ref=__local_4.diff[kind=local]
+expr e@15:13 name(diff) type=Int ref=__local_4.diff[kind=local]
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@19:14 char(97) type=Char
 expr e@19:20 char(122) type=Char
 expr e@19:14#1 binary(lessThan) lhs=e@19:14 rhs=e@19:20 type=Boolean
-expr e@19:5 localDecl lt mutable=0 type=_ init=e@19:14#1 type=Unit ref=__local_5.lt
+expr e@19:5 localDecl lt mutable=0 type=_ init=e@19:14#1 type=Unit ref=__local_5.lt[kind=local]
 expr e@20:14 char(97) type=Char
 expr e@20:21 char(97) type=Char
 expr e@20:14#1 binary(equal) lhs=e@20:14 rhs=e@20:21 type=Boolean
-expr e@20:5 localDecl eq mutable=0 type=_ init=e@20:14#1 type=Unit ref=__local_6.eq
-expr e@21:13 name(lt) type=Boolean ref=__local_5.lt
-expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13] type=Unit call=kotlin.io.println#1
-expr e@22:13 name(eq) type=Boolean ref=__local_6.eq
-expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13] type=Unit call=kotlin.io.println#1
+expr e@20:5 localDecl eq mutable=0 type=_ init=e@20:14#1 type=Unit ref=__local_6.eq[kind=local]
+expr e@21:13 name(lt) type=Boolean ref=__local_5.lt[kind=local]
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@22:13 name(eq) type=Boolean ref=__local_6.eq[kind=local]
+expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

@@ -1,16 +1,16 @@
-symbol fq=golden.sema.Validated kind=class vis=public flags=_
-symbol fq=golden.sema.Validated.$backing_value kind=backingField vis=private flags=mutable type=Int
-symbol fq=golden.sema.Validated.value kind=property vis=public flags=mutable type=Int
+symbol fq=golden.sema.Validated.$backing_value[kind=bfield] kind=backingField vis=private flags=mutable type=Int
+symbol fq=golden.sema.Validated.value[kind=prop] kind=property vis=public flags=mutable type=Int
+symbol fq=golden.sema.Validated[kind=class] kind=class vis=public flags=_
 file fbacking_field package=golden.sema
-  decl golden.sema.Validated class Validated sym=golden.sema.Validated
+  decl golden.sema.Validated[kind=class] class Validated sym=golden.sema.Validated[kind=class]
 expr e@5:30 name(v) type=Int ref=s-0
 expr e@5:34 int(0) type=Int
 expr e@5:30#1 binary(lessThan) lhs=e@5:30 rhs=e@5:34 type=Boolean
 expr e@5:37 int(0) type=Int
 expr e@5:44 name(v) type=Int ref=s-0
 expr e@5:26 if cond=e@5:30#1 then=e@5:37 else=e@5:44 type=Int
-expr e@5:18 localAssign field value=e@5:26 type=Unit ref=golden.sema.Validated.$backing_value
+expr e@5:18 localAssign field value=e@5:26 type=Unit ref=golden.sema.Validated.$backing_value[kind=bfield]
 expr e@4:24 int(0) type=Int
-expr e@8:17 name(value) type=Int ref=golden.sema.Validated.value
+expr e@8:17 name(value) type=Int ref=golden.sema.Validated.value[kind=prop]
 expr e@8:27 int(2) type=Int
 expr e@8:17#1 binary(multiply) lhs=e@8:17 rhs=e@8:27 type=Int

@@ -494,6 +494,55 @@ func itableBridgeSymbolForMethod(
     return bridgeSymbol
 }
 
+/// Registers a nominal type's vtable implementations on an object produced by
+/// a runtime collection factory (for example `LinkedHashSet()` lowered to
+/// `__kk_set_of`). Factory-returned boxes never pass through `kk_object_new`,
+/// so the constructor-site registrations in `appendObjectVtableMethodRegistrations`
+/// never ran for them; without this, an open member such as `LinkedHashSet.size`
+/// dispatches through a vtable slot the box never had registered and the runtime
+/// lookup traps.
+///
+/// Unlike `appendObjectVtableMethodRegistrations` this variant runs in driver-less
+/// lowering passes (it only needs `KIRContext`-level services), so it cannot create
+/// `itableBridgeSymbolForMethod` shims; the registered implementations are the
+/// class's own external-link bridges, whose ABI already matches the erased vtable
+/// signature.
+func appendFactoryObjectVtableMethodRegistrations(
+    objectValue: KIRExprID,
+    nominalSymbol: SymbolID,
+    sema: SemaModule,
+    arena: KIRArena,
+    interner: StringInterner,
+    instructions: inout [KIRInstruction]
+) {
+    var implementationsBySlot: [Int: SymbolID] = [:]
+    for entry in kirVtableImplementations(for: nominalSymbol, sema: sema) {
+        implementationsBySlot[entry.slot] = entry.implementation
+    }
+    for entry in kirVtablePropertyAccessorImplementations(for: nominalSymbol, sema: sema) {
+        implementationsBySlot[entry.slot] = entry.implementation
+    }
+    guard !implementationsBySlot.isEmpty else { return }
+
+    let intType = sema.types.intType
+    let registerCallee = interner.intern("kk_object_register_vtable_method")
+    for (slot, implementation) in implementationsBySlot.sorted(by: { $0.key < $1.key }) {
+        let slotExpr = arena.appendExpr(.intLiteral(Int64(slot)), type: intType)
+        instructions.append(.constValue(result: slotExpr, value: .intLiteral(Int64(slot))))
+        let methodFnExpr = arena.appendExpr(.symbolRef(implementation), type: intType)
+        instructions.append(.constValue(result: methodFnExpr, value: .symbolRef(implementation)))
+        let registerResult = arena.appendTemporary(type: intType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: registerCallee,
+            arguments: [objectValue, slotExpr, methodFnExpr],
+            result: registerResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+    }
+}
+
 /// Registers every direct supertype edge in the ancestor graph of `childSymbol`.
 /// Constructor sites used to emit only `child → direct parent`, so a never-
 /// instantiated intermediate interface (`Ranked : Comparable<Ranked>`) never
@@ -668,11 +717,11 @@ func appendObjectItableMethodRegistrations(
 
 /// Returns the interface methods that must be registered for dynamic itable dispatch.
 ///
-/// BUG-200: bundled library metadata currently omits the compiler-residual
+/// BUG-200/KSP-1070: legacy or precompiled library metadata may omit the
 /// covariant `MutableIterable.iterator(): MutableIterator<T>` entry from the
-/// `MutableIterable` vtable layout. The source class still advertises the
-/// interface and its implementation, so add that exact method at slot zero
-/// until the shared residual layout can carry the covariant member itself.
+/// `MutableIterable` vtable layout. Source-backed layouts include the member
+/// when available; add that exact method at slot zero for residual layouts so
+/// interface dispatch remains compatible across both paths.
 func kirItableMethodEntries(
     for interfaceSymbol: SymbolID,
     interfaceLayout: NominalLayout,

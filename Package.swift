@@ -81,6 +81,7 @@ let package = Package(
                 "GoldenHarnessPaths.swift",
                 "GoldenHarnessSemaFormat.swift",
                 "GoldenHarnessStableRenderContext.swift",
+                "GoldenHarnessSymbolOrigin.swift",
                 "GoldenHarnessSyntaxFormat.swift",
             ]
         ),
@@ -94,7 +95,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "KSwiftLSPCLI",
-            dependencies: ["LSPServer"]
+            dependencies: ["LSPServer", "CompilerCore", "CompilerBackend"]
         ),
         .executableTarget(
             name: "GoldenHarnessWorker",

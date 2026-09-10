@@ -1,6 +1,14 @@
-fun processLinkedSet(set: LinkedHashSet<String>) {
-    println(set.size)
-}
+// `LinkedHashSet<E>` is a source-backed open nominal class
+// (Sources/CompilerCore/Stdlib/kotlin/collections/CollectionAliases.kt).
+// This case verifies only the nominal type and its factories: parameter /
+// return / property types, `LinkedHashSet()` constructor and `linkedSetOf`
+// factory inference, nested type arguments, upper bound, extension receiver,
+// and Set / MutableSet compatibility. Subclassing is verified separately in
+// linkedhashset_inheritance.kt; mutation and membership behavior are executed
+// by Scripts/diff_cases/ksp627_collection_aliases.kt and
+// bug196_linkedhashset_subclass.kt.
+
+fun processLinkedSet(set: LinkedHashSet<String>) {}
 
 fun createLinkedSet(): LinkedHashSet<Int> {
     return LinkedHashSet<Int>()
@@ -11,62 +19,47 @@ class OrderedTags {
     val ids: LinkedHashSet<Int> = LinkedHashSet<Int>()
 }
 
-fun nestedLinkedSets() {
-    val nested: LinkedHashSet<LinkedHashSet<String>> = LinkedHashSet()
-    val inner = LinkedHashSet<String>()
-    inner.add("nested")
-    nested.add(inner)
-    println(nested.size)
-}
-
-class MySet : LinkedHashSet<String>() {
-    fun customOp() = "custom"
-}
-
 fun <T : LinkedHashSet<String>> constrainLinked(set: T): T {
     return set
 }
 
 fun LinkedHashSet<String>.linkedExtension(): String {
-    return "linked: ${this.size}"
+    return "linked"
 }
 
 fun main() {
-    val set: LinkedHashSet<String> = LinkedHashSet()
-    set.add("hello")
-    set.add("world")
-    println(set.size)
-    println(set.contains("hello"))
+    // Constructor inference from explicit type arguments alone, checked by the
+    // assignments and call below rather than an expected type.
+    val explicit = LinkedHashSet<String>()
+    val explicitAsMutable: MutableSet<String> = explicit
+    processLinkedSet(explicit)
 
-    val ms: MutableSet<String> = set
-    ms.add("!")
-    println(ms.size)
+    // Expected-type inference through the nominal type (constructor and
+    // linkedSetOf factory) and through MutableSet.
+    val fromNominal: LinkedHashSet<Double> = LinkedHashSet()
+    val fromFactory: LinkedHashSet<Double> = linkedSetOf()
+    val fromMutable: MutableSet<Boolean> = LinkedHashSet()
 
-    val ordered = linkedSetOf(1, 2, 3)
-    ordered.remove(2)
-    println(ordered.size)
+    // Set (read-only) compatibility.
+    val asReadOnly: Set<String> = LinkedHashSet()
 
-    val readOnly: Set<String> = set
-    println(readOnly.size)
-
-    processLinkedSet(set)
-
+    // Return type propagation.
     val created = createLinkedSet()
-    created.add(42)
-    println(created.size)
+    val createdAsMutable: MutableSet<Int> = created
 
-    val container = OrderedTags()
-    container.tags.add("property")
-    println(container.tags.size)
+    // Property type propagation.
+    val holder = OrderedTags()
+    val tags: MutableSet<String> = holder.tags
+    val ids: LinkedHashSet<Int> = holder.ids
 
-    nestedLinkedSets()
+    // Nested type arguments.
+    val nested: LinkedHashSet<LinkedHashSet<String>> = LinkedHashSet()
+    val nestedAsMutable: MutableSet<LinkedHashSet<String>> = nested
 
-    val mySet = MySet()
-    mySet.add("inherited")
-    println(mySet.customOp())
+    // Upper-bound constraint and return propagation.
+    val constrained = constrainLinked(explicit)
+    val constrainedAsMutable: MutableSet<String> = constrained
 
-    val constrained = constrainLinked(set)
-    println(constrained.size)
-
-    println(set.linkedExtension())
+    // Extension receiver on the nominal type.
+    val extended: String = explicit.linkedExtension()
 }

@@ -207,6 +207,20 @@ extension CollectionLiteralConstructionLoweringPass {
             state: &state,
             loweredBody: &loweredBody
         ) {
+            // Concrete-class collection constructors (`LinkedHashSet()`,
+            // `HashMap()`, ...) are rewritten to runtime factories whose
+            // returned boxes never pass `kk_object_new`, so the
+            // constructor-site vtable registrations never ran for them.
+            // Register the nominal vtable implementations on the box so an
+            // open member dispatch (e.g. `LinkedHashSet.size`) resolves
+            // instead of trapping at `kk_vtable_lookup`. No-ops for
+            // interface-typed results.
+            appendFactoryResultVtableRegistrations(
+                result: result,
+                module: module,
+                ctx: ctx,
+                loweredBody: &loweredBody
+            )
             return
         }
 

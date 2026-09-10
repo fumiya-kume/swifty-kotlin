@@ -1,49 +1,39 @@
-symbol fq=__local_0.removed kind=local vis=private flags=_ type=Int?
-symbol fq=__local_1.keys kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
-symbol fq=__local_2.valuesView kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=golden.sema.ProbeMutableMap kind=class vis=public flags=abstractType|openType
-symbol fq=golden.sema.abstractMutableMapSurface kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.AbstractMutableMap<String, Int>,kotlin.collections.Map<String, Int>,String,Int] ret=Int?
-symbol fq=golden.sema.abstractMutableMapSurface.$0.amount kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.abstractMutableMapSurface.$0.key kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.abstractMutableMapSurface.$0.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.abstractMutableMapSurface.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.AbstractMutableMap kind=class vis=public flags=abstractType|openType type=kotlin.collections.AbstractMutableMap<kotlin.collections.AbstractMutableMap.K, kotlin.collections.AbstractMutableMap.V>
-symbol fq=kotlin.collections.AbstractMutableMap.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.AbstractMutableMap.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
+symbol fq=__local_0.removed[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_1.keys[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
+symbol fq=__local_2.valuesView[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=golden.sema.ProbeMutableMap[kind=class] kind=class vis=public flags=abstractType|openType
+symbol fq=golden.sema.abstractMutableMapSurface.$0.amount[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.abstractMutableMapSurface.$0.key[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.abstractMutableMapSurface.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.abstractMutableMapSurface.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.abstractMutableMapSurface[kind=fun;params=kotlin.collections.AbstractMutableMap<String,Int>,kotlin.collections.Map<String,Int>,String,Int] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.AbstractMutableMap<String, Int>,kotlin.collections.Map<String, Int>,String,Int] ret=Int?
 file fstdlib_kotlin_collections_AbstractMutableMap_AbstractMutableMap_n package=golden.sema
-  decl golden.sema.ProbeMutableMap class ProbeMutableMap sym=golden.sema.ProbeMutableMap
-  decl golden.sema.abstractMutableMapSurface fun abstractMutableMapSurface sym=golden.sema.abstractMutableMapSurface
-expr e@16:5 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values
-expr e@16:16 name(key) type=String ref=golden.sema.abstractMutableMapSurface.$0.key
-expr e@16:21 name(amount) type=Int ref=golden.sema.abstractMutableMapSurface.$0.amount
-expr e@16:5#1 memberCall recv=e@16:5 callee=put args=[_:e@16:16,_:e@16:21] type=Int? call=kotlin.collections.AbstractMutableMap.put targs=[String,Int]
-expr e@17:5 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values
-expr e@17:19 name(source) type=kotlin.collections.Map<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.source
-expr e@17:5#1 memberCall recv=e@17:5 callee=putAll args=[_:e@17:19] type=Unit call=kotlin.collections.AbstractMutableMap.putAll targs=[String,Int]
-expr e@18:19 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values
-expr e@18:33 name(key) type=String ref=golden.sema.abstractMutableMapSurface.$0.key
-expr e@18:19#1 memberCall recv=e@18:19 callee=remove args=[_:e@18:33] type=Int? call=kotlin.collections.AbstractMutableMap.remove targs=[String,Int]
-expr e@18:5 localDecl removed mutable=0 type=_ init=e@18:19#1 type=Unit ref=__local_0.removed
-expr e@19:5 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values
-expr e@19:5#1 memberCall recv=e@19:5 callee=clear args=[] type=Unit call=kotlin.collections.AbstractMutableMap.clear targs=[String,Int]
-expr e@20:36 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values
-expr e@20:36#1 memberCall recv=e@20:36 callee=keys args=[] type=kotlin.collections.MutableSet<String> ref=kotlin.collections.AbstractMutableMap.keys
-expr e@20:5 localDecl keys mutable=0 type=MutableSet<String> init=e@20:36#1 type=Unit ref=__local_1.keys
-expr e@21:46 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values
-expr e@21:46#1 memberCall recv=e@21:46 callee=values args=[] type=kotlin.collections.MutableCollection<Int> ref=kotlin.collections.AbstractMutableMap.values
-expr e@21:5 localDecl valuesView mutable=0 type=MutableCollection<Int> init=e@21:46#1 type=Unit ref=__local_2.valuesView
-expr e@22:5 name(keys) type=kotlin.collections.MutableSet<String> ref=__local_1.keys
-expr e@22:19 name(key) type=String ref=golden.sema.abstractMutableMapSurface.$0.key
-expr e@22:5#1 memberCall recv=e@22:5 callee=contains args=[_:e@22:19] type=Boolean call=kotlin.collections.Set.contains
-expr e@23:5 name(valuesView) type=kotlin.collections.MutableCollection<Int> ref=__local_2.valuesView
-expr e@23:25 name(amount) type=Int ref=golden.sema.abstractMutableMapSurface.$0.amount
-expr e@23:5#1 memberCall recv=e@23:5 callee=contains args=[_:e@23:25] type=Boolean call=kotlin.collections.Collection.contains
-expr e@24:12 name(removed) type=Int? ref=__local_0.removed
+  decl golden.sema.ProbeMutableMap[kind=class] class ProbeMutableMap sym=golden.sema.ProbeMutableMap[kind=class]
+  decl golden.sema.abstractMutableMapSurface[kind=fun;params=kotlin.collections.AbstractMutableMap<String,Int>,kotlin.collections.Map<String,Int>,String,Int] fun abstractMutableMapSurface sym=golden.sema.abstractMutableMapSurface[kind=fun;params=kotlin.collections.AbstractMutableMap<String,Int>,kotlin.collections.Map<String,Int>,String,Int]
+expr e@16:5 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values[kind=vparam]
+expr e@16:16 name(key) type=String ref=golden.sema.abstractMutableMapSurface.$0.key[kind=vparam]
+expr e@16:21 name(amount) type=Int ref=golden.sema.abstractMutableMapSurface.$0.amount[kind=vparam]
+expr e@16:5#1 memberCall recv=e@16:5 callee=put args=[_:e@16:16,_:e@16:21] type=Int? call=kotlin.collections.AbstractMutableMap.put[kind=fun;recv=kotlin.collections.AbstractMutableMap<T0,T1>;params=T0,T1;gen=2] targs=[String,Int]
+expr e@17:5 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values[kind=vparam]
+expr e@17:19 name(source) type=kotlin.collections.Map<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.source[kind=vparam]
+expr e@17:5#1 memberCall recv=e@17:5 callee=putAll args=[_:e@17:19] type=Unit call=kotlin.collections.AbstractMutableMap.putAll[kind=fun;recv=kotlin.collections.AbstractMutableMap<T0,T1>;params=kotlin.collections.Map<out T0,T1>;gen=2] targs=[String,Int]
+expr e@18:19 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values[kind=vparam]
+expr e@18:33 name(key) type=String ref=golden.sema.abstractMutableMapSurface.$0.key[kind=vparam]
+expr e@18:19#1 memberCall recv=e@18:19 callee=remove args=[_:e@18:33] type=Int? call=kotlin.collections.AbstractMutableMap.remove[kind=fun;recv=kotlin.collections.AbstractMutableMap<T0,T1>;params=T0;gen=2] targs=[String,Int]
+expr e@18:5 localDecl removed mutable=0 type=_ init=e@18:19#1 type=Unit ref=__local_0.removed[kind=local]
+expr e@19:5 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values[kind=vparam]
+expr e@19:5#1 memberCall recv=e@19:5 callee=clear args=[] type=Unit call=kotlin.collections.AbstractMutableMap.clear[kind=fun;recv=kotlin.collections.AbstractMutableMap<T0,T1>;params=;gen=2] targs=[String,Int]
+expr e@20:36 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values[kind=vparam]
+expr e@20:36#1 memberCall recv=e@20:36 callee=keys args=[] type=kotlin.collections.MutableSet<String> ref=kotlin.collections.AbstractMutableMap.keys[kind=prop]
+expr e@20:5 localDecl keys mutable=0 type=MutableSet<String> init=e@20:36#1 type=Unit ref=__local_1.keys[kind=local]
+expr e@21:46 name(values) type=kotlin.collections.AbstractMutableMap<String, Int> ref=golden.sema.abstractMutableMapSurface.$0.values[kind=vparam]
+expr e@21:46#1 memberCall recv=e@21:46 callee=values args=[] type=kotlin.collections.MutableCollection<Int> ref=kotlin.collections.AbstractMutableMap.values[kind=prop]
+expr e@21:5 localDecl valuesView mutable=0 type=MutableCollection<Int> init=e@21:46#1 type=Unit ref=__local_2.valuesView[kind=local]
+expr e@22:5 name(keys) type=kotlin.collections.MutableSet<String> ref=__local_1.keys[kind=local]
+expr e@22:19 name(key) type=String ref=golden.sema.abstractMutableMapSurface.$0.key[kind=vparam]
+expr e@22:5#1 memberCall recv=e@22:5 callee=contains args=[_:e@22:19] type=Boolean call=kotlin.collections.Set.contains[kind=fun;recv=kotlin.collections.Set<T0>;params=T0;gen=1]
+expr e@23:5 name(valuesView) type=kotlin.collections.MutableCollection<Int> ref=__local_2.valuesView[kind=local]
+expr e@23:25 name(amount) type=Int ref=golden.sema.abstractMutableMapSurface.$0.amount[kind=vparam]
+expr e@23:5#1 memberCall recv=e@23:5 callee=contains args=[_:e@23:25] type=Boolean call=kotlin.collections.Collection.contains[kind=fun;recv=kotlin.collections.Collection<T0>;params=T0;gen=1]
+expr e@24:12 name(removed) type=Int? ref=__local_0.removed[kind=local]
 expr e@24:5 return value=e@24:12 type=Nothing

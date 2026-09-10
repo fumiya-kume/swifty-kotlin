@@ -1,45 +1,44 @@
-symbol fq=__local_0.sb kind=local vis=private flags=_ type=kotlin.text.StringBuilder
-symbol fq=__local_1.sb kind=local vis=private flags=_ type=kotlin.text.StringBuilder
-symbol fq=__local_2.sb kind=local vis=private flags=_ type=kotlin.text.StringBuilder
-symbol fq=__local_3.parts kind=local vis=private flags=_ type=kotlin.Array<String>
-symbol fq=golden.sema.useAppendVarargAny kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useAppendVarargSpread kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useAppendVarargStrings kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=__local_0.sb[kind=local] kind=local vis=private flags=_ type=kotlin.text.StringBuilder
+symbol fq=__local_1.sb[kind=local] kind=local vis=private flags=_ type=kotlin.text.StringBuilder
+symbol fq=__local_2.sb[kind=local] kind=local vis=private flags=_ type=kotlin.text.StringBuilder
+symbol fq=__local_3.parts[kind=local] kind=local vis=private flags=_ type=kotlin.Array<String>
+symbol fq=golden.sema.useAppendVarargAny[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useAppendVarargSpread[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useAppendVarargStrings[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstring_builder_append_vararg package=golden.sema
-  decl golden.sema.useAppendVarargStrings fun useAppendVarargStrings sym=golden.sema.useAppendVarargStrings
-  decl golden.sema.useAppendVarargAny fun useAppendVarargAny sym=golden.sema.useAppendVarargAny
-  decl golden.sema.useAppendVarargSpread fun useAppendVarargSpread sym=golden.sema.useAppendVarargSpread
-expr e@4:14 call callee=e@4:14#1 args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#0
-expr e@4:5 localDecl sb mutable=0 type=_ init=e@4:14 type=Unit ref=__local_0.sb
-expr e@5:5 name(sb) type=kotlin.text.StringBuilder ref=__local_0.sb
+  decl golden.sema.useAppendVarargStrings[kind=fun;params=] fun useAppendVarargStrings sym=golden.sema.useAppendVarargStrings[kind=fun;params=]
+  decl golden.sema.useAppendVarargAny[kind=fun;params=] fun useAppendVarargAny sym=golden.sema.useAppendVarargAny[kind=fun;params=]
+  decl golden.sema.useAppendVarargSpread[kind=fun;params=] fun useAppendVarargSpread sym=golden.sema.useAppendVarargSpread[kind=fun;params=]
+expr e@4:14 call callee=e@4:14#1 args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=]
+expr e@4:5 localDecl sb mutable=0 type=_ init=e@4:14 type=Unit ref=__local_0.sb[kind=local]
+expr e@5:5 name(sb) type=kotlin.text.StringBuilder ref=__local_0.sb[kind=local]
 expr e@5:15 string(a) type=String
 expr e@5:20 string(b) type=String
 expr e@5:25 string(c) type=String
-expr e@5:5#1 memberCall recv=e@5:5 callee=append args=[_:e@5:15,_:e@5:20,_:e@5:25] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#1
-expr e@6:12 name(sb) type=kotlin.text.StringBuilder ref=__local_0.sb
-expr e@6:12#1 memberCall recv=e@6:12 callee=toString args=[] type=String call=kotlin.text.StringBuilder.toString
+expr e@5:5#1 memberCall recv=e@5:5 callee=append args=[_:e@5:15,_:e@5:20,_:e@5:25] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=*Any?]
+expr e@6:12 name(sb) type=kotlin.text.StringBuilder ref=__local_0.sb[kind=local]
+expr e@6:12#1 memberCall recv=e@6:12 callee=toString args=[] type=String call=kotlin.text.StringBuilder.toString[kind=fun;recv=kotlin.text.StringBuilder;params=]
 expr e@6:5 return value=e@6:12#1 type=Nothing
-expr e@10:14 call callee=e@10:14#1 args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#0
-expr e@10:5 localDecl sb mutable=0 type=_ init=e@10:14 type=Unit ref=__local_1.sb
-expr e@11:5 name(sb) type=kotlin.text.StringBuilder ref=__local_1.sb
+expr e@10:14 call callee=e@10:14#1 args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=]
+expr e@10:5 localDecl sb mutable=0 type=_ init=e@10:14 type=Unit ref=__local_1.sb[kind=local]
+expr e@11:5 name(sb) type=kotlin.text.StringBuilder ref=__local_1.sb[kind=local]
 expr e@11:15 string(hello) type=String
 expr e@11:24 int(42) type=Int
 expr e@11:28 bool(true) type=Boolean
-expr e@11:5#1 memberCall recv=e@11:5 callee=append args=[_:e@11:15,_:e@11:24,_:e@11:28] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#1
-expr e@12:12 name(sb) type=kotlin.text.StringBuilder ref=__local_1.sb
-expr e@12:12#1 memberCall recv=e@12:12 callee=toString args=[] type=String call=kotlin.text.StringBuilder.toString
+expr e@11:5#1 memberCall recv=e@11:5 callee=append args=[_:e@11:15,_:e@11:24,_:e@11:28] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=*Any?]
+expr e@12:12 name(sb) type=kotlin.text.StringBuilder ref=__local_1.sb[kind=local]
+expr e@12:12#1 memberCall recv=e@12:12 callee=toString args=[] type=String call=kotlin.text.StringBuilder.toString[kind=fun;recv=kotlin.text.StringBuilder;params=]
 expr e@12:5 return value=e@12:12#1 type=Nothing
-expr e@16:14 call callee=e@16:14#1 args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#0
-expr e@16:5 localDecl sb mutable=0 type=_ init=e@16:14 type=Unit ref=__local_2.sb
+expr e@16:14 call callee=e@16:14#1 args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=]
+expr e@16:5 localDecl sb mutable=0 type=_ init=e@16:14 type=Unit ref=__local_2.sb[kind=local]
 expr e@17:25 string(x) type=String
 expr e@17:30 string(y) type=String
 expr e@17:35 string(z) type=String
-expr e@17:17 call callee=e@17:17#1 args=[_:e@17:25,_:e@17:30,_:e@17:35] type=kotlin.Array<String> call=kotlin.arrayOf targs=[String]
-expr e@17:5 localDecl parts mutable=0 type=_ init=e@17:17 type=Unit ref=__local_3.parts
-expr e@18:5 name(sb) type=kotlin.text.StringBuilder ref=__local_2.sb
-expr e@18:16 name(parts) type=kotlin.Array<String> ref=__local_3.parts
-expr e@18:5#1 memberCall recv=e@18:5 callee=append args=[_:e@18:16] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#1
-expr e@19:12 name(sb) type=kotlin.text.StringBuilder ref=__local_2.sb
-expr e@19:12#1 memberCall recv=e@19:12 callee=toString args=[] type=String call=kotlin.text.StringBuilder.toString
+expr e@17:17 call callee=e@17:17#1 args=[_:e@17:25,_:e@17:30,_:e@17:35] type=kotlin.Array<String> call=kotlin.arrayOf[kind=fun;params=*T0;gen=1] targs=[String]
+expr e@17:5 localDecl parts mutable=0 type=_ init=e@17:17 type=Unit ref=__local_3.parts[kind=local]
+expr e@18:5 name(sb) type=kotlin.text.StringBuilder ref=__local_2.sb[kind=local]
+expr e@18:16 name(parts) type=kotlin.Array<String> ref=__local_3.parts[kind=local]
+expr e@18:5#1 memberCall recv=e@18:5 callee=append args=[_:e@18:16] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=*Any?]
+expr e@19:12 name(sb) type=kotlin.text.StringBuilder ref=__local_2.sb[kind=local]
+expr e@19:12#1 memberCall recv=e@19:12 callee=toString args=[] type=String call=kotlin.text.StringBuilder.toString[kind=fun;recv=kotlin.text.StringBuilder;params=]
 expr e@19:5 return value=e@19:12#1 type=Nothing

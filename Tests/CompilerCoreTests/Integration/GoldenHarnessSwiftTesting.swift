@@ -1,7 +1,9 @@
 #if canImport(Testing)
+import CompilerCore
 import Foundation
 import GoldenHarnessSupport
 import Testing
+import TestStdlibCache
 
 struct GoldenHarnessCaseBatch: Sendable, CustomTestStringConvertible {
     let cases: [GoldenHarnessCase]
@@ -134,10 +136,21 @@ struct GoldenDiagnosticsGoldenTests {
     }
 }
 
+/// Path of the shared prebuilt stdlib `.kklib`, prepared once per test
+/// process. Feeding it to each golden worker makes every case resolve stdlib
+/// symbols from serialized metadata instead of re-running the bundled-stdlib
+/// source pipeline (the dominant per-case cost). `nil` keeps the historical
+/// source-injection behavior, e.g. when the artifact cannot be built locally.
+private func goldenStdlibLibraryPath() -> String? {
+    TestStdlibCache.shared.prepare()
+    return CompilerOptions.defaultStdlibLibraryPath
+}
+
 private func runGoldenTests(suiteName: String, batch: GoldenHarnessCaseBatch) throws {
     let results = try GoldenHarness.renderBatchInSubprocess(
         suiteName: suiteName,
-        sourcePaths: batch.cases.map(\.sourcePath)
+        sourcePaths: batch.cases.map(\.sourcePath),
+        stdlibLibraryPath: goldenStdlibLibraryPath()
     )
 
     for (caseFile, result) in zip(batch.cases, results) {

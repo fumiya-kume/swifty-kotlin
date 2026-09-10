@@ -1,0 +1,27 @@
+symbol fq=__local_0.containsAll[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_1.checkedAll[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_2.count[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_3.checkedCount[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_4.indices[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntRange
+symbol fq=__local_5.checkedIndices[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntRange
+symbol fq=golden.sema.collectionQueries.$0.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionQueries.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionQueries[kind=fun;params=kotlin.collections.Collection<Int>,kotlin.collections.Collection<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>,kotlin.collections.Collection<Int>] ret=Unit
+file fcollection_contains_indices package=golden.sema
+  decl golden.sema.collectionQueries[kind=fun;params=kotlin.collections.Collection<Int>,kotlin.collections.Collection<Int>] fun collectionQueries sym=golden.sema.collectionQueries[kind=fun;params=kotlin.collections.Collection<Int>,kotlin.collections.Collection<Int>]
+expr e@5:23 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionQueries.$0.values[kind=vparam]
+expr e@5:42 name(other) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionQueries.$0.other[kind=vparam]
+expr e@5:23#1 memberCall recv=e@5:23 callee=containsAll args=[_:e@5:42] type=Boolean call=kotlin.collections.Collection.containsAll[kind=fun;recv=kotlin.collections.Collection<T0>;params=kotlin.collections.Collection<T0>;gen=1]
+expr e@5:5 localDecl containsAll mutable=0 type=_ init=e@5:23#1 type=Unit ref=__local_0.containsAll[kind=local]
+expr e@6:31 name(containsAll) type=Boolean ref=__local_0.containsAll[kind=local]
+expr e@6:5 localDecl checkedAll mutable=0 type=Boolean init=e@6:31 type=Unit ref=__local_1.checkedAll[kind=local]
+expr e@7:17 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionQueries.$0.values[kind=vparam]
+expr e@7:17#1 memberCall recv=e@7:17 callee=count args=[] type=Int
+expr e@7:5 localDecl count mutable=0 type=_ init=e@7:17#1 type=Unit ref=__local_2.count[kind=local]
+expr e@8:29 name(count) type=Int ref=__local_2.count[kind=local]
+expr e@8:5 localDecl checkedCount mutable=0 type=Int init=e@8:29 type=Unit ref=__local_3.checkedCount[kind=local]
+expr e@9:19 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionQueries.$0.values[kind=vparam]
+expr e@9:19#1 memberCall recv=e@9:19 callee=indices args=[] type=kotlin.ranges.IntRange call=kotlin.collections.indices[kind=fun;recv=kotlin.collections.Collection<*>;params=]
+expr e@9:5 localDecl indices mutable=0 type=_ init=e@9:19#1 type=Unit ref=__local_4.indices[kind=local]
+expr e@10:36 name(indices) type=kotlin.ranges.IntRange ref=__local_4.indices[kind=local]
+expr e@10:5 localDecl checkedIndices mutable=0 type=IntRange init=e@10:36 type=Unit ref=__local_5.checkedIndices[kind=local]

@@ -1,84 +1,82 @@
-symbol fq=golden.sema.uuidCompanionConstants kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.uuidCompanionFromByteArray kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray] ret=kotlin.uuid.Uuid
-symbol fq=golden.sema.uuidCompanionFromByteArray.$0.bytes kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.uuidCompanionFromLongs kind=function vis=public flags=_ sig=recv=_ params=[Long,Long] ret=kotlin.uuid.Uuid
-symbol fq=golden.sema.uuidCompanionFromLongs.$1.lsb kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.uuidCompanionFromLongs.$1.msb kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.uuidCompanionFromUByteArray kind=function vis=public flags=_ sig=recv=_ params=[kotlin.UByteArray] ret=kotlin.uuid.Uuid
-symbol fq=golden.sema.uuidCompanionFromUByteArray.$2.bytes kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.uuidCompanionFromULongs kind=function vis=public flags=_ sig=recv=_ params=[ULong,ULong] ret=kotlin.uuid.Uuid
-symbol fq=golden.sema.uuidCompanionFromULongs.$3.lsb kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.uuidCompanionFromULongs.$3.msb kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.uuidCompanionNil kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.uuid.Uuid
-symbol fq=golden.sema.uuidCompanionNilEquality kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.uuidCompanionNilHashCode kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.uuidCompanionParse kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.uuid.Uuid
-symbol fq=golden.sema.uuidCompanionParse.$4.text kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.uuidCompanionParseHex kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.uuid.Uuid
-symbol fq=golden.sema.uuidCompanionParseHex.$5.text kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.uuidCompanionParseHexOrNull kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.uuid.Uuid?
-symbol fq=golden.sema.uuidCompanionParseHexOrNull.$6.text kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.uuidCompanionParseOrNull kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.uuid.Uuid?
-symbol fq=golden.sema.uuidCompanionParseOrNull.$7.text kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.uuidCompanionRandom kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.uuid.Uuid
-symbol fq=kotlin.ByteArray kind=class vis=public flags=synthetic type=kotlin.ByteArray
-symbol fq=kotlin.UByteArray#0 kind=class vis=public flags=synthetic
+symbol fq=golden.sema.uuidCompanionConstants[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.uuidCompanionFromByteArray.$0.bytes[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.uuidCompanionFromByteArray[kind=fun;params=kotlin.ByteArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray] ret=kotlin.uuid.Uuid
+symbol fq=golden.sema.uuidCompanionFromLongs.$1.lsb[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.uuidCompanionFromLongs.$1.msb[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.uuidCompanionFromLongs[kind=fun;params=Long,Long] kind=function vis=public flags=_ sig=recv=_ params=[Long,Long] ret=kotlin.uuid.Uuid
+symbol fq=golden.sema.uuidCompanionFromUByteArray.$2.bytes[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.uuidCompanionFromUByteArray[kind=fun;params=kotlin.UByteArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.UByteArray] ret=kotlin.uuid.Uuid
+symbol fq=golden.sema.uuidCompanionFromULongs.$3.lsb[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.uuidCompanionFromULongs.$3.msb[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.uuidCompanionFromULongs[kind=fun;params=ULong,ULong] kind=function vis=public flags=_ sig=recv=_ params=[ULong,ULong] ret=kotlin.uuid.Uuid
+symbol fq=golden.sema.uuidCompanionNilEquality[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.uuidCompanionNilHashCode[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.uuidCompanionNil[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.uuid.Uuid
+symbol fq=golden.sema.uuidCompanionParse.$4.text[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.uuidCompanionParseHex.$5.text[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.uuidCompanionParseHexOrNull.$6.text[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.uuidCompanionParseHexOrNull[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.uuid.Uuid?
+symbol fq=golden.sema.uuidCompanionParseHex[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.uuid.Uuid
+symbol fq=golden.sema.uuidCompanionParseOrNull.$7.text[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.uuidCompanionParseOrNull[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.uuid.Uuid?
+symbol fq=golden.sema.uuidCompanionParse[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.uuid.Uuid
+symbol fq=golden.sema.uuidCompanionRandom[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.uuid.Uuid
 file fstdlib_kotlin_uuid_Uuid_n_n package=golden.sema annotations=[@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)]
-  decl golden.sema.uuidCompanionConstants fun uuidCompanionConstants sym=golden.sema.uuidCompanionConstants
-  decl golden.sema.uuidCompanionNil fun uuidCompanionNil sym=golden.sema.uuidCompanionNil
-  decl golden.sema.uuidCompanionRandom fun uuidCompanionRandom sym=golden.sema.uuidCompanionRandom
-  decl golden.sema.uuidCompanionFromLongs fun uuidCompanionFromLongs sym=golden.sema.uuidCompanionFromLongs
-  decl golden.sema.uuidCompanionFromULongs fun uuidCompanionFromULongs sym=golden.sema.uuidCompanionFromULongs
-  decl golden.sema.uuidCompanionFromByteArray fun uuidCompanionFromByteArray sym=golden.sema.uuidCompanionFromByteArray
-  decl golden.sema.uuidCompanionFromUByteArray fun uuidCompanionFromUByteArray sym=golden.sema.uuidCompanionFromUByteArray
-  decl golden.sema.uuidCompanionParse fun uuidCompanionParse sym=golden.sema.uuidCompanionParse
-  decl golden.sema.uuidCompanionParseOrNull fun uuidCompanionParseOrNull sym=golden.sema.uuidCompanionParseOrNull
-  decl golden.sema.uuidCompanionParseHex fun uuidCompanionParseHex sym=golden.sema.uuidCompanionParseHex
-  decl golden.sema.uuidCompanionParseHexOrNull fun uuidCompanionParseHexOrNull sym=golden.sema.uuidCompanionParseHexOrNull
-  decl golden.sema.uuidCompanionNilEquality fun uuidCompanionNilEquality sym=golden.sema.uuidCompanionNilEquality
-  decl golden.sema.uuidCompanionNilHashCode fun uuidCompanionNilHashCode sym=golden.sema.uuidCompanionNilHashCode
-expr e@7:37 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@7:37#1 memberCall recv=e@7:37 callee=SIZE_BITS args=[] type=Int ref=kotlin.uuid.Uuid.Companion.SIZE_BITS
-expr e@7:54 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@7:54#1 memberCall recv=e@7:54 callee=SIZE_BYTES args=[] type=Int ref=kotlin.uuid.Uuid.Companion.SIZE_BYTES
+  decl golden.sema.uuidCompanionConstants[kind=fun;params=] fun uuidCompanionConstants sym=golden.sema.uuidCompanionConstants[kind=fun;params=]
+  decl golden.sema.uuidCompanionNil[kind=fun;params=] fun uuidCompanionNil sym=golden.sema.uuidCompanionNil[kind=fun;params=]
+  decl golden.sema.uuidCompanionRandom[kind=fun;params=] fun uuidCompanionRandom sym=golden.sema.uuidCompanionRandom[kind=fun;params=]
+  decl golden.sema.uuidCompanionFromLongs[kind=fun;params=Long,Long] fun uuidCompanionFromLongs sym=golden.sema.uuidCompanionFromLongs[kind=fun;params=Long,Long]
+  decl golden.sema.uuidCompanionFromULongs[kind=fun;params=ULong,ULong] fun uuidCompanionFromULongs sym=golden.sema.uuidCompanionFromULongs[kind=fun;params=ULong,ULong]
+  decl golden.sema.uuidCompanionFromByteArray[kind=fun;params=kotlin.ByteArray] fun uuidCompanionFromByteArray sym=golden.sema.uuidCompanionFromByteArray[kind=fun;params=kotlin.ByteArray]
+  decl golden.sema.uuidCompanionFromUByteArray[kind=fun;params=kotlin.UByteArray] fun uuidCompanionFromUByteArray sym=golden.sema.uuidCompanionFromUByteArray[kind=fun;params=kotlin.UByteArray]
+  decl golden.sema.uuidCompanionParse[kind=fun;params=String] fun uuidCompanionParse sym=golden.sema.uuidCompanionParse[kind=fun;params=String]
+  decl golden.sema.uuidCompanionParseOrNull[kind=fun;params=String] fun uuidCompanionParseOrNull sym=golden.sema.uuidCompanionParseOrNull[kind=fun;params=String]
+  decl golden.sema.uuidCompanionParseHex[kind=fun;params=String] fun uuidCompanionParseHex sym=golden.sema.uuidCompanionParseHex[kind=fun;params=String]
+  decl golden.sema.uuidCompanionParseHexOrNull[kind=fun;params=String] fun uuidCompanionParseHexOrNull sym=golden.sema.uuidCompanionParseHexOrNull[kind=fun;params=String]
+  decl golden.sema.uuidCompanionNilEquality[kind=fun;params=] fun uuidCompanionNilEquality sym=golden.sema.uuidCompanionNilEquality[kind=fun;params=]
+  decl golden.sema.uuidCompanionNilHashCode[kind=fun;params=] fun uuidCompanionNilHashCode sym=golden.sema.uuidCompanionNilHashCode[kind=fun;params=]
+expr e@7:37 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@7:37#1 memberCall recv=e@7:37 callee=SIZE_BITS args=[] type=Int ref=kotlin.uuid.Uuid.Companion.SIZE_BITS[kind=prop]
+expr e@7:54 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@7:54#1 memberCall recv=e@7:54 callee=SIZE_BYTES args=[] type=Int ref=kotlin.uuid.Uuid.Companion.SIZE_BYTES[kind=prop]
 expr e@7:37#2 binary(add) lhs=e@7:37#1 rhs=e@7:54#1 type=Int
-expr e@9:32 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@9:32#1 memberCall recv=e@9:32 callee=NIL args=[] type=kotlin.uuid.Uuid ref=kotlin.uuid.Uuid.Companion.NIL
-expr e@11:35 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@11:35#1 memberCall recv=e@11:35 callee=random args=[] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.random
-expr e@13:58 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@13:73 name(msb) type=Long ref=golden.sema.uuidCompanionFromLongs.$1.msb
-expr e@13:78 name(lsb) type=Long ref=golden.sema.uuidCompanionFromLongs.$1.lsb
-expr e@13:58#1 memberCall recv=e@13:58 callee=fromLongs args=[_:e@13:73,_:e@13:78] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.fromLongs
-expr e@15:61 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@15:77 name(msb) type=ULong ref=golden.sema.uuidCompanionFromULongs.$3.msb
-expr e@15:82 name(lsb) type=ULong ref=golden.sema.uuidCompanionFromULongs.$3.lsb
-expr e@15:61#1 memberCall recv=e@15:61 callee=fromULongs args=[_:e@15:77,_:e@15:82] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.fromULongs
-expr e@17:58 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@17:77 name(bytes) type=kotlin.ByteArray ref=golden.sema.uuidCompanionFromByteArray.$0.bytes
-expr e@17:58#1 memberCall recv=e@17:58 callee=fromByteArray args=[_:e@17:77] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.fromByteArray
-expr e@19:60 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@19:80 name(bytes) type=kotlin.UByteArray ref=golden.sema.uuidCompanionFromUByteArray.$2.bytes
-expr e@19:60#1 memberCall recv=e@19:60 callee=fromUByteArray args=[_:e@19:80] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.fromUByteArray
-expr e@21:46 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@21:57 name(text) type=String ref=golden.sema.uuidCompanionParse.$4.text
-expr e@21:46#1 memberCall recv=e@21:46 callee=parse args=[_:e@21:57] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.parse
-expr e@23:53 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@23:70 name(text) type=String ref=golden.sema.uuidCompanionParseOrNull.$7.text
-expr e@23:53#1 memberCall recv=e@23:53 callee=parseOrNull args=[_:e@23:70] type=kotlin.uuid.Uuid? call=kotlin.uuid.Uuid.Companion.parseOrNull
-expr e@25:49 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@25:63 name(text) type=String ref=golden.sema.uuidCompanionParseHex.$5.text
-expr e@25:49#1 memberCall recv=e@25:49 callee=parseHex args=[_:e@25:63] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.parseHex
-expr e@27:56 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@27:76 name(text) type=String ref=golden.sema.uuidCompanionParseHexOrNull.$6.text
-expr e@27:56#1 memberCall recv=e@27:56 callee=parseHexOrNull args=[_:e@27:76] type=kotlin.uuid.Uuid? call=kotlin.uuid.Uuid.Companion.parseHexOrNull
-expr e@29:43 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@29:43#1 memberCall recv=e@29:43 callee=NIL args=[] type=kotlin.uuid.Uuid ref=kotlin.uuid.Uuid.Companion.NIL
-expr e@29:55 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
+expr e@9:32 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@9:32#1 memberCall recv=e@9:32 callee=NIL args=[] type=kotlin.uuid.Uuid ref=kotlin.uuid.Uuid.Companion.NIL[kind=prop]
+expr e@11:35 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@11:35#1 memberCall recv=e@11:35 callee=random args=[] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.random[kind=fun;recv=kotlin.uuid.Uuid.Companion;params=]
+expr e@13:58 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@13:73 name(msb) type=Long ref=golden.sema.uuidCompanionFromLongs.$1.msb[kind=vparam]
+expr e@13:78 name(lsb) type=Long ref=golden.sema.uuidCompanionFromLongs.$1.lsb[kind=vparam]
+expr e@13:58#1 memberCall recv=e@13:58 callee=fromLongs args=[_:e@13:73,_:e@13:78] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.fromLongs[kind=fun;recv=kotlin.uuid.Uuid.Companion;params=Long,Long]
+expr e@15:61 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@15:77 name(msb) type=ULong ref=golden.sema.uuidCompanionFromULongs.$3.msb[kind=vparam]
+expr e@15:82 name(lsb) type=ULong ref=golden.sema.uuidCompanionFromULongs.$3.lsb[kind=vparam]
+expr e@15:61#1 memberCall recv=e@15:61 callee=fromULongs args=[_:e@15:77,_:e@15:82] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.fromULongs[kind=fun;recv=kotlin.uuid.Uuid.Companion;params=ULong,ULong]
+expr e@17:58 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@17:77 name(bytes) type=kotlin.ByteArray ref=golden.sema.uuidCompanionFromByteArray.$0.bytes[kind=vparam]
+expr e@17:58#1 memberCall recv=e@17:58 callee=fromByteArray args=[_:e@17:77] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.fromByteArray[kind=fun;recv=kotlin.uuid.Uuid.Companion;params=kotlin.ByteArray]
+expr e@19:60 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@19:80 name(bytes) type=kotlin.UByteArray ref=golden.sema.uuidCompanionFromUByteArray.$2.bytes[kind=vparam]
+expr e@19:60#1 memberCall recv=e@19:60 callee=fromUByteArray args=[_:e@19:80] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.fromUByteArray[kind=fun;recv=kotlin.uuid.Uuid.Companion;params=kotlin.UByteArray]
+expr e@21:46 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@21:57 name(text) type=String ref=golden.sema.uuidCompanionParse.$4.text[kind=vparam]
+expr e@21:46#1 memberCall recv=e@21:46 callee=parse args=[_:e@21:57] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.parse[kind=fun;recv=kotlin.uuid.Uuid.Companion;params=String]
+expr e@23:53 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@23:70 name(text) type=String ref=golden.sema.uuidCompanionParseOrNull.$7.text[kind=vparam]
+expr e@23:53#1 memberCall recv=e@23:53 callee=parseOrNull args=[_:e@23:70] type=kotlin.uuid.Uuid? call=kotlin.uuid.Uuid.Companion.parseOrNull[kind=fun;recv=kotlin.uuid.Uuid.Companion;params=String]
+expr e@25:49 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@25:63 name(text) type=String ref=golden.sema.uuidCompanionParseHex.$5.text[kind=vparam]
+expr e@25:49#1 memberCall recv=e@25:49 callee=parseHex args=[_:e@25:63] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.parseHex[kind=fun;recv=kotlin.uuid.Uuid.Companion;params=String]
+expr e@27:56 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@27:76 name(text) type=String ref=golden.sema.uuidCompanionParseHexOrNull.$6.text[kind=vparam]
+expr e@27:56#1 memberCall recv=e@27:56 callee=parseHexOrNull args=[_:e@27:76] type=kotlin.uuid.Uuid? call=kotlin.uuid.Uuid.Companion.parseHexOrNull[kind=fun;recv=kotlin.uuid.Uuid.Companion;params=String]
+expr e@29:43 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@29:43#1 memberCall recv=e@29:43 callee=NIL args=[] type=kotlin.uuid.Uuid ref=kotlin.uuid.Uuid.Companion.NIL[kind=prop]
+expr e@29:55 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
 expr e@29:70 long(0) type=Long
 expr e@29:74 long(0) type=Long
-expr e@29:55#1 memberCall recv=e@29:55 callee=fromLongs args=[_:e@29:70,_:e@29:74] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.fromLongs
-expr e@29:43#2 binary(equal) lhs=e@29:43#1 rhs=e@29:55#1 type=Boolean call=kotlin.uuid.Uuid.equals
-expr e@31:39 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid
-expr e@31:39#1 memberCall recv=e@31:39 callee=NIL args=[] type=kotlin.uuid.Uuid ref=kotlin.uuid.Uuid.Companion.NIL
-expr e@31:39#2 memberCall recv=e@31:39#1 callee=hashCode args=[] type=Int call=kotlin.uuid.Uuid.hashCode
+expr e@29:55#1 memberCall recv=e@29:55 callee=fromLongs args=[_:e@29:70,_:e@29:74] type=kotlin.uuid.Uuid call=kotlin.uuid.Uuid.Companion.fromLongs[kind=fun;recv=kotlin.uuid.Uuid.Companion;params=Long,Long]
+expr e@29:43#2 binary(equal) lhs=e@29:43#1 rhs=e@29:55#1 type=Boolean call=kotlin.uuid.Uuid.equals[kind=fun;recv=kotlin.uuid.Uuid;params=Any?]
+expr e@31:39 name(Uuid) type=kotlin.uuid.Uuid.Companion ref=kotlin.uuid.Uuid[kind=class]
+expr e@31:39#1 memberCall recv=e@31:39 callee=NIL args=[] type=kotlin.uuid.Uuid ref=kotlin.uuid.Uuid.Companion.NIL[kind=prop]
+expr e@31:39#2 memberCall recv=e@31:39#1 callee=hashCode args=[] type=Int call=kotlin.uuid.Uuid.hashCode[kind=fun;recv=kotlin.uuid.Uuid;params=]

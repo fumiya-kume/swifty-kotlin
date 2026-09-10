@@ -94,7 +94,6 @@ extension DataFlowSemaPhase {
         // delegates to the __kk_u*Array_as*Array runtime bridges.
 
         let primitiveArrayFactoryTypes: [(String, String, TypeID)] = [
-            ("uintArrayOf", "UIntArray", types.uintType),
             ("ulongArrayOf", "ULongArray", types.ulongType),
         ]
         for (factoryName, arrayName, elementType) in primitiveArrayFactoryTypes {

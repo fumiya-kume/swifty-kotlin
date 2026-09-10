@@ -1,0 +1,71 @@
+symbol fq=golden.sema.Probe.add.$0.element[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Probe.add.$0.index[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Probe.add[kind=fun;recv=golden.sema.Probe;params=Int,Int] kind=function vis=public flags=overrideMember sig=recv=golden.sema.Probe params=[Int,Int] ret=Unit
+symbol fq=golden.sema.Probe.clearRange[kind=fun;recv=golden.sema.Probe;params=] kind=function vis=public flags=_ sig=recv=golden.sema.Probe params=[] ret=Unit
+symbol fq=golden.sema.Probe.currentModifications[kind=fun;recv=golden.sema.Probe;params=] kind=function vis=public flags=_ sig=recv=golden.sema.Probe params=[] ret=Int
+symbol fq=golden.sema.Probe.size[kind=prop] kind=property vis=public flags=overrideMember type=Int
+symbol fq=golden.sema.Probe[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.exercise.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.exercise[kind=fun;params=golden.sema.Probe] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Probe] ret=Unit
+file fstdlib_kotlin_collections_AbstractMutableList_AbstractMutableList_n package=golden.sema
+  decl golden.sema.Probe[kind=class] class Probe sym=golden.sema.Probe[kind=class]
+  decl golden.sema.exercise[kind=fun;params=golden.sema.Probe] fun exercise sym=golden.sema.exercise[kind=fun;params=golden.sema.Probe]
+expr e@7:17 int(0) type=Int
+expr e@9:41 int(0) type=Int
+expr e@11:55 int(0) type=Int
+expr e@15:46 int(0) type=Int
+expr e@18:21 int(0) type=Int
+expr e@18:24 name(size) type=Int ref=golden.sema.Probe.size[kind=prop]
+expr e@18:9 call callee=e@18:9#1 args=[_:e@18:21,_:e@18:24] type=Unit call=kotlin.collections.AbstractMutableList.removeRange[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=Int,Int;gen=1] targs=[Int]
+expr e@21:39 name(modCount) type=Int ref=kotlin.collections.AbstractMutableList.modCount[kind=prop]
+expr e@25:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@25:16 int(1) type=Int
+expr e@25:5#1 memberCall recv=e@25:5 callee=add args=[_:e@25:16] type=Boolean call=kotlin.collections.AbstractMutableList.add[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=T0;gen=1] targs=[Int]
+expr e@26:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@26:16 int(0) type=Int
+expr e@26:19 int(1) type=Int
+expr e@26:5#1 memberCall recv=e@26:5 callee=add args=[_:e@26:16,_:e@26:19] type=Unit call=golden.sema.Probe.add[kind=fun;recv=golden.sema.Probe;params=Int,Int]
+expr e@27:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@27:19 int(0) type=Int
+expr e@27:29 int(1) type=Int
+expr e@27:22 call callee=e@27:22#1 args=[_:e@27:29] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@27:5#1 memberCall recv=e@27:5 callee=addAll args=[_:e@27:19,_:e@27:22] type=Boolean call=kotlin.collections.AbstractMutableList.addAll[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=Int,kotlin.collections.Collection<T0>;gen=1] targs=[Int]
+expr e@28:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@28:5#1 memberCall recv=e@28:5 callee=clear args=[] type=Unit call=kotlin.collections.AbstractMutableList.clear[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=;gen=1] targs=[Int]
+expr e@29:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@29:21 int(1) type=Int
+expr e@29:5#1 memberCall recv=e@29:5 callee=contains args=[_:e@29:21] type=Boolean call=kotlin.collections.AbstractMutableList.contains[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=T0;gen=1] targs=[Int]
+expr e@30:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@30:20 int(1) type=Int
+expr e@30:5#1 memberCall recv=e@30:5 callee=indexOf args=[_:e@30:20] type=Int call=kotlin.collections.indexOf[kind=fun;recv=kotlin.collections.Iterable<T0>;params=T0;gen=1] targs=[Any]
+expr e@31:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@31:24 int(1) type=Int
+expr e@31:5#1 memberCall recv=e@31:5 callee=lastIndexOf args=[_:e@31:24] type=Int call=kotlin.collections.AbstractMutableList.lastIndexOf[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=T0;gen=1] targs=[Int]
+expr e@32:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@32:5#1 memberCall recv=e@32:5 callee=iterator args=[] type=kotlin.collections.MutableIterator<Int> call=kotlin.collections.AbstractMutableList.iterator[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=;gen=1] targs=[Int]
+expr e@33:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@33:5#1 memberCall recv=e@33:5 callee=listIterator args=[] type=kotlin.collections.MutableListIterator<Int> call=kotlin.collections.AbstractMutableList.listIterator[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=;gen=1] targs=[Int]
+expr e@34:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@34:25 int(0) type=Int
+expr e@34:5#1 memberCall recv=e@34:5 callee=listIterator args=[_:e@34:25] type=kotlin.collections.MutableListIterator<Int> call=kotlin.collections.AbstractMutableList.listIterator[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=Int;gen=1] targs=[Int]
+expr e@35:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@35:29 int(1) type=Int
+expr e@35:22 call callee=e@35:22#1 args=[_:e@35:29] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@35:5#1 memberCall recv=e@35:5 callee=removeAll args=[_:e@35:22] type=Boolean call=kotlin.collections.AbstractMutableList.removeAll[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=kotlin.collections.Collection<T0>;gen=1] targs=[Int]
+expr e@36:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@36:29 int(1) type=Int
+expr e@36:22 call callee=e@36:22#1 args=[_:e@36:29] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@36:5#1 memberCall recv=e@36:5 callee=retainAll args=[_:e@36:22] type=Boolean call=kotlin.collections.AbstractMutableList.retainAll[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=kotlin.collections.Collection<T0>;gen=1] targs=[Int]
+expr e@37:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@37:20 int(0) type=Int
+expr e@37:23 int(0) type=Int
+expr e@37:5#1 memberCall recv=e@37:5 callee=subList args=[_:e@37:20,_:e@37:23] type=kotlin.collections.MutableList<Int> call=kotlin.collections.AbstractMutableList.subList[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=Int,Int;gen=1] targs=[Int]
+expr e@38:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@38:19 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@38:5#1 memberCall recv=e@38:5 callee=equals args=[_:e@38:19] type=Boolean call=kotlin.collections.AbstractMutableList.equals[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=Any?;gen=1] targs=[Int]
+expr e@39:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@39:5#1 memberCall recv=e@39:5 callee=hashCode args=[] type=Int call=kotlin.collections.AbstractMutableList.hashCode[kind=fun;recv=kotlin.collections.AbstractMutableList<T0>;params=;gen=1] targs=[Int]
+expr e@40:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@40:5#1 memberCall recv=e@40:5 callee=clearRange args=[] type=Unit call=golden.sema.Probe.clearRange[kind=fun;recv=golden.sema.Probe;params=]
+expr e@41:5 name(values) type=golden.sema.Probe ref=golden.sema.exercise.$1.values[kind=vparam]
+expr e@41:5#1 memberCall recv=e@41:5 callee=currentModifications args=[] type=Int call=golden.sema.Probe.currentModifications[kind=fun;recv=golden.sema.Probe;params=]
