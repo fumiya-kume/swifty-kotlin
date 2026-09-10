@@ -1,140 +1,140 @@
-symbol fq=__local_0.builder kind=local vis=private flags=_ type=kotlin.text.StringBuilder
-symbol fq=__local_1.anyValue kind=local vis=private flags=_ type=Any?
-symbol fq=__local_2.chars kind=local vis=private flags=_ type=kotlin.CharArray
-symbol fq=__local_3.byteValue kind=local vis=private flags=_ type=Byte
-symbol fq=__local_4.shortValue kind=local vis=private flags=_ type=Short
-symbol fq=__local_5.builder kind=local vis=private flags=_ type=kotlin.text.StringBuilder
-symbol fq=__local_6.chars kind=local vis=private flags=_ type=kotlin.CharArray
-symbol fq=__local_7.sequence kind=local vis=private flags=_ type=kotlin.CharSequence?
-symbol fq=__local_8.builder kind=local vis=private flags=_ type=kotlin.text.StringBuilder
-symbol fq=__local_9.builder kind=local vis=private flags=_ type=kotlin.text.StringBuilder
-symbol fq=__local_10.destination kind=local vis=private flags=_ type=kotlin.CharArray
-symbol fq=golden.sema.stringBuilderAppendMissing kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.StringBuilder
-symbol fq=golden.sema.stringBuilderIndexMissing kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.stringBuilderInsertMissing kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.StringBuilder
-symbol fq=golden.sema.stringBuilderSetLengthMissing kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.stringBuilderSubstringMissing kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.stringBuilderToCharArrayMissing kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharArray
+symbol fq=__local_0.builder[kind=local] kind=local vis=private flags=_ type=kotlin.text.StringBuilder
+symbol fq=__local_1.anyValue[kind=local] kind=local vis=private flags=_ type=Any?
+symbol fq=__local_2.chars[kind=local] kind=local vis=private flags=_ type=kotlin.CharArray
+symbol fq=__local_3.byteValue[kind=local] kind=local vis=private flags=_ type=Byte
+symbol fq=__local_4.shortValue[kind=local] kind=local vis=private flags=_ type=Short
+symbol fq=__local_5.builder[kind=local] kind=local vis=private flags=_ type=kotlin.text.StringBuilder
+symbol fq=__local_6.chars[kind=local] kind=local vis=private flags=_ type=kotlin.CharArray
+symbol fq=__local_7.sequence[kind=local] kind=local vis=private flags=_ type=kotlin.CharSequence?
+symbol fq=__local_8.builder[kind=local] kind=local vis=private flags=_ type=kotlin.text.StringBuilder
+symbol fq=__local_9.builder[kind=local] kind=local vis=private flags=_ type=kotlin.text.StringBuilder
+symbol fq=__local_10.destination[kind=local] kind=local vis=private flags=_ type=kotlin.CharArray
+symbol fq=golden.sema.stringBuilderAppendMissing[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.StringBuilder
+symbol fq=golden.sema.stringBuilderIndexMissing[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.stringBuilderInsertMissing[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.StringBuilder
+symbol fq=golden.sema.stringBuilderSetLengthMissing[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.stringBuilderSubstringMissing[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.stringBuilderToCharArrayMissing[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharArray
 file fstdlib_kotlin_text_StringBuilder_StringBuilder_n package=golden.sema
-  decl golden.sema.stringBuilderAppendMissing fun stringBuilderAppendMissing sym=golden.sema.stringBuilderAppendMissing
-  decl golden.sema.stringBuilderIndexMissing fun stringBuilderIndexMissing sym=golden.sema.stringBuilderIndexMissing
-  decl golden.sema.stringBuilderInsertMissing fun stringBuilderInsertMissing sym=golden.sema.stringBuilderInsertMissing
-  decl golden.sema.stringBuilderSetLengthMissing fun stringBuilderSetLengthMissing sym=golden.sema.stringBuilderSetLengthMissing
-  decl golden.sema.stringBuilderSubstringMissing fun stringBuilderSubstringMissing sym=golden.sema.stringBuilderSubstringMissing
-  decl golden.sema.stringBuilderToCharArrayMissing fun stringBuilderToCharArrayMissing sym=golden.sema.stringBuilderToCharArrayMissing
-expr e@4:19 call callee=e@4:19#1 args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#0
-expr e@4:5 localDecl builder mutable=0 type=_ init=e@4:19 type=Unit ref=__local_0.builder
+  decl golden.sema.stringBuilderAppendMissing[kind=fun;params=] fun stringBuilderAppendMissing sym=golden.sema.stringBuilderAppendMissing[kind=fun;params=]
+  decl golden.sema.stringBuilderIndexMissing[kind=fun;params=] fun stringBuilderIndexMissing sym=golden.sema.stringBuilderIndexMissing[kind=fun;params=]
+  decl golden.sema.stringBuilderInsertMissing[kind=fun;params=] fun stringBuilderInsertMissing sym=golden.sema.stringBuilderInsertMissing[kind=fun;params=]
+  decl golden.sema.stringBuilderSetLengthMissing[kind=fun;params=] fun stringBuilderSetLengthMissing sym=golden.sema.stringBuilderSetLengthMissing[kind=fun;params=]
+  decl golden.sema.stringBuilderSubstringMissing[kind=fun;params=] fun stringBuilderSubstringMissing sym=golden.sema.stringBuilderSubstringMissing[kind=fun;params=]
+  decl golden.sema.stringBuilderToCharArrayMissing[kind=fun;params=] fun stringBuilderToCharArrayMissing sym=golden.sema.stringBuilderToCharArrayMissing[kind=fun;params=]
+expr e@4:19 call callee=e@4:19#1 args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=]
+expr e@4:5 localDecl builder mutable=0 type=_ init=e@4:19 type=Unit ref=__local_0.builder[kind=local]
 expr e@5:26 name(null) type=Nothing?
-expr e@5:5 localDecl anyValue mutable=0 type=Any? init=e@5:26 type=Unit ref=__local_1.anyValue
+expr e@5:5 localDecl anyValue mutable=0 type=Any? init=e@5:26 type=Unit ref=__local_1.anyValue[kind=local]
 expr e@6:29 char(97) type=Char
 expr e@6:34 char(98) type=Char
 expr e@6:39 char(99) type=Char
-expr e@6:17 call callee=e@6:17#1 args=[_:e@6:29,_:e@6:34,_:e@6:39] type=kotlin.CharArray call=kotlin.charArrayOf
-expr e@6:5 localDecl chars mutable=0 type=_ init=e@6:17 type=Unit ref=__local_2.chars
+expr e@6:17 call callee=e@6:17#1 args=[_:e@6:29,_:e@6:34,_:e@6:39] type=kotlin.CharArray call=kotlin.charArrayOf[kind=fun;params=*Char]
+expr e@6:5 localDecl chars mutable=0 type=_ init=e@6:17 type=Unit ref=__local_2.chars[kind=local]
 expr e@7:27 int(1) type=Byte
-expr e@7:5 localDecl byteValue mutable=0 type=Byte init=e@7:27 type=Unit ref=__local_3.byteValue
+expr e@7:5 localDecl byteValue mutable=0 type=Byte init=e@7:27 type=Unit ref=__local_3.byteValue[kind=local]
 expr e@8:29 int(2) type=Short
-expr e@8:5 localDecl shortValue mutable=0 type=Short init=e@8:29 type=Unit ref=__local_4.shortValue
-expr e@9:5 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder
-expr e@9:20 name(anyValue) type=Any? ref=__local_1.anyValue
-expr e@9:5#1 memberCall recv=e@9:5 callee=append args=[_:e@9:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#0
-expr e@10:5 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder
-expr e@10:20 name(byteValue) type=Byte ref=__local_3.byteValue
-expr e@10:5#1 memberCall recv=e@10:5 callee=append args=[_:e@10:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#3
-expr e@11:5 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder
-expr e@11:20 name(chars) type=kotlin.CharArray ref=__local_2.chars
-expr e@11:5#1 memberCall recv=e@11:5 callee=append args=[_:e@11:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#11
-expr e@12:5 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder
-expr e@12:20 name(shortValue) type=Short ref=__local_4.shortValue
-expr e@12:5#1 memberCall recv=e@12:5 callee=append args=[_:e@12:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#9
-expr e@13:5 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder
-expr e@13:25 name(chars) type=kotlin.CharArray ref=__local_2.chars
+expr e@8:5 localDecl shortValue mutable=0 type=Short init=e@8:29 type=Unit ref=__local_4.shortValue[kind=local]
+expr e@9:5 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder[kind=local]
+expr e@9:20 name(anyValue) type=Any? ref=__local_1.anyValue[kind=local]
+expr e@9:5#1 memberCall recv=e@9:5 callee=append args=[_:e@9:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=Any?]
+expr e@10:5 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder[kind=local]
+expr e@10:20 name(byteValue) type=Byte ref=__local_3.byteValue[kind=local]
+expr e@10:5#1 memberCall recv=e@10:5 callee=append args=[_:e@10:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=Byte]
+expr e@11:5 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder[kind=local]
+expr e@11:20 name(chars) type=kotlin.CharArray ref=__local_2.chars[kind=local]
+expr e@11:5#1 memberCall recv=e@11:5 callee=append args=[_:e@11:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=kotlin.CharArray]
+expr e@12:5 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder[kind=local]
+expr e@12:20 name(shortValue) type=Short ref=__local_4.shortValue[kind=local]
+expr e@12:5#1 memberCall recv=e@12:5 callee=append args=[_:e@12:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=Short]
+expr e@13:5 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder[kind=local]
+expr e@13:25 name(chars) type=kotlin.CharArray ref=__local_2.chars[kind=local]
 expr e@13:32 int(0) type=Int
 expr e@13:35 int(2) type=Int
-expr e@13:5#1 memberCall recv=e@13:5 callee=appendRange args=[_:e@13:25,_:e@13:32,_:e@13:35] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendRange#0
-expr e@14:12 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder
+expr e@13:5#1 memberCall recv=e@13:5 callee=appendRange args=[_:e@13:25,_:e@13:32,_:e@13:35] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendRange[kind=fun;recv=kotlin.text.StringBuilder;params=kotlin.CharArray,Int,Int]
+expr e@14:12 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder[kind=local]
 expr e@14:5 return value=e@14:12 type=Nothing
 expr e@18:33 string(a😀ba😀b) type=String
-expr e@18:19 call callee=e@18:19#1 args=[_:e@18:33] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#2
-expr e@18:5 localDecl builder mutable=0 type=_ init=e@18:19 type=Unit ref=__local_5.builder
-expr e@19:12 name(builder) type=kotlin.text.StringBuilder ref=__local_5.builder
+expr e@18:19 call callee=e@18:19#1 args=[_:e@18:33] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=String]
+expr e@18:5 localDecl builder mutable=0 type=_ init=e@18:19 type=Unit ref=__local_5.builder[kind=local]
+expr e@19:12 name(builder) type=kotlin.text.StringBuilder ref=__local_5.builder[kind=local]
 expr e@19:28 string(😀) type=String
-expr e@19:12#1 memberCall recv=e@19:12 callee=indexOf args=[_:e@19:28] type=Int call=kotlin.text.StringBuilder.indexOf#0
-expr e@19:35 name(builder) type=kotlin.text.StringBuilder ref=__local_5.builder
+expr e@19:12#1 memberCall recv=e@19:12 callee=indexOf args=[_:e@19:28] type=Int call=kotlin.text.StringBuilder.indexOf[kind=fun;recv=kotlin.text.StringBuilder;params=String]
+expr e@19:35 name(builder) type=kotlin.text.StringBuilder ref=__local_5.builder[kind=local]
 expr e@19:51 string(😀) type=String
 expr e@19:56 int(4) type=Int
-expr e@19:35#1 memberCall recv=e@19:35 callee=indexOf args=[_:e@19:51,_:e@19:56] type=Int call=kotlin.text.StringBuilder.indexOf#1
+expr e@19:35#1 memberCall recv=e@19:35 callee=indexOf args=[_:e@19:51,_:e@19:56] type=Int call=kotlin.text.StringBuilder.indexOf[kind=fun;recv=kotlin.text.StringBuilder;params=String,Int]
 expr e@19:12#2 binary(add) lhs=e@19:12#1 rhs=e@19:35#1 type=Int
-expr e@20:9 name(builder) type=kotlin.text.StringBuilder ref=__local_5.builder
+expr e@20:9 name(builder) type=kotlin.text.StringBuilder ref=__local_5.builder[kind=local]
 expr e@20:29 string(b) type=String
-expr e@20:9#1 memberCall recv=e@20:9 callee=lastIndexOf args=[_:e@20:29] type=Int call=kotlin.text.StringBuilder.lastIndexOf#0
+expr e@20:9#1 memberCall recv=e@20:9 callee=lastIndexOf args=[_:e@20:29] type=Int call=kotlin.text.StringBuilder.lastIndexOf[kind=fun;recv=kotlin.text.StringBuilder;params=String]
 expr e@19:12#3 binary(add) lhs=e@19:12#2 rhs=e@20:9#1 type=Int
-expr e@20:36 name(builder) type=kotlin.text.StringBuilder ref=__local_5.builder
+expr e@20:36 name(builder) type=kotlin.text.StringBuilder ref=__local_5.builder[kind=local]
 expr e@20:56 string(b) type=String
 expr e@20:61 int(4) type=Int
-expr e@20:36#1 memberCall recv=e@20:36 callee=lastIndexOf args=[_:e@20:56,_:e@20:61] type=Int call=kotlin.text.StringBuilder.lastIndexOf#1
+expr e@20:36#1 memberCall recv=e@20:36 callee=lastIndexOf args=[_:e@20:56,_:e@20:61] type=Int call=kotlin.text.StringBuilder.lastIndexOf[kind=fun;recv=kotlin.text.StringBuilder;params=String,Int]
 expr e@19:12#4 binary(add) lhs=e@19:12#3 rhs=e@20:36#1 type=Int
 expr e@19:5 return value=e@19:12#4 type=Nothing
 expr e@24:29 char(120) type=Char
 expr e@24:34 char(121) type=Char
-expr e@24:17 call callee=e@24:17#1 args=[_:e@24:29,_:e@24:34] type=kotlin.CharArray call=kotlin.charArrayOf
-expr e@24:5 localDecl chars mutable=0 type=_ init=e@24:17 type=Unit ref=__local_6.chars
+expr e@24:17 call callee=e@24:17#1 args=[_:e@24:29,_:e@24:34] type=kotlin.CharArray call=kotlin.charArrayOf[kind=fun;params=*Char]
+expr e@24:5 localDecl chars mutable=0 type=_ init=e@24:17 type=Unit ref=__local_6.chars[kind=local]
 expr e@25:35 name(null) type=Nothing?
-expr e@25:5 localDecl sequence mutable=0 type=CharSequence? init=e@25:35 type=Unit ref=__local_7.sequence
+expr e@25:5 localDecl sequence mutable=0 type=CharSequence? init=e@25:35 type=Unit ref=__local_7.sequence[kind=local]
 expr e@26:33 string(ab) type=String
-expr e@26:19 call callee=e@26:19#1 args=[_:e@26:33] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#2
-expr e@26:5 localDecl builder mutable=0 type=_ init=e@26:19 type=Unit ref=__local_8.builder
-expr e@27:5 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder
+expr e@26:19 call callee=e@26:19#1 args=[_:e@26:33] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=String]
+expr e@26:5 localDecl builder mutable=0 type=_ init=e@26:19 type=Unit ref=__local_8.builder[kind=local]
+expr e@27:5 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder[kind=local]
 expr e@27:20 int(1) type=Int
 expr e@27:23 int(1) type=Int
 expr e@27:23#1 memberCall recv=e@27:23 callee=toByte args=[] type=Byte
-expr e@27:5#1 memberCall recv=e@27:5 callee=insert args=[_:e@27:20,_:e@27:23#1] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.insert#2
-expr e@28:5 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder
+expr e@27:5#1 memberCall recv=e@27:5 callee=insert args=[_:e@27:20,_:e@27:23#1] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.insert[kind=fun;recv=kotlin.text.StringBuilder;params=Int,Byte]
+expr e@28:5 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder[kind=local]
 expr e@28:20 int(1) type=Int
-expr e@28:23 name(chars) type=kotlin.CharArray ref=__local_6.chars
-expr e@28:5#1 memberCall recv=e@28:5 callee=insert args=[_:e@28:20,_:e@28:23] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.insert#10
-expr e@29:5 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder
+expr e@28:23 name(chars) type=kotlin.CharArray ref=__local_6.chars[kind=local]
+expr e@28:5#1 memberCall recv=e@28:5 callee=insert args=[_:e@28:20,_:e@28:23] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.insert[kind=fun;recv=kotlin.text.StringBuilder;params=Int,kotlin.CharArray]
+expr e@29:5 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder[kind=local]
 expr e@29:20 int(1) type=Int
-expr e@29:23 name(sequence) type=kotlin.CharSequence? ref=__local_7.sequence
-expr e@29:5#1 memberCall recv=e@29:5 callee=insert args=[_:e@29:20,_:e@29:23] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.insert#11
-expr e@30:5 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder
+expr e@29:23 name(sequence) type=kotlin.CharSequence? ref=__local_7.sequence[kind=local]
+expr e@29:5#1 memberCall recv=e@29:5 callee=insert args=[_:e@29:20,_:e@29:23] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.insert[kind=fun;recv=kotlin.text.StringBuilder;params=Int,kotlin.CharSequence?]
+expr e@30:5 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder[kind=local]
 expr e@30:20 int(1) type=Int
 expr e@30:23 int(2) type=Int
 expr e@30:23#1 memberCall recv=e@30:23 callee=toShort args=[] type=Short
-expr e@30:5#1 memberCall recv=e@30:5 callee=insert args=[_:e@30:20,_:e@30:23#1] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.insert#8
-expr e@31:5 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder
+expr e@30:5#1 memberCall recv=e@30:5 callee=insert args=[_:e@30:20,_:e@30:23#1] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.insert[kind=fun;recv=kotlin.text.StringBuilder;params=Int,Short]
+expr e@31:5 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder[kind=local]
 expr e@31:25 int(1) type=Int
-expr e@31:28 name(chars) type=kotlin.CharArray ref=__local_6.chars
+expr e@31:28 name(chars) type=kotlin.CharArray ref=__local_6.chars[kind=local]
 expr e@31:35 int(0) type=Int
 expr e@31:38 int(2) type=Int
-expr e@31:5#1 memberCall recv=e@31:5 callee=insertRange args=[_:e@31:25,_:e@31:28,_:e@31:35,_:e@31:38] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.insertRange#0
-expr e@32:12 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder
+expr e@31:5#1 memberCall recv=e@31:5 callee=insertRange args=[_:e@31:25,_:e@31:28,_:e@31:35,_:e@31:38] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.insertRange[kind=fun;recv=kotlin.text.StringBuilder;params=Int,kotlin.CharArray,Int,Int]
+expr e@32:12 name(builder) type=kotlin.text.StringBuilder ref=__local_8.builder[kind=local]
 expr e@32:5 return value=e@32:12 type=Nothing
 expr e@36:19 string(abc) type=String
-expr e@36:5 call callee=e@36:5#1 args=[_:e@36:19] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#2
+expr e@36:5 call callee=e@36:5#1 args=[_:e@36:19] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=String]
 expr e@36:36 int(1) type=Int
-expr e@36:5#2 memberCall recv=e@36:5 callee=setLength args=[_:e@36:36] type=Unit call=kotlin.text.StringBuilder.setLength
+expr e@36:5#2 memberCall recv=e@36:5 callee=setLength args=[_:e@36:36] type=Unit call=kotlin.text.StringBuilder.setLength[kind=fun;recv=kotlin.text.StringBuilder;params=Int]
 expr e@40:33 string(a😀b) type=String
-expr e@40:19 call callee=e@40:19#1 args=[_:e@40:33] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#2
-expr e@40:5 localDecl builder mutable=0 type=_ init=e@40:19 type=Unit ref=__local_9.builder
-expr e@41:12 name(builder) type=kotlin.text.StringBuilder ref=__local_9.builder
+expr e@40:19 call callee=e@40:19#1 args=[_:e@40:33] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=String]
+expr e@40:5 localDecl builder mutable=0 type=_ init=e@40:19 type=Unit ref=__local_9.builder[kind=local]
+expr e@41:12 name(builder) type=kotlin.text.StringBuilder ref=__local_9.builder[kind=local]
 expr e@41:30 int(1) type=Int
-expr e@41:12#1 memberCall recv=e@41:12 callee=substring args=[_:e@41:30] type=String call=kotlin.text.StringBuilder.substring#0
-expr e@41:35 name(builder) type=kotlin.text.StringBuilder ref=__local_9.builder
+expr e@41:12#1 memberCall recv=e@41:12 callee=substring args=[_:e@41:30] type=String call=kotlin.text.StringBuilder.substring[kind=fun;recv=kotlin.text.StringBuilder;params=Int]
+expr e@41:35 name(builder) type=kotlin.text.StringBuilder ref=__local_9.builder[kind=local]
 expr e@41:53 int(1) type=Int
 expr e@41:56 int(3) type=Int
-expr e@41:35#1 memberCall recv=e@41:35 callee=substring args=[_:e@41:53,_:e@41:56] type=String call=kotlin.text.StringBuilder.substring#1
+expr e@41:35#1 memberCall recv=e@41:35 callee=substring args=[_:e@41:53,_:e@41:56] type=String call=kotlin.text.StringBuilder.substring[kind=fun;recv=kotlin.text.StringBuilder;params=Int,Int]
 expr e@41:12#2 binary(add) lhs=e@41:12#1 rhs=e@41:35#1 type=String
 expr e@41:5 return value=e@41:12#2 type=Nothing
 expr e@45:33 int(4) type=Int
 expr e@45:23 call callee=e@45:23#1 args=[_:e@45:33] type=kotlin.CharArray
-expr e@45:5 localDecl destination mutable=0 type=_ init=e@45:23 type=Unit ref=__local_10.destination
+expr e@45:5 localDecl destination mutable=0 type=_ init=e@45:23 type=Unit ref=__local_10.destination[kind=local]
 expr e@46:19 string(wxyz) type=String
-expr e@46:5 call callee=e@46:5#1 args=[_:e@46:19] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#2
-expr e@46:39 name(destination) type=kotlin.CharArray ref=__local_10.destination
+expr e@46:5 call callee=e@46:5#1 args=[_:e@46:19] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=String]
+expr e@46:39 name(destination) type=kotlin.CharArray ref=__local_10.destination[kind=local]
 expr e@46:52 int(1) type=Int
 expr e@46:55 int(1) type=Int
 expr e@46:58 int(3) type=Int
-expr e@46:5#2 memberCall recv=e@46:5 callee=toCharArray args=[_:e@46:39,_:e@46:52,_:e@46:55,_:e@46:58] type=Unit call=kotlin.text.StringBuilder.toCharArray
-expr e@47:12 name(destination) type=kotlin.CharArray ref=__local_10.destination
+expr e@46:5#2 memberCall recv=e@46:5 callee=toCharArray args=[_:e@46:39,_:e@46:52,_:e@46:55,_:e@46:58] type=Unit call=kotlin.text.StringBuilder.toCharArray[kind=fun;recv=kotlin.text.StringBuilder;params=kotlin.CharArray,Int,Int,Int]
+expr e@47:12 name(destination) type=kotlin.CharArray ref=__local_10.destination[kind=local]
 expr e@47:5 return value=e@47:12 type=Nothing

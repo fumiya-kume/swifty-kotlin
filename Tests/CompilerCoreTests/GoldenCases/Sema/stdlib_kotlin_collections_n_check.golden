@@ -1,15 +1,15 @@
-symbol fq=__local_0.index kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.count kind=local vis=private flags=_ type=Int
-symbol fq=golden.sema.checkFamily kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=__local_0.index[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.count[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=golden.sema.checkFamily[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_collections_n_check package=golden.sema
-  decl golden.sema.checkFamily fun checkFamily sym=golden.sema.checkFamily
+  decl golden.sema.checkFamily[kind=fun;params=] fun checkFamily sym=golden.sema.checkFamily[kind=fun;params=]
 expr e@4:55 int(0) type=Int
-expr e@4:17 memberCall recv=e@4:17#1 callee=checkIndexOverflow args=[_:e@4:55] type=Int call=kotlin.collections.checkIndexOverflow
-expr e@4:5 localDecl index mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.index
+expr e@4:17 memberCall recv=e@4:17#1 callee=checkIndexOverflow args=[_:e@4:55] type=Int call=kotlin.collections.checkIndexOverflow[kind=fun;params=Int]
+expr e@4:5 localDecl index mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.index[kind=local]
 expr e@5:55 int(0) type=Int
-expr e@5:17 memberCall recv=e@5:17#1 callee=checkCountOverflow args=[_:e@5:55] type=Int call=kotlin.collections.checkCountOverflow
-expr e@5:5 localDecl count mutable=0 type=_ init=e@5:17 type=Unit ref=__local_1.count
-expr e@6:12 name(index) type=Int ref=__local_0.index
-expr e@6:20 name(count) type=Int ref=__local_1.count
+expr e@5:17 memberCall recv=e@5:17#1 callee=checkCountOverflow args=[_:e@5:55] type=Int call=kotlin.collections.checkCountOverflow[kind=fun;params=Int]
+expr e@5:5 localDecl count mutable=0 type=_ init=e@5:17 type=Unit ref=__local_1.count[kind=local]
+expr e@6:12 name(index) type=Int ref=__local_0.index[kind=local]
+expr e@6:20 name(count) type=Int ref=__local_1.count[kind=local]
 expr e@6:12#1 binary(add) lhs=e@6:12 rhs=e@6:20 type=Int
 expr e@6:5 return value=e@6:12#1 type=Nothing

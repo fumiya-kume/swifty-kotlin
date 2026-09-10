@@ -1,50 +1,50 @@
-symbol fq=__try_0_catch_0.exception kind=local vis=internal flags=_ type=kotlin.RuntimeException
-symbol fq=__try_1_catch_0.exception kind=local vis=internal flags=_ type=kotlin.Throwable
-symbol fq=golden.sema.catchRuntimeException kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.catchThrowable kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.isException kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.IncorrectDereferenceException] ret=Boolean
-symbol fq=golden.sema.isException.$0.exception kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.isIllegalStateException kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.IncorrectDereferenceException] ret=Boolean
-symbol fq=golden.sema.isIllegalStateException.$1.exception kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.isRuntimeException kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.IncorrectDereferenceException] ret=Boolean
-symbol fq=golden.sema.isRuntimeException.$2.exception kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.message kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.native.IncorrectDereferenceException
-symbol fq=golden.sema.message.$3.message kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.noArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.IncorrectDereferenceException
+symbol fq=__try_0_catch_0.exception[kind=local] kind=local vis=internal flags=_ type=kotlin.RuntimeException
+symbol fq=__try_1_catch_0.exception[kind=local] kind=local vis=internal flags=_ type=kotlin.Throwable
+symbol fq=golden.sema.catchRuntimeException[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.catchThrowable[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.isException.$0.exception[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.isException[kind=fun;params=kotlin.native.IncorrectDereferenceException] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.IncorrectDereferenceException] ret=Boolean
+symbol fq=golden.sema.isIllegalStateException.$1.exception[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.isIllegalStateException[kind=fun;params=kotlin.native.IncorrectDereferenceException] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.IncorrectDereferenceException] ret=Boolean
+symbol fq=golden.sema.isRuntimeException.$2.exception[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.isRuntimeException[kind=fun;params=kotlin.native.IncorrectDereferenceException] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.IncorrectDereferenceException] ret=Boolean
+symbol fq=golden.sema.message.$3.message[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.message[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.native.IncorrectDereferenceException
+symbol fq=golden.sema.noArg[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.IncorrectDereferenceException
 file fstdlib_kotlin_native_IncorrectDereferenceException_n_n package=golden.sema annotations=[@file:Suppress("DEPRECATION_ERROR")]
-  decl golden.sema.noArg fun noArg sym=golden.sema.noArg
-  decl golden.sema.message fun message sym=golden.sema.message
-  decl golden.sema.isRuntimeException fun isRuntimeException sym=golden.sema.isRuntimeException
-  decl golden.sema.isException fun isException sym=golden.sema.isException
-  decl golden.sema.isIllegalStateException fun isIllegalStateException sym=golden.sema.isIllegalStateException
-  decl golden.sema.catchRuntimeException fun catchRuntimeException sym=golden.sema.catchRuntimeException
-  decl golden.sema.catchThrowable fun catchThrowable sym=golden.sema.catchThrowable
-expr e@7:46 call callee=e@7:46#1 args=[] type=kotlin.native.IncorrectDereferenceException call=kotlin.native.IncorrectDereferenceException.<init>#0
-expr e@10:35 name(message) type=String ref=golden.sema.message.$3.message
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:35] type=kotlin.native.IncorrectDereferenceException call=kotlin.native.IncorrectDereferenceException.<init>#1
-expr e@13:5 name(exception) type=kotlin.native.IncorrectDereferenceException ref=golden.sema.isRuntimeException.$2.exception
+  decl golden.sema.noArg[kind=fun;params=] fun noArg sym=golden.sema.noArg[kind=fun;params=]
+  decl golden.sema.message[kind=fun;params=String] fun message sym=golden.sema.message[kind=fun;params=String]
+  decl golden.sema.isRuntimeException[kind=fun;params=kotlin.native.IncorrectDereferenceException] fun isRuntimeException sym=golden.sema.isRuntimeException[kind=fun;params=kotlin.native.IncorrectDereferenceException]
+  decl golden.sema.isException[kind=fun;params=kotlin.native.IncorrectDereferenceException] fun isException sym=golden.sema.isException[kind=fun;params=kotlin.native.IncorrectDereferenceException]
+  decl golden.sema.isIllegalStateException[kind=fun;params=kotlin.native.IncorrectDereferenceException] fun isIllegalStateException sym=golden.sema.isIllegalStateException[kind=fun;params=kotlin.native.IncorrectDereferenceException]
+  decl golden.sema.catchRuntimeException[kind=fun;params=] fun catchRuntimeException sym=golden.sema.catchRuntimeException[kind=fun;params=]
+  decl golden.sema.catchThrowable[kind=fun;params=] fun catchThrowable sym=golden.sema.catchThrowable[kind=fun;params=]
+expr e@7:46 call callee=e@7:46#1 args=[] type=kotlin.native.IncorrectDereferenceException call=kotlin.native.IncorrectDereferenceException.<init>[kind=ctor;recv=kotlin.native.IncorrectDereferenceException;params=]
+expr e@10:35 name(message) type=String ref=golden.sema.message.$3.message[kind=vparam]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:35] type=kotlin.native.IncorrectDereferenceException call=kotlin.native.IncorrectDereferenceException.<init>[kind=ctor;recv=kotlin.native.IncorrectDereferenceException;params=String]
+expr e@13:5 name(exception) type=kotlin.native.IncorrectDereferenceException ref=golden.sema.isRuntimeException.$2.exception[kind=vparam]
 expr e@13:5#1 isCheck expr=e@13:5 type=kotlin.RuntimeException type=Boolean
-expr e@16:5 name(exception) type=kotlin.native.IncorrectDereferenceException ref=golden.sema.isException.$0.exception
+expr e@16:5 name(exception) type=kotlin.native.IncorrectDereferenceException ref=golden.sema.isException.$0.exception[kind=vparam]
 expr e@16:5#1 isCheck expr=e@16:5 type=kotlin.Exception type=Boolean
-expr e@19:5 name(exception) type=kotlin.native.IncorrectDereferenceException ref=golden.sema.isIllegalStateException.$1.exception
+expr e@19:5 name(exception) type=kotlin.native.IncorrectDereferenceException ref=golden.sema.isIllegalStateException.$1.exception[kind=vparam]
 expr e@19:5#1 isCheck expr=e@19:5 type=kotlin.IllegalStateException type=Boolean
 expr e@23:45 string(runtime) type=String
-expr e@23:15 call callee=e@23:15#1 args=[_:e@23:45] type=kotlin.native.IncorrectDereferenceException call=kotlin.native.IncorrectDereferenceException.<init>#1
+expr e@23:15 call callee=e@23:15#1 args=[_:e@23:45] type=kotlin.native.IncorrectDereferenceException call=kotlin.native.IncorrectDereferenceException.<init>[kind=ctor;recv=kotlin.native.IncorrectDereferenceException;params=String]
 expr e@23:9 throw value=e@23:15 type=Nothing
 expr e@22:9 blockExpr stmts=[] trailing=e@23:9 type=Nothing
-expr e@25:9 name(exception) type=kotlin.RuntimeException ref=__try_0_catch_0.exception
-expr e@25:9#1 memberCall recv=e@25:9 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@25:9 name(exception) type=kotlin.RuntimeException ref=__try_0_catch_0.exception[kind=local]
+expr e@25:9#1 memberCall recv=e@25:9 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@25:30 string(caught) type=String
 expr e@25:9#2 binary(elvis) lhs=e@25:9#1 rhs=e@25:30 type=String
-expr e@24:43 blockExpr stmts=[] trailing=e@25:9#2 type=String ref=__try_0_catch_0.exception
+expr e@24:43 blockExpr stmts=[] trailing=e@25:9#2 type=String ref=__try_0_catch_0.exception[kind=local]
 expr e@22:5 try body=e@22:9 catches=[e@24:43] finally=_ type=String
 expr e@30:45 string(throwable) type=String
-expr e@30:15 call callee=e@30:15#1 args=[_:e@30:45] type=kotlin.native.IncorrectDereferenceException call=kotlin.native.IncorrectDereferenceException.<init>#1
+expr e@30:15 call callee=e@30:15#1 args=[_:e@30:45] type=kotlin.native.IncorrectDereferenceException call=kotlin.native.IncorrectDereferenceException.<init>[kind=ctor;recv=kotlin.native.IncorrectDereferenceException;params=String]
 expr e@30:9 throw value=e@30:15 type=Nothing
 expr e@29:9 blockExpr stmts=[] trailing=e@30:9 type=Nothing
-expr e@32:9 name(exception) type=kotlin.Throwable ref=__try_1_catch_0.exception
-expr e@32:9#1 memberCall recv=e@32:9 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@32:9 name(exception) type=kotlin.Throwable ref=__try_1_catch_0.exception[kind=local]
+expr e@32:9#1 memberCall recv=e@32:9 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@32:30 string(caught) type=String
 expr e@32:9#2 binary(elvis) lhs=e@32:9#1 rhs=e@32:30 type=String
-expr e@31:36 blockExpr stmts=[] trailing=e@32:9#2 type=String ref=__try_1_catch_0.exception
+expr e@31:36 blockExpr stmts=[] trailing=e@32:9#2 type=String ref=__try_1_catch_0.exception[kind=local]
 expr e@29:5 try body=e@29:9 catches=[e@31:36] finally=_ type=String

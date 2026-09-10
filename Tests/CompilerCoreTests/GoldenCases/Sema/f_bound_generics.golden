@@ -1,24 +1,24 @@
-symbol fq=__local_0.m1 kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.m2 kind=local vis=private flags=_ type=String
-symbol fq=golden.sema.max kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.max.$0.T,golden.sema.max.$0.T] ret=golden.sema.max.$0.T bounds=[kotlin.Comparable<golden.sema.max.$0.T>]
-symbol fq=golden.sema.max.$0.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.max.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.max.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.useMax kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.m1[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.m2[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=golden.sema.max.$0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.max.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.max.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.max[kind=fun;params=T0,T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.max.$0.T,golden.sema.max.$0.T] ret=golden.sema.max.$0.T bounds=[kotlin.Comparable<golden.sema.max.$0.T>]
+symbol fq=golden.sema.useMax[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ff_bound_generics package=golden.sema
-  decl golden.sema.max fun max sym=golden.sema.max
-  decl golden.sema.useMax fun useMax sym=golden.sema.useMax
-expr e@4:9 name(a) type=golden.sema.max.$0.T ref=golden.sema.max.$0.a
-expr e@4:13 name(b) type=golden.sema.max.$0.T ref=golden.sema.max.$0.b
-expr e@4:9#1 binary(greaterThan) lhs=e@4:9 rhs=e@4:13 type=Boolean call=kotlin.Comparable.compareTo targs=[golden.sema.max.$0.T]
-expr e@4:16 name(a) type=golden.sema.max.$0.T ref=golden.sema.max.$0.a
-expr e@4:23 name(b) type=golden.sema.max.$0.T ref=golden.sema.max.$0.b
+  decl golden.sema.max[kind=fun;params=T0,T0;gen=1] fun max sym=golden.sema.max[kind=fun;params=T0,T0;gen=1]
+  decl golden.sema.useMax[kind=fun;params=] fun useMax sym=golden.sema.useMax[kind=fun;params=]
+expr e@4:9 name(a) type=golden.sema.max.$0.T ref=golden.sema.max.$0.a[kind=vparam]
+expr e@4:13 name(b) type=golden.sema.max.$0.T ref=golden.sema.max.$0.b[kind=vparam]
+expr e@4:9#1 binary(greaterThan) lhs=e@4:9 rhs=e@4:13 type=Boolean call=kotlin.Comparable.compareTo[kind=fun;recv=kotlin.Comparable<T0>;params=T0;gen=1] targs=[golden.sema.max.$0.T]
+expr e@4:16 name(a) type=golden.sema.max.$0.T ref=golden.sema.max.$0.a[kind=vparam]
+expr e@4:23 name(b) type=golden.sema.max.$0.T ref=golden.sema.max.$0.b[kind=vparam]
 expr e@4:5 if cond=e@4:9#1 then=e@4:16 else=e@4:23 type=golden.sema.max.$0.T
 expr e@7:18 int(1) type=Int
 expr e@7:21 int(2) type=Int
-expr e@7:14 call callee=e@7:14#1 args=[_:e@7:18,_:e@7:21] type=Int call=golden.sema.max targs=[Int]
-expr e@7:5 localDecl m1 mutable=0 type=_ init=e@7:14 type=Unit ref=__local_0.m1
+expr e@7:14 call callee=e@7:14#1 args=[_:e@7:18,_:e@7:21] type=Int call=golden.sema.max[kind=fun;params=T0,T0;gen=1] targs=[Int]
+expr e@7:5 localDecl m1 mutable=0 type=_ init=e@7:14 type=Unit ref=__local_0.m1[kind=local]
 expr e@8:18 string(a) type=String
 expr e@8:23 string(b) type=String
-expr e@8:14 call callee=e@8:14#1 args=[_:e@8:18,_:e@8:23] type=String call=golden.sema.max targs=[String]
-expr e@8:5 localDecl m2 mutable=0 type=_ init=e@8:14 type=Unit ref=__local_1.m2
+expr e@8:14 call callee=e@8:14#1 args=[_:e@8:18,_:e@8:23] type=String call=golden.sema.max[kind=fun;params=T0,T0;gen=1] targs=[String]
+expr e@8:5 localDecl m2 mutable=0 type=_ init=e@8:14 type=Unit ref=__local_1.m2[kind=local]

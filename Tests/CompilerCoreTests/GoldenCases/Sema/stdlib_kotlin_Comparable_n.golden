@@ -1,24 +1,24 @@
-symbol fq=golden.sema.Version kind=class vis=public flags=_
-symbol fq=golden.sema.Version.compareTo.$0.other kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Version.value kind=property vis=public flags=_ type=Int
-symbol fq=golden.sema.compareBound kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.compareBound.$1.T,golden.sema.compareBound.$1.T] ret=Int bounds=[kotlin.Comparable<golden.sema.compareBound.$1.T>]
-symbol fq=golden.sema.compareBound.$1.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.compareBound.$1.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.compareBound.$1.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.comparePrimitive kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=golden.sema.comparePrimitive.$2.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.comparePrimitive.$2.b kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Version.compareTo.$0.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Version.value[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.Version[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.compareBound.$1.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.compareBound.$1.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.compareBound.$1.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.compareBound[kind=fun;params=T0,T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.compareBound.$1.T,golden.sema.compareBound.$1.T] ret=Int bounds=[kotlin.Comparable<golden.sema.compareBound.$1.T>]
+symbol fq=golden.sema.comparePrimitive.$2.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.comparePrimitive.$2.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.comparePrimitive[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
 file fstdlib_kotlin_Comparable_n package=golden.sema
-  decl golden.sema.Version class Version sym=golden.sema.Version
-  decl golden.sema.compareBound fun compareBound sym=golden.sema.compareBound
-  decl golden.sema.comparePrimitive fun comparePrimitive sym=golden.sema.comparePrimitive
-expr e@4:51 name(value) type=Int ref=golden.sema.Version.value
-expr e@4:67 name(other) type=golden.sema.Version ref=golden.sema.Version.compareTo.$0.other
-expr e@4:67#1 memberCall recv=e@4:67 callee=value args=[] type=Int ref=golden.sema.Version.value
-expr e@4:51#1 memberCall recv=e@4:51 callee=compareTo args=[_:e@4:67#1] type=Int call=kotlin.Comparable.compareTo targs=[Int]
-expr e@7:57 name(a) type=golden.sema.compareBound.$1.T ref=golden.sema.compareBound.$1.a
-expr e@7:69 name(b) type=golden.sema.compareBound.$1.T ref=golden.sema.compareBound.$1.b
-expr e@7:57#1 memberCall recv=e@7:57 callee=compareTo args=[_:e@7:69] type=Int call=kotlin.Comparable.compareTo targs=[golden.sema.compareBound.$1.T]
-expr e@9:45 name(a) type=Int ref=golden.sema.comparePrimitive.$2.a
-expr e@9:57 name(b) type=Int ref=golden.sema.comparePrimitive.$2.b
-expr e@9:45#1 memberCall recv=e@9:45 callee=compareTo args=[_:e@9:57] type=Int call=kotlin.Comparable.compareTo targs=[Int]
+  decl golden.sema.Version[kind=class] class Version sym=golden.sema.Version[kind=class]
+  decl golden.sema.compareBound[kind=fun;params=T0,T0;gen=1] fun compareBound sym=golden.sema.compareBound[kind=fun;params=T0,T0;gen=1]
+  decl golden.sema.comparePrimitive[kind=fun;params=Int,Int] fun comparePrimitive sym=golden.sema.comparePrimitive[kind=fun;params=Int,Int]
+expr e@4:51 name(value) type=Int ref=golden.sema.Version.value[kind=prop]
+expr e@4:67 name(other) type=golden.sema.Version ref=golden.sema.Version.compareTo.$0.other[kind=vparam]
+expr e@4:67#1 memberCall recv=e@4:67 callee=value args=[] type=Int ref=golden.sema.Version.value[kind=prop]
+expr e@4:51#1 memberCall recv=e@4:51 callee=compareTo args=[_:e@4:67#1] type=Int call=kotlin.Comparable.compareTo[kind=fun;recv=kotlin.Comparable<T0>;params=T0;gen=1] targs=[Int]
+expr e@7:57 name(a) type=golden.sema.compareBound.$1.T ref=golden.sema.compareBound.$1.a[kind=vparam]
+expr e@7:69 name(b) type=golden.sema.compareBound.$1.T ref=golden.sema.compareBound.$1.b[kind=vparam]
+expr e@7:57#1 memberCall recv=e@7:57 callee=compareTo args=[_:e@7:69] type=Int call=kotlin.Comparable.compareTo[kind=fun;recv=kotlin.Comparable<T0>;params=T0;gen=1] targs=[golden.sema.compareBound.$1.T]
+expr e@9:45 name(a) type=Int ref=golden.sema.comparePrimitive.$2.a[kind=vparam]
+expr e@9:57 name(b) type=Int ref=golden.sema.comparePrimitive.$2.b[kind=vparam]
+expr e@9:45#1 memberCall recv=e@9:45 callee=compareTo args=[_:e@9:57] type=Int call=kotlin.Comparable.compareTo[kind=fun;recv=kotlin.Comparable<T0>;params=T0;gen=1] targs=[Int]

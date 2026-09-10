@@ -1,12 +1,12 @@
-symbol fq=__local_0.found kind=local vis=private flags=_ type=Any?
-symbol fq=findFirst kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=String?
-symbol fq=findFirst.$0.values kind=valueParameter vis=private flags=_
-symbol fq=findFirstInList kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=String?
-symbol fq=findFirstInList.$1.values kind=valueParameter vis=private flags=_
+symbol fq=__local_0.found[kind=local] kind=local vis=private flags=_ type=Any?
+symbol fq=findFirst.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=findFirstInList.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=findFirstInList[kind=fun;params=kotlin.collections.List<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=String?
+symbol fq=findFirst[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=String?
 file fcollection_firstNotNullOfOrNull package=_
-  decl findFirst fun findFirst sym=findFirst
-  decl findFirstInList fun findFirstInList sym=findFirstInList
-expr e@2:12 name(values) type=kotlin.collections.Iterable<Int> ref=findFirst.$0.values
+  decl findFirst[kind=fun;params=kotlin.collections.Iterable<Int>] fun findFirst sym=findFirst[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl findFirstInList[kind=fun;params=kotlin.collections.List<Int>] fun findFirstInList sym=findFirstInList[kind=fun;params=kotlin.collections.List<Int>]
+expr e@2:12 name(values) type=kotlin.collections.Iterable<Int> ref=findFirst.$0.values[kind=vparam]
 expr e@2:46 name(it) type=Int ref=s-0
 expr e@2:51 int(0) type=Int
 expr e@2:46#1 binary(greaterThan) lhs=e@2:46 rhs=e@2:51 type=Boolean
@@ -15,9 +15,9 @@ expr e@2:54#1 memberCall recv=e@2:54 callee=toString args=[] type=String
 expr e@2:73 name(null) type=Nothing?
 expr e@2:42 if cond=e@2:46#1 then=e@2:54#1 else=e@2:73 type=String?
 expr e@2:40 lambda params=[] body=e@2:42 label=firstNotNullOfOrNull type=(Int) -> Any?
-expr e@2:12#1 memberCall recv=e@2:12 callee=firstNotNullOfOrNull args=[_:e@2:40] type=String? call=kotlin.collections.firstNotNullOfOrNull#0
+expr e@2:12#1 memberCall recv=e@2:12 callee=firstNotNullOfOrNull args=[_:e@2:40] type=String? call=kotlin.collections.firstNotNullOfOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1?};gen=2]
 expr e@2:5 return value=e@2:12#1 type=Nothing
-expr e@6:17 name(values) type=kotlin.collections.List<Int> ref=findFirstInList.$1.values
+expr e@6:17 name(values) type=kotlin.collections.List<Int> ref=findFirstInList.$1.values[kind=vparam]
 expr e@6:51 name(it) type=Int ref=s-1
 expr e@6:56 int(2) type=Int
 expr e@6:51#1 binary(modulo) lhs=e@6:51 rhs=e@6:56 type=Int
@@ -27,8 +27,8 @@ expr e@6:64 string(even) type=String
 expr e@6:76 name(null) type=Nothing?
 expr e@6:47 if cond=e@6:51#2 then=e@6:64 else=e@6:76 type=String?
 expr e@6:45 lambda params=[] body=e@6:47 label=firstNotNullOfOrNull type=(Int) -> Any?
-expr e@6:17#1 memberCall recv=e@6:17 callee=firstNotNullOfOrNull args=[_:e@6:45] type=Any? call=kotlin.collections.firstNotNullOfOrNull#0
-expr e@6:5 localDecl found mutable=0 type=_ init=e@6:17#1 type=Unit ref=__local_0.found
-expr e@7:12 name(found) type=Any? ref=__local_0.found
+expr e@6:17#1 memberCall recv=e@6:17 callee=firstNotNullOfOrNull args=[_:e@6:45] type=Any? call=kotlin.collections.firstNotNullOfOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1?};gen=2]
+expr e@6:5 localDecl found mutable=0 type=_ init=e@6:17#1 type=Unit ref=__local_0.found[kind=local]
+expr e@7:12 name(found) type=Any? ref=__local_0.found[kind=local]
 expr e@7:5 return value=e@7:12 type=Nothing
 diagnostic severity=error code=KSWIFTK-TYPE-0001 at=7:5 msg=Type constraint could not be satisfied.

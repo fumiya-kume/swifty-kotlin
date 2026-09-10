@@ -1,16 +1,16 @@
-symbol fq=__local_0.f kind=local vis=private flags=_ type=java.io.File
-symbol fq=__local_1.bytes kind=local vis=private flags=_ type=kotlin.ByteArray
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.f[kind=local] kind=local vis=private flags=_ type=java.io.File
+symbol fq=__local_1.bytes[kind=local] kind=local vis=private flags=_ type=kotlin.ByteArray
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ffile_append_bytes package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@4:18 string(test.bin) type=String
-expr e@4:13 call callee=e@4:13#1 args=[_:e@4:18] type=java.io.File call=java.io.File.<init>#0
-expr e@4:5 localDecl f mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.f
+expr e@4:13 call callee=e@4:13#1 args=[_:e@4:18] type=java.io.File call=java.io.File.<init>[kind=ctor;params=String]
+expr e@4:5 localDecl f mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.f[kind=local]
 expr e@5:29 int(1) type=Byte
 expr e@5:32 int(2) type=Byte
 expr e@5:35 int(3) type=Byte
-expr e@5:17 call callee=e@5:17#1 args=[_:e@5:29,_:e@5:32,_:e@5:35] type=kotlin.ByteArray call=kotlin.byteArrayOf
-expr e@5:5 localDecl bytes mutable=0 type=_ init=e@5:17 type=Unit ref=__local_1.bytes
-expr e@6:5 name(f) type=java.io.File ref=__local_0.f
-expr e@6:19 name(bytes) type=kotlin.ByteArray ref=__local_1.bytes
-expr e@6:5#1 memberCall recv=e@6:5 callee=appendBytes args=[_:e@6:19] type=Unit call=java.io.File.appendBytes#0
+expr e@5:17 call callee=e@5:17#1 args=[_:e@5:29,_:e@5:32,_:e@5:35] type=kotlin.ByteArray call=kotlin.byteArrayOf[kind=fun;params=*Byte]
+expr e@5:5 localDecl bytes mutable=0 type=_ init=e@5:17 type=Unit ref=__local_1.bytes[kind=local]
+expr e@6:5 name(f) type=java.io.File ref=__local_0.f[kind=local]
+expr e@6:19 name(bytes) type=kotlin.ByteArray ref=__local_1.bytes[kind=local]
+expr e@6:5#1 memberCall recv=e@6:5 callee=appendBytes args=[_:e@6:19] type=Unit call=java.io.File.appendBytes[kind=fun;recv=java.io.File;params=kotlin.ByteArray]

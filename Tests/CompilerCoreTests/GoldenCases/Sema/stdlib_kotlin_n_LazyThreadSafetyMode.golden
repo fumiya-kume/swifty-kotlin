@@ -1,21 +1,21 @@
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.none kind=property vis=public flags=_ type=kotlin.LazyThreadSafetyMode
-symbol fq=golden.sema.pub kind=property vis=public flags=_ type=kotlin.LazyThreadSafetyMode
-symbol fq=golden.sema.sync kind=property vis=public flags=_ type=kotlin.LazyThreadSafetyMode
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.none[kind=prop] kind=property vis=public flags=_ type=kotlin.LazyThreadSafetyMode
+symbol fq=golden.sema.pub[kind=prop] kind=property vis=public flags=_ type=kotlin.LazyThreadSafetyMode
+symbol fq=golden.sema.sync[kind=prop] kind=property vis=public flags=_ type=kotlin.LazyThreadSafetyMode
 file fstdlib_kotlin_n_LazyThreadSafetyMode package=golden.sema
-  decl golden.sema.sync property sync var=0 sym=golden.sema.sync
-  decl golden.sema.pub property pub var=0 sym=golden.sema.pub
-  decl golden.sema.none property none var=0 sym=golden.sema.none
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@4:12 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode#0
-expr e@4:12#1 memberCall recv=e@4:12 callee=SYNCHRONIZED args=[] type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode.SYNCHRONIZED
-expr e@5:11 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode#0
-expr e@5:11#1 memberCall recv=e@5:11 callee=PUBLICATION args=[] type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode.PUBLICATION
-expr e@6:12 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode#0
-expr e@6:12#1 memberCall recv=e@6:12 callee=NONE args=[] type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode.NONE
-expr e@9:13 name(sync) type=kotlin.LazyThreadSafetyMode ref=golden.sema.sync
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println#1
-expr e@10:13 name(pub) type=kotlin.LazyThreadSafetyMode ref=golden.sema.pub
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println#1
-expr e@11:13 name(none) type=kotlin.LazyThreadSafetyMode ref=golden.sema.none
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13] type=Unit call=kotlin.io.println#1
+  decl golden.sema.sync[kind=prop] property sync var=0 sym=golden.sema.sync[kind=prop]
+  decl golden.sema.pub[kind=prop] property pub var=0 sym=golden.sema.pub[kind=prop]
+  decl golden.sema.none[kind=prop] property none var=0 sym=golden.sema.none[kind=prop]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@4:12 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode[kind=enum]
+expr e@4:12#1 memberCall recv=e@4:12 callee=SYNCHRONIZED args=[] type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode.SYNCHRONIZED[kind=field]
+expr e@5:11 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode[kind=enum]
+expr e@5:11#1 memberCall recv=e@5:11 callee=PUBLICATION args=[] type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode.PUBLICATION[kind=field]
+expr e@6:12 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode[kind=enum]
+expr e@6:12#1 memberCall recv=e@6:12 callee=NONE args=[] type=kotlin.LazyThreadSafetyMode ref=kotlin.LazyThreadSafetyMode.NONE[kind=field]
+expr e@9:13 name(sync) type=kotlin.LazyThreadSafetyMode ref=golden.sema.sync[kind=prop]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@10:13 name(pub) type=kotlin.LazyThreadSafetyMode ref=golden.sema.pub[kind=prop]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@11:13 name(none) type=kotlin.LazyThreadSafetyMode ref=golden.sema.none[kind=prop]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

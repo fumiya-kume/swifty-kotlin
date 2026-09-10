@@ -1,14 +1,14 @@
-symbol fq=__local_0.list kind=local vis=private flags=_ type=kotlin.collections.List<String?>
-symbol fq=__local_1.first kind=local vis=private flags=_ type=String?
-symbol fq=golden.sema.useNullableArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.list[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String?>
+symbol fq=__local_1.first[kind=local] kind=local vis=private flags=_ type=String?
+symbol fq=golden.sema.useNullableArg[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fnullable_type_arg package=golden.sema
-  decl golden.sema.useNullableArg fun useNullableArg sym=golden.sema.useNullableArg
+  decl golden.sema.useNullableArg[kind=fun;params=] fun useNullableArg sym=golden.sema.useNullableArg[kind=fun;params=]
 expr e@4:38 string(a) type=String
 expr e@4:43 name(null) type=Nothing?
 expr e@4:49 string(b) type=String
-expr e@4:31 call callee=e@4:31#1 args=[_:e@4:38,_:e@4:43,_:e@4:49] type=kotlin.collections.List<String?> call=kotlin.collections.listOf#1 targs=[String?]
-expr e@4:5 localDecl list mutable=0 type=List<String?> init=e@4:31 type=Unit ref=__local_0.list
-expr e@5:26 name(list) type=kotlin.collections.List<String?> ref=__local_0.list
+expr e@4:31 call callee=e@4:31#1 args=[_:e@4:38,_:e@4:43,_:e@4:49] type=kotlin.collections.List<String?> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[String?]
+expr e@4:5 localDecl list mutable=0 type=List<String?> init=e@4:31 type=Unit ref=__local_0.list[kind=local]
+expr e@5:26 name(list) type=kotlin.collections.List<String?> ref=__local_0.list[kind=local]
 expr e@5:31 int(0) type=Int
-expr e@5:26#1 indexedAccess receiver=e@5:26 indices=[e@5:31] type=String? call=kotlin.collections.List.get targs=[String?]
-expr e@5:5 localDecl first mutable=0 type=String? init=e@5:26#1 type=Unit ref=__local_1.first
+expr e@5:26#1 indexedAccess receiver=e@5:26 indices=[e@5:31] type=String? call=kotlin.collections.List.get[kind=fun;recv=kotlin.collections.List<out T0>;params=Int;gen=1] targs=[String?]
+expr e@5:5 localDecl first mutable=0 type=String? init=e@5:26#1 type=Unit ref=__local_1.first[kind=local]

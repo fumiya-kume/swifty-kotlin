@@ -1,11 +1,11 @@
-symbol fq=golden.sema.cleanerType kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.native.ref.Cleaner
-symbol fq=golden.sema.cleanerType.$0.resource kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.weakReferenceType kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.ref.WeakReference<String>?
+symbol fq=golden.sema.cleanerType.$0.resource[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.cleanerType[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.native.ref.Cleaner
+symbol fq=golden.sema.weakReferenceType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.ref.WeakReference<String>?
 file fstdlib_kotlin_native_ref_n_n package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)]
-  decl golden.sema.weakReferenceType fun weakReferenceType sym=golden.sema.weakReferenceType
-  decl golden.sema.cleanerType fun cleanerType sym=golden.sema.cleanerType
+  decl golden.sema.weakReferenceType[kind=fun;params=] fun weakReferenceType sym=golden.sema.weakReferenceType[kind=fun;params=]
+  decl golden.sema.cleanerType[kind=fun;params=String?] fun cleanerType sym=golden.sema.cleanerType[kind=fun;params=String?]
 expr e@9:51 name(null) type=Nothing?
-expr e@12:19 name(resource) type=String? ref=golden.sema.cleanerType.$0.resource
+expr e@12:19 name(resource) type=String? ref=golden.sema.cleanerType.$0.resource[kind=vparam]
 expr e@12:30 blockExpr stmts=[] trailing=_ type=Unit
 expr e@12:29 lambda params=[_] body=e@12:30 label=createCleaner type=(String?) -> Unit
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:19,_:e@12:29] type=kotlin.native.ref.Cleaner call=kotlin.native.ref.createCleaner targs=[String?]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:19,_:e@12:29] type=kotlin.native.ref.Cleaner call=kotlin.native.ref.createCleaner[kind=fun;params=T0,fn{p=T0;ret=Unit};gen=1] targs=[String?]

@@ -1,5 +1,5 @@
-symbol fq=useExitProcess kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=useExitProcess[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fexit_process package=_
-  decl useExitProcess fun useExitProcess sym=useExitProcess
+  decl useExitProcess[kind=fun;params=] fun useExitProcess sym=useExitProcess[kind=fun;params=]
 expr e@4:17 int(0) type=Int
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:17] type=Nothing call=kotlin.system.exitProcess
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:17] type=Nothing call=kotlin.system.exitProcess[kind=fun;params=Int]

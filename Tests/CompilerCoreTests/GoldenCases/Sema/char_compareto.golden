@@ -1,10 +1,10 @@
-symbol fq=__local_0.result kind=local vis=private flags=_ type=Int
-symbol fq=charCompareToDemo kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.result[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=charCompareToDemo[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fchar_compareto package=_
-  decl charCompareToDemo fun charCompareToDemo sym=charCompareToDemo
+  decl charCompareToDemo[kind=fun;params=] fun charCompareToDemo sym=charCompareToDemo[kind=fun;params=]
 expr e@2:18 char(90) type=Char
 expr e@2:32 char(65) type=Char
-expr e@2:18#1 memberCall recv=e@2:18 callee=compareTo args=[_:e@2:32] type=Int call=kotlin.text.compareTo#0
-expr e@2:5 localDecl result mutable=0 type=_ init=e@2:18#1 type=Unit ref=__local_0.result
-expr e@3:13 name(result) type=Int ref=__local_0.result
-expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13] type=Unit call=kotlin.io.println#1
+expr e@2:18#1 memberCall recv=e@2:18 callee=compareTo args=[_:e@2:32] type=Int call=kotlin.text.compareTo[kind=fun;recv=Char;params=Char]
+expr e@2:5 localDecl result mutable=0 type=_ init=e@2:18#1 type=Unit ref=__local_0.result[kind=local]
+expr e@3:13 name(result) type=Int ref=__local_0.result[kind=local]
+expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

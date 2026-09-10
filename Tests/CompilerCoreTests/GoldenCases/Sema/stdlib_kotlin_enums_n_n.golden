@@ -1,6 +1,6 @@
-symbol fq=golden.sema.Color kind=enumClass vis=public flags=_
-symbol fq=golden.sema.colorEntries kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<golden.sema.Color>
+symbol fq=golden.sema.Color[kind=enum] kind=enumClass vis=public flags=_
+symbol fq=golden.sema.colorEntries[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<golden.sema.Color>
 file fstdlib_kotlin_enums_n_n package=golden.sema
-  decl golden.sema.Color class Color sym=golden.sema.Color
-  decl golden.sema.colorEntries fun colorEntries sym=golden.sema.colorEntries
-expr e@7:55 call callee=e@7:55#1 args=[] type=kotlin.enums.EnumEntries<golden.sema.Color> call=kotlin.enums.enumEntries#0 targs=[golden.sema.Color]
+  decl golden.sema.Color[kind=enum] class Color sym=golden.sema.Color[kind=enum]
+  decl golden.sema.colorEntries[kind=fun;params=] fun colorEntries sym=golden.sema.colorEntries[kind=fun;params=]
+expr e@7:55 call callee=e@7:55#1 args=[] type=kotlin.enums.EnumEntries<golden.sema.Color> call=kotlin.enums.enumEntries[kind=fun;params=;gen=1] targs=[golden.sema.Color]

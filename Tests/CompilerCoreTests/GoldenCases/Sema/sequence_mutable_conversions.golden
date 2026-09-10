@@ -1,48 +1,48 @@
-symbol fq=__local_0.seq kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
-symbol fq=__local_1.mutableList kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
-symbol fq=__local_2.mutableSet kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
-symbol fq=__local_3.hashSet kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.seq[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
+symbol fq=__local_1.mutableList[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_2.mutableSet[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
+symbol fq=__local_3.hashSet[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fsequence_mutable_conversions package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:26 int(3) type=Int
 expr e@2:29 int(1) type=Int
 expr e@2:32 int(2) type=Int
 expr e@2:35 int(1) type=Int
 expr e@2:38 int(3) type=Int
-expr e@2:15 call callee=e@2:15#1 args=[_:e@2:26,_:e@2:29,_:e@2:32,_:e@2:35,_:e@2:38] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
-expr e@2:5 localDecl seq mutable=0 type=_ init=e@2:15 type=Unit ref=__local_0.seq
-expr e@4:41 name(seq) type=kotlin.sequences.Sequence<Int> ref=__local_0.seq
-expr e@4:41#1 memberCall recv=e@4:41 callee=toMutableList args=[] type=kotlin.collections.MutableList<Int> call=kotlin.sequences.toMutableList targs=[Int]
-expr e@4:5 localDecl mutableList mutable=0 type=MutableList<Int> init=e@4:41#1 type=Unit ref=__local_1.mutableList
-expr e@5:5 name(mutableList) type=kotlin.collections.MutableList<Int> ref=__local_1.mutableList
+expr e@2:15 call callee=e@2:15#1 args=[_:e@2:26,_:e@2:29,_:e@2:32,_:e@2:35,_:e@2:38] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@2:5 localDecl seq mutable=0 type=_ init=e@2:15 type=Unit ref=__local_0.seq[kind=local]
+expr e@4:41 name(seq) type=kotlin.sequences.Sequence<Int> ref=__local_0.seq[kind=local]
+expr e@4:41#1 memberCall recv=e@4:41 callee=toMutableList args=[] type=kotlin.collections.MutableList<Int> call=kotlin.sequences.toMutableList[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int]
+expr e@4:5 localDecl mutableList mutable=0 type=MutableList<Int> init=e@4:41#1 type=Unit ref=__local_1.mutableList[kind=local]
+expr e@5:5 name(mutableList) type=kotlin.collections.MutableList<Int> ref=__local_1.mutableList[kind=local]
 expr e@5:21 int(99) type=Int
-expr e@5:5#1 memberCall recv=e@5:5 callee=add args=[_:e@5:21] type=Boolean call=kotlin.collections.MutableList.add#1
-expr e@6:13 name(mutableList) type=kotlin.collections.MutableList<Int> ref=__local_1.mutableList
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println#1
+expr e@5:5#1 memberCall recv=e@5:5 callee=add args=[_:e@5:21] type=Boolean call=kotlin.collections.MutableList.add[kind=fun;recv=kotlin.collections.MutableList<T0>;params=T0;gen=1]
+expr e@6:13 name(mutableList) type=kotlin.collections.MutableList<Int> ref=__local_1.mutableList[kind=local]
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@8:50 int(3) type=Int
 expr e@8:53 int(1) type=Int
 expr e@8:56 int(2) type=Int
 expr e@8:59 int(1) type=Int
 expr e@8:62 int(3) type=Int
-expr e@8:39 call callee=e@8:39#1 args=[_:e@8:50,_:e@8:53,_:e@8:56,_:e@8:59,_:e@8:62] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
-expr e@8:39#2 memberCall recv=e@8:39 callee=toMutableSet args=[] type=kotlin.collections.MutableSet<Int> call=kotlin.sequences.toMutableSet targs=[Int]
-expr e@8:5 localDecl mutableSet mutable=0 type=MutableSet<Int> init=e@8:39#2 type=Unit ref=__local_2.mutableSet
-expr e@9:5 name(mutableSet) type=kotlin.collections.MutableSet<Int> ref=__local_2.mutableSet
+expr e@8:39 call callee=e@8:39#1 args=[_:e@8:50,_:e@8:53,_:e@8:56,_:e@8:59,_:e@8:62] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@8:39#2 memberCall recv=e@8:39 callee=toMutableSet args=[] type=kotlin.collections.MutableSet<Int> call=kotlin.sequences.toMutableSet[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int]
+expr e@8:5 localDecl mutableSet mutable=0 type=MutableSet<Int> init=e@8:39#2 type=Unit ref=__local_2.mutableSet[kind=local]
+expr e@9:5 name(mutableSet) type=kotlin.collections.MutableSet<Int> ref=__local_2.mutableSet[kind=local]
 expr e@9:20 int(42) type=Int
-expr e@9:5#1 memberCall recv=e@9:5 callee=add args=[_:e@9:20] type=Boolean call=kotlin.collections.MutableSet.add
-expr e@10:13 name(mutableSet) type=kotlin.collections.MutableSet<Int> ref=__local_2.mutableSet
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println#1
+expr e@9:5#1 memberCall recv=e@9:5 callee=add args=[_:e@9:20] type=Boolean call=kotlin.collections.MutableSet.add[kind=fun;recv=kotlin.collections.MutableSet<T0>;params=T0;gen=1]
+expr e@10:13 name(mutableSet) type=kotlin.collections.MutableSet<Int> ref=__local_2.mutableSet[kind=local]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@12:47 int(3) type=Int
 expr e@12:50 int(1) type=Int
 expr e@12:53 int(2) type=Int
 expr e@12:56 int(1) type=Int
 expr e@12:59 int(3) type=Int
-expr e@12:36 call callee=e@12:36#1 args=[_:e@12:47,_:e@12:50,_:e@12:53,_:e@12:56,_:e@12:59] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
-expr e@12:36#2 memberCall recv=e@12:36 callee=toHashSet args=[] type=kotlin.collections.MutableSet<Int> call=kotlin.sequences.toHashSet targs=[Int]
-expr e@12:5 localDecl hashSet mutable=0 type=MutableSet<Int> init=e@12:36#2 type=Unit ref=__local_3.hashSet
-expr e@13:5 name(hashSet) type=kotlin.collections.MutableSet<Int> ref=__local_3.hashSet
+expr e@12:36 call callee=e@12:36#1 args=[_:e@12:47,_:e@12:50,_:e@12:53,_:e@12:56,_:e@12:59] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@12:36#2 memberCall recv=e@12:36 callee=toHashSet args=[] type=kotlin.collections.MutableSet<Int> call=kotlin.sequences.toHashSet[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int]
+expr e@12:5 localDecl hashSet mutable=0 type=MutableSet<Int> init=e@12:36#2 type=Unit ref=__local_3.hashSet[kind=local]
+expr e@13:5 name(hashSet) type=kotlin.collections.MutableSet<Int> ref=__local_3.hashSet[kind=local]
 expr e@13:17 int(77) type=Int
-expr e@13:5#1 memberCall recv=e@13:5 callee=add args=[_:e@13:17] type=Boolean call=kotlin.collections.MutableSet.add
-expr e@14:13 name(hashSet) type=kotlin.collections.MutableSet<Int> ref=__local_3.hashSet
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13] type=Unit call=kotlin.io.println#1
+expr e@13:5#1 memberCall recv=e@13:5 callee=add args=[_:e@13:17] type=Boolean call=kotlin.collections.MutableSet.add[kind=fun;recv=kotlin.collections.MutableSet<T0>;params=T0;gen=1]
+expr e@14:13 name(hashSet) type=kotlin.collections.MutableSet<Int> ref=__local_3.hashSet[kind=local]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

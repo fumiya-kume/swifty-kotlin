@@ -1,10 +1,10 @@
-symbol fq=golden.sema.makeUIntArrayFromIntView kind=function vis=public flags=_ sig=recv=_ params=[kotlin.IntArray] ret=kotlin.UIntArray
-symbol fq=golden.sema.makeUIntArrayFromIntView.$0.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.makeUIntArraySizeOnly kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.UIntArray
+symbol fq=golden.sema.makeUIntArrayFromIntView.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeUIntArrayFromIntView[kind=fun;params=kotlin.IntArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.IntArray] ret=kotlin.UIntArray
+symbol fq=golden.sema.makeUIntArraySizeOnly[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.UIntArray
 file fstdlib_kotlin_UIntArray_n_n package=golden.sema
-  decl golden.sema.makeUIntArraySizeOnly fun makeUIntArraySizeOnly sym=golden.sema.makeUIntArraySizeOnly
-  decl golden.sema.makeUIntArrayFromIntView fun makeUIntArrayFromIntView sym=golden.sema.makeUIntArrayFromIntView
+  decl golden.sema.makeUIntArraySizeOnly[kind=fun;params=] fun makeUIntArraySizeOnly sym=golden.sema.makeUIntArraySizeOnly[kind=fun;params=]
+  decl golden.sema.makeUIntArrayFromIntView[kind=fun;params=kotlin.IntArray] fun makeUIntArrayFromIntView sym=golden.sema.makeUIntArrayFromIntView[kind=fun;params=kotlin.IntArray]
 expr e@3:52 int(3) type=Int
 expr e@3:42 call callee=e@3:42#1 args=[_:e@3:52] type=kotlin.UIntArray
-expr e@5:61 name(source) type=kotlin.IntArray ref=golden.sema.makeUIntArrayFromIntView.$0.source
-expr e@5:61#1 memberCall recv=e@5:61 callee=asUIntArray args=[] type=kotlin.UIntArray call=kotlin.collections.asUIntArray
+expr e@5:61 name(source) type=kotlin.IntArray ref=golden.sema.makeUIntArrayFromIntView.$0.source[kind=vparam]
+expr e@5:61#1 memberCall recv=e@5:61 callee=asUIntArray args=[] type=kotlin.UIntArray call=kotlin.collections.asUIntArray[kind=fun;recv=kotlin.IntArray;params=]

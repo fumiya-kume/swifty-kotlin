@@ -1,47 +1,47 @@
-symbol fq=__local_0.shallowEqual kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_1.shallowHash kind=local vis=private flags=_ type=Int
-symbol fq=__local_2.shallowText kind=local vis=private flags=_ type=String
-symbol fq=__local_3.deepEqual kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_4.deepHash kind=local vis=private flags=_ type=Int
-symbol fq=__local_5.deepText kind=local vis=private flags=_ type=String
-symbol fq=__local_6.intEqual kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_7.uintHash kind=local vis=private flags=_ type=Int
-symbol fq=__local_8.floatText kind=local vis=private flags=_ type=String
-symbol fq=inspect kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<Int?>,kotlin.Array<Any?>,kotlin.IntArray,kotlin.UIntArray,kotlin.FloatArray] ret=Unit
-symbol fq=inspect.$0.floats kind=valueParameter vis=private flags=_
-symbol fq=inspect.$0.ints kind=valueParameter vis=private flags=_
-symbol fq=inspect.$0.nested kind=valueParameter vis=private flags=_
-symbol fq=inspect.$0.uints kind=valueParameter vis=private flags=_
-symbol fq=inspect.$0.values kind=valueParameter vis=private flags=_
+symbol fq=__local_0.shallowEqual[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_1.shallowHash[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.shallowText[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_3.deepEqual[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_4.deepHash[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_5.deepText[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_6.intEqual[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_7.uintHash[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_8.floatText[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=inspect.$0.floats[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=inspect.$0.ints[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=inspect.$0.nested[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=inspect.$0.uints[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=inspect.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=inspect[kind=fun;params=kotlin.Array<Int?>,kotlin.Array<Any?>,kotlin.IntArray,kotlin.UIntArray,kotlin.FloatArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<Int?>,kotlin.Array<Any?>,kotlin.IntArray,kotlin.UIntArray,kotlin.FloatArray] ret=Unit
 file farray_content_comparison package=_
-  decl inspect fun inspect sym=inspect
-expr e@8:24 name(values) type=kotlin.Array<Int?> ref=inspect.$0.values
+  decl inspect[kind=fun;params=kotlin.Array<Int?>,kotlin.Array<Any?>,kotlin.IntArray,kotlin.UIntArray,kotlin.FloatArray] fun inspect sym=inspect[kind=fun;params=kotlin.Array<Int?>,kotlin.Array<Any?>,kotlin.IntArray,kotlin.UIntArray,kotlin.FloatArray]
+expr e@8:24 name(values) type=kotlin.Array<Int?> ref=inspect.$0.values[kind=vparam]
 expr e@8:45 name(null) type=Nothing?
-expr e@8:24#1 memberCall recv=e@8:24 callee=contentEquals args=[_:e@8:45] type=Boolean call=kotlin.collections.contentEquals#0 targs=[Int?]
-expr e@8:5 localDecl shallowEqual mutable=0 type=_ init=e@8:24#1 type=Unit ref=__local_0.shallowEqual
-expr e@9:23 name(values) type=kotlin.Array<Int?> ref=inspect.$0.values
-expr e@9:23#1 memberCall recv=e@9:23 callee=contentHashCode args=[] type=Int call=kotlin.collections.contentHashCode#0 targs=[Int?]
-expr e@9:5 localDecl shallowHash mutable=0 type=_ init=e@9:23#1 type=Unit ref=__local_1.shallowHash
-expr e@10:23 name(values) type=kotlin.Array<Int?> ref=inspect.$0.values
-expr e@10:23#1 memberCall recv=e@10:23 callee=contentToString args=[] type=String call=kotlin.collections.contentToString#0 targs=[Int?]
-expr e@10:5 localDecl shallowText mutable=0 type=_ init=e@10:23#1 type=Unit ref=__local_2.shallowText
-expr e@11:21 name(nested) type=kotlin.Array<Any?> ref=inspect.$0.nested
+expr e@8:24#1 memberCall recv=e@8:24 callee=contentEquals args=[_:e@8:45] type=Boolean call=kotlin.collections.contentEquals[kind=fun;recv=kotlin.Array<out T0>?;params=kotlin.Array<out T0>?;gen=1] targs=[Int?]
+expr e@8:5 localDecl shallowEqual mutable=0 type=_ init=e@8:24#1 type=Unit ref=__local_0.shallowEqual[kind=local]
+expr e@9:23 name(values) type=kotlin.Array<Int?> ref=inspect.$0.values[kind=vparam]
+expr e@9:23#1 memberCall recv=e@9:23 callee=contentHashCode args=[] type=Int call=kotlin.collections.contentHashCode[kind=fun;recv=kotlin.Array<out T0>?;params=;gen=1] targs=[Int?]
+expr e@9:5 localDecl shallowHash mutable=0 type=_ init=e@9:23#1 type=Unit ref=__local_1.shallowHash[kind=local]
+expr e@10:23 name(values) type=kotlin.Array<Int?> ref=inspect.$0.values[kind=vparam]
+expr e@10:23#1 memberCall recv=e@10:23 callee=contentToString args=[] type=String call=kotlin.collections.contentToString[kind=fun;recv=kotlin.Array<out T0>?;params=;gen=1] targs=[Int?]
+expr e@10:5 localDecl shallowText mutable=0 type=_ init=e@10:23#1 type=Unit ref=__local_2.shallowText[kind=local]
+expr e@11:21 name(nested) type=kotlin.Array<Any?> ref=inspect.$0.nested[kind=vparam]
 expr e@11:46 name(null) type=Nothing?
-expr e@11:21#1 memberCall recv=e@11:21 callee=contentDeepEquals args=[_:e@11:46] type=Boolean call=kotlin.collections.contentDeepEquals targs=[Any?]
-expr e@11:5 localDecl deepEqual mutable=0 type=_ init=e@11:21#1 type=Unit ref=__local_3.deepEqual
-expr e@12:20 name(nested) type=kotlin.Array<Any?> ref=inspect.$0.nested
-expr e@12:20#1 memberCall recv=e@12:20 callee=contentDeepHashCode args=[] type=Int call=kotlin.collections.contentDeepHashCode targs=[Any?]
-expr e@12:5 localDecl deepHash mutable=0 type=_ init=e@12:20#1 type=Unit ref=__local_4.deepHash
-expr e@13:20 name(nested) type=kotlin.Array<Any?> ref=inspect.$0.nested
-expr e@13:20#1 memberCall recv=e@13:20 callee=contentDeepToString args=[] type=String call=kotlin.collections.contentDeepToString targs=[Any?]
-expr e@13:5 localDecl deepText mutable=0 type=_ init=e@13:20#1 type=Unit ref=__local_5.deepText
-expr e@14:20 name(ints) type=kotlin.IntArray ref=inspect.$0.ints
+expr e@11:21#1 memberCall recv=e@11:21 callee=contentDeepEquals args=[_:e@11:46] type=Boolean call=kotlin.collections.contentDeepEquals[kind=fun;recv=kotlin.Array<out T0>?;params=kotlin.Array<out T0>?;gen=1] targs=[Any?]
+expr e@11:5 localDecl deepEqual mutable=0 type=_ init=e@11:21#1 type=Unit ref=__local_3.deepEqual[kind=local]
+expr e@12:20 name(nested) type=kotlin.Array<Any?> ref=inspect.$0.nested[kind=vparam]
+expr e@12:20#1 memberCall recv=e@12:20 callee=contentDeepHashCode args=[] type=Int call=kotlin.collections.contentDeepHashCode[kind=fun;recv=kotlin.Array<out T0>?;params=;gen=1] targs=[Any?]
+expr e@12:5 localDecl deepHash mutable=0 type=_ init=e@12:20#1 type=Unit ref=__local_4.deepHash[kind=local]
+expr e@13:20 name(nested) type=kotlin.Array<Any?> ref=inspect.$0.nested[kind=vparam]
+expr e@13:20#1 memberCall recv=e@13:20 callee=contentDeepToString args=[] type=String call=kotlin.collections.contentDeepToString[kind=fun;recv=kotlin.Array<out T0>?;params=;gen=1] targs=[Any?]
+expr e@13:5 localDecl deepText mutable=0 type=_ init=e@13:20#1 type=Unit ref=__local_5.deepText[kind=local]
+expr e@14:20 name(ints) type=kotlin.IntArray ref=inspect.$0.ints[kind=vparam]
 expr e@14:39 name(null) type=Nothing?
-expr e@14:20#1 memberCall recv=e@14:20 callee=contentEquals args=[_:e@14:39] type=Boolean call=kotlin.collections.contentEquals#6
-expr e@14:5 localDecl intEqual mutable=0 type=_ init=e@14:20#1 type=Unit ref=__local_6.intEqual
-expr e@15:20 name(uints) type=kotlin.UIntArray ref=inspect.$0.uints
-expr e@15:20#1 memberCall recv=e@15:20 callee=contentHashCode args=[] type=Int call=kotlin.collections.contentHashCode#10
-expr e@15:5 localDecl uintHash mutable=0 type=_ init=e@15:20#1 type=Unit ref=__local_7.uintHash
-expr e@16:21 name(floats) type=kotlin.FloatArray ref=inspect.$0.floats
-expr e@16:21#1 memberCall recv=e@16:21 callee=contentToString args=[] type=String call=kotlin.collections.contentToString#5
-expr e@16:5 localDecl floatText mutable=0 type=_ init=e@16:21#1 type=Unit ref=__local_8.floatText
+expr e@14:20#1 memberCall recv=e@14:20 callee=contentEquals args=[_:e@14:39] type=Boolean call=kotlin.collections.contentEquals[kind=fun;recv=kotlin.IntArray?;params=kotlin.IntArray?]
+expr e@14:5 localDecl intEqual mutable=0 type=_ init=e@14:20#1 type=Unit ref=__local_6.intEqual[kind=local]
+expr e@15:20 name(uints) type=kotlin.UIntArray ref=inspect.$0.uints[kind=vparam]
+expr e@15:20#1 memberCall recv=e@15:20 callee=contentHashCode args=[] type=Int call=kotlin.collections.contentHashCode[kind=fun;recv=kotlin.UIntArray?;params=]
+expr e@15:5 localDecl uintHash mutable=0 type=_ init=e@15:20#1 type=Unit ref=__local_7.uintHash[kind=local]
+expr e@16:21 name(floats) type=kotlin.FloatArray ref=inspect.$0.floats[kind=vparam]
+expr e@16:21#1 memberCall recv=e@16:21 callee=contentToString args=[] type=String call=kotlin.collections.contentToString[kind=fun;recv=kotlin.FloatArray?;params=]
+expr e@16:5 localDecl floatText mutable=0 type=_ init=e@16:21#1 type=Unit ref=__local_8.floatText[kind=local]

@@ -1,22 +1,22 @@
-symbol fq=golden.sema.compareInts kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=golden.sema.compareInts.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.compareInts.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.compareNullableInts kind=function vis=public flags=_ sig=recv=_ params=[Int?,Int?] ret=Int
-symbol fq=golden.sema.compareNullableInts.$1.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.compareNullableInts.$1.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.compareStrings kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=Int
-symbol fq=golden.sema.compareStrings.$2.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.compareStrings.$2.b kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.compareInts.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.compareInts.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.compareInts[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
+symbol fq=golden.sema.compareNullableInts.$1.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.compareNullableInts.$1.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.compareNullableInts[kind=fun;params=Int?,Int?] kind=function vis=public flags=_ sig=recv=_ params=[Int?,Int?] ret=Int
+symbol fq=golden.sema.compareStrings.$2.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.compareStrings.$2.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.compareStrings[kind=fun;params=String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=Int
 file fcompare_values package=golden.sema
-  decl golden.sema.compareInts fun compareInts sym=golden.sema.compareInts
-  decl golden.sema.compareStrings fun compareStrings sym=golden.sema.compareStrings
-  decl golden.sema.compareNullableInts fun compareNullableInts sym=golden.sema.compareNullableInts
-expr e@3:54 name(a) type=Int ref=golden.sema.compareInts.$0.a
-expr e@3:57 name(b) type=Int ref=golden.sema.compareInts.$0.b
-expr e@3:40 call callee=e@3:40#1 args=[_:e@3:54,_:e@3:57] type=Int call=kotlin.comparisons.compareValues targs=[Int]
-expr e@4:63 name(a) type=String ref=golden.sema.compareStrings.$2.a
-expr e@4:66 name(b) type=String ref=golden.sema.compareStrings.$2.b
-expr e@4:49 call callee=e@4:49#1 args=[_:e@4:63,_:e@4:66] type=Int call=kotlin.comparisons.compareValues targs=[String]
-expr e@5:64 name(a) type=Int? ref=golden.sema.compareNullableInts.$1.a
-expr e@5:67 name(b) type=Int? ref=golden.sema.compareNullableInts.$1.b
-expr e@5:50 call callee=e@5:50#1 args=[_:e@5:64,_:e@5:67] type=Int call=kotlin.comparisons.compareValues targs=[Int]
+  decl golden.sema.compareInts[kind=fun;params=Int,Int] fun compareInts sym=golden.sema.compareInts[kind=fun;params=Int,Int]
+  decl golden.sema.compareStrings[kind=fun;params=String,String] fun compareStrings sym=golden.sema.compareStrings[kind=fun;params=String,String]
+  decl golden.sema.compareNullableInts[kind=fun;params=Int?,Int?] fun compareNullableInts sym=golden.sema.compareNullableInts[kind=fun;params=Int?,Int?]
+expr e@3:54 name(a) type=Int ref=golden.sema.compareInts.$0.a[kind=vparam]
+expr e@3:57 name(b) type=Int ref=golden.sema.compareInts.$0.b[kind=vparam]
+expr e@3:40 call callee=e@3:40#1 args=[_:e@3:54,_:e@3:57] type=Int call=kotlin.comparisons.compareValues[kind=fun;params=T0?,T0?;gen=1] targs=[Int]
+expr e@4:63 name(a) type=String ref=golden.sema.compareStrings.$2.a[kind=vparam]
+expr e@4:66 name(b) type=String ref=golden.sema.compareStrings.$2.b[kind=vparam]
+expr e@4:49 call callee=e@4:49#1 args=[_:e@4:63,_:e@4:66] type=Int call=kotlin.comparisons.compareValues[kind=fun;params=T0?,T0?;gen=1] targs=[String]
+expr e@5:64 name(a) type=Int? ref=golden.sema.compareNullableInts.$1.a[kind=vparam]
+expr e@5:67 name(b) type=Int? ref=golden.sema.compareNullableInts.$1.b[kind=vparam]
+expr e@5:50 call callee=e@5:50#1 args=[_:e@5:64,_:e@5:67] type=Int call=kotlin.comparisons.compareValues[kind=fun;params=T0?,T0?;gen=1] targs=[Int]

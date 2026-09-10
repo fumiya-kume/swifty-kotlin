@@ -1,4 +1,4 @@
-symbol fq=golden.sema.unusedValue kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.unusedValue[kind=prop] kind=property vis=public flags=_ type=Int
 file fstdlib_kotlin_n_Suppress package=golden.sema annotations=[@file:Suppress("UNUSED")]
-  decl golden.sema.unusedValue property unusedValue var=0 sym=golden.sema.unusedValue
+  decl golden.sema.unusedValue[kind=prop] property unusedValue var=0 sym=golden.sema.unusedValue[kind=prop]
 expr e@5:24 int(0) type=Int

@@ -1,10 +1,10 @@
-symbol fq=golden.sema.minOfULongThreeArg kind=function vis=public flags=_ sig=recv=_ params=[ULong,ULong,ULong] ret=ULong
-symbol fq=golden.sema.minOfULongThreeArg.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.minOfULongThreeArg.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.minOfULongThreeArg.$0.c kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfULongThreeArg.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfULongThreeArg.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfULongThreeArg.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfULongThreeArg[kind=fun;params=ULong,ULong,ULong] kind=function vis=public flags=_ sig=recv=_ params=[ULong,ULong,ULong] ret=ULong
 file fminof_ulong_3args package=golden.sema
-  decl golden.sema.minOfULongThreeArg fun minOfULongThreeArg sym=golden.sema.minOfULongThreeArg
-expr e@3:69 name(a) type=ULong ref=golden.sema.minOfULongThreeArg.$0.a
-expr e@3:72 name(b) type=ULong ref=golden.sema.minOfULongThreeArg.$0.b
-expr e@3:75 name(c) type=ULong ref=golden.sema.minOfULongThreeArg.$0.c
-expr e@3:63 call callee=e@3:63#1 args=[_:e@3:69,_:e@3:72,_:e@3:75] type=ULong call=kotlin.comparisons.minOf#32
+  decl golden.sema.minOfULongThreeArg[kind=fun;params=ULong,ULong,ULong] fun minOfULongThreeArg sym=golden.sema.minOfULongThreeArg[kind=fun;params=ULong,ULong,ULong]
+expr e@3:69 name(a) type=ULong ref=golden.sema.minOfULongThreeArg.$0.a[kind=vparam]
+expr e@3:72 name(b) type=ULong ref=golden.sema.minOfULongThreeArg.$0.b[kind=vparam]
+expr e@3:75 name(c) type=ULong ref=golden.sema.minOfULongThreeArg.$0.c[kind=vparam]
+expr e@3:63 call callee=e@3:63#1 args=[_:e@3:69,_:e@3:72,_:e@3:75] type=ULong call=kotlin.comparisons.minOf[kind=fun;params=ULong,ULong,ULong]

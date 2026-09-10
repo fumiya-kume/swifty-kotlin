@@ -1,6 +1,14 @@
-fun processSet(set: HashSet<String>) {
-    println(set.size)
-}
+// `HashSet<E>` is a source-backed nominal class
+// (Sources/CompilerCore/Stdlib/kotlin/collections/CollectionAliases.kt) —
+// unlike the ArrayList / LinkedHashMap typealiases, a `MutableSet`-typed value
+// is NOT assignable to a `HashSet` parameter. This case verifies only the
+// nominal type and the `hashSetOf` factory: parameter / return / property
+// types, expected-type inference, nested type arguments, upper bound,
+// extension receiver, and Set / MutableSet compatibility. Mutation and
+// membership behavior are executed by
+// Scripts/diff_cases/ksp627_collection_aliases.kt.
+
+fun processSet(set: HashSet<String>) {}
 
 fun createSet(): HashSet<Int> {
     return hashSetOf<Int>()
@@ -11,54 +19,45 @@ class TagContainer {
     val ids: HashSet<Int> = hashSetOf<Int>()
 }
 
-fun nestedSets() {
-    val nested: HashSet<HashSet<String>> = hashSetOf()
-    val inner = hashSetOf<String>()
-    inner.add("nested")
-    nested.add(inner)
-    println(nested.size)
-}
-
 fun <T : HashSet<String>> constrain(set: T): T {
     return set
 }
 
 fun HashSet<String>.customExtension(): String {
-    return "extended: ${this.size}"
+    return "extended"
 }
 
 fun main() {
-    val set: HashSet<String> = hashSetOf()
-    set.add("hello")
-    set.add("world")
-    println(set.size)
-    println(set.contains("hello"))
+    // Factory inference from explicit type arguments alone, checked by the
+    // assignments and call below rather than an expected type.
+    val explicit = hashSetOf<String>()
+    val explicitAsMutable: MutableSet<String> = explicit
+    processSet(explicit)
 
-    val ms: MutableSet<String> = set
-    ms.add("!")
-    println(ms.size)
+    // Expected-type inference through the nominal type and through MutableSet.
+    val fromNominal: HashSet<Double> = hashSetOf()
+    val fromMutable: MutableSet<Boolean> = hashSetOf()
 
-    val nums = hashSetOf(1, 2, 3)
-    nums.remove(2)
-    println(nums.size)
+    // Set (read-only) compatibility.
+    val asReadOnly: Set<String> = hashSetOf()
 
-    val readOnly: Set<String> = set
-    println(readOnly.size)
-
-    processSet(set)
-
+    // Return type propagation.
     val created = createSet()
-    created.add(42)
-    println(created.size)
+    val createdAsMutable: MutableSet<Int> = created
 
-    val container = TagContainer()
-    container.tags.add("property")
-    println(container.tags.size)
+    // Property type propagation.
+    val holder = TagContainer()
+    val tags: MutableSet<String> = holder.tags
+    val ids: HashSet<Int> = holder.ids
 
-    nestedSets()
+    // Nested type arguments.
+    val nested: HashSet<HashSet<String>> = hashSetOf()
+    val nestedAsMutable: MutableSet<HashSet<String>> = nested
 
-    val constrained = constrain(set)
-    println(constrained.size)
+    // Upper-bound constraint and return propagation.
+    val constrained = constrain(explicit)
+    val constrainedAsMutable: MutableSet<String> = constrained
 
-    println(set.customExtension())
+    // Extension receiver on the nominal type.
+    val extended: String = explicit.customExtension()
 }

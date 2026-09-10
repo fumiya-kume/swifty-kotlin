@@ -1,9 +1,9 @@
-symbol fq=passWorker kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Worker] ret=kotlin.native.concurrent.Worker
-symbol fq=passWorker.$0.worker kind=valueParameter vis=private flags=_
-symbol fq=workerCompanionType kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.Worker.Companion
+symbol fq=passWorker.$0.worker[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=passWorker[kind=fun;params=kotlin.native.concurrent.Worker] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Worker] ret=kotlin.native.concurrent.Worker
+symbol fq=workerCompanionType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.Worker.Companion
 file fstdlib_kotlin_native_concurrent_Worker_n_n package=_ annotations=[@file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class)]
-  decl workerCompanionType fun workerCompanionType sym=workerCompanionType
-  decl passWorker fun passWorker sym=passWorker
-expr e@5:47 name(Worker) type=kotlin.native.concurrent.Worker ref=kotlin.native.concurrent.Worker#0
-expr e@5:47#1 memberCall recv=e@5:47 callee=Companion args=[] type=kotlin.native.concurrent.Worker.Companion ref=kotlin.native.concurrent.Worker.Companion
-expr e@7:42 name(worker) type=kotlin.native.concurrent.Worker ref=passWorker.$0.worker
+  decl workerCompanionType[kind=fun;params=] fun workerCompanionType sym=workerCompanionType[kind=fun;params=]
+  decl passWorker[kind=fun;params=kotlin.native.concurrent.Worker] fun passWorker sym=passWorker[kind=fun;params=kotlin.native.concurrent.Worker]
+expr e@5:47 name(Worker) type=kotlin.native.concurrent.Worker ref=kotlin.native.concurrent.Worker[kind=class]
+expr e@5:47#1 memberCall recv=e@5:47 callee=Companion args=[] type=kotlin.native.concurrent.Worker.Companion ref=kotlin.native.concurrent.Worker.Companion[kind=obj]
+expr e@7:42 name(worker) type=kotlin.native.concurrent.Worker ref=passWorker.$0.worker[kind=vparam]

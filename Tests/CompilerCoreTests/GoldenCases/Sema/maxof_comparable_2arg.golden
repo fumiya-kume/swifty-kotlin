@@ -1,8 +1,8 @@
-symbol fq=golden.sema.pickLargerString kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=String
-symbol fq=golden.sema.pickLargerString.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.pickLargerString.$0.b kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.pickLargerString.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.pickLargerString.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.pickLargerString[kind=fun;params=String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=String
 file fmaxof_comparable_2arg package=golden.sema
-  decl golden.sema.pickLargerString fun pickLargerString sym=golden.sema.pickLargerString
-expr e@4:60 name(a) type=String ref=golden.sema.pickLargerString.$0.a
-expr e@4:63 name(b) type=String ref=golden.sema.pickLargerString.$0.b
-expr e@4:54 call callee=e@4:54#1 args=[_:e@4:60,_:e@4:63] type=String call=kotlin.comparisons.maxOf#18 targs=[String]
+  decl golden.sema.pickLargerString[kind=fun;params=String,String] fun pickLargerString sym=golden.sema.pickLargerString[kind=fun;params=String,String]
+expr e@4:60 name(a) type=String ref=golden.sema.pickLargerString.$0.a[kind=vparam]
+expr e@4:63 name(b) type=String ref=golden.sema.pickLargerString.$0.b[kind=vparam]
+expr e@4:54 call callee=e@4:54#1 args=[_:e@4:60,_:e@4:63] type=String call=kotlin.comparisons.maxOf[kind=fun;params=T0,T0;gen=1] targs=[String]

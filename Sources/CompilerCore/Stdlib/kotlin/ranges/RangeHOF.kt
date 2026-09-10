@@ -183,6 +183,22 @@ public external fun IntRange.reversed(): IntRange
 
 public fun IntRange.toIntArray(): IntArray = toList().toIntArray()
 
+// KSP-1285: Kotlin exposes exact IntRange overloads for the other signed
+// primitive integer types. Long values must be range-checked before narrowing.
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Byte): Boolean =
+    contains(value.toInt())
+
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Long): Boolean {
+    if (value < -2147483648L || value > 2147483647L) return false
+    return contains(value.toInt())
+}
+
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Short): Boolean =
+    contains(value.toInt())
+
 public fun IntRange.average(): Double {
     if (isEmpty()) return Double.NaN
     var sum = 0.0
@@ -1551,6 +1567,23 @@ public fun ULongRange.toList(): List<ULong> {
         }
     }
     return result
+}
+
+// KSP-1292: Kotlin 2.3.10 widens unsigned values before using the native
+// ULong overload, preserving the exact range membership and boundary rules.
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UByte): Boolean {
+    return contains(value.toULong())
+}
+
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UInt): Boolean {
+    return contains(value.toULong())
+}
+
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UShort): Boolean {
+    return contains(value.toULong())
 }
 
 @KsSymbolName("__kk_range_count")

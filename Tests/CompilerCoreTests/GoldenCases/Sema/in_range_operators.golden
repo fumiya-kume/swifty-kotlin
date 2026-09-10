@@ -1,33 +1,33 @@
-symbol fq=checkIn kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean
-symbol fq=checkIn.$0.x kind=valueParameter vis=private flags=_
-symbol fq=checkIn.$0.y kind=valueParameter vis=private flags=_
-symbol fq=checkNotIn kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean
-symbol fq=checkNotIn.$1.x kind=valueParameter vis=private flags=_
-symbol fq=checkNotIn.$1.y kind=valueParameter vis=private flags=_
-symbol fq=rangeUntilEndExclusive kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=rangeUntilExpr kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean
-symbol fq=rangeUntilExpr.$2.n kind=valueParameter vis=private flags=_
+symbol fq=checkIn.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=checkIn.$0.y[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=checkIn[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean
+symbol fq=checkNotIn.$1.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=checkNotIn.$1.y[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=checkNotIn[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean
+symbol fq=rangeUntilEndExclusive[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=rangeUntilExpr.$2.n[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=rangeUntilExpr[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean
 file fin_range_operators package=_
-  decl checkIn fun checkIn sym=checkIn
-  decl checkNotIn fun checkNotIn sym=checkNotIn
-  decl rangeUntilExpr fun rangeUntilExpr sym=rangeUntilExpr
-  decl rangeUntilEndExclusive fun rangeUntilEndExclusive sym=rangeUntilEndExclusive
-expr e@1:40 name(x) type=Int ref=checkIn.$0.x
+  decl checkIn[kind=fun;params=Int,Int] fun checkIn sym=checkIn[kind=fun;params=Int,Int]
+  decl checkNotIn[kind=fun;params=Int,Int] fun checkNotIn sym=checkNotIn[kind=fun;params=Int,Int]
+  decl rangeUntilExpr[kind=fun;params=Int] fun rangeUntilExpr sym=rangeUntilExpr[kind=fun;params=Int]
+  decl rangeUntilEndExclusive[kind=fun;params=] fun rangeUntilEndExclusive sym=rangeUntilEndExclusive[kind=fun;params=]
+expr e@1:40 name(x) type=Int ref=checkIn.$0.x[kind=vparam]
 expr e@1:45 int(1) type=Int
 expr e@1:48 int(10) type=Int
 expr e@1:45#1 binary(rangeTo) lhs=e@1:45 rhs=e@1:48 type=Int
 expr e@1:40#1 inExpr lhs=e@1:40 rhs=e@1:45#1 type=Boolean
-expr e@3:43 name(x) type=Int ref=checkNotIn.$1.x
+expr e@3:43 name(x) type=Int ref=checkNotIn.$1.x[kind=vparam]
 expr e@3:49 int(1) type=Int
 expr e@3:52 int(10) type=Int
 expr e@3:49#1 binary(rangeTo) lhs=e@3:49 rhs=e@3:52 type=Int
 expr e@3:43#1 notInExpr lhs=e@3:43 rhs=e@3:49#1 type=Boolean
-expr e@5:39 name(n) type=Int ref=rangeUntilExpr.$2.n
+expr e@5:39 name(n) type=Int ref=rangeUntilExpr.$2.n[kind=vparam]
 expr e@5:44 int(0) type=Int
 expr e@5:48 int(10) type=Int
-expr e@5:44#1 binary(rangeUntil) lhs=e@5:44 rhs=e@5:48 type=kotlin.ranges.IntRange call=kotlin.ranges.rangeUntil#6
-expr e@5:39#1 inExpr lhs=e@5:39 rhs=e@5:44#1 type=Boolean call=kotlin.ranges.contains#3
+expr e@5:44#1 binary(rangeUntil) lhs=e@5:44 rhs=e@5:48 type=kotlin.ranges.IntRange call=kotlin.ranges.rangeUntil[kind=fun;recv=Int;params=Int]
+expr e@5:39#1 inExpr lhs=e@5:39 rhs=e@5:44#1 type=Boolean call=kotlin.ranges.contains[kind=fun;recv=kotlin.ranges.IntRange;params=Int]
 expr e@7:37 int(0) type=Int
 expr e@7:50 int(10) type=Int
-expr e@7:37#1 memberCall recv=e@7:37 callee=rangeUntil args=[_:e@7:50] type=kotlin.ranges.IntRange call=kotlin.ranges.rangeUntil#6
-expr e@7:37#2 memberCall recv=e@7:37#1 callee=endExclusive args=[] type=Int ref=kotlin.ranges.IntRange.endExclusive
+expr e@7:37#1 memberCall recv=e@7:37 callee=rangeUntil args=[_:e@7:50] type=kotlin.ranges.IntRange call=kotlin.ranges.rangeUntil[kind=fun;recv=Int;params=Int]
+expr e@7:37#2 memberCall recv=e@7:37#1 callee=endExclusive args=[] type=Int ref=kotlin.ranges.IntRange.endExclusive[kind=prop]

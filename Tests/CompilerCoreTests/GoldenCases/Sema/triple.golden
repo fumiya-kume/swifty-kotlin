@@ -1,35 +1,35 @@
-symbol fq=tripleCreate kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Triple<Int, String, Boolean>
-symbol fq=tripleFirst kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=tripleSecond kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=tripleThird kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=tripleToString kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=tripleCreate[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Triple<Int, String, Boolean>
+symbol fq=tripleFirst[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=tripleSecond[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=tripleThird[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=tripleToString[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file ftriple package=_
-  decl tripleCreate fun tripleCreate sym=tripleCreate
-  decl tripleFirst fun tripleFirst sym=tripleFirst
-  decl tripleSecond fun tripleSecond sym=tripleSecond
-  decl tripleThird fun tripleThird sym=tripleThird
-  decl tripleToString fun tripleToString sym=tripleToString
+  decl tripleCreate[kind=fun;params=] fun tripleCreate sym=tripleCreate[kind=fun;params=]
+  decl tripleFirst[kind=fun;params=] fun tripleFirst sym=tripleFirst[kind=fun;params=]
+  decl tripleSecond[kind=fun;params=] fun tripleSecond sym=tripleSecond[kind=fun;params=]
+  decl tripleThird[kind=fun;params=] fun tripleThird sym=tripleThird[kind=fun;params=]
+  decl tripleToString[kind=fun;params=] fun tripleToString sym=tripleToString[kind=fun;params=]
 expr e@1:59 int(1) type=Int
 expr e@1:62 string(a) type=String
 expr e@1:67 bool(true) type=Boolean
-expr e@1:52 call callee=e@1:52#1 args=[_:e@1:59,_:e@1:62,_:e@1:67] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init> targs=[Int,String,Boolean]
+expr e@1:52 call callee=e@1:52#1 args=[_:e@1:59,_:e@1:62,_:e@1:67] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init>[kind=ctor;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
 expr e@2:33 int(1) type=Int
 expr e@2:36 string(a) type=String
 expr e@2:41 bool(true) type=Boolean
-expr e@2:26 call callee=e@2:26#1 args=[_:e@2:33,_:e@2:36,_:e@2:41] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init> targs=[Int,String,Boolean]
-expr e@2:26#2 memberCall recv=e@2:26 callee=first args=[] type=Int ref=kotlin.Triple.first
+expr e@2:26 call callee=e@2:26#1 args=[_:e@2:33,_:e@2:36,_:e@2:41] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init>[kind=ctor;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
+expr e@2:26#2 memberCall recv=e@2:26 callee=first args=[] type=Int ref=kotlin.Triple.first[kind=prop]
 expr e@3:37 int(1) type=Int
 expr e@3:40 string(a) type=String
 expr e@3:45 bool(true) type=Boolean
-expr e@3:30 call callee=e@3:30#1 args=[_:e@3:37,_:e@3:40,_:e@3:45] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init> targs=[Int,String,Boolean]
-expr e@3:30#2 memberCall recv=e@3:30 callee=second args=[] type=String ref=kotlin.Triple.second
+expr e@3:30 call callee=e@3:30#1 args=[_:e@3:37,_:e@3:40,_:e@3:45] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init>[kind=ctor;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
+expr e@3:30#2 memberCall recv=e@3:30 callee=second args=[] type=String ref=kotlin.Triple.second[kind=prop]
 expr e@4:37 int(1) type=Int
 expr e@4:40 string(a) type=String
 expr e@4:45 bool(true) type=Boolean
-expr e@4:30 call callee=e@4:30#1 args=[_:e@4:37,_:e@4:40,_:e@4:45] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init> targs=[Int,String,Boolean]
-expr e@4:30#2 memberCall recv=e@4:30 callee=third args=[] type=Boolean ref=kotlin.Triple.third
+expr e@4:30 call callee=e@4:30#1 args=[_:e@4:37,_:e@4:40,_:e@4:45] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init>[kind=ctor;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
+expr e@4:30#2 memberCall recv=e@4:30 callee=third args=[] type=Boolean ref=kotlin.Triple.third[kind=prop]
 expr e@5:39 int(1) type=Int
 expr e@5:42 string(a) type=String
 expr e@5:47 bool(true) type=Boolean
-expr e@5:32 call callee=e@5:32#1 args=[_:e@5:39,_:e@5:42,_:e@5:47] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init> targs=[Int,String,Boolean]
-expr e@5:32#2 memberCall recv=e@5:32 callee=toString args=[] type=String call=kotlin.Triple.toString targs=[Int,String,Boolean]
+expr e@5:32 call callee=e@5:32#1 args=[_:e@5:39,_:e@5:42,_:e@5:47] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init>[kind=ctor;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
+expr e@5:32#2 memberCall recv=e@5:32 callee=toString args=[] type=String call=kotlin.Triple.toString[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=;gen=3] targs=[Int,String,Boolean]

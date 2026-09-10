@@ -1,18 +1,18 @@
-symbol fq=golden.sema.Counter kind=class vis=public flags=_
-symbol fq=golden.sema.Counter.<init>.$0.initial0 kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Counter.count kind=property vis=public flags=mutable type=Int
-symbol fq=golden.sema.Counter.initial kind=property vis=public flags=_ type=Int
-symbol fq=golden.sema.Singleton kind=object vis=public flags=_
+symbol fq=golden.sema.Counter.<init>.$0.initial0[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Counter.count[kind=prop] kind=property vis=public flags=mutable type=Int
+symbol fq=golden.sema.Counter.initial[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.Counter[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.Singleton[kind=obj] kind=object vis=public flags=_
 file fclass_members package=golden.sema
-  decl golden.sema.Counter class Counter sym=golden.sema.Counter
-  decl golden.sema.Singleton object Singleton sym=golden.sema.Singleton
-expr e@4:24 name(initial0) type=Int ref=golden.sema.Counter.<init>.$0.initial0
-expr e@5:22 name(initial) type=Int ref=golden.sema.Counter.initial
+  decl golden.sema.Counter[kind=class] class Counter sym=golden.sema.Counter[kind=class]
+  decl golden.sema.Singleton[kind=obj] object Singleton sym=golden.sema.Singleton[kind=obj]
+expr e@4:24 name(initial0) type=Int ref=golden.sema.Counter.<init>.$0.initial0[kind=vparam]
+expr e@5:22 name(initial) type=Int ref=golden.sema.Counter.initial[kind=prop]
 expr e@6:25 string(counter) type=String
-expr e@9:17 name(count) type=Int ref=golden.sema.Counter.count
+expr e@9:17 name(count) type=Int ref=golden.sema.Counter.count[kind=prop]
 expr e@9:25 int(1) type=Int
 expr e@9:17#1 binary(add) lhs=e@9:17 rhs=e@9:25 type=Int
-expr e@9:9 localAssign count value=e@9:17#1 type=Unit ref=golden.sema.Counter.count
-expr e@12:22 name(count) type=Int ref=golden.sema.Counter.count
+expr e@9:9 localAssign count value=e@9:17#1 type=Unit ref=golden.sema.Counter.count[kind=prop]
+expr e@12:22 name(count) type=Int ref=golden.sema.Counter.count[kind=prop]
 expr e@16:24 string(singleton) type=String
 expr e@17:27 string(hello) type=String

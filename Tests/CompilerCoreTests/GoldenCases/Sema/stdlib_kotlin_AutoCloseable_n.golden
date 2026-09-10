@@ -1,51 +1,51 @@
-symbol fq=__local_0.resource kind=local vis=private flags=_ type=kotlin.AutoCloseable?
-symbol fq=__try_0_catch_0.e kind=local vis=internal flags=_ type=kotlin.Throwable
-symbol fq=__try_1_catch_0.e kind=local vis=internal flags=_ type=kotlin.Throwable
-symbol fq=golden.sema.ThrowingResource kind=class vis=public flags=_
-symbol fq=golden.sema.ThrowingResource.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.ThrowingResource params=[Boolean] ret=golden.sema.ThrowingResource
-symbol fq=golden.sema.ThrowingResource.<init>.$0.throwOnClose kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.ThrowingResource.throwOnClose kind=property vis=public flags=_ type=Boolean
-symbol fq=golden.sema.useWithNullReceiver kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useWithPrimary kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Throwable
-symbol fq=golden.sema.useWithoutPrimary kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=__local_0.resource[kind=local] kind=local vis=private flags=_ type=kotlin.AutoCloseable?
+symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.Throwable
+symbol fq=__try_1_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.Throwable
+symbol fq=golden.sema.ThrowingResource.<init>.$0.throwOnClose[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.ThrowingResource.<init>[kind=ctor;recv=golden.sema.ThrowingResource;params=Boolean] kind=constructor vis=public flags=_ sig=recv=golden.sema.ThrowingResource params=[Boolean] ret=golden.sema.ThrowingResource
+symbol fq=golden.sema.ThrowingResource.throwOnClose[kind=prop] kind=property vis=public flags=_ type=Boolean
+symbol fq=golden.sema.ThrowingResource[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.useWithNullReceiver[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useWithPrimary[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Throwable
+symbol fq=golden.sema.useWithoutPrimary[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstdlib_kotlin_AutoCloseable_n package=golden.sema
-  decl golden.sema.ThrowingResource class ThrowingResource sym=golden.sema.ThrowingResource
-  decl golden.sema.useWithoutPrimary fun useWithoutPrimary sym=golden.sema.useWithoutPrimary
-  decl golden.sema.useWithPrimary fun useWithPrimary sym=golden.sema.useWithPrimary
-  decl golden.sema.useWithNullReceiver fun useWithNullReceiver sym=golden.sema.useWithNullReceiver
-expr e@8:13 name(throwOnClose) type=Boolean ref=golden.sema.ThrowingResource.throwOnClose
+  decl golden.sema.ThrowingResource[kind=class] class ThrowingResource sym=golden.sema.ThrowingResource[kind=class]
+  decl golden.sema.useWithoutPrimary[kind=fun;params=] fun useWithoutPrimary sym=golden.sema.useWithoutPrimary[kind=fun;params=]
+  decl golden.sema.useWithPrimary[kind=fun;params=] fun useWithPrimary sym=golden.sema.useWithPrimary[kind=fun;params=]
+  decl golden.sema.useWithNullReceiver[kind=fun;params=] fun useWithNullReceiver sym=golden.sema.useWithNullReceiver[kind=fun;params=]
+expr e@8:13 name(throwOnClose) type=Boolean ref=golden.sema.ThrowingResource.throwOnClose[kind=prop]
 expr e@8:55 string(close) type=String
-expr e@8:33 call callee=e@8:33#1 args=[_:e@8:55] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>#1
+expr e@8:33 call callee=e@8:33#1 args=[_:e@8:55] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>[kind=ctor;recv=kotlin.IllegalStateException;params=String?]
 expr e@8:27 throw value=e@8:33 type=Nothing
 expr e@8:9 if cond=e@8:13 then=e@8:27 else=_ type=Unit
 expr e@14:26 bool(true) type=Boolean
-expr e@14:9 call callee=e@14:9#1 args=[_:e@14:26] type=golden.sema.ThrowingResource call=golden.sema.ThrowingResource.<init>
+expr e@14:9 call callee=e@14:9#1 args=[_:e@14:26] type=golden.sema.ThrowingResource call=golden.sema.ThrowingResource.<init>[kind=ctor;recv=golden.sema.ThrowingResource;params=Boolean]
 expr e@14:38 string(body) type=String
 expr e@14:36 lambda params=[] body=e@14:38 label=use type=(golden.sema.ThrowingResource) -> String
 expr e@14:9#2 memberCall recv=e@14:9 callee=use args=[_:e@14:36] type=String
 expr e@13:16 blockExpr stmts=[] trailing=e@14:9#2 type=String
-expr e@16:9 name(e) type=kotlin.Throwable ref=__try_0_catch_0.e
-expr e@16:9#1 memberCall recv=e@16:9 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@16:9 name(e) type=kotlin.Throwable ref=__try_0_catch_0.e[kind=local]
+expr e@16:9#1 memberCall recv=e@16:9 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@16:22 string(null) type=String
 expr e@16:9#2 binary(elvis) lhs=e@16:9#1 rhs=e@16:22 type=String
-expr e@15:28 blockExpr stmts=[] trailing=e@16:9#2 type=String ref=__try_0_catch_0.e
+expr e@15:28 blockExpr stmts=[] trailing=e@16:9#2 type=String ref=__try_0_catch_0.e[kind=local]
 expr e@13:12 try body=e@13:16 catches=[e@15:28] finally=_ type=String
 expr e@13:5 return value=e@13:12 type=Nothing
 expr e@22:26 bool(true) type=Boolean
-expr e@22:9 call callee=e@22:9#1 args=[_:e@22:26] type=golden.sema.ThrowingResource call=golden.sema.ThrowingResource.<init>
+expr e@22:9 call callee=e@22:9#1 args=[_:e@22:26] type=golden.sema.ThrowingResource call=golden.sema.ThrowingResource.<init>[kind=ctor;recv=golden.sema.ThrowingResource;params=Boolean]
 expr e@23:41 string(primary) type=String
-expr e@23:19 call callee=e@23:19#1 args=[_:e@23:41] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>#1
+expr e@23:19 call callee=e@23:19#1 args=[_:e@23:41] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>[kind=ctor;recv=kotlin.IllegalStateException;params=String?]
 expr e@23:13 throw value=e@23:19 type=Nothing
 expr e@22:36 lambda params=[] body=e@23:13 label=use type=(golden.sema.ThrowingResource) -> kotlin.Throwable
 expr e@22:9#2 memberCall recv=e@22:9 callee=use args=[_:e@22:36] type=kotlin.Throwable
 expr e@21:16 blockExpr stmts=[] trailing=e@22:9#2 type=kotlin.Throwable
-expr e@26:9 name(e) type=kotlin.Throwable ref=__try_1_catch_0.e
-expr e@25:28 blockExpr stmts=[] trailing=e@26:9 type=kotlin.Throwable ref=__try_1_catch_0.e
+expr e@26:9 name(e) type=kotlin.Throwable ref=__try_1_catch_0.e[kind=local]
+expr e@25:28 blockExpr stmts=[] trailing=e@26:9 type=kotlin.Throwable ref=__try_1_catch_0.e[kind=local]
 expr e@21:12 try body=e@21:16 catches=[e@25:28] finally=_ type=kotlin.Throwable
 expr e@21:5 return value=e@21:12 type=Nothing
 expr e@31:36 name(null) type=Nothing?
-expr e@31:5 localDecl resource mutable=0 type=AutoCloseable? init=e@31:36 type=Unit ref=__local_0.resource
-expr e@32:12 name(resource) type=kotlin.AutoCloseable? ref=__local_0.resource
+expr e@31:5 localDecl resource mutable=0 type=AutoCloseable? init=e@31:36 type=Unit ref=__local_0.resource[kind=local]
+expr e@32:12 name(resource) type=kotlin.AutoCloseable? ref=__local_0.resource[kind=local]
 expr e@32:31 name(it) type=kotlin.AutoCloseable? ref=s-0
 expr e@32:37 name(null) type=Nothing?
 expr e@32:31#1 binary(equal) lhs=e@32:31 rhs=e@32:37 type=Boolean

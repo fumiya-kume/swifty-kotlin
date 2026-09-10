@@ -1,89 +1,89 @@
-symbol fq=__local_0.instant kind=local vis=private flags=_ type=kotlin.time.Instant
-symbol fq=__local_1.same kind=local vis=private flags=_ type=kotlin.time.Instant
-symbol fq=__local_2.different kind=local vis=private flags=_ type=Any
-symbol fq=__local_3.asAny kind=local vis=private flags=_ type=Any
-symbol fq=__local_4.sameAsAny kind=local vis=private flags=_ type=Any
-symbol fq=__local_5.negative kind=local vis=private flags=_ type=kotlin.time.Instant
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.instant[kind=local] kind=local vis=private flags=_ type=kotlin.time.Instant
+symbol fq=__local_1.same[kind=local] kind=local vis=private flags=_ type=kotlin.time.Instant
+symbol fq=__local_2.different[kind=local] kind=local vis=private flags=_ type=Any
+symbol fq=__local_3.asAny[kind=local] kind=local vis=private flags=_ type=Any
+symbol fq=__local_4.sameAsAny[kind=local] kind=local vis=private flags=_ type=Any
+symbol fq=__local_5.negative[kind=local] kind=local vis=private flags=_ type=kotlin.time.Instant
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_time_Instant_Instant_n package=_
-  decl main fun main sym=main
-expr e@5:19 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant#0
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+expr e@5:19 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant[kind=class]
 expr e@5:49 long(1000) type=Long
-expr e@5:19#1 memberCall recv=e@5:19 callee=fromEpochMilliseconds args=[_:e@5:49] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds
+expr e@5:19#1 memberCall recv=e@5:19 callee=fromEpochMilliseconds args=[_:e@5:49] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds[kind=fun;recv=kotlin.time.Instant.Companion;params=Long]
 expr e@5:59 int(500) type=Int
-expr e@5:59#1 memberCall recv=e@5:59 callee=milliseconds args=[] type=kotlin.time.Duration call=kotlin.time.milliseconds.$get#1
-expr e@5:19#2 binary(add) lhs=e@5:19#1 rhs=e@5:59#1 type=kotlin.time.Instant call=kotlin.time.plus#2
-expr e@5:5 localDecl instant mutable=0 type=_ init=e@5:19#2 type=Unit ref=__local_0.instant
-expr e@6:16 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant#0
+expr e@5:59#1 memberCall recv=e@5:59 callee=milliseconds args=[] type=kotlin.time.Duration call=kotlin.time.milliseconds.$get[kind=fun;recv=Int;params=]
+expr e@5:19#2 binary(add) lhs=e@5:19#1 rhs=e@5:59#1 type=kotlin.time.Instant call=kotlin.time.plus[kind=fun;recv=kotlin.time.Instant;params=kotlin.time.Duration]
+expr e@5:5 localDecl instant mutable=0 type=_ init=e@5:19#2 type=Unit ref=__local_0.instant[kind=local]
+expr e@6:16 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant[kind=class]
 expr e@6:46 long(1500) type=Long
-expr e@6:16#1 memberCall recv=e@6:16 callee=fromEpochMilliseconds args=[_:e@6:46] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds
-expr e@6:5 localDecl same mutable=0 type=_ init=e@6:16#1 type=Unit ref=__local_1.same
+expr e@6:16#1 memberCall recv=e@6:16 callee=fromEpochMilliseconds args=[_:e@6:46] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds[kind=fun;recv=kotlin.time.Instant.Companion;params=Long]
+expr e@6:5 localDecl same mutable=0 type=_ init=e@6:16#1 type=Unit ref=__local_1.same[kind=local]
 expr e@7:26 string(not-an-instant) type=String
-expr e@7:5 localDecl different mutable=0 type=Any init=e@7:26 type=Unit ref=__local_2.different
-expr e@8:22 name(instant) type=kotlin.time.Instant ref=__local_0.instant
-expr e@8:5 localDecl asAny mutable=0 type=Any init=e@8:22 type=Unit ref=__local_3.asAny
-expr e@9:26 name(same) type=kotlin.time.Instant ref=__local_1.same
-expr e@9:5 localDecl sameAsAny mutable=0 type=Any init=e@9:26 type=Unit ref=__local_4.sameAsAny
-expr e@10:20 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant#0
+expr e@7:5 localDecl different mutable=0 type=Any init=e@7:26 type=Unit ref=__local_2.different[kind=local]
+expr e@8:22 name(instant) type=kotlin.time.Instant ref=__local_0.instant[kind=local]
+expr e@8:5 localDecl asAny mutable=0 type=Any init=e@8:22 type=Unit ref=__local_3.asAny[kind=local]
+expr e@9:26 name(same) type=kotlin.time.Instant ref=__local_1.same[kind=local]
+expr e@9:5 localDecl sameAsAny mutable=0 type=Any init=e@9:26 type=Unit ref=__local_4.sameAsAny[kind=local]
+expr e@10:20 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant[kind=class]
 expr e@10:51 long(500) type=Long
 expr e@10:50 unary(unaryMinus) operand=e@10:51 type=Long
-expr e@10:20#1 memberCall recv=e@10:20 callee=fromEpochMilliseconds args=[_:e@10:50] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds
-expr e@10:5 localDecl negative mutable=0 type=_ init=e@10:20#1 type=Unit ref=__local_5.negative
-expr e@12:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant
+expr e@10:20#1 memberCall recv=e@10:20 callee=fromEpochMilliseconds args=[_:e@10:50] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds[kind=fun;recv=kotlin.time.Instant.Companion;params=Long]
+expr e@10:5 localDecl negative mutable=0 type=_ init=e@10:20#1 type=Unit ref=__local_5.negative[kind=local]
+expr e@12:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant[kind=local]
 expr e@12:28 name(null) type=Nothing?
-expr e@12:13#1 memberCall recv=e@12:13 callee=equals args=[_:e@12:28] type=Boolean call=kotlin.time.equals
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
-expr e@13:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant
-expr e@13:28 name(same) type=kotlin.time.Instant ref=__local_1.same
-expr e@13:13#1 memberCall recv=e@13:13 callee=equals args=[_:e@13:28] type=Boolean call=kotlin.time.equals
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println#1
-expr e@14:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant
-expr e@14:28 name(different) type=Any ref=__local_2.different
-expr e@14:13#1 memberCall recv=e@14:13 callee=equals args=[_:e@14:28] type=Boolean call=kotlin.time.equals
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println#1
-expr e@15:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant
-expr e@15:24 name(same) type=kotlin.time.Instant ref=__local_1.same
+expr e@12:13#1 memberCall recv=e@12:13 callee=equals args=[_:e@12:28] type=Boolean call=kotlin.time.equals[kind=fun;recv=kotlin.time.Instant;params=Any?]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@13:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant[kind=local]
+expr e@13:28 name(same) type=kotlin.time.Instant ref=__local_1.same[kind=local]
+expr e@13:13#1 memberCall recv=e@13:13 callee=equals args=[_:e@13:28] type=Boolean call=kotlin.time.equals[kind=fun;recv=kotlin.time.Instant;params=Any?]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@14:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant[kind=local]
+expr e@14:28 name(different) type=Any ref=__local_2.different[kind=local]
+expr e@14:13#1 memberCall recv=e@14:13 callee=equals args=[_:e@14:28] type=Boolean call=kotlin.time.equals[kind=fun;recv=kotlin.time.Instant;params=Any?]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@15:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant[kind=local]
+expr e@15:24 name(same) type=kotlin.time.Instant ref=__local_1.same[kind=local]
 expr e@15:13#1 binary(equal) lhs=e@15:13 rhs=e@15:24 type=Boolean
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println#1
-expr e@16:13 name(asAny) type=Any ref=__local_3.asAny
-expr e@16:26 name(sameAsAny) type=Any ref=__local_4.sameAsAny
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@16:13 name(asAny) type=Any ref=__local_3.asAny[kind=local]
+expr e@16:26 name(sameAsAny) type=Any ref=__local_4.sameAsAny[kind=local]
 expr e@16:13#1 memberCall recv=e@16:13 callee=equals args=[_:e@16:26] type=Boolean
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println#1
-expr e@17:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant
-expr e@17:13#1 memberCall recv=e@17:13 callee=hashCode args=[] type=Int call=kotlin.time.hashCode
-expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#1] type=Unit call=kotlin.io.println#1
-expr e@18:13 name(asAny) type=Any ref=__local_3.asAny
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@17:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant[kind=local]
+expr e@17:13#1 memberCall recv=e@17:13 callee=hashCode args=[] type=Int call=kotlin.time.hashCode[kind=fun;recv=kotlin.time.Instant;params=]
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@18:13 name(asAny) type=Any ref=__local_3.asAny[kind=local]
 expr e@18:13#1 memberCall recv=e@18:13 callee=hashCode args=[] type=Int
-expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13#1] type=Unit call=kotlin.io.println#1
-expr e@19:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant
-expr e@19:13#1 memberCall recv=e@19:13 callee=toEpochMilliseconds args=[] type=Long call=kotlin.time.toEpochMilliseconds
-expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13#1] type=Unit call=kotlin.io.println#1
-expr e@20:13 name(negative) type=kotlin.time.Instant ref=__local_5.negative
-expr e@20:13#1 memberCall recv=e@20:13 callee=toEpochMilliseconds args=[] type=Long call=kotlin.time.toEpochMilliseconds
-expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13#1] type=Unit call=kotlin.io.println#1
-expr e@21:13 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant#0
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@19:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant[kind=local]
+expr e@19:13#1 memberCall recv=e@19:13 callee=toEpochMilliseconds args=[] type=Long call=kotlin.time.toEpochMilliseconds[kind=fun;recv=kotlin.time.Instant;params=]
+expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@20:13 name(negative) type=kotlin.time.Instant ref=__local_5.negative[kind=local]
+expr e@20:13#1 memberCall recv=e@20:13 callee=toEpochMilliseconds args=[] type=Long call=kotlin.time.toEpochMilliseconds[kind=fun;recv=kotlin.time.Instant;params=]
+expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@21:13 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant[kind=class]
 expr e@21:44 long(9223372036854775807) type=Long
 expr e@21:43 unary(unaryMinus) operand=e@21:44 type=Long
 expr e@21:67 long(1) type=Long
 expr e@21:43#1 binary(subtract) lhs=e@21:43 rhs=e@21:67 type=Long
-expr e@21:13#1 memberCall recv=e@21:13 callee=fromEpochMilliseconds args=[_:e@21:43#1] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds
-expr e@21:13#2 memberCall recv=e@21:13#1 callee=toEpochMilliseconds args=[] type=Long call=kotlin.time.toEpochMilliseconds
-expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13#2] type=Unit call=kotlin.io.println#1
-expr e@22:13 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant#0
+expr e@21:13#1 memberCall recv=e@21:13 callee=fromEpochMilliseconds args=[_:e@21:43#1] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds[kind=fun;recv=kotlin.time.Instant.Companion;params=Long]
+expr e@21:13#2 memberCall recv=e@21:13#1 callee=toEpochMilliseconds args=[] type=Long call=kotlin.time.toEpochMilliseconds[kind=fun;recv=kotlin.time.Instant;params=]
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@22:13 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant[kind=class]
 expr e@22:43 long(9223372036854775807) type=Long
-expr e@22:13#1 memberCall recv=e@22:13 callee=fromEpochMilliseconds args=[_:e@22:43] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds
-expr e@22:13#2 memberCall recv=e@22:13#1 callee=toEpochMilliseconds args=[] type=Long call=kotlin.time.toEpochMilliseconds
-expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13#2] type=Unit call=kotlin.io.println#1
-expr e@23:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant
-expr e@23:13#1 memberCall recv=e@23:13 callee=toString args=[] type=String call=kotlin.time.toString
-expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13#1] type=Unit call=kotlin.io.println#2
-expr e@24:13 name(asAny) type=Any ref=__local_3.asAny
+expr e@22:13#1 memberCall recv=e@22:13 callee=fromEpochMilliseconds args=[_:e@22:43] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds[kind=fun;recv=kotlin.time.Instant.Companion;params=Long]
+expr e@22:13#2 memberCall recv=e@22:13#1 callee=toEpochMilliseconds args=[] type=Long call=kotlin.time.toEpochMilliseconds[kind=fun;recv=kotlin.time.Instant;params=]
+expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@23:13 name(instant) type=kotlin.time.Instant ref=__local_0.instant[kind=local]
+expr e@23:13#1 memberCall recv=e@23:13 callee=toString args=[] type=String call=kotlin.time.toString[kind=fun;recv=kotlin.time.Instant;params=]
+expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@24:13 name(asAny) type=Any ref=__local_3.asAny[kind=local]
 expr e@24:13#1 memberCall recv=e@24:13 callee=toString args=[] type=String
-expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13#1] type=Unit call=kotlin.io.println#2
-expr e@25:13 name(negative) type=kotlin.time.Instant ref=__local_5.negative
-expr e@25:13#1 memberCall recv=e@25:13 callee=toString args=[] type=String call=kotlin.time.toString
-expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13#1] type=Unit call=kotlin.io.println#2
-expr e@26:14 name(negative) type=kotlin.time.Instant ref=__local_5.negative
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@25:13 name(negative) type=kotlin.time.Instant ref=__local_5.negative[kind=local]
+expr e@25:13#1 memberCall recv=e@25:13 callee=toString args=[] type=String call=kotlin.time.toString[kind=fun;recv=kotlin.time.Instant;params=]
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@26:14 name(negative) type=kotlin.time.Instant ref=__local_5.negative[kind=local]
 expr e@26:14#1 asCast expr=e@26:14 type=Any type=Any
 expr e@26:14#2 memberCall recv=e@26:14#1 callee=toString args=[] type=String
-expr e@26:5 call callee=e@26:5#1 args=[_:e@26:14#2] type=Unit call=kotlin.io.println#2
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:14#2] type=Unit call=kotlin.io.println[kind=fun;params=String]

@@ -1,31 +1,31 @@
-symbol fq=golden.sema.useBuildList kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
-symbol fq=golden.sema.useBuildMap kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.Map<String, Int>
-symbol fq=golden.sema.useBuildSet kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.Set<Int>
+symbol fq=golden.sema.useBuildList[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
+symbol fq=golden.sema.useBuildMap[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.Map<String, Int>
+symbol fq=golden.sema.useBuildSet[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.Set<Int>
 file fstdlib_kotlin_collections_n_build package=golden.sema
-  decl golden.sema.useBuildList fun useBuildList sym=golden.sema.useBuildList
-  decl golden.sema.useBuildSet fun useBuildSet sym=golden.sema.useBuildSet
-  decl golden.sema.useBuildMap fun useBuildMap sym=golden.sema.useBuildMap
+  decl golden.sema.useBuildList[kind=fun;params=] fun useBuildList sym=golden.sema.useBuildList[kind=fun;params=]
+  decl golden.sema.useBuildSet[kind=fun;params=] fun useBuildSet sym=golden.sema.useBuildSet[kind=fun;params=]
+  decl golden.sema.useBuildMap[kind=fun;params=] fun useBuildMap sym=golden.sema.useBuildMap[kind=fun;params=]
 expr e@4:9 int(1) type=Int
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:9] type=Boolean call=kotlin.collections.MutableList.add#1 targs=[Int]
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:9] type=Boolean call=kotlin.collections.MutableList.add[kind=fun;recv=kotlin.collections.MutableList<T0>;params=T0;gen=1] targs=[Int]
 expr e@5:9 int(2) type=Int
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:9] type=Boolean call=kotlin.collections.MutableList.add#1 targs=[Int]
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:9] type=Boolean call=kotlin.collections.MutableList.add[kind=fun;recv=kotlin.collections.MutableList<T0>;params=T0;gen=1] targs=[Int]
 expr e@4:5#2 blockExpr stmts=[e@4:5] trailing=e@5:5 type=Boolean
 expr e@3:46 lambda params=[] body=e@4:5#2 label=buildList type=kotlin.collections.MutableList<Int>.() -> Unit
-expr e@3:33 call callee=e@3:33#1 args=[_:e@3:43,_:e@3:46] type=kotlin.collections.List<out Int> call=kotlin.collections.buildList#0 targs=[Int]
+expr e@3:33 call callee=e@3:33#1 args=[_:e@3:43,_:e@3:46] type=kotlin.collections.List<out Int> call=kotlin.collections.buildList[kind=fun;params=Int,fn{r=kotlin.collections.MutableList<T0>;p=;ret=Unit};gen=1] targs=[Int]
 expr e@9:9 int(1) type=Int
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:9] type=Boolean call=kotlin.collections.MutableSet.add targs=[Int]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:9] type=Boolean call=kotlin.collections.MutableSet.add[kind=fun;recv=kotlin.collections.MutableSet<T0>;params=T0;gen=1] targs=[Int]
 expr e@10:9 int(1) type=Int
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:9] type=Boolean call=kotlin.collections.MutableSet.add targs=[Int]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:9] type=Boolean call=kotlin.collections.MutableSet.add[kind=fun;recv=kotlin.collections.MutableSet<T0>;params=T0;gen=1] targs=[Int]
 expr e@9:5#2 blockExpr stmts=[e@9:5] trailing=e@10:5 type=Boolean
 expr e@8:43 lambda params=[] body=e@9:5#2 label=buildSet type=kotlin.collections.MutableSet<Int>.() -> Unit
-expr e@8:31 call callee=e@8:31#1 args=[_:e@8:40,_:e@8:43] type=kotlin.collections.Set<out Int> call=kotlin.collections.buildSet#0 targs=[Int]
+expr e@8:31 call callee=e@8:31#1 args=[_:e@8:40,_:e@8:43] type=kotlin.collections.Set<out Int> call=kotlin.collections.buildSet[kind=fun;params=Int,fn{r=kotlin.collections.MutableSet<T0>;p=;ret=Unit};gen=1] targs=[Int]
 expr e@14:9 string(a) type=String
 expr e@14:14 int(1) type=Int
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:9,_:e@14:14] type=Int? call=kotlin.collections.MutableMap.put targs=[String,Int]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:9,_:e@14:14] type=Int? call=kotlin.collections.MutableMap.put[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=T0,T1;gen=2] targs=[String,Int]
 expr e@15:9 string(a) type=String
 expr e@15:14 int(2) type=Int
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:9,_:e@15:14] type=Int? call=kotlin.collections.MutableMap.put targs=[String,Int]
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:9,_:e@15:14] type=Int? call=kotlin.collections.MutableMap.put[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=T0,T1;gen=2] targs=[String,Int]
 expr e@14:5#2 blockExpr stmts=[e@14:5] trailing=e@15:5 type=Int?
 expr e@13:51 lambda params=[] body=e@14:5#2 label=buildMap type=kotlin.collections.MutableMap<String, Int>.() -> Unit
-expr e@13:39 call callee=e@13:39#1 args=[_:e@13:48,_:e@13:51] type=kotlin.collections.Map<out String, out Int> call=kotlin.collections.buildMap#0 targs=[String,Int]
+expr e@13:39 call callee=e@13:39#1 args=[_:e@13:48,_:e@13:51] type=kotlin.collections.Map<out String, out Int> call=kotlin.collections.buildMap[kind=fun;params=Int,fn{r=kotlin.collections.MutableMap<T0,T1>;p=;ret=Unit};gen=2] targs=[String,Int]
 diagnostic severity=error code=KSWIFTK-TYPE-0001 at=13:1 msg=Type constraint could not be satisfied.

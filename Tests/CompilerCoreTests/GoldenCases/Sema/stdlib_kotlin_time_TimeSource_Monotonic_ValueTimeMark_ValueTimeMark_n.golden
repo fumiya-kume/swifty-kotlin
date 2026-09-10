@@ -1,64 +1,64 @@
-symbol fq=__local_0.mark kind=local vis=private flags=_ type=kotlin.time.TimeSource.Monotonic.ValueTimeMark
-symbol fq=__local_1.copy kind=local vis=private flags=_ type=kotlin.time.TimeSource.Monotonic.ValueTimeMark
-symbol fq=__local_2.comparable kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
-symbol fq=__local_3.foreign kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
-symbol fq=__local_4.rejected kind=local vis=private flags=mutable type=Boolean
-symbol fq=__try_0_catch_0._ kind=local vis=internal flags=_ type=kotlin.IllegalArgumentException
-symbol fq=valueTimeMarkProbe kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=__local_0.mark[kind=local] kind=local vis=private flags=_ type=kotlin.time.TimeSource.Monotonic.ValueTimeMark
+symbol fq=__local_1.copy[kind=local] kind=local vis=private flags=_ type=kotlin.time.TimeSource.Monotonic.ValueTimeMark
+symbol fq=__local_2.comparable[kind=local] kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
+symbol fq=__local_3.foreign[kind=local] kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
+symbol fq=__local_4.rejected[kind=local] kind=local vis=private flags=mutable type=Boolean
+symbol fq=__try_0_catch_0._[kind=local] kind=local vis=internal flags=_ type=kotlin.IllegalArgumentException
+symbol fq=valueTimeMarkProbe[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 file fstdlib_kotlin_time_TimeSource_Monotonic_ValueTimeMark_ValueTimeMark_n package=_
-  decl valueTimeMarkProbe fun valueTimeMarkProbe sym=valueTimeMarkProbe
-expr e@9:16 name(TimeSource) type=kotlin.time.TimeSource ref=kotlin.time.TimeSource#0
-expr e@9:16#1 memberCall recv=e@9:16 callee=Monotonic args=[] type=kotlin.time.TimeSource.Monotonic ref=kotlin.time.TimeSource.Monotonic#0
-expr e@9:16#2 memberCall recv=e@9:16#1 callee=markNow args=[] type=kotlin.time.TimeSource.Monotonic.ValueTimeMark call=kotlin.time.TimeSource.Monotonic.markNow
-expr e@9:5 localDecl mark mutable=0 type=_ init=e@9:16#2 type=Unit ref=__local_0.mark
-expr e@10:16 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark
-expr e@10:23 name(Duration) type=kotlin.time.Duration.Companion ref=kotlin.time.Duration#0
-expr e@10:23#1 memberCall recv=e@10:23 callee=ZERO args=[] type=kotlin.time.Duration call=kotlin.time.ZERO.$get
-expr e@10:16#1 binary(add) lhs=e@10:16 rhs=e@10:23#1 type=kotlin.time.TimeSource.Monotonic.ValueTimeMark call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.plus
-expr e@10:5 localDecl copy mutable=0 type=_ init=e@10:16#1 type=Unit ref=__local_1.copy
-expr e@11:42 name(copy) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_1.copy
-expr e@11:5 localDecl comparable mutable=0 type=ComparableTimeMark init=e@11:42 type=Unit ref=__local_2.comparable
-expr e@12:39 call callee=e@12:39#1 args=[] type=kotlin.time.TestTimeSource call=kotlin.time.TestTimeSource.<init>
-expr e@12:39#2 memberCall recv=e@12:39 callee=markNow args=[] type=kotlin.time.ComparableTimeMark call=kotlin.time.AbstractLongTimeSource.markNow
-expr e@12:5 localDecl foreign mutable=0 type=ComparableTimeMark init=e@12:39#2 type=Unit ref=__local_3.foreign
+  decl valueTimeMarkProbe[kind=fun;params=] fun valueTimeMarkProbe sym=valueTimeMarkProbe[kind=fun;params=]
+expr e@9:16 name(TimeSource) type=kotlin.time.TimeSource ref=kotlin.time.TimeSource[kind=iface]
+expr e@9:16#1 memberCall recv=e@9:16 callee=Monotonic args=[] type=kotlin.time.TimeSource.Monotonic ref=kotlin.time.TimeSource.Monotonic[kind=obj]
+expr e@9:16#2 memberCall recv=e@9:16#1 callee=markNow args=[] type=kotlin.time.TimeSource.Monotonic.ValueTimeMark call=kotlin.time.TimeSource.Monotonic.markNow[kind=fun;recv=kotlin.time.TimeSource.Monotonic;params=]
+expr e@9:5 localDecl mark mutable=0 type=_ init=e@9:16#2 type=Unit ref=__local_0.mark[kind=local]
+expr e@10:16 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark[kind=local]
+expr e@10:23 name(Duration) type=kotlin.time.Duration.Companion ref=kotlin.time.Duration[kind=class]
+expr e@10:23#1 memberCall recv=e@10:23 callee=ZERO args=[] type=kotlin.time.Duration call=kotlin.time.ZERO.$get[kind=fun;recv=kotlin.time.Duration.Companion;params=]
+expr e@10:16#1 binary(add) lhs=e@10:16 rhs=e@10:23#1 type=kotlin.time.TimeSource.Monotonic.ValueTimeMark call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.plus[kind=fun;recv=kotlin.time.TimeSource.Monotonic.ValueTimeMark;params=kotlin.time.Duration]
+expr e@10:5 localDecl copy mutable=0 type=_ init=e@10:16#1 type=Unit ref=__local_1.copy[kind=local]
+expr e@11:42 name(copy) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_1.copy[kind=local]
+expr e@11:5 localDecl comparable mutable=0 type=ComparableTimeMark init=e@11:42 type=Unit ref=__local_2.comparable[kind=local]
+expr e@12:39 call callee=e@12:39#1 args=[] type=kotlin.time.TestTimeSource call=kotlin.time.TestTimeSource.<init>[kind=ctor;recv=kotlin.time.TestTimeSource;params=]
+expr e@12:39#2 memberCall recv=e@12:39 callee=markNow args=[] type=kotlin.time.ComparableTimeMark call=kotlin.time.AbstractLongTimeSource.markNow[kind=fun;recv=kotlin.time.AbstractLongTimeSource;params=]
+expr e@12:5 localDecl foreign mutable=0 type=ComparableTimeMark init=e@12:39#2 type=Unit ref=__local_3.foreign[kind=local]
 expr e@13:20 bool(false) type=Boolean
-expr e@13:5 localDecl rejected mutable=1 type=_ init=e@13:20 type=Unit ref=__local_4.rejected
-expr e@15:9 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark
-expr e@15:20 name(foreign) type=kotlin.time.ComparableTimeMark ref=__local_3.foreign
-expr e@15:9#1 memberCall recv=e@15:9 callee=minus args=[_:e@15:20] type=kotlin.time.Duration call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.minus#0
+expr e@13:5 localDecl rejected mutable=1 type=_ init=e@13:20 type=Unit ref=__local_4.rejected[kind=local]
+expr e@15:9 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark[kind=local]
+expr e@15:20 name(foreign) type=kotlin.time.ComparableTimeMark ref=__local_3.foreign[kind=local]
+expr e@15:9#1 memberCall recv=e@15:9 callee=minus args=[_:e@15:20] type=kotlin.time.Duration call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.minus[kind=fun;recv=kotlin.time.TimeSource.Monotonic.ValueTimeMark;params=kotlin.time.ComparableTimeMark]
 expr e@14:9 blockExpr stmts=[] trailing=e@15:9#1 type=kotlin.time.Duration
 expr e@17:20 bool(true) type=Boolean
-expr e@17:9 localAssign rejected value=e@17:20 type=Unit ref=__local_4.rejected
-expr e@16:43 blockExpr stmts=[e@17:9] trailing=_ type=Unit ref=__try_0_catch_0._
+expr e@17:9 localAssign rejected value=e@17:20 type=Unit ref=__local_4.rejected[kind=local]
+expr e@16:43 blockExpr stmts=[e@17:9] trailing=_ type=Unit ref=__try_0_catch_0._[kind=local]
 expr e@14:5 try body=e@14:9 catches=[e@16:43] finally=_ type=Any
-expr e@19:12 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark
-expr e@19:20 name(copy) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_1.copy
-expr e@19:12#1 binary(equal) lhs=e@19:12 rhs=e@19:20 type=Boolean call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.equals
-expr e@20:9 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark
-expr e@20:9#1 memberCall recv=e@20:9 callee=hashCode args=[] type=Int call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.hashCode
-expr e@20:28 name(copy) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_1.copy
-expr e@20:28#1 memberCall recv=e@20:28 callee=hashCode args=[] type=Int call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.hashCode
+expr e@19:12 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark[kind=local]
+expr e@19:20 name(copy) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_1.copy[kind=local]
+expr e@19:12#1 binary(equal) lhs=e@19:12 rhs=e@19:20 type=Boolean call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.equals[kind=fun;recv=kotlin.time.TimeSource.Monotonic.ValueTimeMark;params=Any?]
+expr e@20:9 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark[kind=local]
+expr e@20:9#1 memberCall recv=e@20:9 callee=hashCode args=[] type=Int call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.hashCode[kind=fun;recv=kotlin.time.TimeSource.Monotonic.ValueTimeMark;params=]
+expr e@20:28 name(copy) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_1.copy[kind=local]
+expr e@20:28#1 memberCall recv=e@20:28 callee=hashCode args=[] type=Int call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.hashCode[kind=fun;recv=kotlin.time.TimeSource.Monotonic.ValueTimeMark;params=]
 expr e@20:9#2 binary(equal) lhs=e@20:9#1 rhs=e@20:28#1 type=Boolean
 expr e@19:12#2 binary(logicalAnd) lhs=e@19:12#1 rhs=e@20:9#2 type=Boolean
-expr e@21:9 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark
-expr e@21:9#1 memberCall recv=e@21:9 callee=toString args=[] type=String call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.toString
+expr e@21:9 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark[kind=local]
+expr e@21:9#1 memberCall recv=e@21:9 callee=toString args=[] type=String call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.toString[kind=fun;recv=kotlin.time.TimeSource.Monotonic.ValueTimeMark;params=]
 expr e@21:36 string(ValueTimeMark(reading=) type=String
-expr e@21:9#2 memberCall recv=e@21:9#1 callee=startsWith args=[_:e@21:36] type=Boolean call=kotlin.text.startsWith#1
+expr e@21:9#2 memberCall recv=e@21:9#1 callee=startsWith args=[_:e@21:36] type=Boolean call=kotlin.text.startsWith[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence,Boolean]
 expr e@19:12#3 binary(logicalAnd) lhs=e@19:12#2 rhs=e@21:9#2 type=Boolean
-expr e@22:9 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark
-expr e@22:9#1 memberCall recv=e@22:9 callee=hasPassedNow args=[] type=Boolean call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.hasPassedNow
+expr e@22:9 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark[kind=local]
+expr e@22:9#1 memberCall recv=e@22:9 callee=hasPassedNow args=[] type=Boolean call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.hasPassedNow[kind=fun;recv=kotlin.time.TimeSource.Monotonic.ValueTimeMark;params=]
 expr e@19:12#4 binary(logicalAnd) lhs=e@19:12#3 rhs=e@22:9#1 type=Boolean
-expr e@23:10 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark
-expr e@23:10#1 memberCall recv=e@23:10 callee=hasNotPassedNow args=[] type=Boolean call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.hasNotPassedNow
+expr e@23:10 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark[kind=local]
+expr e@23:10#1 memberCall recv=e@23:10 callee=hasNotPassedNow args=[] type=Boolean call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.hasNotPassedNow[kind=fun;recv=kotlin.time.TimeSource.Monotonic.ValueTimeMark;params=]
 expr e@23:9 unary(not) operand=e@23:10#1 type=Boolean
 expr e@19:12#5 binary(logicalAnd) lhs=e@19:12#4 rhs=e@23:9 type=Boolean
-expr e@24:10 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark
-expr e@24:17 name(comparable) type=kotlin.time.ComparableTimeMark ref=__local_2.comparable
-expr e@24:10#1 binary(subtract) lhs=e@24:10 rhs=e@24:17 type=kotlin.time.Duration call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.minus#0
-expr e@24:10#2 memberCall recv=e@24:10#1 callee=inWholeNanoseconds args=[] type=Long ref=kotlin.time.Duration.inWholeNanoseconds
+expr e@24:10 name(mark) type=kotlin.time.TimeSource.Monotonic.ValueTimeMark ref=__local_0.mark[kind=local]
+expr e@24:17 name(comparable) type=kotlin.time.ComparableTimeMark ref=__local_2.comparable[kind=local]
+expr e@24:10#1 binary(subtract) lhs=e@24:10 rhs=e@24:17 type=kotlin.time.Duration call=kotlin.time.TimeSource.Monotonic.ValueTimeMark.minus[kind=fun;recv=kotlin.time.TimeSource.Monotonic.ValueTimeMark;params=kotlin.time.ComparableTimeMark]
+expr e@24:10#2 memberCall recv=e@24:10#1 callee=inWholeNanoseconds args=[] type=Long ref=kotlin.time.Duration.inWholeNanoseconds[kind=prop]
 expr e@24:51 long(0) type=Long
 expr e@24:10#3 binary(equal) lhs=e@24:10#2 rhs=e@24:51 type=Boolean
 expr e@19:12#6 binary(logicalAnd) lhs=e@19:12#5 rhs=e@24:10#3 type=Boolean
-expr e@25:9 name(rejected) type=Boolean ref=__local_4.rejected
+expr e@25:9 name(rejected) type=Boolean ref=__local_4.rejected[kind=local]
 expr e@19:12#7 binary(logicalAnd) lhs=e@19:12#6 rhs=e@25:9 type=Boolean
 expr e@19:5 return value=e@19:12#7 type=Nothing

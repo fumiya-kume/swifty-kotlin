@@ -1,28 +1,28 @@
-symbol fq=__local_0.sum kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.count kind=local vis=private flags=_ type=Int
-symbol fq=__local_2.none kind=local vis=private flags=_ type=Boolean
-symbol fq=aggregate kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<Int>] ret=Unit
-symbol fq=aggregate.$0.numbers kind=valueParameter vis=private flags=_
+symbol fq=__local_0.sum[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.count[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.none[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=aggregate.$0.numbers[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=aggregate[kind=fun;params=kotlin.Array<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<Int>] ret=Unit
 file farray_hof_reduce package=_
-  decl aggregate fun aggregate sym=aggregate
-expr e@2:15 name(numbers) type=kotlin.Array<Int> ref=aggregate.$0.numbers
+  decl aggregate[kind=fun;params=kotlin.Array<Int>] fun aggregate sym=aggregate[kind=fun;params=kotlin.Array<Int>]
+expr e@2:15 name(numbers) type=kotlin.Array<Int> ref=aggregate.$0.numbers[kind=vparam]
 expr e@2:40 name(a) type=Int ref=s-0
 expr e@2:44 name(b) type=Int ref=s-1
 expr e@2:40#1 binary(add) lhs=e@2:40 rhs=e@2:44 type=Int
 expr e@2:30 lambda params=[a,b] body=e@2:40#1 label=reduce type=(Int, Int) -> Int
-expr e@2:15#1 memberCall recv=e@2:15 callee=reduce args=[_:e@2:30] type=Int call=kotlin.collections.reduce#0 targs=[Int]
-expr e@2:5 localDecl sum mutable=0 type=_ init=e@2:15#1 type=Unit ref=__local_0.sum
-expr e@3:17 name(numbers) type=kotlin.Array<Int> ref=aggregate.$0.numbers
+expr e@2:15#1 memberCall recv=e@2:15 callee=reduce args=[_:e@2:30] type=Int call=kotlin.collections.reduce[kind=fun;recv=kotlin.Array<T0>;params=fn{p=T0,T0;ret=T0};gen=1] targs=[Int]
+expr e@2:5 localDecl sum mutable=0 type=_ init=e@2:15#1 type=Unit ref=__local_0.sum[kind=local]
+expr e@3:17 name(numbers) type=kotlin.Array<Int> ref=aggregate.$0.numbers[kind=vparam]
 expr e@3:33 name(it) type=Int ref=s-2
 expr e@3:38 int(0) type=Int
 expr e@3:33#1 binary(greaterThan) lhs=e@3:33 rhs=e@3:38 type=Boolean
 expr e@3:31 lambda params=[] body=e@3:33#1 label=count type=(Int) -> Boolean
-expr e@3:17#1 memberCall recv=e@3:17 callee=count args=[_:e@3:31] type=Int call=kotlin.collections.count#1 targs=[Int]
-expr e@3:5 localDecl count mutable=0 type=_ init=e@3:17#1 type=Unit ref=__local_1.count
-expr e@4:16 name(numbers) type=kotlin.Array<Int> ref=aggregate.$0.numbers
+expr e@3:17#1 memberCall recv=e@3:17 callee=count args=[_:e@3:31] type=Int call=kotlin.collections.count[kind=fun;recv=kotlin.Array<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
+expr e@3:5 localDecl count mutable=0 type=_ init=e@3:17#1 type=Unit ref=__local_1.count[kind=local]
+expr e@4:16 name(numbers) type=kotlin.Array<Int> ref=aggregate.$0.numbers[kind=vparam]
 expr e@4:31 name(it) type=Int ref=s-3
 expr e@4:36 int(0) type=Int
 expr e@4:31#1 binary(lessThan) lhs=e@4:31 rhs=e@4:36 type=Boolean
 expr e@4:29 lambda params=[] body=e@4:31#1 label=none type=(Int) -> Boolean
-expr e@4:16#1 memberCall recv=e@4:16 callee=none args=[_:e@4:29] type=Boolean call=kotlin.collections.none#1 targs=[Int]
-expr e@4:5 localDecl none mutable=0 type=_ init=e@4:16#1 type=Unit ref=__local_2.none
+expr e@4:16#1 memberCall recv=e@4:16 callee=none args=[_:e@4:29] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.Array<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
+expr e@4:5 localDecl none mutable=0 type=_ init=e@4:16#1 type=Unit ref=__local_2.none[kind=local]

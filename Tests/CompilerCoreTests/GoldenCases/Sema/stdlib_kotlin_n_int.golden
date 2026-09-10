@@ -1,31 +1,31 @@
-symbol fq=__local_0.empty kind=local vis=private flags=_ type=kotlin.IntArray
-symbol fq=__local_1.values kind=local vis=private flags=_ type=kotlin.IntArray
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.empty[kind=local] kind=local vis=private flags=_ type=kotlin.IntArray
+symbol fq=__local_1.values[kind=local] kind=local vis=private flags=_ type=kotlin.IntArray
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_n_int package=golden.sema
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@4:17 call callee=e@4:17#1 args=[] type=kotlin.IntArray call=kotlin.intArrayOf
-expr e@4:5 localDecl empty mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.empty
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@4:17 call callee=e@4:17#1 args=[] type=kotlin.IntArray call=kotlin.intArrayOf[kind=fun;params=*Int]
+expr e@4:5 localDecl empty mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.empty[kind=local]
 expr e@5:29 int(1) type=Int
 expr e@5:33 int(2) type=Int
 expr e@5:32 unary(unaryMinus) operand=e@5:33 type=Int
 expr e@5:36 int(2147483647) type=Int
-expr e@5:18 call callee=e@5:18#1 args=[_:e@5:29,_:e@5:32,_:e@5:36] type=kotlin.IntArray call=kotlin.intArrayOf
-expr e@5:5 localDecl values mutable=0 type=_ init=e@5:18 type=Unit ref=__local_1.values
-expr e@6:13 name(empty) type=kotlin.IntArray ref=__local_0.empty
-expr e@6:13#1 memberCall recv=e@6:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#6
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println#1
-expr e@7:13 name(values) type=kotlin.IntArray ref=__local_1.values
-expr e@7:13#1 memberCall recv=e@7:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#6
-expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println#1
-expr e@8:13 name(values) type=kotlin.IntArray ref=__local_1.values
+expr e@5:18 call callee=e@5:18#1 args=[_:e@5:29,_:e@5:32,_:e@5:36] type=kotlin.IntArray call=kotlin.intArrayOf[kind=fun;params=*Int]
+expr e@5:5 localDecl values mutable=0 type=_ init=e@5:18 type=Unit ref=__local_1.values[kind=local]
+expr e@6:13 name(empty) type=kotlin.IntArray ref=__local_0.empty[kind=local]
+expr e@6:13#1 memberCall recv=e@6:13 callee=size args=[] type=Int call=kotlin.collections.size.$get[kind=fun;recv=kotlin.IntArray;params=]
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@7:13 name(values) type=kotlin.IntArray ref=__local_1.values[kind=local]
+expr e@7:13#1 memberCall recv=e@7:13 callee=size args=[] type=Int call=kotlin.collections.size.$get[kind=fun;recv=kotlin.IntArray;params=]
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@8:13 name(values) type=kotlin.IntArray ref=__local_1.values[kind=local]
 expr e@8:20 int(0) type=Int
 expr e@8:13#1 indexedAccess receiver=e@8:13 indices=[e@8:20] type=Int
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println#1
-expr e@9:13 name(values) type=kotlin.IntArray ref=__local_1.values
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@9:13 name(values) type=kotlin.IntArray ref=__local_1.values[kind=local]
 expr e@9:20 int(1) type=Int
 expr e@9:13#1 indexedAccess receiver=e@9:13 indices=[e@9:20] type=Int
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#1
-expr e@10:13 name(values) type=kotlin.IntArray ref=__local_1.values
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@10:13 name(values) type=kotlin.IntArray ref=__local_1.values[kind=local]
 expr e@10:20 int(2) type=Int
 expr e@10:13#1 indexedAccess receiver=e@10:13 indices=[e@10:20] type=Int
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#1
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

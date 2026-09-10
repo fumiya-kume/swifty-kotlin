@@ -1,19 +1,19 @@
-symbol fq=golden.sema.charSequenceGet kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=Char
-symbol fq=golden.sema.charSequenceGet.$0.index kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequenceGet.$0.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequenceGetMember kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
-symbol fq=golden.sema.charSequenceGetMember.$1.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequenceLength kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Int
-symbol fq=golden.sema.charSequenceLength.$2.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceGet.$0.index[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceGet.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceGetMember.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceGetMember[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
+symbol fq=golden.sema.charSequenceGet[kind=fun;params=kotlin.CharSequence,Int] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=Char
+symbol fq=golden.sema.charSequenceLength.$2.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceLength[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Int
 file fstdlib_kotlin_CharSequence_CharSequence_n package=golden.sema
-  decl golden.sema.charSequenceLength fun charSequenceLength sym=golden.sema.charSequenceLength
-  decl golden.sema.charSequenceGet fun charSequenceGet sym=golden.sema.charSequenceGet
-  decl golden.sema.charSequenceGetMember fun charSequenceGetMember sym=golden.sema.charSequenceGetMember
-expr e@3:52 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceLength.$2.value
-expr e@3:52#1 memberCall recv=e@3:52 callee=length args=[] type=Int ref=kotlin.CharSequence.length
-expr e@5:62 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceGet.$0.value
-expr e@5:68 name(index) type=Int ref=golden.sema.charSequenceGet.$0.index
-expr e@5:62#1 indexedAccess receiver=e@5:62 indices=[e@5:68] type=Char call=kotlin.CharSequence.get
-expr e@7:56 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceGetMember.$1.value
+  decl golden.sema.charSequenceLength[kind=fun;params=kotlin.CharSequence] fun charSequenceLength sym=golden.sema.charSequenceLength[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.charSequenceGet[kind=fun;params=kotlin.CharSequence,Int] fun charSequenceGet sym=golden.sema.charSequenceGet[kind=fun;params=kotlin.CharSequence,Int]
+  decl golden.sema.charSequenceGetMember[kind=fun;params=kotlin.CharSequence] fun charSequenceGetMember sym=golden.sema.charSequenceGetMember[kind=fun;params=kotlin.CharSequence]
+expr e@3:52 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceLength.$2.value[kind=vparam]
+expr e@3:52#1 memberCall recv=e@3:52 callee=length args=[] type=Int ref=kotlin.CharSequence.length[kind=prop]
+expr e@5:62 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceGet.$0.value[kind=vparam]
+expr e@5:68 name(index) type=Int ref=golden.sema.charSequenceGet.$0.index[kind=vparam]
+expr e@5:62#1 indexedAccess receiver=e@5:62 indices=[e@5:68] type=Char call=kotlin.CharSequence.get[kind=fun;recv=kotlin.CharSequence;params=Int]
+expr e@7:56 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceGetMember.$1.value[kind=vparam]
 expr e@7:66 int(0) type=Int
-expr e@7:56#1 memberCall recv=e@7:56 callee=get args=[_:e@7:66] type=Char call=kotlin.CharSequence.get
+expr e@7:56#1 memberCall recv=e@7:56 callee=get args=[_:e@7:66] type=Char call=kotlin.CharSequence.get[kind=fun;recv=kotlin.CharSequence;params=Int]

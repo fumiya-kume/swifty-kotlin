@@ -1,5 +1,5 @@
-symbol fq=golden.sema.continuationInterceptorKey kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.ContinuationInterceptor>
+symbol fq=golden.sema.continuationInterceptorKey[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.ContinuationInterceptor>
 file fstdlib_kotlin_coroutines_ContinuationInterceptor_n_n package=golden.sema
-  decl golden.sema.continuationInterceptorKey fun continuationInterceptorKey sym=golden.sema.continuationInterceptorKey
-expr e@7:5 name(ContinuationInterceptor) type=kotlin.coroutines.ContinuationInterceptor ref=kotlin.coroutines.ContinuationInterceptor#0
-expr e@7:5#1 memberCall recv=e@7:5 callee=Key args=[] type=kotlin.coroutines.ContinuationInterceptor.Key ref=kotlin.coroutines.ContinuationInterceptor.Key
+  decl golden.sema.continuationInterceptorKey[kind=fun;params=] fun continuationInterceptorKey sym=golden.sema.continuationInterceptorKey[kind=fun;params=]
+expr e@7:5 name(ContinuationInterceptor) type=kotlin.coroutines.ContinuationInterceptor ref=kotlin.coroutines.ContinuationInterceptor[kind=iface]
+expr e@7:5#1 memberCall recv=e@7:5 callee=Key args=[] type=kotlin.coroutines.ContinuationInterceptor.Key ref=kotlin.coroutines.ContinuationInterceptor.Key[kind=obj]

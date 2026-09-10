@@ -1,131 +1,131 @@
-symbol fq=Counter kind=class vis=public flags=_
-symbol fq=Counter.count kind=property vis=public flags=mutable type=Int
-symbol fq=__local_0.a kind=local vis=private flags=mutable type=Int
-symbol fq=__local_1.b kind=local vis=private flags=mutable type=Int
-symbol fq=__local_2.c kind=local vis=private flags=mutable type=Int
-symbol fq=__local_3.d kind=local vis=private flags=mutable type=Int
-symbol fq=__local_4.e kind=local vis=private flags=mutable type=Int
-symbol fq=__local_5.arr kind=local vis=private flags=mutable type=kotlin.IntArray
-symbol fq=arrayAssignExample kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=compoundAdd kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
-symbol fq=compoundAdd.$0.x kind=valueParameter vis=private flags=_
-symbol fq=compoundDiv kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
-symbol fq=compoundDiv.$1.x kind=valueParameter vis=private flags=_
-symbol fq=compoundMod kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
-symbol fq=compoundMod.$2.x kind=valueParameter vis=private flags=_
-symbol fq=compoundMul kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
-symbol fq=compoundMul.$3.x kind=valueParameter vis=private flags=_
-symbol fq=compoundSub kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
-symbol fq=compoundSub.$4.x kind=valueParameter vis=private flags=_
-symbol fq=elvisOp kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=String
-symbol fq=elvisOp.$5.v kind=valueParameter vis=private flags=_
-symbol fq=memberCompoundAdd kind=function vis=public flags=_ sig=recv=_ params=[Counter] ret=Int
-symbol fq=memberCompoundAdd.$6.c kind=valueParameter vis=private flags=_
-symbol fq=memberCompoundDec kind=function vis=public flags=_ sig=recv=_ params=[Counter] ret=Int
-symbol fq=memberCompoundDec.$7.c kind=valueParameter vis=private flags=_
-symbol fq=memberCompoundInc kind=function vis=public flags=_ sig=recv=_ params=[Counter] ret=Int
-symbol fq=memberCompoundInc.$8.c kind=valueParameter vis=private flags=_
-symbol fq=negatedTypeCheck kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
-symbol fq=negatedTypeCheck.$9.v kind=valueParameter vis=private flags=_
-symbol fq=nullAssertOp kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=String
-symbol fq=nullAssertOp.$10.v kind=valueParameter vis=private flags=_
-symbol fq=safeCallExample kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=Int?
-symbol fq=safeCallExample.$11.s kind=valueParameter vis=private flags=_
-symbol fq=safeCast kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=String?
-symbol fq=safeCast.$12.v kind=valueParameter vis=private flags=_
-symbol fq=typeCheck kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
-symbol fq=typeCheck.$13.v kind=valueParameter vis=private flags=_
-symbol fq=unsafeCast kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=String
-symbol fq=unsafeCast.$14.v kind=valueParameter vis=private flags=_
+symbol fq=Counter.count[kind=prop] kind=property vis=public flags=mutable type=Int
+symbol fq=Counter[kind=class] kind=class vis=public flags=_
+symbol fq=__local_0.a[kind=local] kind=local vis=private flags=mutable type=Int
+symbol fq=__local_1.b[kind=local] kind=local vis=private flags=mutable type=Int
+symbol fq=__local_2.c[kind=local] kind=local vis=private flags=mutable type=Int
+symbol fq=__local_3.d[kind=local] kind=local vis=private flags=mutable type=Int
+symbol fq=__local_4.e[kind=local] kind=local vis=private flags=mutable type=Int
+symbol fq=__local_5.arr[kind=local] kind=local vis=private flags=mutable type=kotlin.IntArray
+symbol fq=arrayAssignExample[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=compoundAdd.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=compoundAdd[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
+symbol fq=compoundDiv.$1.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=compoundDiv[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
+symbol fq=compoundMod.$2.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=compoundMod[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
+symbol fq=compoundMul.$3.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=compoundMul[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
+symbol fq=compoundSub.$4.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=compoundSub[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
+symbol fq=elvisOp.$5.v[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=elvisOp[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=String
+symbol fq=memberCompoundAdd.$6.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=memberCompoundAdd[kind=fun;params=Counter] kind=function vis=public flags=_ sig=recv=_ params=[Counter] ret=Int
+symbol fq=memberCompoundDec.$7.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=memberCompoundDec[kind=fun;params=Counter] kind=function vis=public flags=_ sig=recv=_ params=[Counter] ret=Int
+symbol fq=memberCompoundInc.$8.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=memberCompoundInc[kind=fun;params=Counter] kind=function vis=public flags=_ sig=recv=_ params=[Counter] ret=Int
+symbol fq=negatedTypeCheck.$9.v[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=negatedTypeCheck[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
+symbol fq=nullAssertOp.$10.v[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=nullAssertOp[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=String
+symbol fq=safeCallExample.$11.s[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=safeCallExample[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=Int?
+symbol fq=safeCast.$12.v[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=safeCast[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=String?
+symbol fq=typeCheck.$13.v[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=typeCheck[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
+symbol fq=unsafeCast.$14.v[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=unsafeCast[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=String
 file foperators package=_
-  decl typeCheck fun typeCheck sym=typeCheck
-  decl negatedTypeCheck fun negatedTypeCheck sym=negatedTypeCheck
-  decl unsafeCast fun unsafeCast sym=unsafeCast
-  decl safeCast fun safeCast sym=safeCast
-  decl elvisOp fun elvisOp sym=elvisOp
-  decl nullAssertOp fun nullAssertOp sym=nullAssertOp
-  decl compoundAdd fun compoundAdd sym=compoundAdd
-  decl compoundSub fun compoundSub sym=compoundSub
-  decl compoundMul fun compoundMul sym=compoundMul
-  decl compoundDiv fun compoundDiv sym=compoundDiv
-  decl compoundMod fun compoundMod sym=compoundMod
-  decl safeCallExample fun safeCallExample sym=safeCallExample
-  decl arrayAssignExample fun arrayAssignExample sym=arrayAssignExample
-  decl Counter class Counter sym=Counter
-  decl memberCompoundAdd fun memberCompoundAdd sym=memberCompoundAdd
-  decl memberCompoundInc fun memberCompoundInc sym=memberCompoundInc
-  decl memberCompoundDec fun memberCompoundDec sym=memberCompoundDec
-expr e@1:34 name(v) type=Any ref=typeCheck.$13.v
+  decl typeCheck[kind=fun;params=Any] fun typeCheck sym=typeCheck[kind=fun;params=Any]
+  decl negatedTypeCheck[kind=fun;params=Any] fun negatedTypeCheck sym=negatedTypeCheck[kind=fun;params=Any]
+  decl unsafeCast[kind=fun;params=Any] fun unsafeCast sym=unsafeCast[kind=fun;params=Any]
+  decl safeCast[kind=fun;params=Any] fun safeCast sym=safeCast[kind=fun;params=Any]
+  decl elvisOp[kind=fun;params=String?] fun elvisOp sym=elvisOp[kind=fun;params=String?]
+  decl nullAssertOp[kind=fun;params=String?] fun nullAssertOp sym=nullAssertOp[kind=fun;params=String?]
+  decl compoundAdd[kind=fun;params=Int] fun compoundAdd sym=compoundAdd[kind=fun;params=Int]
+  decl compoundSub[kind=fun;params=Int] fun compoundSub sym=compoundSub[kind=fun;params=Int]
+  decl compoundMul[kind=fun;params=Int] fun compoundMul sym=compoundMul[kind=fun;params=Int]
+  decl compoundDiv[kind=fun;params=Int] fun compoundDiv sym=compoundDiv[kind=fun;params=Int]
+  decl compoundMod[kind=fun;params=Int] fun compoundMod sym=compoundMod[kind=fun;params=Int]
+  decl safeCallExample[kind=fun;params=String?] fun safeCallExample sym=safeCallExample[kind=fun;params=String?]
+  decl arrayAssignExample[kind=fun;params=] fun arrayAssignExample sym=arrayAssignExample[kind=fun;params=]
+  decl Counter[kind=class] class Counter sym=Counter[kind=class]
+  decl memberCompoundAdd[kind=fun;params=Counter] fun memberCompoundAdd sym=memberCompoundAdd[kind=fun;params=Counter]
+  decl memberCompoundInc[kind=fun;params=Counter] fun memberCompoundInc sym=memberCompoundInc[kind=fun;params=Counter]
+  decl memberCompoundDec[kind=fun;params=Counter] fun memberCompoundDec sym=memberCompoundDec[kind=fun;params=Counter]
+expr e@1:34 name(v) type=Any ref=typeCheck.$13.v[kind=vparam]
 expr e@1:34#1 isCheck expr=e@1:34 type=String type=Boolean
-expr e@3:41 name(v) type=Any ref=negatedTypeCheck.$9.v
+expr e@3:41 name(v) type=Any ref=negatedTypeCheck.$9.v[kind=vparam]
 expr e@3:41#1 isCheck! expr=e@3:41 type=Int type=Boolean
-expr e@5:34 name(v) type=Any ref=unsafeCast.$14.v
+expr e@5:34 name(v) type=Any ref=unsafeCast.$14.v[kind=vparam]
 expr e@5:34#1 asCast expr=e@5:34 type=String type=String
-expr e@7:33 name(v) type=Any ref=safeCast.$12.v
+expr e@7:33 name(v) type=Any ref=safeCast.$12.v[kind=vparam]
 expr e@7:33#1 asCast? expr=e@7:33 type=String type=String?
-expr e@9:35 name(v) type=String? ref=elvisOp.$5.v
+expr e@9:35 name(v) type=String? ref=elvisOp.$5.v[kind=vparam]
 expr e@9:40 string(default) type=String
 expr e@9:35#1 binary(elvis) lhs=e@9:35 rhs=e@9:40 type=String
-expr e@11:40 name(v) type=String? ref=nullAssertOp.$10.v
+expr e@11:40 name(v) type=String? ref=nullAssertOp.$10.v[kind=vparam]
 expr e@11:40#1 nullAssert expr=e@11:40 type=String
-expr e@14:13 name(x) type=Int ref=compoundAdd.$0.x
-expr e@14:5 localDecl a mutable=1 type=_ init=e@14:13 type=Unit ref=__local_0.a
+expr e@14:13 name(x) type=Int ref=compoundAdd.$0.x[kind=vparam]
+expr e@14:5 localDecl a mutable=1 type=_ init=e@14:13 type=Unit ref=__local_0.a[kind=local]
 expr e@15:10 int(10) type=Int
-expr e@15:5 compoundAssign(plusAssign) name=a value=e@15:10 type=Unit ref=__local_0.a
-expr e@16:12 name(a) type=Int ref=__local_0.a
+expr e@15:5 compoundAssign(plusAssign) name=a value=e@15:10 type=Unit ref=__local_0.a[kind=local]
+expr e@16:12 name(a) type=Int ref=__local_0.a[kind=local]
 expr e@16:5 return value=e@16:12 type=Nothing
-expr e@20:13 name(x) type=Int ref=compoundSub.$4.x
-expr e@20:5 localDecl b mutable=1 type=_ init=e@20:13 type=Unit ref=__local_1.b
+expr e@20:13 name(x) type=Int ref=compoundSub.$4.x[kind=vparam]
+expr e@20:5 localDecl b mutable=1 type=_ init=e@20:13 type=Unit ref=__local_1.b[kind=local]
 expr e@21:10 int(5) type=Int
-expr e@21:5 compoundAssign(minusAssign) name=b value=e@21:10 type=Unit ref=__local_1.b
-expr e@22:12 name(b) type=Int ref=__local_1.b
+expr e@21:5 compoundAssign(minusAssign) name=b value=e@21:10 type=Unit ref=__local_1.b[kind=local]
+expr e@22:12 name(b) type=Int ref=__local_1.b[kind=local]
 expr e@22:5 return value=e@22:12 type=Nothing
-expr e@26:13 name(x) type=Int ref=compoundMul.$3.x
-expr e@26:5 localDecl c mutable=1 type=_ init=e@26:13 type=Unit ref=__local_2.c
+expr e@26:13 name(x) type=Int ref=compoundMul.$3.x[kind=vparam]
+expr e@26:5 localDecl c mutable=1 type=_ init=e@26:13 type=Unit ref=__local_2.c[kind=local]
 expr e@27:10 int(2) type=Int
-expr e@27:5 compoundAssign(timesAssign) name=c value=e@27:10 type=Unit ref=__local_2.c
-expr e@28:12 name(c) type=Int ref=__local_2.c
+expr e@27:5 compoundAssign(timesAssign) name=c value=e@27:10 type=Unit ref=__local_2.c[kind=local]
+expr e@28:12 name(c) type=Int ref=__local_2.c[kind=local]
 expr e@28:5 return value=e@28:12 type=Nothing
-expr e@32:13 name(x) type=Int ref=compoundDiv.$1.x
-expr e@32:5 localDecl d mutable=1 type=_ init=e@32:13 type=Unit ref=__local_3.d
+expr e@32:13 name(x) type=Int ref=compoundDiv.$1.x[kind=vparam]
+expr e@32:5 localDecl d mutable=1 type=_ init=e@32:13 type=Unit ref=__local_3.d[kind=local]
 expr e@33:10 int(3) type=Int
-expr e@33:5 compoundAssign(divAssign) name=d value=e@33:10 type=Unit ref=__local_3.d
-expr e@34:12 name(d) type=Int ref=__local_3.d
+expr e@33:5 compoundAssign(divAssign) name=d value=e@33:10 type=Unit ref=__local_3.d[kind=local]
+expr e@34:12 name(d) type=Int ref=__local_3.d[kind=local]
 expr e@34:5 return value=e@34:12 type=Nothing
-expr e@38:13 name(x) type=Int ref=compoundMod.$2.x
-expr e@38:5 localDecl e mutable=1 type=_ init=e@38:13 type=Unit ref=__local_4.e
+expr e@38:13 name(x) type=Int ref=compoundMod.$2.x[kind=vparam]
+expr e@38:5 localDecl e mutable=1 type=_ init=e@38:13 type=Unit ref=__local_4.e[kind=local]
 expr e@39:10 int(4) type=Int
-expr e@39:5 compoundAssign(modAssign) name=e value=e@39:10 type=Unit ref=__local_4.e
-expr e@40:12 name(e) type=Int ref=__local_4.e
+expr e@39:5 compoundAssign(modAssign) name=e value=e@39:10 type=Unit ref=__local_4.e[kind=local]
+expr e@40:12 name(e) type=Int ref=__local_4.e[kind=local]
 expr e@40:5 return value=e@40:12 type=Nothing
-expr e@43:41 name(s) type=String? ref=safeCallExample.$11.s
-expr e@43:41#1 safeMemberCall recv=e@43:41 callee=hashCode args=[] type=Int? call=kotlin.Any.hashCode
+expr e@43:41 name(s) type=String? ref=safeCallExample.$11.s[kind=vparam]
+expr e@43:41#1 safeMemberCall recv=e@43:41 callee=hashCode args=[] type=Int? call=kotlin.Any.hashCode[kind=fun;recv=kotlin.Any;params=]
 expr e@46:24 int(3) type=Int
 expr e@46:15 call callee=e@46:15#1 args=[_:e@46:24] type=kotlin.IntArray
-expr e@46:5 localDecl arr mutable=1 type=_ init=e@46:15 type=Unit ref=__local_5.arr
-expr e@47:5 name(arr) type=kotlin.IntArray ref=__local_5.arr
+expr e@46:5 localDecl arr mutable=1 type=_ init=e@46:15 type=Unit ref=__local_5.arr[kind=local]
+expr e@47:5 name(arr) type=kotlin.IntArray ref=__local_5.arr[kind=local]
 expr e@47:9 int(0) type=Int
 expr e@47:14 int(42) type=Int
 expr e@47:5#1 indexedAssign receiver=e@47:5 indices=[e@47:9] value=e@47:14 type=Unit
-expr e@48:12 name(arr) type=kotlin.IntArray ref=__local_5.arr
+expr e@48:12 name(arr) type=kotlin.IntArray ref=__local_5.arr[kind=local]
 expr e@48:16 int(0) type=Int
 expr e@48:12#1 indexedAccess receiver=e@48:12 indices=[e@48:16] type=Int
 expr e@48:5 return value=e@48:12#1 type=Nothing
-expr e@54:5 name(c) type=Counter ref=memberCompoundAdd.$6.c
+expr e@54:5 name(c) type=Counter ref=memberCompoundAdd.$6.c[kind=vparam]
 expr e@54:16 int(10) type=Int
-expr e@54:5#1 memberCompoundAssign(plusAssign) recv=e@54:5 callee=count value=e@54:16 type=Unit ref=Counter.count
-expr e@55:12 name(c) type=Counter ref=memberCompoundAdd.$6.c
-expr e@55:12#1 memberCall recv=e@55:12 callee=count args=[] type=Int ref=Counter.count
+expr e@54:5#1 memberCompoundAssign(plusAssign) recv=e@54:5 callee=count value=e@54:16 type=Unit ref=Counter.count[kind=prop]
+expr e@55:12 name(c) type=Counter ref=memberCompoundAdd.$6.c[kind=vparam]
+expr e@55:12#1 memberCall recv=e@55:12 callee=count args=[] type=Int ref=Counter.count[kind=prop]
 expr e@55:5 return value=e@55:12#1 type=Nothing
-expr e@59:5 name(c) type=Counter ref=memberCompoundInc.$8.c
+expr e@59:5 name(c) type=Counter ref=memberCompoundInc.$8.c[kind=vparam]
 expr e@59:12 int(1) type=Int
-expr e@59:5#1 memberCompoundAssign(plusAssign) recv=e@59:5 callee=count value=e@59:12 type=Unit ref=Counter.count
-expr e@60:12 name(c) type=Counter ref=memberCompoundInc.$8.c
-expr e@60:12#1 memberCall recv=e@60:12 callee=count args=[] type=Int ref=Counter.count
+expr e@59:5#1 memberCompoundAssign(plusAssign) recv=e@59:5 callee=count value=e@59:12 type=Unit ref=Counter.count[kind=prop]
+expr e@60:12 name(c) type=Counter ref=memberCompoundInc.$8.c[kind=vparam]
+expr e@60:12#1 memberCall recv=e@60:12 callee=count args=[] type=Int ref=Counter.count[kind=prop]
 expr e@60:5 return value=e@60:12#1 type=Nothing
-expr e@64:5 name(c) type=Counter ref=memberCompoundDec.$7.c
+expr e@64:5 name(c) type=Counter ref=memberCompoundDec.$7.c[kind=vparam]
 expr e@64:12 int(1) type=Int
-expr e@64:5#1 memberCompoundAssign(minusAssign) recv=e@64:5 callee=count value=e@64:12 type=Unit ref=Counter.count
-expr e@65:12 name(c) type=Counter ref=memberCompoundDec.$7.c
-expr e@65:12#1 memberCall recv=e@65:12 callee=count args=[] type=Int ref=Counter.count
+expr e@64:5#1 memberCompoundAssign(minusAssign) recv=e@64:5 callee=count value=e@64:12 type=Unit ref=Counter.count[kind=prop]
+expr e@65:12 name(c) type=Counter ref=memberCompoundDec.$7.c[kind=vparam]
+expr e@65:12#1 memberCall recv=e@65:12 callee=count args=[] type=Int ref=Counter.count[kind=prop]
 expr e@65:5 return value=e@65:12#1 type=Nothing

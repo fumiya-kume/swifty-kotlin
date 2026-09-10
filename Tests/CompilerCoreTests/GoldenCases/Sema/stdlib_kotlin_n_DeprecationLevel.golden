@@ -1,5 +1,5 @@
-symbol fq=golden.sema.useDeprecationLevel kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.DeprecationLevel
+symbol fq=golden.sema.useDeprecationLevel[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.DeprecationLevel
 file fstdlib_kotlin_n_DeprecationLevel package=golden.sema
-  decl golden.sema.useDeprecationLevel fun useDeprecationLevel sym=golden.sema.useDeprecationLevel
-expr e@3:47 name(DeprecationLevel) type=kotlin.DeprecationLevel ref=kotlin.DeprecationLevel#0
-expr e@3:47#1 memberCall recv=e@3:47 callee=WARNING args=[] type=kotlin.DeprecationLevel ref=kotlin.DeprecationLevel.WARNING
+  decl golden.sema.useDeprecationLevel[kind=fun;params=] fun useDeprecationLevel sym=golden.sema.useDeprecationLevel[kind=fun;params=]
+expr e@3:47 name(DeprecationLevel) type=kotlin.DeprecationLevel ref=kotlin.DeprecationLevel[kind=enum]
+expr e@3:47#1 memberCall recv=e@3:47 callee=WARNING args=[] type=kotlin.DeprecationLevel ref=kotlin.DeprecationLevel.WARNING[kind=field]

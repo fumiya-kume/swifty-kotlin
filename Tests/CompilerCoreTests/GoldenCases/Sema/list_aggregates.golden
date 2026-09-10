@@ -1,14 +1,14 @@
-symbol fq=aggregate kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=Unit
-symbol fq=aggregate.$0.values kind=valueParameter vis=private flags=_
+symbol fq=aggregate.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=aggregate[kind=fun;params=kotlin.collections.List<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=Unit
 file flist_aggregates package=_
-  decl aggregate fun aggregate sym=aggregate
-expr e@2:5 name(values) type=kotlin.collections.List<Int> ref=aggregate.$0.values
+  decl aggregate[kind=fun;params=kotlin.collections.List<Int>] fun aggregate sym=aggregate[kind=fun;params=kotlin.collections.List<Int>]
+expr e@2:5 name(values) type=kotlin.collections.List<Int> ref=aggregate.$0.values[kind=vparam]
 expr e@2:20 name(it) type=Int ref=s-0
 expr e@2:25 int(2) type=Int
 expr e@2:20#1 binary(multiply) lhs=e@2:20 rhs=e@2:25 type=Int
 expr e@2:18 lambda params=[] body=e@2:20#1 label=sumOf type=(Int) -> Int
-expr e@2:5#1 memberCall recv=e@2:5 callee=sumOf args=[_:e@2:18] type=Int call=kotlin.collections.sumOf#5 targs=[Int]
-expr e@3:5 name(values) type=kotlin.collections.List<Int> ref=aggregate.$0.values
-expr e@3:5#1 memberCall recv=e@3:5 callee=maxOrNull args=[] type=Int? call=kotlin.collections.maxOrNull#3 targs=[Int]
-expr e@4:5 name(values) type=kotlin.collections.List<Int> ref=aggregate.$0.values
-expr e@4:5#1 memberCall recv=e@4:5 callee=minOrNull args=[] type=Int? call=kotlin.collections.minOrNull#0 targs=[Int]
+expr e@2:5#1 memberCall recv=e@2:5 callee=sumOf args=[_:e@2:18] type=Int call=kotlin.collections.sumOf[kind=fun;recv=kotlin.collections.List<T0>;params=fn{p=T0;ret=Int};gen=1] targs=[Int]
+expr e@3:5 name(values) type=kotlin.collections.List<Int> ref=aggregate.$0.values[kind=vparam]
+expr e@3:5#1 memberCall recv=e@3:5 callee=maxOrNull args=[] type=Int? call=kotlin.collections.maxOrNull[kind=fun;recv=kotlin.collections.List<T0>;params=;gen=1] targs=[Int]
+expr e@4:5 name(values) type=kotlin.collections.List<Int> ref=aggregate.$0.values[kind=vparam]
+expr e@4:5#1 memberCall recv=e@4:5 callee=minOrNull args=[] type=Int? call=kotlin.collections.minOrNull[kind=fun;recv=kotlin.collections.List<T0>;params=;gen=1] targs=[Int]

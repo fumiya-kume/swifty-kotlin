@@ -1,26 +1,26 @@
-symbol fq=__local_0.p kind=local vis=private flags=_ type=golden.sema.Producer<Any>
-symbol fq=__local_1.c kind=local vis=private flags=_ type=golden.sema.Consumer<Int>
-symbol fq=golden.sema.BadConsumer kind=class vis=public flags=_
-symbol fq=golden.sema.BadProducer kind=class vis=public flags=_
-symbol fq=golden.sema.Consumer kind=class vis=public flags=_
-symbol fq=golden.sema.Consumer.$class0.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.Consumer.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.Consumer<golden.sema.Consumer.$class0.T> params=[] ret=golden.sema.Consumer<golden.sema.Consumer.$class0.T>
-symbol fq=golden.sema.Producer kind=class vis=public flags=_
-symbol fq=golden.sema.Producer.$class1.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.Producer.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.Producer<golden.sema.Producer.$class1.T> params=[golden.sema.Producer.$class1.T] ret=golden.sema.Producer<golden.sema.Producer.$class1.T>
-symbol fq=golden.sema.Producer.<init>.$0.item kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.validVariance kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.p[kind=local] kind=local vis=private flags=_ type=golden.sema.Producer<Any>
+symbol fq=__local_1.c[kind=local] kind=local vis=private flags=_ type=golden.sema.Consumer<Int>
+symbol fq=golden.sema.BadConsumer[kind=class;gen=1] kind=class vis=public flags=_
+symbol fq=golden.sema.BadProducer[kind=class;gen=1] kind=class vis=public flags=_
+symbol fq=golden.sema.Consumer.$class0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.Consumer.<init>[kind=ctor;recv=golden.sema.Consumer<T0>;params=;gen=1] kind=constructor vis=public flags=_ sig=recv=golden.sema.Consumer<golden.sema.Consumer.$class0.T> params=[] ret=golden.sema.Consumer<golden.sema.Consumer.$class0.T>
+symbol fq=golden.sema.Consumer[kind=class;gen=1] kind=class vis=public flags=_
+symbol fq=golden.sema.Producer.$class1.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.Producer.<init>.$0.item[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Producer.<init>[kind=ctor;recv=golden.sema.Producer<T0>;params=T0;gen=1] kind=constructor vis=public flags=_ sig=recv=golden.sema.Producer<golden.sema.Producer.$class1.T> params=[golden.sema.Producer.$class1.T] ret=golden.sema.Producer<golden.sema.Producer.$class1.T>
+symbol fq=golden.sema.Producer[kind=class;gen=1] kind=class vis=public flags=_
+symbol fq=golden.sema.validVariance[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fvariance_violation package=golden.sema
-  decl golden.sema.Producer class Producer sym=golden.sema.Producer
-  decl golden.sema.Consumer class Consumer sym=golden.sema.Consumer
-  decl golden.sema.validVariance fun validVariance sym=golden.sema.validVariance
-  decl golden.sema.BadProducer class BadProducer sym=golden.sema.BadProducer
-  decl golden.sema.BadConsumer class BadConsumer sym=golden.sema.BadConsumer
+  decl golden.sema.Producer[kind=class;gen=1] class Producer sym=golden.sema.Producer[kind=class;gen=1]
+  decl golden.sema.Consumer[kind=class;gen=1] class Consumer sym=golden.sema.Consumer[kind=class;gen=1]
+  decl golden.sema.validVariance[kind=fun;params=] fun validVariance sym=golden.sema.validVariance[kind=fun;params=]
+  decl golden.sema.BadProducer[kind=class;gen=1] class BadProducer sym=golden.sema.BadProducer[kind=class;gen=1]
+  decl golden.sema.BadConsumer[kind=class;gen=1] class BadConsumer sym=golden.sema.BadConsumer[kind=class;gen=1]
 expr e@11:37 int(42) type=Int
-expr e@11:28 call callee=e@11:28#1 args=[_:e@11:37] type=golden.sema.Producer<Int> call=golden.sema.Producer.<init> targs=[Int]
-expr e@11:5 localDecl p mutable=0 type=Producer<Any> init=e@11:28 type=Unit ref=__local_0.p
-expr e@12:28 call callee=e@12:28#1 args=[] type=golden.sema.Consumer<kotlin.Number> call=golden.sema.Consumer.<init> targs=[kotlin.Number]
-expr e@12:5 localDecl c mutable=0 type=Consumer<Int> init=e@12:28 type=Unit ref=__local_1.c
+expr e@11:28 call callee=e@11:28#1 args=[_:e@11:37] type=golden.sema.Producer<Int> call=golden.sema.Producer.<init>[kind=ctor;recv=golden.sema.Producer<T0>;params=T0;gen=1] targs=[Int]
+expr e@11:5 localDecl p mutable=0 type=Producer<Any> init=e@11:28 type=Unit ref=__local_0.p[kind=local]
+expr e@12:28 call callee=e@12:28#1 args=[] type=golden.sema.Consumer<kotlin.Number> call=golden.sema.Consumer.<init>[kind=ctor;recv=golden.sema.Consumer<T0>;params=;gen=1] targs=[kotlin.Number]
+expr e@12:5 localDecl c mutable=0 type=Consumer<Int> init=e@12:28 type=Unit ref=__local_1.c[kind=local]
 expr e@22:25 name(null) type=Nothing?
 diagnostic severity=error code=KSWIFTK-SEMA-VARIANCE at=17:5 msg=Type parameter T is declared as 'out' but occurs in 'in' position
 diagnostic severity=error code=KSWIFTK-SEMA-VARIANCE at=22:5 msg=Type parameter T is declared as 'in' but occurs in 'out' position

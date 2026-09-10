@@ -1,47 +1,47 @@
-symbol fq=__local_0.adder kind=local vis=private flags=_ type=golden.sema.Adder
-symbol fq=__local_1.localResult kind=local vis=private flags=_ type=Int
-symbol fq=__local_2.topLevelResult kind=local vis=private flags=_ type=Int
-symbol fq=__local_3.objectResult kind=local vis=private flags=_ type=Int
-symbol fq=__local_4.exprResult kind=local vis=private flags=_ type=Int
-symbol fq=golden.sema.Adder kind=class vis=public flags=_
-symbol fq=golden.sema.Adder.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.Adder params=[] ret=golden.sema.Adder
-symbol fq=golden.sema.Adder.invoke kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Adder params=[Int] ret=Int
-symbol fq=golden.sema.Adder.invoke.$0.x kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Incrementer kind=object vis=public flags=_
-symbol fq=golden.sema.Incrementer.invoke kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Incrementer params=[Int] ret=Int
-symbol fq=golden.sema.Incrementer.invoke.$1.x kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.globalAdder kind=property vis=public flags=_ type=golden.sema.Adder
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.makeAdder kind=function vis=public flags=_ sig=recv=_ params=[] ret=golden.sema.Adder
+symbol fq=__local_0.adder[kind=local] kind=local vis=private flags=_ type=golden.sema.Adder
+symbol fq=__local_1.localResult[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.topLevelResult[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_3.objectResult[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_4.exprResult[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=golden.sema.Adder.<init>[kind=ctor;recv=golden.sema.Adder;params=] kind=constructor vis=public flags=_ sig=recv=golden.sema.Adder params=[] ret=golden.sema.Adder
+symbol fq=golden.sema.Adder.invoke.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Adder.invoke[kind=fun;recv=golden.sema.Adder;params=Int] kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Adder params=[Int] ret=Int
+symbol fq=golden.sema.Adder[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.Incrementer.invoke.$1.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Incrementer.invoke[kind=fun;recv=golden.sema.Incrementer;params=Int] kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Incrementer params=[Int] ret=Int
+symbol fq=golden.sema.Incrementer[kind=obj] kind=object vis=public flags=_
+symbol fq=golden.sema.globalAdder[kind=prop] kind=property vis=public flags=_ type=golden.sema.Adder
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.makeAdder[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=golden.sema.Adder
 file finvoke_operator package=golden.sema
-  decl golden.sema.Adder class Adder sym=golden.sema.Adder
-  decl golden.sema.globalAdder property globalAdder var=0 sym=golden.sema.globalAdder
-  decl golden.sema.Incrementer object Incrementer sym=golden.sema.Incrementer
-  decl golden.sema.makeAdder fun makeAdder sym=golden.sema.makeAdder
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@4:40 name(x) type=Int ref=golden.sema.Adder.invoke.$0.x
+  decl golden.sema.Adder[kind=class] class Adder sym=golden.sema.Adder[kind=class]
+  decl golden.sema.globalAdder[kind=prop] property globalAdder var=0 sym=golden.sema.globalAdder[kind=prop]
+  decl golden.sema.Incrementer[kind=obj] object Incrementer sym=golden.sema.Incrementer[kind=obj]
+  decl golden.sema.makeAdder[kind=fun;params=] fun makeAdder sym=golden.sema.makeAdder[kind=fun;params=]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@4:40 name(x) type=Int ref=golden.sema.Adder.invoke.$0.x[kind=vparam]
 expr e@4:44 int(1) type=Int
 expr e@4:40#1 binary(add) lhs=e@4:40 rhs=e@4:44 type=Int
-expr e@7:26 call callee=e@7:26#1 args=[] type=golden.sema.Adder call=golden.sema.Adder.<init>
-expr e@10:40 name(x) type=Int ref=golden.sema.Incrementer.invoke.$1.x
+expr e@7:26 call callee=e@7:26#1 args=[] type=golden.sema.Adder call=golden.sema.Adder.<init>[kind=ctor;recv=golden.sema.Adder;params=]
+expr e@10:40 name(x) type=Int ref=golden.sema.Incrementer.invoke.$1.x[kind=vparam]
 expr e@10:44 int(2) type=Int
 expr e@10:40#1 binary(add) lhs=e@10:40 rhs=e@10:44 type=Int
-expr e@13:26 call callee=e@13:26#1 args=[] type=golden.sema.Adder call=golden.sema.Adder.<init>
-expr e@16:17 call callee=e@16:17#1 args=[] type=golden.sema.Adder call=golden.sema.Adder.<init>
-expr e@16:5 localDecl adder mutable=0 type=_ init=e@16:17 type=Unit ref=__local_0.adder
-expr e@17:28 name(adder) type=golden.sema.Adder ref=__local_0.adder
+expr e@13:26 call callee=e@13:26#1 args=[] type=golden.sema.Adder call=golden.sema.Adder.<init>[kind=ctor;recv=golden.sema.Adder;params=]
+expr e@16:17 call callee=e@16:17#1 args=[] type=golden.sema.Adder call=golden.sema.Adder.<init>[kind=ctor;recv=golden.sema.Adder;params=]
+expr e@16:5 localDecl adder mutable=0 type=_ init=e@16:17 type=Unit ref=__local_0.adder[kind=local]
+expr e@17:28 name(adder) type=golden.sema.Adder ref=__local_0.adder[kind=local]
 expr e@17:34 int(5) type=Int
-expr e@17:28#1 call callee=e@17:28 args=[_:e@17:34] type=Int call=golden.sema.Adder.invoke
-expr e@17:5 localDecl localResult mutable=0 type=Int init=e@17:28#1 type=Unit ref=__local_1.localResult
-expr e@18:31 name(globalAdder) type=golden.sema.Adder ref=golden.sema.globalAdder
+expr e@17:28#1 call callee=e@17:28 args=[_:e@17:34] type=Int call=golden.sema.Adder.invoke[kind=fun;recv=golden.sema.Adder;params=Int]
+expr e@17:5 localDecl localResult mutable=0 type=Int init=e@17:28#1 type=Unit ref=__local_1.localResult[kind=local]
+expr e@18:31 name(globalAdder) type=golden.sema.Adder ref=golden.sema.globalAdder[kind=prop]
 expr e@18:43 int(6) type=Int
-expr e@18:31#1 call callee=e@18:31 args=[_:e@18:43] type=Int call=golden.sema.Adder.invoke
-expr e@18:5 localDecl topLevelResult mutable=0 type=Int init=e@18:31#1 type=Unit ref=__local_2.topLevelResult
-expr e@19:29 name(Incrementer) type=golden.sema.Incrementer ref=golden.sema.Incrementer
+expr e@18:31#1 call callee=e@18:31 args=[_:e@18:43] type=Int call=golden.sema.Adder.invoke[kind=fun;recv=golden.sema.Adder;params=Int]
+expr e@18:5 localDecl topLevelResult mutable=0 type=Int init=e@18:31#1 type=Unit ref=__local_2.topLevelResult[kind=local]
+expr e@19:29 name(Incrementer) type=golden.sema.Incrementer ref=golden.sema.Incrementer[kind=obj]
 expr e@19:41 int(7) type=Int
-expr e@19:29#1 call callee=e@19:29 args=[_:e@19:41] type=Int call=golden.sema.Incrementer.invoke
-expr e@19:5 localDecl objectResult mutable=0 type=Int init=e@19:29#1 type=Unit ref=__local_3.objectResult
-expr e@20:27 call callee=e@20:27#1 args=[] type=golden.sema.Adder call=golden.sema.makeAdder
+expr e@19:29#1 call callee=e@19:29 args=[_:e@19:41] type=Int call=golden.sema.Incrementer.invoke[kind=fun;recv=golden.sema.Incrementer;params=Int]
+expr e@19:5 localDecl objectResult mutable=0 type=Int init=e@19:29#1 type=Unit ref=__local_3.objectResult[kind=local]
+expr e@20:27 call callee=e@20:27#1 args=[] type=golden.sema.Adder call=golden.sema.makeAdder[kind=fun;params=]
 expr e@20:39 int(8) type=Int
-expr e@20:27#2 call callee=e@20:27 args=[_:e@20:39] type=Int call=golden.sema.Adder.invoke
-expr e@20:5 localDecl exprResult mutable=0 type=Int init=e@20:27#2 type=Unit ref=__local_4.exprResult
+expr e@20:27#2 call callee=e@20:27 args=[_:e@20:39] type=Int call=golden.sema.Adder.invoke[kind=fun;recv=golden.sema.Adder;params=Int]
+expr e@20:5 localDecl exprResult mutable=0 type=Int init=e@20:27#2 type=Unit ref=__local_4.exprResult[kind=local]

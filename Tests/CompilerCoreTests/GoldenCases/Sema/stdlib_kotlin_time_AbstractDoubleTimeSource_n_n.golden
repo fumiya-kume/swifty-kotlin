@@ -1,5 +1,5 @@
-symbol fq=Probe kind=class vis=public flags=abstractType|openType
+symbol fq=Probe[kind=class] kind=class vis=public flags=abstractType|openType
 file fstdlib_kotlin_time_AbstractDoubleTimeSource_n_n package=_ annotations=[@file:Suppress("DEPRECATION","DEPRECATION_ERROR")]
-  decl Probe class Probe sym=Probe
-expr e@8:49 name(DurationUnit) type=kotlin.time.DurationUnit ref=kotlin.time.DurationUnit#0
-expr e@8:49#1 memberCall recv=e@8:49 callee=MILLISECONDS args=[] type=kotlin.time.DurationUnit ref=kotlin.time.DurationUnit.MILLISECONDS
+  decl Probe[kind=class] class Probe sym=Probe[kind=class]
+expr e@8:49 name(DurationUnit) type=kotlin.time.DurationUnit ref=kotlin.time.DurationUnit[kind=enum]
+expr e@8:49#1 memberCall recv=e@8:49 callee=MILLISECONDS args=[] type=kotlin.time.DurationUnit ref=kotlin.time.DurationUnit.MILLISECONDS[kind=field]

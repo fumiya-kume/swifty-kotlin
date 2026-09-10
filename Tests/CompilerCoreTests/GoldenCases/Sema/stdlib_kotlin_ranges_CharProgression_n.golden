@@ -1,21 +1,21 @@
-symbol fq=charProgressionFirst kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.CharProgression] ret=Char
-symbol fq=charProgressionFirst.$0.progression kind=valueParameter vis=private flags=_
-symbol fq=charProgressionFirstOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.CharProgression] ret=Char?
-symbol fq=charProgressionFirstOrNull.$1.progression kind=valueParameter vis=private flags=_
-symbol fq=charProgressionLast kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.CharProgression] ret=Char
-symbol fq=charProgressionLast.$2.progression kind=valueParameter vis=private flags=_
-symbol fq=charProgressionLastOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.CharProgression] ret=Char?
-symbol fq=charProgressionLastOrNull.$3.progression kind=valueParameter vis=private flags=_
+symbol fq=charProgressionFirst.$0.progression[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=charProgressionFirstOrNull.$1.progression[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=charProgressionFirstOrNull[kind=fun;params=kotlin.ranges.CharProgression] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.CharProgression] ret=Char?
+symbol fq=charProgressionFirst[kind=fun;params=kotlin.ranges.CharProgression] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.CharProgression] ret=Char
+symbol fq=charProgressionLast.$2.progression[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=charProgressionLastOrNull.$3.progression[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=charProgressionLastOrNull[kind=fun;params=kotlin.ranges.CharProgression] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.CharProgression] ret=Char?
+symbol fq=charProgressionLast[kind=fun;params=kotlin.ranges.CharProgression] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.CharProgression] ret=Char
 file fstdlib_kotlin_ranges_CharProgression_n package=_
-  decl charProgressionFirst fun charProgressionFirst sym=charProgressionFirst
-  decl charProgressionFirstOrNull fun charProgressionFirstOrNull sym=charProgressionFirstOrNull
-  decl charProgressionLast fun charProgressionLast sym=charProgressionLast
-  decl charProgressionLastOrNull fun charProgressionLastOrNull sym=charProgressionLastOrNull
-expr e@1:64 name(progression) type=kotlin.ranges.CharProgression ref=charProgressionFirst.$0.progression
-expr e@1:64#1 memberCall recv=e@1:64 callee=first args=[] type=Char call=kotlin.ranges.first#0
-expr e@3:71 name(progression) type=kotlin.ranges.CharProgression ref=charProgressionFirstOrNull.$1.progression
-expr e@3:71#1 memberCall recv=e@3:71 callee=firstOrNull args=[] type=Char? call=kotlin.ranges.firstOrNull#0
-expr e@5:63 name(progression) type=kotlin.ranges.CharProgression ref=charProgressionLast.$2.progression
-expr e@5:63#1 memberCall recv=e@5:63 callee=last args=[] type=Char call=kotlin.ranges.last#0
-expr e@7:70 name(progression) type=kotlin.ranges.CharProgression ref=charProgressionLastOrNull.$3.progression
-expr e@7:70#1 memberCall recv=e@7:70 callee=lastOrNull args=[] type=Char? call=kotlin.ranges.lastOrNull#0
+  decl charProgressionFirst[kind=fun;params=kotlin.ranges.CharProgression] fun charProgressionFirst sym=charProgressionFirst[kind=fun;params=kotlin.ranges.CharProgression]
+  decl charProgressionFirstOrNull[kind=fun;params=kotlin.ranges.CharProgression] fun charProgressionFirstOrNull sym=charProgressionFirstOrNull[kind=fun;params=kotlin.ranges.CharProgression]
+  decl charProgressionLast[kind=fun;params=kotlin.ranges.CharProgression] fun charProgressionLast sym=charProgressionLast[kind=fun;params=kotlin.ranges.CharProgression]
+  decl charProgressionLastOrNull[kind=fun;params=kotlin.ranges.CharProgression] fun charProgressionLastOrNull sym=charProgressionLastOrNull[kind=fun;params=kotlin.ranges.CharProgression]
+expr e@1:64 name(progression) type=kotlin.ranges.CharProgression ref=charProgressionFirst.$0.progression[kind=vparam]
+expr e@1:64#1 memberCall recv=e@1:64 callee=first args=[] type=Char call=kotlin.ranges.first[kind=fun;recv=kotlin.ranges.CharProgression;params=]
+expr e@3:71 name(progression) type=kotlin.ranges.CharProgression ref=charProgressionFirstOrNull.$1.progression[kind=vparam]
+expr e@3:71#1 memberCall recv=e@3:71 callee=firstOrNull args=[] type=Char? call=kotlin.ranges.firstOrNull[kind=fun;recv=kotlin.ranges.CharProgression;params=]
+expr e@5:63 name(progression) type=kotlin.ranges.CharProgression ref=charProgressionLast.$2.progression[kind=vparam]
+expr e@5:63#1 memberCall recv=e@5:63 callee=last args=[] type=Char call=kotlin.ranges.last[kind=fun;recv=kotlin.ranges.CharProgression;params=]
+expr e@7:70 name(progression) type=kotlin.ranges.CharProgression ref=charProgressionLastOrNull.$3.progression[kind=vparam]
+expr e@7:70#1 memberCall recv=e@7:70 callee=lastOrNull args=[] type=Char? call=kotlin.ranges.lastOrNull[kind=fun;recv=kotlin.ranges.CharProgression;params=]

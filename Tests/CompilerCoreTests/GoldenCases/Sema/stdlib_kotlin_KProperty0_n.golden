@@ -1,29 +1,29 @@
-symbol fq=__local_0.property kind=local vis=private flags=_ type=kotlin.reflect.KProperty0<Int>
-symbol fq=delegatedValue kind=property vis=public flags=_ type=Int
-symbol fq=lateinitValue kind=property vis=public flags=mutable type=String
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=sourceValue kind=property vis=public flags=mutable type=Int
+symbol fq=__local_0.property[kind=local] kind=local vis=private flags=_ type=kotlin.reflect.KProperty0<Int>
+symbol fq=delegatedValue[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=lateinitValue[kind=prop] kind=property vis=public flags=mutable type=String
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=sourceValue[kind=prop] kind=property vis=public flags=mutable type=Int
 file fstdlib_kotlin_KProperty0_n package=_
-  decl sourceValue property sourceValue var=1 sym=sourceValue
-  decl delegatedValue property delegatedValue var=0 sym=delegatedValue
-  decl lateinitValue property lateinitValue var=1 sym=lateinitValue
-  decl main fun main sym=main
+  decl sourceValue[kind=prop] property sourceValue var=1 sym=sourceValue[kind=prop]
+  decl delegatedValue[kind=prop] property delegatedValue var=0 sym=delegatedValue[kind=prop]
+  decl lateinitValue[kind=prop] property lateinitValue var=1 sym=lateinitValue[kind=prop]
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@3:24 int(7) type=Int
-expr e@4:23 callableRef recv=_ member=sourceValue type=kotlin.reflect.KMutableProperty0<Int> ref=sourceValue
-expr e@8:37 callableRef recv=_ member=sourceValue type=kotlin.reflect.KProperty0<Int> ref=sourceValue
-expr e@8:5 localDecl property mutable=0 type=KProperty0<Int> init=e@8:37 type=Unit ref=__local_0.property
-expr e@9:13 name(property) type=kotlin.reflect.KProperty0<Int> ref=__local_0.property
+expr e@4:23 callableRef recv=_ member=sourceValue type=kotlin.reflect.KMutableProperty0<Int> ref=sourceValue[kind=prop]
+expr e@8:37 callableRef recv=_ member=sourceValue type=kotlin.reflect.KProperty0<Int> ref=sourceValue[kind=prop]
+expr e@8:5 localDecl property mutable=0 type=KProperty0<Int> init=e@8:37 type=Unit ref=__local_0.property[kind=local]
+expr e@9:13 name(property) type=kotlin.reflect.KProperty0<Int> ref=__local_0.property[kind=local]
 expr e@9:31 name(null) type=Nothing?
-expr e@9:37 name(property) type=kotlin.reflect.KProperty0<Int> ref=__local_0.property
-expr e@9:13#1 memberCall recv=e@9:13 callee=getValue args=[_:e@9:31,_:e@9:37] type=Int call=kotlin.getValue#0 targs=[Int]
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#1
-expr e@10:13 name(delegatedValue) type=Int ref=delegatedValue
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println#1
-expr e@11:13 callableRef recv=_ member=lateinitValue type=kotlin.reflect.KMutableProperty0<String> ref=lateinitValue
-expr e@11:13#1 memberCall recv=e@11:13 callee=isInitialized args=[] type=Boolean ref=kotlin.isInitialized
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#1
+expr e@9:37 name(property) type=kotlin.reflect.KProperty0<Int> ref=__local_0.property[kind=local]
+expr e@9:13#1 memberCall recv=e@9:13 callee=getValue args=[_:e@9:31,_:e@9:37] type=Int call=kotlin.getValue[kind=fun;recv=kotlin.reflect.KProperty0<T0>;params=Any?,kotlin.reflect.KProperty<*>;gen=1] targs=[Int]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@10:13 name(delegatedValue) type=Int ref=delegatedValue[kind=prop]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@11:13 callableRef recv=_ member=lateinitValue type=kotlin.reflect.KMutableProperty0<String> ref=lateinitValue[kind=prop]
+expr e@11:13#1 memberCall recv=e@11:13 callee=isInitialized args=[] type=Boolean ref=kotlin.isInitialized[kind=prop]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@12:21 string(ready) type=String
-expr e@12:5 localAssign lateinitValue value=e@12:21 type=Unit ref=lateinitValue
-expr e@13:13 callableRef recv=_ member=lateinitValue type=kotlin.reflect.KMutableProperty0<String> ref=lateinitValue
-expr e@13:13#1 memberCall recv=e@13:13 callee=isInitialized args=[] type=Boolean ref=kotlin.isInitialized
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println#1
+expr e@12:5 localAssign lateinitValue value=e@12:21 type=Unit ref=lateinitValue[kind=prop]
+expr e@13:13 callableRef recv=_ member=lateinitValue type=kotlin.reflect.KMutableProperty0<String> ref=lateinitValue[kind=prop]
+expr e@13:13#1 memberCall recv=e@13:13 callee=isInitialized args=[] type=Boolean ref=kotlin.isInitialized[kind=prop]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

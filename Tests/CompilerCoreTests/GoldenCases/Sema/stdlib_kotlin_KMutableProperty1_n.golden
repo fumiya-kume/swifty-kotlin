@@ -1,15 +1,15 @@
-symbol fq=golden.sema.Counter kind=class vis=public flags=_
-symbol fq=golden.sema.assign kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KMutableProperty1<golden.sema.assign.$0.T, golden.sema.assign.$0.V>,golden.sema.assign.$0.T,golden.sema.assign.$0.V] ret=Unit
-symbol fq=golden.sema.assign.$0.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.assign.$0.V kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.assign.$0.property kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.assign.$0.receiver kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.assign.$0.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Counter[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.assign.$0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.assign.$0.V[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.assign.$0.property[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.assign.$0.receiver[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.assign.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.assign[kind=fun;params=kotlin.reflect.KMutableProperty1<T0,T1>,T0,T1;gen=2] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KMutableProperty1<golden.sema.assign.$0.T, golden.sema.assign.$0.V>,golden.sema.assign.$0.T,golden.sema.assign.$0.V] ret=Unit
 file fstdlib_kotlin_KMutableProperty1_n package=golden.sema
-  decl golden.sema.Counter class Counter sym=golden.sema.Counter
-  decl golden.sema.assign fun assign sym=golden.sema.assign
-expr e@8:5 name(property) type=kotlin.reflect.KMutableProperty1<golden.sema.assign.$0.T, golden.sema.assign.$0.V> ref=golden.sema.assign.$0.property
-expr e@8:23 name(receiver) type=golden.sema.assign.$0.T ref=golden.sema.assign.$0.receiver
-expr e@8:33 name(property) type=kotlin.reflect.KMutableProperty1<golden.sema.assign.$0.T, golden.sema.assign.$0.V> ref=golden.sema.assign.$0.property
-expr e@8:43 name(value) type=golden.sema.assign.$0.V ref=golden.sema.assign.$0.value
-expr e@8:5#1 memberCall recv=e@8:5 callee=setValue args=[_:e@8:23,_:e@8:33,_:e@8:43] type=Unit call=kotlin.setValue#1 targs=[golden.sema.assign.$0.T,golden.sema.assign.$0.V]
+  decl golden.sema.Counter[kind=class] class Counter sym=golden.sema.Counter[kind=class]
+  decl golden.sema.assign[kind=fun;params=kotlin.reflect.KMutableProperty1<T0,T1>,T0,T1;gen=2] fun assign sym=golden.sema.assign[kind=fun;params=kotlin.reflect.KMutableProperty1<T0,T1>,T0,T1;gen=2]
+expr e@8:5 name(property) type=kotlin.reflect.KMutableProperty1<golden.sema.assign.$0.T, golden.sema.assign.$0.V> ref=golden.sema.assign.$0.property[kind=vparam]
+expr e@8:23 name(receiver) type=golden.sema.assign.$0.T ref=golden.sema.assign.$0.receiver[kind=vparam]
+expr e@8:33 name(property) type=kotlin.reflect.KMutableProperty1<golden.sema.assign.$0.T, golden.sema.assign.$0.V> ref=golden.sema.assign.$0.property[kind=vparam]
+expr e@8:43 name(value) type=golden.sema.assign.$0.V ref=golden.sema.assign.$0.value[kind=vparam]
+expr e@8:5#1 memberCall recv=e@8:5 callee=setValue args=[_:e@8:23,_:e@8:33,_:e@8:43] type=Unit call=kotlin.setValue[kind=fun;recv=kotlin.reflect.KMutableProperty1<T0,T1>;params=T0,kotlin.reflect.KProperty<*>,T1;gen=2] targs=[golden.sema.assign.$0.T,golden.sema.assign.$0.V]

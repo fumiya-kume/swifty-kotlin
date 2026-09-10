@@ -1,15 +1,15 @@
-symbol fq=golden.sema.makeNullablePair kind=function vis=public flags=_ sig=recv=_ params=[String?,Int?] ret=kotlin.Pair<String?, Int?>
-symbol fq=golden.sema.makeNullablePair.$0.first kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.makeNullablePair.$0.second kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.makePair kind=function vis=public flags=_ sig=recv=_ params=[Int,String] ret=kotlin.Pair<Int, String>
-symbol fq=golden.sema.makePair.$1.first kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.makePair.$1.second kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeNullablePair.$0.first[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeNullablePair.$0.second[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeNullablePair[kind=fun;params=String?,Int?] kind=function vis=public flags=_ sig=recv=_ params=[String?,Int?] ret=kotlin.Pair<String?, Int?>
+symbol fq=golden.sema.makePair.$1.first[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makePair.$1.second[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makePair[kind=fun;params=Int,String] kind=function vis=public flags=_ sig=recv=_ params=[Int,String] ret=kotlin.Pair<Int, String>
 file fstdlib_kotlin_Pair_n_n package=golden.sema
-  decl golden.sema.makePair fun makePair sym=golden.sema.makePair
-  decl golden.sema.makeNullablePair fun makeNullablePair sym=golden.sema.makeNullablePair
-expr e@3:68 name(first) type=Int ref=golden.sema.makePair.$1.first
-expr e@3:75 name(second) type=String ref=golden.sema.makePair.$1.second
-expr e@3:63 call callee=e@3:63#1 args=[_:e@3:68,_:e@3:75] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init> targs=[Int,String]
-expr e@5:80 name(first) type=String? ref=golden.sema.makeNullablePair.$0.first
-expr e@5:87 name(second) type=Int? ref=golden.sema.makeNullablePair.$0.second
-expr e@5:75 call callee=e@5:75#1 args=[_:e@5:80,_:e@5:87] type=kotlin.Pair<String?, Int?> call=kotlin.Pair.<init> targs=[String?,Int?]
+  decl golden.sema.makePair[kind=fun;params=Int,String] fun makePair sym=golden.sema.makePair[kind=fun;params=Int,String]
+  decl golden.sema.makeNullablePair[kind=fun;params=String?,Int?] fun makeNullablePair sym=golden.sema.makeNullablePair[kind=fun;params=String?,Int?]
+expr e@3:68 name(first) type=Int ref=golden.sema.makePair.$1.first[kind=vparam]
+expr e@3:75 name(second) type=String ref=golden.sema.makePair.$1.second[kind=vparam]
+expr e@3:63 call callee=e@3:63#1 args=[_:e@3:68,_:e@3:75] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init>[kind=ctor;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[Int,String]
+expr e@5:80 name(first) type=String? ref=golden.sema.makeNullablePair.$0.first[kind=vparam]
+expr e@5:87 name(second) type=Int? ref=golden.sema.makeNullablePair.$0.second[kind=vparam]
+expr e@5:75 call callee=e@5:75#1 args=[_:e@5:80,_:e@5:87] type=kotlin.Pair<String?, Int?> call=kotlin.Pair.<init>[kind=ctor;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[String?,Int?]

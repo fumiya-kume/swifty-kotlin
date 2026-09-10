@@ -1,50 +1,50 @@
-symbol fq=__local_0.pair kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
-symbol fq=__local_1.copied kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
-symbol fq=__local_2.firstChanged kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
-symbol fq=__local_3.secondChanged kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
-symbol fq=__local_4.bothChanged kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
-symbol fq=golden.sema.exercisePairMembers kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<Int, String>
+symbol fq=__local_0.pair[kind=local] kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
+symbol fq=__local_1.copied[kind=local] kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
+symbol fq=__local_2.firstChanged[kind=local] kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
+symbol fq=__local_3.secondChanged[kind=local] kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
+symbol fq=__local_4.bothChanged[kind=local] kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
+symbol fq=golden.sema.exercisePairMembers[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<Int, String>
 file fstdlib_kotlin_Pair_Pair_n package=golden.sema
-  decl golden.sema.exercisePairMembers fun exercisePairMembers sym=golden.sema.exercisePairMembers
+  decl golden.sema.exercisePairMembers[kind=fun;params=] fun exercisePairMembers sym=golden.sema.exercisePairMembers[kind=fun;params=]
 expr e@4:21 int(1) type=Int
 expr e@4:24 string(one) type=String
-expr e@4:16 call callee=e@4:16#1 args=[_:e@4:21,_:e@4:24] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init> targs=[Int,String]
-expr e@4:5 localDecl pair mutable=0 type=_ init=e@4:16 type=Unit ref=__local_0.pair
-expr e@5:18 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair
-expr e@5:18#1 memberCall recv=e@5:18 callee=copy args=[] type=kotlin.Pair<Int, String> call=kotlin.copy#0 targs=[Int,String]
-expr e@5:5 localDecl copied mutable=0 type=_ init=e@5:18#1 type=Unit ref=__local_1.copied
-expr e@6:24 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair
+expr e@4:16 call callee=e@4:16#1 args=[_:e@4:21,_:e@4:24] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init>[kind=ctor;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[Int,String]
+expr e@4:5 localDecl pair mutable=0 type=_ init=e@4:16 type=Unit ref=__local_0.pair[kind=local]
+expr e@5:18 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair[kind=local]
+expr e@5:18#1 memberCall recv=e@5:18 callee=copy args=[] type=kotlin.Pair<Int, String> call=kotlin.copy[kind=fun;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[Int,String]
+expr e@5:5 localDecl copied mutable=0 type=_ init=e@5:18#1 type=Unit ref=__local_1.copied[kind=local]
+expr e@6:24 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair[kind=local]
 expr e@6:42 int(2) type=Int
-expr e@6:24#1 memberCall recv=e@6:24 callee=copy args=[first:e@6:42] type=kotlin.Pair<Int, String> call=kotlin.copy#0 targs=[Int,String]
-expr e@6:5 localDecl firstChanged mutable=0 type=_ init=e@6:24#1 type=Unit ref=__local_2.firstChanged
-expr e@7:25 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair
+expr e@6:24#1 memberCall recv=e@6:24 callee=copy args=[first:e@6:42] type=kotlin.Pair<Int, String> call=kotlin.copy[kind=fun;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[Int,String]
+expr e@6:5 localDecl firstChanged mutable=0 type=_ init=e@6:24#1 type=Unit ref=__local_2.firstChanged[kind=local]
+expr e@7:25 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair[kind=local]
 expr e@7:44 string(two) type=String
-expr e@7:25#1 memberCall recv=e@7:25 callee=copy args=[second:e@7:44] type=kotlin.Pair<Int, String> call=kotlin.copy#0 targs=[Int,String]
-expr e@7:5 localDecl secondChanged mutable=0 type=_ init=e@7:25#1 type=Unit ref=__local_3.secondChanged
-expr e@8:23 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair
+expr e@7:25#1 memberCall recv=e@7:25 callee=copy args=[second:e@7:44] type=kotlin.Pair<Int, String> call=kotlin.copy[kind=fun;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[Int,String]
+expr e@7:5 localDecl secondChanged mutable=0 type=_ init=e@7:25#1 type=Unit ref=__local_3.secondChanged[kind=local]
+expr e@8:23 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair[kind=local]
 expr e@8:33 int(3) type=Int
 expr e@8:36 string(three) type=String
-expr e@8:23#1 memberCall recv=e@8:23 callee=copy args=[_:e@8:33,_:e@8:36] type=kotlin.Pair<Int, String> call=kotlin.copy#0 targs=[Int,String]
-expr e@8:5 localDecl bothChanged mutable=0 type=_ init=e@8:23#1 type=Unit ref=__local_4.bothChanged
-expr e@10:13 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair
-expr e@10:13#1 memberCall recv=e@10:13 callee=first args=[] type=Int ref=kotlin.Pair.first
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#1
-expr e@11:13 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair
-expr e@11:13#1 memberCall recv=e@11:13 callee=second args=[] type=String ref=kotlin.Pair.second
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#2
-expr e@12:13 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair
-expr e@12:13#1 memberCall recv=e@12:13 callee=component1 args=[] type=Int call=kotlin.Pair.component1 targs=[Int,String]
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
-expr e@13:13 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair
-expr e@13:13#1 memberCall recv=e@13:13 callee=component2 args=[] type=String call=kotlin.Pair.component2 targs=[Int,String]
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println#2
-expr e@14:13 name(copied) type=kotlin.Pair<Int, String> ref=__local_1.copied
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13] type=Unit call=kotlin.io.println#1
-expr e@15:13 name(firstChanged) type=kotlin.Pair<Int, String> ref=__local_2.firstChanged
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13] type=Unit call=kotlin.io.println#1
-expr e@16:13 name(secondChanged) type=kotlin.Pair<Int, String> ref=__local_3.secondChanged
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13] type=Unit call=kotlin.io.println#1
-expr e@17:13 name(bothChanged) type=kotlin.Pair<Int, String> ref=__local_4.bothChanged
-expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13] type=Unit call=kotlin.io.println#1
-expr e@18:12 name(copied) type=kotlin.Pair<Int, String> ref=__local_1.copied
+expr e@8:23#1 memberCall recv=e@8:23 callee=copy args=[_:e@8:33,_:e@8:36] type=kotlin.Pair<Int, String> call=kotlin.copy[kind=fun;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[Int,String]
+expr e@8:5 localDecl bothChanged mutable=0 type=_ init=e@8:23#1 type=Unit ref=__local_4.bothChanged[kind=local]
+expr e@10:13 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair[kind=local]
+expr e@10:13#1 memberCall recv=e@10:13 callee=first args=[] type=Int ref=kotlin.Pair.first[kind=prop]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@11:13 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair[kind=local]
+expr e@11:13#1 memberCall recv=e@11:13 callee=second args=[] type=String ref=kotlin.Pair.second[kind=prop]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@12:13 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair[kind=local]
+expr e@12:13#1 memberCall recv=e@12:13 callee=component1 args=[] type=Int call=kotlin.Pair.component1[kind=fun;recv=kotlin.Pair<T0,T1>;params=;gen=2] targs=[Int,String]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@13:13 name(pair) type=kotlin.Pair<Int, String> ref=__local_0.pair[kind=local]
+expr e@13:13#1 memberCall recv=e@13:13 callee=component2 args=[] type=String call=kotlin.Pair.component2[kind=fun;recv=kotlin.Pair<T0,T1>;params=;gen=2] targs=[Int,String]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@14:13 name(copied) type=kotlin.Pair<Int, String> ref=__local_1.copied[kind=local]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@15:13 name(firstChanged) type=kotlin.Pair<Int, String> ref=__local_2.firstChanged[kind=local]
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@16:13 name(secondChanged) type=kotlin.Pair<Int, String> ref=__local_3.secondChanged[kind=local]
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@17:13 name(bothChanged) type=kotlin.Pair<Int, String> ref=__local_4.bothChanged[kind=local]
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@18:12 name(copied) type=kotlin.Pair<Int, String> ref=__local_1.copied[kind=local]
 expr e@18:5 return value=e@18:12 type=Nothing

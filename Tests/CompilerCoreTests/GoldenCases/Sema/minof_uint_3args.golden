@@ -1,10 +1,10 @@
-symbol fq=golden.sema.threeArgMinUInt kind=function vis=public flags=_ sig=recv=_ params=[UInt,UInt,UInt] ret=UInt
-symbol fq=golden.sema.threeArgMinUInt.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMinUInt.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMinUInt.$0.c kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinUInt.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinUInt.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinUInt.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinUInt[kind=fun;params=UInt,UInt,UInt] kind=function vis=public flags=_ sig=recv=_ params=[UInt,UInt,UInt] ret=UInt
 file fminof_uint_3args package=golden.sema
-  decl golden.sema.threeArgMinUInt fun threeArgMinUInt sym=golden.sema.threeArgMinUInt
-expr e@3:62 name(a) type=UInt ref=golden.sema.threeArgMinUInt.$0.a
-expr e@3:65 name(b) type=UInt ref=golden.sema.threeArgMinUInt.$0.b
-expr e@3:68 name(c) type=UInt ref=golden.sema.threeArgMinUInt.$0.c
-expr e@3:56 call callee=e@3:56#1 args=[_:e@3:62,_:e@3:65,_:e@3:68] type=UInt call=kotlin.comparisons.minOf#29
+  decl golden.sema.threeArgMinUInt[kind=fun;params=UInt,UInt,UInt] fun threeArgMinUInt sym=golden.sema.threeArgMinUInt[kind=fun;params=UInt,UInt,UInt]
+expr e@3:62 name(a) type=UInt ref=golden.sema.threeArgMinUInt.$0.a[kind=vparam]
+expr e@3:65 name(b) type=UInt ref=golden.sema.threeArgMinUInt.$0.b[kind=vparam]
+expr e@3:68 name(c) type=UInt ref=golden.sema.threeArgMinUInt.$0.c[kind=vparam]
+expr e@3:56 call callee=e@3:56#1 args=[_:e@3:62,_:e@3:65,_:e@3:68] type=UInt call=kotlin.comparisons.minOf[kind=fun;params=UInt,UInt,UInt]

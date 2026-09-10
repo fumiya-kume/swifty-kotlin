@@ -1,51 +1,51 @@
-symbol fq=__local_0.mapped kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=__local_1.filtered kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=__local_2.found kind=local vis=private flags=_ type=String?
-symbol fq=__local_3.any kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_4.all kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_5.folded kind=local vis=private flags=_ type=String
-symbol fq=transform kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<String>] ret=Unit
-symbol fq=transform.$0.values kind=valueParameter vis=private flags=_
+symbol fq=__local_0.mapped[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_1.filtered[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_2.found[kind=local] kind=local vis=private flags=_ type=String?
+symbol fq=__local_3.any[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_4.all[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_5.folded[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=transform.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=transform[kind=fun;params=kotlin.Array<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<String>] ret=Unit
 file farray_hof_map package=_
-  decl transform fun transform sym=transform
-expr e@2:18 name(values) type=kotlin.Array<String> ref=transform.$0.values
+  decl transform[kind=fun;params=kotlin.Array<String>] fun transform sym=transform[kind=fun;params=kotlin.Array<String>]
+expr e@2:18 name(values) type=kotlin.Array<String> ref=transform.$0.values[kind=vparam]
 expr e@2:31 name(it) type=String ref=s-0
-expr e@2:31#1 memberCall recv=e@2:31 callee=uppercase args=[] type=String call=kotlin.text.uppercase#2
+expr e@2:31#1 memberCall recv=e@2:31 callee=uppercase args=[] type=String call=kotlin.text.uppercase[kind=fun;recv=String;params=]
 expr e@2:29 lambda params=[] body=e@2:31#1 label=map type=(String) -> String
-expr e@2:18#1 memberCall recv=e@2:18 callee=map args=[_:e@2:29] type=kotlin.collections.List<String> call=kotlin.collections.map#0 targs=[String,String]
-expr e@2:5 localDecl mapped mutable=0 type=_ init=e@2:18#1 type=Unit ref=__local_0.mapped
-expr e@3:20 name(values) type=kotlin.Array<String> ref=transform.$0.values
+expr e@2:18#1 memberCall recv=e@2:18 callee=map args=[_:e@2:29] type=kotlin.collections.List<String> call=kotlin.collections.map[kind=fun;recv=kotlin.Array<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[String,String]
+expr e@2:5 localDecl mapped mutable=0 type=_ init=e@2:18#1 type=Unit ref=__local_0.mapped[kind=local]
+expr e@3:20 name(values) type=kotlin.Array<String> ref=transform.$0.values[kind=vparam]
 expr e@3:36 name(it) type=String ref=s-1
-expr e@3:36#1 memberCall recv=e@3:36 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@3:36#1 memberCall recv=e@3:36 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@3:48 int(3) type=Int
 expr e@3:36#2 binary(greaterThan) lhs=e@3:36#1 rhs=e@3:48 type=Boolean
 expr e@3:34 lambda params=[] body=e@3:36#2 label=filter type=(String) -> Boolean
-expr e@3:20#1 memberCall recv=e@3:20 callee=filter args=[_:e@3:34] type=kotlin.collections.List<String> call=kotlin.collections.filter#0 targs=[String]
-expr e@3:5 localDecl filtered mutable=0 type=_ init=e@3:20#1 type=Unit ref=__local_1.filtered
-expr e@4:17 name(values) type=kotlin.Array<String> ref=transform.$0.values
+expr e@3:20#1 memberCall recv=e@3:20 callee=filter args=[_:e@3:34] type=kotlin.collections.List<String> call=kotlin.collections.filter[kind=fun;recv=kotlin.Array<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[String]
+expr e@3:5 localDecl filtered mutable=0 type=_ init=e@3:20#1 type=Unit ref=__local_1.filtered[kind=local]
+expr e@4:17 name(values) type=kotlin.Array<String> ref=transform.$0.values[kind=vparam]
 expr e@4:31 name(it) type=String ref=s-2
 expr e@4:45 string(a) type=String
-expr e@4:31#1 memberCall recv=e@4:31 callee=startsWith args=[_:e@4:45] type=Boolean call=kotlin.text.startsWith#1
+expr e@4:31#1 memberCall recv=e@4:31 callee=startsWith args=[_:e@4:45] type=Boolean call=kotlin.text.startsWith[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence,Boolean]
 expr e@4:29 lambda params=[] body=e@4:31#1 label=find type=(String) -> Boolean
-expr e@4:17#1 memberCall recv=e@4:17 callee=find args=[_:e@4:29] type=String? call=kotlin.collections.find#0 targs=[String]
-expr e@4:5 localDecl found mutable=0 type=_ init=e@4:17#1 type=Unit ref=__local_2.found
-expr e@5:15 name(values) type=kotlin.Array<String> ref=transform.$0.values
+expr e@4:17#1 memberCall recv=e@4:17 callee=find args=[_:e@4:29] type=String? call=kotlin.collections.find[kind=fun;recv=kotlin.Array<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[String]
+expr e@4:5 localDecl found mutable=0 type=_ init=e@4:17#1 type=Unit ref=__local_2.found[kind=local]
+expr e@5:15 name(values) type=kotlin.Array<String> ref=transform.$0.values[kind=vparam]
 expr e@5:28 name(it) type=String ref=s-3
-expr e@5:28#1 memberCall recv=e@5:28 callee=isEmpty args=[] type=Boolean call=kotlin.text.isEmpty
+expr e@5:28#1 memberCall recv=e@5:28 callee=isEmpty args=[] type=Boolean call=kotlin.text.isEmpty[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@5:26 lambda params=[] body=e@5:28#1 label=any type=(String) -> Boolean
-expr e@5:15#1 memberCall recv=e@5:15 callee=any args=[_:e@5:26] type=Boolean call=kotlin.collections.any#1 targs=[String]
-expr e@5:5 localDecl any mutable=0 type=_ init=e@5:15#1 type=Unit ref=__local_3.any
-expr e@6:15 name(values) type=kotlin.Array<String> ref=transform.$0.values
+expr e@5:15#1 memberCall recv=e@5:15 callee=any args=[_:e@5:26] type=Boolean call=kotlin.collections.any[kind=fun;recv=kotlin.Array<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[String]
+expr e@5:5 localDecl any mutable=0 type=_ init=e@5:15#1 type=Unit ref=__local_3.any[kind=local]
+expr e@6:15 name(values) type=kotlin.Array<String> ref=transform.$0.values[kind=vparam]
 expr e@6:28 name(it) type=String ref=s-4
-expr e@6:28#1 memberCall recv=e@6:28 callee=isNotEmpty args=[] type=Boolean call=kotlin.text.isNotEmpty
+expr e@6:28#1 memberCall recv=e@6:28 callee=isNotEmpty args=[] type=Boolean call=kotlin.text.isNotEmpty[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@6:26 lambda params=[] body=e@6:28#1 label=all type=(String) -> Boolean
-expr e@6:15#1 memberCall recv=e@6:15 callee=all args=[_:e@6:26] type=Boolean call=kotlin.collections.all#0 targs=[String]
-expr e@6:5 localDecl all mutable=0 type=_ init=e@6:15#1 type=Unit ref=__local_4.all
-expr e@7:18 name(values) type=kotlin.Array<String> ref=transform.$0.values
+expr e@6:15#1 memberCall recv=e@6:15 callee=all args=[_:e@6:26] type=Boolean call=kotlin.collections.all[kind=fun;recv=kotlin.Array<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[String]
+expr e@6:5 localDecl all mutable=0 type=_ init=e@6:15#1 type=Unit ref=__local_4.all[kind=local]
+expr e@7:18 name(values) type=kotlin.Array<String> ref=transform.$0.values[kind=vparam]
 expr e@7:30 string() type=String
 expr e@7:46 name(acc) type=String ref=s-5
 expr e@7:52 name(v) type=String ref=s-6
 expr e@7:46#1 binary(add) lhs=e@7:46 rhs=e@7:52 type=String
 expr e@7:34 lambda params=[acc,v] body=e@7:46#1 label=fold type=(String, String) -> String
-expr e@7:18#1 memberCall recv=e@7:18 callee=fold args=[_:e@7:30,_:e@7:34] type=String call=kotlin.collections.fold#0 targs=[String,String]
-expr e@7:5 localDecl folded mutable=0 type=_ init=e@7:18#1 type=Unit ref=__local_5.folded
+expr e@7:18#1 memberCall recv=e@7:18 callee=fold args=[_:e@7:30,_:e@7:34] type=String call=kotlin.collections.fold[kind=fun;recv=kotlin.Array<T0>;params=T1,fn{p=T1,T0;ret=T1};gen=2] targs=[String,String]
+expr e@7:5 localDecl folded mutable=0 type=_ init=e@7:18#1 type=Unit ref=__local_5.folded[kind=local]

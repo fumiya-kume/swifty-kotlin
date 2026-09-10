@@ -1,30 +1,30 @@
-symbol fq=__local_0.doubleValue kind=local vis=private flags=_ type=Double
-symbol fq=__local_1.floatValue kind=local vis=private flags=_ type=Float
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.doubleValue[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_1.floatValue[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_n_numbers package=golden.sema
-  decl golden.sema.main fun main sym=golden.sema.main
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:23 double(3.99) type=Double
-expr e@4:5 localDecl doubleValue mutable=0 type=_ init=e@4:23 type=Unit ref=__local_0.doubleValue
-expr e@5:13 name(doubleValue) type=Double ref=__local_0.doubleValue
+expr e@4:5 localDecl doubleValue mutable=0 type=_ init=e@4:23 type=Unit ref=__local_0.doubleValue[kind=local]
+expr e@5:13 name(doubleValue) type=Double ref=__local_0.doubleValue[kind=local]
 expr e@5:13#1 memberCall recv=e@5:13 callee=toInt args=[] type=Int
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println#1
-expr e@6:13 name(doubleValue) type=Double ref=__local_0.doubleValue
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@6:13 name(doubleValue) type=Double ref=__local_0.doubleValue[kind=local]
 expr e@6:13#1 memberCall recv=e@6:13 callee=toLong args=[] type=Long
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println#1
-expr e@7:13 name(doubleValue) type=Double ref=__local_0.doubleValue
-expr e@7:13#1 memberCall recv=e@7:13 callee=toChar args=[] type=Char call=kotlin.toChar#0
-expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println#1
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@7:13 name(doubleValue) type=Double ref=__local_0.doubleValue[kind=local]
+expr e@7:13#1 memberCall recv=e@7:13 callee=toChar args=[] type=Char call=kotlin.toChar[kind=fun;recv=Double;params=]
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@9:22 float(2.5) type=Float
-expr e@9:5 localDecl floatValue mutable=0 type=_ init=e@9:22 type=Unit ref=__local_1.floatValue
-expr e@10:13 name(floatValue) type=Float ref=__local_1.floatValue
+expr e@9:5 localDecl floatValue mutable=0 type=_ init=e@9:22 type=Unit ref=__local_1.floatValue[kind=local]
+expr e@10:13 name(floatValue) type=Float ref=__local_1.floatValue[kind=local]
 expr e@10:13#1 memberCall recv=e@10:13 callee=toInt args=[] type=Int
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#1
-expr e@11:13 name(floatValue) type=Float ref=__local_1.floatValue
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@11:13 name(floatValue) type=Float ref=__local_1.floatValue[kind=local]
 expr e@11:13#1 memberCall recv=e@11:13 callee=toLong args=[] type=Long
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#1
-expr e@12:13 name(floatValue) type=Float ref=__local_1.floatValue
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@12:13 name(floatValue) type=Float ref=__local_1.floatValue[kind=local]
 expr e@12:13#1 memberCall recv=e@12:13 callee=toDouble args=[] type=Double
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
-expr e@13:13 name(floatValue) type=Float ref=__local_1.floatValue
-expr e@13:13#1 memberCall recv=e@13:13 callee=toChar args=[] type=Char call=kotlin.toChar#1
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println#1
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@13:13 name(floatValue) type=Float ref=__local_1.floatValue[kind=local]
+expr e@13:13#1 memberCall recv=e@13:13 callee=toChar args=[] type=Char call=kotlin.toChar[kind=fun;recv=Float;params=]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

@@ -1,5 +1,5 @@
-symbol fq=golden.sema.newHexFormatBuilder kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.HexFormat.Builder
+symbol fq=golden.sema.newHexFormatBuilder[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.HexFormat.Builder
 file fstdlib_kotlin_text_HexFormat_Builder_n_n package=golden.sema
-  decl golden.sema.newHexFormatBuilder fun newHexFormatBuilder sym=golden.sema.newHexFormatBuilder
-expr e@3:29 name(HexFormat) type=kotlin.text.HexFormat ref=kotlin.text.HexFormat#0
-expr e@3:29#1 memberCall recv=e@3:29 callee=Builder args=[] type=kotlin.text.HexFormat.Builder call=kotlin.text.HexFormat.Builder.<init>
+  decl golden.sema.newHexFormatBuilder[kind=fun;params=] fun newHexFormatBuilder sym=golden.sema.newHexFormatBuilder[kind=fun;params=]
+expr e@3:29 name(HexFormat) type=kotlin.text.HexFormat ref=kotlin.text.HexFormat[kind=class]
+expr e@3:29#1 memberCall recv=e@3:29 callee=Builder args=[] type=kotlin.text.HexFormat.Builder call=kotlin.text.HexFormat.Builder.<init>[kind=ctor;recv=kotlin.text.HexFormat.Builder;params=]

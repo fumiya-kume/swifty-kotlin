@@ -57,8 +57,46 @@ private struct RuntimeFlowOp {
     let argument: Int
 }
 
+/// Factory for the channel used by one `channelFlow`/`callbackFlow` collect.
+/// The template continuation is kept alive only to retain captured values;
+/// every collection receives a fresh continuation and channel.
+private final class RuntimeChannelProducer {
+    let emitterFnPtr: Int
+    let functionID: Int
+    let templateState: RuntimeContinuationState?
+
+    init(emitterFnPtr: Int, templateContinuation: Int) {
+        self.emitterFnPtr = emitterFnPtr
+        let state = runtimeContinuationState(from: templateContinuation)
+        self.templateState = state
+        self.functionID = state.map { Int($0.functionID) } ?? 0
+
+        // The producer flow owns the state through `templateState`; release
+        // the opaque continuation's original runtime retain now that it is
+        // no longer used as an executable continuation.
+        if state != nil, templateContinuation != 0 {
+            _ = kk_coroutine_state_exit(templateContinuation, 0)
+        }
+    }
+
+    func start() -> Int {
+        let continuation = kk_coroutine_continuation_new(functionID)
+        if let templateState,
+           let state = runtimeContinuationState(from: continuation)
+        {
+            state.launcherArgs = templateState.launcherArgs.filter { $0.key != 0 }
+        }
+        return runtimeKxMiniProduceWithCont(
+            emitterFnPtr,
+            continuation,
+            channelCapacity: 64
+        )
+    }
+}
+
 private enum RuntimeFlowSource {
     case emitter(fnPtr: Int, continuation: Int)
+    case channelProducer(RuntimeChannelProducer)
     case fixed([RuntimeFlowEvent])
     case merge([Int])
     case zip(Int, Int, Int)
@@ -733,6 +771,30 @@ private func runtimeFlowRunSourceStage(
         return RuntimeFlowExecutionResult(values: emitted, failure: failure)
     }
 
+    if case let .channelProducer(producer) = flow.source {
+        let channelHandle = producer.start()
+        defer { _ = kk_channel_close(channelHandle) }
+
+        var events: [RuntimeFlowEvent] = []
+        while true {
+            var value = 0
+            let status = kk_channel_receive(channelHandle, 0, &value)
+            guard status == kChannelResultSuccess else { break }
+            events.append(RuntimeFlowEvent(
+                value: runtimeFlowMaybeUnbox(value),
+                timestamp: DispatchTime.now().uptimeNanoseconds
+            ))
+        }
+
+        let processedEvents = runtimeFlowApplyStreamOps(events, ops: ops) ?? events
+        for event in processedEvents {
+            if processValue(event.value) == runtimeFlowStopSentinel {
+                break
+            }
+        }
+        return RuntimeFlowExecutionResult(values: emitted, failure: failure)
+    }
+
     guard flow.emitterFnPtr != 0 else {
         return RuntimeFlowExecutionResult(values: emitted, failure: failure)
     }
@@ -959,7 +1021,7 @@ private func runtimeFlowEvaluate(flow: RuntimeFlowHandle) -> RuntimeFlowExecutio
 /// streaming path; advanced sources must go through runtimeFlowEvaluate.
 private func runtimeFlowHasAdvancedSource(_ flow: RuntimeFlowHandle) -> Bool {
     switch flow.source {
-    case .emitter, .fixed:
+    case .emitter, .channelProducer, .fixed:
         return false
     default:
         // .flatMapConcat, .flatMapMerge, .flatMapLatest, .merge, .zip, .combine
@@ -1085,6 +1147,62 @@ private func runtimeFlowCollectStreaming(
                 if !deliverValue(value) {
                     return 0
                 }
+            case .filtered:
+                continue
+            case .thrown, .done:
+                return 0
+            }
+        }
+        return 0
+    }
+
+    if case let .channelProducer(producer) = flow.source {
+        let channelHandle = producer.start()
+        defer { _ = kk_channel_close(channelHandle) }
+
+        if hasStreamLevelOps {
+            var events: [RuntimeFlowEvent] = []
+            while true {
+                var value = 0
+                let status = kk_channel_receive(channelHandle, 0, &value)
+                guard status == kChannelResultSuccess else { break }
+                events.append(RuntimeFlowEvent(
+                    value: runtimeFlowMaybeUnbox(value),
+                    timestamp: DispatchTime.now().uptimeNanoseconds
+                ))
+            }
+            let processedEvents = runtimeFlowApplyStreamOps(events, ops: ops) ?? events
+            for event in processedEvents {
+                let result = runtimeFlowApplyOpsLazy(
+                    event.value,
+                    ops: ops,
+                    takeCounters: &takeCounters,
+                    lastValues: &lastValues
+                )
+                switch result {
+                case .emit(let value):
+                    if !deliverValue(value) { return 0 }
+                case .filtered:
+                    continue
+                case .thrown, .done:
+                    return 0
+                }
+            }
+            return 0
+        }
+
+        while true {
+            var value = 0
+            let status = kk_channel_receive(channelHandle, 0, &value)
+            guard status == kChannelResultSuccess else { break }
+            switch runtimeFlowApplyOpsLazy(
+                runtimeFlowMaybeUnbox(value),
+                ops: ops,
+                takeCounters: &takeCounters,
+                lastValues: &lastValues
+            ) {
+            case .emit(let value):
+                if !deliverValue(value) { return 0 }
             case .filtered:
                 continue
             case .thrown, .done:
@@ -1317,6 +1435,38 @@ public func kk_flow_create(_ emitterFnPtr: Int, _ emitterContinuation: Int) -> I
     )
 }
 
+/// Create a cold Flow backed by a fresh runtime channel and a ProducerScope
+/// receiver for each collection.
+@_cdecl("kk_channel_flow_create")
+public func kk_channel_flow_create(_ emitterFnPtr: Int, _ emitterContinuation: Int) -> Int {
+    return runtimeRegisterFlowHandle(
+        RuntimeFlowHandle(
+            source: .channelProducer(
+                RuntimeChannelProducer(
+                    emitterFnPtr: emitterFnPtr,
+                    templateContinuation: emitterContinuation
+                )
+            )
+        )
+    )
+}
+
+/// `callbackFlow` shares the channel-backed implementation with `channelFlow`;
+/// the distinct entry point preserves the public ABI surface.
+@_cdecl("kk_callback_flow_create")
+public func kk_callback_flow_create(_ emitterFnPtr: Int, _ emitterContinuation: Int) -> Int {
+    return runtimeRegisterFlowHandle(
+        RuntimeFlowHandle(
+            source: .channelProducer(
+                RuntimeChannelProducer(
+                    emitterFnPtr: emitterFnPtr,
+                    templateContinuation: emitterContinuation
+                )
+            )
+        )
+    )
+}
+
 /// Return the flow-stop sentinel pointer. This is a unique object pointer that
 /// cannot collide with any legitimate `Int` value (unlike the previous `Int.min`
 /// approach). Emitters should compare the return value of `kk_flow_emit` against
@@ -1359,9 +1509,14 @@ public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowHandle) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_flow_emit received invalid flow handle")
     }
+    let source: RuntimeFlowSource = switch flow.source {
+    case let .channelProducer(producer):
+        .channelProducer(producer)
+    case .emitter, .fixed, .merge, .zip, .combine, .flatMapConcat, .flatMapMerge, .flatMapLatest:
+        .emitter(fnPtr: flow.emitterFnPtr, continuation: flow.emitterContinuation)
+    }
     let derived = RuntimeFlowHandle(
-        emitterFnPtr: flow.emitterFnPtr,
-        emitterContinuation: flow.emitterContinuation,
+        source: source,
         opChain: flow.opChain + [RuntimeFlowOp(kind: opKind, argument: value)],
         fixedValues: flow.fixedValues
     )

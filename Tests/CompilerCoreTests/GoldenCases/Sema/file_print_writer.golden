@@ -1,23 +1,23 @@
-symbol fq=__local_0.f kind=local vis=private flags=_ type=java.io.File
-symbol fq=__local_1.pw kind=local vis=private flags=_ type=java.io.PrintWriter
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.f[kind=local] kind=local vis=private flags=_ type=java.io.File
+symbol fq=__local_1.pw[kind=local] kind=local vis=private flags=_ type=java.io.PrintWriter
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ffile_print_writer package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@5:18 string(output.txt) type=String
-expr e@5:13 call callee=e@5:13#1 args=[_:e@5:18] type=java.io.File call=java.io.File.<init>#0
-expr e@5:5 localDecl f mutable=0 type=_ init=e@5:13 type=Unit ref=__local_0.f
-expr e@6:14 name(f) type=java.io.File ref=__local_0.f
-expr e@6:14#1 memberCall recv=e@6:14 callee=printWriter args=[] type=java.io.PrintWriter call=java.io.File.printWriter
-expr e@6:5 localDecl pw mutable=0 type=_ init=e@6:14#1 type=Unit ref=__local_1.pw
-expr e@7:5 name(pw) type=java.io.PrintWriter ref=__local_1.pw
+expr e@5:13 call callee=e@5:13#1 args=[_:e@5:18] type=java.io.File call=java.io.File.<init>[kind=ctor;params=String]
+expr e@5:5 localDecl f mutable=0 type=_ init=e@5:13 type=Unit ref=__local_0.f[kind=local]
+expr e@6:14 name(f) type=java.io.File ref=__local_0.f[kind=local]
+expr e@6:14#1 memberCall recv=e@6:14 callee=printWriter args=[] type=java.io.PrintWriter call=java.io.File.printWriter[kind=fun;recv=java.io.File;params=]
+expr e@6:5 localDecl pw mutable=0 type=_ init=e@6:14#1 type=Unit ref=__local_1.pw[kind=local]
+expr e@7:5 name(pw) type=java.io.PrintWriter ref=__local_1.pw[kind=local]
 expr e@7:14 string(hello) type=String
-expr e@7:5#1 memberCall recv=e@7:5 callee=print args=[_:e@7:14] type=Unit call=java.io.PrintWriter.print
-expr e@8:5 name(pw) type=java.io.PrintWriter ref=__local_1.pw
+expr e@7:5#1 memberCall recv=e@7:5 callee=print args=[_:e@7:14] type=Unit call=java.io.PrintWriter.print[kind=fun;recv=java.io.PrintWriter;params=String]
+expr e@8:5 name(pw) type=java.io.PrintWriter ref=__local_1.pw[kind=local]
 expr e@8:16 string( world) type=String
-expr e@8:5#1 memberCall recv=e@8:5 callee=println args=[_:e@8:16] type=Unit call=java.io.PrintWriter.println#1
-expr e@9:5 name(pw) type=java.io.PrintWriter ref=__local_1.pw
-expr e@9:5#1 memberCall recv=e@9:5 callee=println args=[] type=Unit call=java.io.PrintWriter.println#0
-expr e@10:5 name(pw) type=java.io.PrintWriter ref=__local_1.pw
-expr e@10:5#1 memberCall recv=e@10:5 callee=flush args=[] type=Unit call=java.io.PrintWriter.flush
-expr e@11:5 name(pw) type=java.io.PrintWriter ref=__local_1.pw
-expr e@11:5#1 memberCall recv=e@11:5 callee=close args=[] type=Unit call=java.io.PrintWriter.close
+expr e@8:5#1 memberCall recv=e@8:5 callee=println args=[_:e@8:16] type=Unit call=java.io.PrintWriter.println[kind=fun;recv=java.io.PrintWriter;params=String]
+expr e@9:5 name(pw) type=java.io.PrintWriter ref=__local_1.pw[kind=local]
+expr e@9:5#1 memberCall recv=e@9:5 callee=println args=[] type=Unit call=java.io.PrintWriter.println[kind=fun;recv=java.io.PrintWriter;params=]
+expr e@10:5 name(pw) type=java.io.PrintWriter ref=__local_1.pw[kind=local]
+expr e@10:5#1 memberCall recv=e@10:5 callee=flush args=[] type=Unit call=java.io.PrintWriter.flush[kind=fun;recv=java.io.PrintWriter;params=]
+expr e@11:5 name(pw) type=java.io.PrintWriter ref=__local_1.pw[kind=local]
+expr e@11:5#1 memberCall recv=e@11:5 callee=close args=[] type=Unit call=java.io.PrintWriter.close[kind=fun;recv=java.io.PrintWriter;params=]

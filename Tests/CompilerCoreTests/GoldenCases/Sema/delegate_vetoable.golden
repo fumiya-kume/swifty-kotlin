@@ -1,18 +1,18 @@
-symbol fq=golden.sema.age kind=property vis=public flags=mutable type=Int
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.age[kind=prop] kind=property vis=public flags=mutable type=Int
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fdelegate_vetoable package=golden.sema
-  decl golden.sema.age property age var=1 sym=golden.sema.age
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@5:17 name(Delegates) type=kotlin.properties.Delegates ref=kotlin.properties.Delegates#0
+  decl golden.sema.age[kind=prop] property age var=1 sym=golden.sema.age[kind=prop]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@5:17 name(Delegates) type=kotlin.properties.Delegates ref=kotlin.properties.Delegates[kind=obj]
 expr e@5:36 int(0) type=Int
 expr e@6:5 name(new) type=Int ref=s-0
 expr e@6:12 int(0) type=Int
 expr e@6:5#1 binary(greaterOrEqual) lhs=e@6:5 rhs=e@6:12 type=Boolean
 expr e@5:39 lambda params=[prop,old,new] body=e@6:5#1 label=vetoable type=(kotlin.reflect.KProperty<*>, Int, Int) -> Boolean
-expr e@5:17#1 memberCall recv=e@5:17 callee=vetoable args=[_:e@5:36,_:e@5:39] type=kotlin.properties.ReadWriteProperty<Any?, Int> call=kotlin.properties.Delegates.vetoable targs=[Int]
-expr e@10:13 name(age) type=Int ref=golden.sema.age
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println#1
+expr e@5:17#1 memberCall recv=e@5:17 callee=vetoable args=[_:e@5:36,_:e@5:39] type=kotlin.properties.ReadWriteProperty<Any?, Int> call=kotlin.properties.Delegates.vetoable[kind=fun;recv=kotlin.properties.Delegates;params=T0,fn{p=kotlin.reflect.KProperty<*>,T0,T0;ret=Boolean};gen=1] targs=[Int]
+expr e@10:13 name(age) type=Int ref=golden.sema.age[kind=prop]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@11:11 int(10) type=Int
-expr e@11:5 localAssign age value=e@11:11 type=Unit ref=golden.sema.age
-expr e@12:13 name(age) type=Int ref=golden.sema.age
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13] type=Unit call=kotlin.io.println#1
+expr e@11:5 localAssign age value=e@11:11 type=Unit ref=golden.sema.age[kind=prop]
+expr e@12:13 name(age) type=Int ref=golden.sema.age[kind=prop]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

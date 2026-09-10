@@ -1814,6 +1814,31 @@ public func __kk_ktypeprojection_create_checked(
     return __kk_ktypeprojection_create(typeIsNull ? 0 : typeRaw, decodedVarianceOrdinal)
 }
 
+/// Returns the Kotlin declaration ordinal for a projection's variance, or null.
+@_cdecl("__kk_ktypeprojection_get_variance")
+public func __kk_ktypeprojection_get_variance(_ projectionRaw: Int) -> Int {
+    guard let box = runtimeKTypeProjectionBox(from: projectionRaw), let variance = box.variance else {
+        return runtimeNullSentinelInt
+    }
+    switch variance {
+    case .invariant:
+        return 0
+    case .in:
+        return 1
+    case .out:
+        return 2
+    }
+}
+
+/// Returns the projected KType handle, or null for a star projection.
+@_cdecl("__kk_ktypeprojection_get_type")
+public func __kk_ktypeprojection_get_type(_ projectionRaw: Int) -> Int {
+    guard let box = runtimeKTypeProjectionBox(from: projectionRaw), box.typeRaw != 0 else {
+        return runtimeNullSentinelInt
+    }
+    return box.typeRaw
+}
+
 /// Implements `typeOf<T>()` — creates a KType for the given type token.
 /// This is the reified inline function entry point. The compiler emits the
 /// type token and nullability at the call site.
@@ -1836,6 +1861,20 @@ private func runtimeKTypeBox(from raw: Int) -> RuntimeKTypeBox? {
             return nil
         }
         return tryCast(ptr, to: RuntimeKTypeBox.self)
+    }
+}
+
+private func runtimeKTypeProjectionBox(from raw: Int) -> RuntimeKTypeProjectionBox? {
+    guard raw != 0, raw != runtimeNullSentinelInt,
+          let ptr = UnsafeMutableRawPointer(bitPattern: raw)
+    else {
+        return nil
+    }
+    return runtimeStorage.withGCLock { state in
+        guard state.objectPointers.contains(UInt(bitPattern: ptr)) else {
+            return nil
+        }
+        return tryCast(ptr, to: RuntimeKTypeProjectionBox.self)
     }
 }
 

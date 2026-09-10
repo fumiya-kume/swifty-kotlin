@@ -1,7 +1,7 @@
-symbol fq=useReadln kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=useReadlnOrNull kind=function vis=public flags=_ sig=recv=_ params=[] ret=String?
+symbol fq=useReadlnOrNull[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String?
+symbol fq=useReadln[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file freadln package=_
-  decl useReadln fun useReadln sym=useReadln
-  decl useReadlnOrNull fun useReadlnOrNull sym=useReadlnOrNull
-expr e@1:27 call callee=e@1:27#1 args=[] type=String call=kotlin.io.readln
-expr e@3:34 call callee=e@3:34#1 args=[] type=String? call=kotlin.io.readlnOrNull
+  decl useReadln[kind=fun;params=] fun useReadln sym=useReadln[kind=fun;params=]
+  decl useReadlnOrNull[kind=fun;params=] fun useReadlnOrNull sym=useReadlnOrNull[kind=fun;params=]
+expr e@1:27 call callee=e@1:27#1 args=[] type=String call=kotlin.io.readln[kind=fun;params=]
+expr e@3:34 call callee=e@3:34#1 args=[] type=String? call=kotlin.io.readlnOrNull[kind=fun;params=]

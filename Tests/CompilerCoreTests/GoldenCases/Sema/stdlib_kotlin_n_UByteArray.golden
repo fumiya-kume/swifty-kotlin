@@ -1,10 +1,10 @@
-symbol fq=golden.sema.makeUByteArray kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.UByteArray
+symbol fq=golden.sema.makeUByteArray[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.UByteArray
 file fstdlib_kotlin_n_UByteArray package=golden.sema
-  decl golden.sema.makeUByteArray fun makeUByteArray sym=golden.sema.makeUByteArray
+  decl golden.sema.makeUByteArray[kind=fun;params=] fun makeUByteArray sym=golden.sema.makeUByteArray[kind=fun;params=]
 expr e@4:16 int(3) type=Int
 expr e@4:22 name(it) type=Int ref=s-0
 expr e@4:27 int(1) type=Int
 expr e@4:22#1 binary(add) lhs=e@4:22 rhs=e@4:27 type=Int
 expr e@4:22#2 memberCall recv=e@4:22#1 callee=toUByte args=[] type=UByte
 expr e@4:19 lambda params=[] body=e@4:22#2 label=UByteArray type=(Int) -> UByte
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:16,_:e@4:19] type=kotlin.UByteArray call=kotlin.UByteArray#1
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:16,_:e@4:19] type=kotlin.UByteArray call=kotlin.UByteArray[kind=fun;params=Int,fn{p=Int;ret=UByte}]

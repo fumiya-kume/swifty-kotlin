@@ -1,8 +1,8 @@
-symbol fq=golden.sema.twoArgMinUInt kind=function vis=public flags=_ sig=recv=_ params=[UInt,UInt] ret=UInt
-symbol fq=golden.sema.twoArgMinUInt.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.twoArgMinUInt.$0.b kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.twoArgMinUInt.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.twoArgMinUInt.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.twoArgMinUInt[kind=fun;params=UInt,UInt] kind=function vis=public flags=_ sig=recv=_ params=[UInt,UInt] ret=UInt
 file fminof_uint_2args package=golden.sema
-  decl golden.sema.twoArgMinUInt fun twoArgMinUInt sym=golden.sema.twoArgMinUInt
-expr e@3:51 name(a) type=UInt ref=golden.sema.twoArgMinUInt.$0.a
-expr e@3:54 name(b) type=UInt ref=golden.sema.twoArgMinUInt.$0.b
-expr e@3:45 call callee=e@3:45#1 args=[_:e@3:51,_:e@3:54] type=UInt call=kotlin.comparisons.minOf#27
+  decl golden.sema.twoArgMinUInt[kind=fun;params=UInt,UInt] fun twoArgMinUInt sym=golden.sema.twoArgMinUInt[kind=fun;params=UInt,UInt]
+expr e@3:51 name(a) type=UInt ref=golden.sema.twoArgMinUInt.$0.a[kind=vparam]
+expr e@3:54 name(b) type=UInt ref=golden.sema.twoArgMinUInt.$0.b[kind=vparam]
+expr e@3:45 call callee=e@3:45#1 args=[_:e@3:51,_:e@3:54] type=UInt call=kotlin.comparisons.minOf[kind=fun;params=UInt,UInt]

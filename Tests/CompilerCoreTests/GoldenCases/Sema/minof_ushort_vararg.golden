@@ -1,12 +1,12 @@
-symbol fq=golden.sema.varargMinUShort kind=function vis=public flags=_ sig=recv=_ params=[UShort,UShort,UShort,UShort] ret=UShort
-symbol fq=golden.sema.varargMinUShort.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinUShort.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinUShort.$0.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinUShort.$0.d kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUShort.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUShort.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUShort.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUShort.$0.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUShort[kind=fun;params=UShort,UShort,UShort,UShort] kind=function vis=public flags=_ sig=recv=_ params=[UShort,UShort,UShort,UShort] ret=UShort
 file fminof_ushort_vararg package=golden.sema
-  decl golden.sema.varargMinUShort fun varargMinUShort sym=golden.sema.varargMinUShort
-expr e@3:81 name(a) type=UShort ref=golden.sema.varargMinUShort.$0.a
-expr e@3:84 name(b) type=UShort ref=golden.sema.varargMinUShort.$0.b
-expr e@3:87 name(c) type=UShort ref=golden.sema.varargMinUShort.$0.c
-expr e@3:90 name(d) type=UShort ref=golden.sema.varargMinUShort.$0.d
-expr e@3:75 call callee=e@3:75#1 args=[_:e@3:81,_:e@3:84,_:e@3:87,_:e@3:90] type=UShort call=kotlin.comparisons.minOf#34
+  decl golden.sema.varargMinUShort[kind=fun;params=UShort,UShort,UShort,UShort] fun varargMinUShort sym=golden.sema.varargMinUShort[kind=fun;params=UShort,UShort,UShort,UShort]
+expr e@3:81 name(a) type=UShort ref=golden.sema.varargMinUShort.$0.a[kind=vparam]
+expr e@3:84 name(b) type=UShort ref=golden.sema.varargMinUShort.$0.b[kind=vparam]
+expr e@3:87 name(c) type=UShort ref=golden.sema.varargMinUShort.$0.c[kind=vparam]
+expr e@3:90 name(d) type=UShort ref=golden.sema.varargMinUShort.$0.d[kind=vparam]
+expr e@3:75 call callee=e@3:75#1 args=[_:e@3:81,_:e@3:84,_:e@3:87,_:e@3:90] type=UShort call=kotlin.comparisons.minOf[kind=fun;params=UShort,*UShort]

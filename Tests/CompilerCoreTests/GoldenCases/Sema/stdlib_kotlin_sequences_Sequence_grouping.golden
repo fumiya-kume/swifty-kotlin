@@ -1,13 +1,13 @@
-symbol fq=__local_0.grouping kind=local vis=private flags=_ type=kotlin.collections.Grouping<String, Int>
-symbol fq=testSequenceGroupingByContracts kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<String>] ret=kotlin.collections.Grouping<String, Int>
-symbol fq=testSequenceGroupingByContracts.$0.source kind=valueParameter vis=private flags=_
+symbol fq=__local_0.grouping[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Grouping<String, Int>
+symbol fq=testSequenceGroupingByContracts.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=testSequenceGroupingByContracts[kind=fun;params=kotlin.sequences.Sequence<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<String>] ret=kotlin.collections.Grouping<String, Int>
 file fstdlib_kotlin_sequences_Sequence_grouping package=_
-  decl testSequenceGroupingByContracts fun testSequenceGroupingByContracts sym=testSequenceGroupingByContracts
-expr e@2:43 name(source) type=kotlin.sequences.Sequence<String> ref=testSequenceGroupingByContracts.$0.source
+  decl testSequenceGroupingByContracts[kind=fun;params=kotlin.sequences.Sequence<String>] fun testSequenceGroupingByContracts sym=testSequenceGroupingByContracts[kind=fun;params=kotlin.sequences.Sequence<String>]
+expr e@2:43 name(source) type=kotlin.sequences.Sequence<String> ref=testSequenceGroupingByContracts.$0.source[kind=vparam]
 expr e@2:63 name(it) type=String ref=s-0
-expr e@2:63#1 memberCall recv=e@2:63 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@2:63#1 memberCall recv=e@2:63 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@2:61 lambda params=[] body=e@2:63#1 label=groupingBy type=(String) -> Int
-expr e@2:43#1 memberCall recv=e@2:43 callee=groupingBy args=[_:e@2:61] type=kotlin.collections.Grouping<String, Int> call=kotlin.sequences.groupingBy targs=[String,Int]
-expr e@2:5 localDecl grouping mutable=0 type=Grouping<String,Int> init=e@2:43#1 type=Unit ref=__local_0.grouping
-expr e@3:12 name(grouping) type=kotlin.collections.Grouping<String, Int> ref=__local_0.grouping
+expr e@2:43#1 memberCall recv=e@2:43 callee=groupingBy args=[_:e@2:61] type=kotlin.collections.Grouping<String, Int> call=kotlin.sequences.groupingBy[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[String,Int]
+expr e@2:5 localDecl grouping mutable=0 type=Grouping<String,Int> init=e@2:43#1 type=Unit ref=__local_0.grouping[kind=local]
+expr e@3:12 name(grouping) type=kotlin.collections.Grouping<String, Int> ref=__local_0.grouping[kind=local]
 expr e@3:5 return value=e@3:12 type=Nothing
