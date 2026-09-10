@@ -28,7 +28,6 @@ symbol fq=golden.sema.stringBuilderLastOrNull[kind=fun;params=kotlin.text.String
 symbol fq=golden.sema.stringBuilderLast[kind=fun;params=kotlin.text.StringBuilder] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder] ret=Char
 symbol fq=golden.sema.stringLastOrNull[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char?
 symbol fq=golden.sema.stringLast[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_last package=golden.sema
   decl golden.sema.charSequenceLast[kind=fun;params=kotlin.CharSequence] fun charSequenceLast sym=golden.sema.charSequenceLast[kind=fun;params=kotlin.CharSequence]
   decl golden.sema.charSequenceLastPredicate[kind=fun;params=kotlin.CharSequence] fun charSequenceLastPredicate sym=golden.sema.charSequenceLastPredicate[kind=fun;params=kotlin.CharSequence]

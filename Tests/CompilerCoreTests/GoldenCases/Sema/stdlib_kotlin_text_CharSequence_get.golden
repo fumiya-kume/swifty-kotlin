@@ -10,7 +10,6 @@ symbol fq=golden.sema.namedReturn[kind=fun;params=kotlin.CharSequence,Char] kind
 symbol fq=golden.sema.safeReturn.$3.source[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.safeReturn.$3.value[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.safeReturn[kind=fun;params=kotlin.CharSequence?,Char] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence?,Char] ret=Char
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_get package=golden.sema
   decl golden.sema.getOrElse[kind=fun;params=kotlin.CharSequence,Int] fun getOrElse sym=golden.sema.getOrElse[kind=fun;params=kotlin.CharSequence,Int]
   decl golden.sema.getOrNull[kind=fun;params=kotlin.CharSequence,Int] fun getOrNull sym=golden.sema.getOrNull[kind=fun;params=kotlin.CharSequence,Int]

@@ -15,7 +15,6 @@ symbol fq=golden.sema.namedSafeDefault.$4.value[kind=vparam] kind=valueParameter
 symbol fq=golden.sema.namedSafeDefault[kind=fun;params=kotlin.CharSequence?,Char] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence?,Char] ret=Char
 symbol fq=golden.sema.nonLocalDefault.$5.source[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.nonLocalDefault[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_element package=golden.sema
   decl golden.sema.elementAt[kind=fun;params=kotlin.CharSequence,Int] fun elementAt sym=golden.sema.elementAt[kind=fun;params=kotlin.CharSequence,Int]
   decl golden.sema.elementAtOrElse[kind=fun;params=kotlin.CharSequence,Int] fun elementAtOrElse sym=golden.sema.elementAtOrElse[kind=fun;params=kotlin.CharSequence,Int]

@@ -8,7 +8,6 @@ symbol fq=golden.sema.charSequenceFirstPredicate[kind=fun;params=kotlin.CharSequ
 symbol fq=golden.sema.charSequenceFirst[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
 symbol fq=golden.sema.emptyFirstOrNull[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char?
 symbol fq=golden.sema.stringFirst[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_first package=golden.sema
   decl golden.sema.charSequenceFirst[kind=fun;params=kotlin.CharSequence] fun charSequenceFirst sym=golden.sema.charSequenceFirst[kind=fun;params=kotlin.CharSequence]
   decl golden.sema.charSequenceFirstPredicate[kind=fun;params=kotlin.CharSequence] fun charSequenceFirstPredicate sym=golden.sema.charSequenceFirstPredicate[kind=fun;params=kotlin.CharSequence]

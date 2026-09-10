@@ -7,10 +7,6 @@ symbol fq=joinFamily.$0.buffer[kind=vparam] kind=valueParameter vis=private flag
 symbol fq=joinFamily.$0.separator[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=joinFamily.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=joinFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.text.Appendable,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.text.Appendable,kotlin.CharSequence] ret=String
-symbol fq=kotlin.Any.toString[kind=fun;recv=kotlin.Any;params=] kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=String
-symbol fq=kotlin.Any[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_join package=_
   decl joinFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.text.Appendable,kotlin.CharSequence] fun joinFamily sym=joinFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.text.Appendable,kotlin.CharSequence]
 expr e@8:36 name(values) type=kotlin.collections.Iterable<Int> ref=joinFamily.$0.values[kind=vparam]
