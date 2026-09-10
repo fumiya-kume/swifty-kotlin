@@ -1,24 +1,24 @@
-symbol fq=__local_0.destination kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>>
-symbol fq=__local_1.destination kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>>
-symbol fq=golden.sema.charSequenceGroupBy kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.Map<Int, kotlin.collections.List<Char>>
-symbol fq=golden.sema.charSequenceGroupBy.$0.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequenceGroupByTo kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>>
-symbol fq=golden.sema.charSequenceGroupByTo.$1.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequenceGroupByToTransform kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>>
-symbol fq=golden.sema.charSequenceGroupByToTransform.$2.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequenceGroupByTransform kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.Map<Int, kotlin.collections.List<String>>
-symbol fq=golden.sema.charSequenceGroupByTransform.$3.source kind=valueParameter vis=private flags=_
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
+symbol fq=__local_0.destination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>>
+symbol fq=__local_1.destination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>>
+symbol fq=golden.sema.charSequenceGroupBy.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceGroupByTo.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceGroupByToTransform.$2.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceGroupByToTransform[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>>
+symbol fq=golden.sema.charSequenceGroupByTo[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>>
+symbol fq=golden.sema.charSequenceGroupByTransform.$3.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceGroupByTransform[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.Map<Int, kotlin.collections.List<String>>
+symbol fq=golden.sema.charSequenceGroupBy[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.Map<Int, kotlin.collections.List<Char>>
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_text_CharSequence_group package=golden.sema
-  decl golden.sema.charSequenceGroupBy fun charSequenceGroupBy sym=golden.sema.charSequenceGroupBy
-  decl golden.sema.charSequenceGroupByTransform fun charSequenceGroupByTransform sym=golden.sema.charSequenceGroupByTransform
-  decl golden.sema.charSequenceGroupByTo fun charSequenceGroupByTo sym=golden.sema.charSequenceGroupByTo
-  decl golden.sema.charSequenceGroupByToTransform fun charSequenceGroupByToTransform sym=golden.sema.charSequenceGroupByToTransform
-expr e@4:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceGroupBy.$0.source
+  decl golden.sema.charSequenceGroupBy[kind=fun;params=kotlin.CharSequence] fun charSequenceGroupBy sym=golden.sema.charSequenceGroupBy[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.charSequenceGroupByTransform[kind=fun;params=kotlin.CharSequence] fun charSequenceGroupByTransform sym=golden.sema.charSequenceGroupByTransform[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.charSequenceGroupByTo[kind=fun;params=kotlin.CharSequence] fun charSequenceGroupByTo sym=golden.sema.charSequenceGroupByTo[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.charSequenceGroupByToTransform[kind=fun;params=kotlin.CharSequence] fun charSequenceGroupByToTransform sym=golden.sema.charSequenceGroupByToTransform[kind=fun;params=kotlin.CharSequence]
+expr e@4:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceGroupBy.$0.source[kind=vparam]
 expr e@4:32 name(ch) type=Char ref=s-0
 expr e@4:38 char(97) type=Char
 expr e@4:32#1 binary(equal) lhs=e@4:32 rhs=e@4:38 type=Boolean
@@ -26,8 +26,8 @@ expr e@4:43 int(0) type=Int
 expr e@4:50 int(1) type=Int
 expr e@4:28 if cond=e@4:32#1 then=e@4:43 else=e@4:50 type=Int
 expr e@4:20 lambda params=[ch] body=e@4:28 label=groupBy type=(Char) -> Int
-expr e@4:5#1 memberCall recv=e@4:5 callee=groupBy args=[_:e@4:20] type=kotlin.collections.Map<Int, kotlin.collections.List<Char>> call=kotlin.text.groupBy#0 targs=[Int]
-expr e@7:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceGroupByTransform.$3.source
+expr e@4:5#1 memberCall recv=e@4:5 callee=groupBy args=[_:e@4:20] type=kotlin.collections.Map<Int, kotlin.collections.List<Char>> call=kotlin.text.groupBy[kind=fun;recv=kotlin.CharSequence;params=fn{p=Char;ret=T0};gen=1] targs=[Int]
+expr e@7:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceGroupByTransform.$3.source[kind=vparam]
 expr e@8:21 name(ch) type=Char ref=s-1
 expr e@8:27 char(97) type=Char
 expr e@8:21#1 binary(equal) lhs=e@8:21 rhs=e@8:27 type=Boolean
@@ -43,11 +43,11 @@ expr e@9:41 name(ch) type=Char ref=s-2
 expr e@9:41#1 memberCall recv=e@9:41 callee=toString args=[] type=String
 expr e@9:17 if cond=e@9:21#1 then=e@9:32 else=e@9:41#1 type=String
 expr e@9:9 lambda params=[ch] body=e@9:17 label=groupBy type=(Char) -> String
-expr e@7:5#1 memberCall recv=e@7:5 callee=groupBy args=[_:e@8:9,_:e@9:9] type=kotlin.collections.Map<Int, kotlin.collections.List<String>> call=kotlin.text.groupBy#1 targs=[Int,String]
-expr e@13:23 call callee=e@13:23#1 args=[] type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>> call=kotlin.collections.mutableMapOf#0 targs=[Int,kotlin.collections.MutableList<Char>]
-expr e@13:5 localDecl destination mutable=0 type=_ init=e@13:23 type=Unit ref=__local_0.destination
-expr e@14:12 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceGroupByTo.$1.source
-expr e@14:29 name(destination) type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>> ref=__local_0.destination
+expr e@7:5#1 memberCall recv=e@7:5 callee=groupBy args=[_:e@8:9,_:e@9:9] type=kotlin.collections.Map<Int, kotlin.collections.List<String>> call=kotlin.text.groupBy[kind=fun;recv=kotlin.CharSequence;params=fn{p=Char;ret=T0},fn{p=Char;ret=T1};gen=2] targs=[Int,String]
+expr e@13:23 call callee=e@13:23#1 args=[] type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>> call=kotlin.collections.mutableMapOf[kind=fun;params=;gen=2] targs=[Int,kotlin.collections.MutableList<Char>]
+expr e@13:5 localDecl destination mutable=0 type=_ init=e@13:23 type=Unit ref=__local_0.destination[kind=local]
+expr e@14:12 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceGroupByTo.$1.source[kind=vparam]
+expr e@14:29 name(destination) type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>> ref=__local_0.destination[kind=local]
 expr e@14:54 name(ch) type=Char ref=s-3
 expr e@14:60 char(97) type=Char
 expr e@14:54#1 binary(equal) lhs=e@14:54 rhs=e@14:60 type=Boolean
@@ -55,12 +55,12 @@ expr e@14:65 int(0) type=Int
 expr e@14:72 int(1) type=Int
 expr e@14:50 if cond=e@14:54#1 then=e@14:65 else=e@14:72 type=Int
 expr e@14:42 lambda params=[ch] body=e@14:50 label=groupByTo type=(Char) -> Int
-expr e@14:12#1 memberCall recv=e@14:12 callee=groupByTo args=[_:e@14:29,_:e@14:42] type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>> call=kotlin.text.groupByTo#0 targs=[Int,kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>>]
+expr e@14:12#1 memberCall recv=e@14:12 callee=groupByTo args=[_:e@14:29,_:e@14:42] type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>> call=kotlin.text.groupByTo[kind=fun;recv=kotlin.CharSequence;params=T1,fn{p=Char;ret=T0};gen=2] targs=[Int,kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<Char>>]
 expr e@14:5 return value=e@14:12#1 type=Nothing
-expr e@18:23 call callee=e@18:23#1 args=[] type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>> call=kotlin.collections.mutableMapOf#0 targs=[Int,kotlin.collections.MutableList<String>]
-expr e@18:5 localDecl destination mutable=0 type=_ init=e@18:23 type=Unit ref=__local_1.destination
-expr e@19:12 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceGroupByToTransform.$2.source
-expr e@20:9 name(destination) type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>> ref=__local_1.destination
+expr e@18:23 call callee=e@18:23#1 args=[] type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>> call=kotlin.collections.mutableMapOf[kind=fun;params=;gen=2] targs=[Int,kotlin.collections.MutableList<String>]
+expr e@18:5 localDecl destination mutable=0 type=_ init=e@18:23 type=Unit ref=__local_1.destination[kind=local]
+expr e@19:12 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceGroupByToTransform.$2.source[kind=vparam]
+expr e@20:9 name(destination) type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>> ref=__local_1.destination[kind=local]
 expr e@21:21 name(ch) type=Char ref=s-4
 expr e@21:27 char(97) type=Char
 expr e@21:21#1 binary(equal) lhs=e@21:21 rhs=e@21:27 type=Boolean
@@ -76,5 +76,5 @@ expr e@22:41 name(ch) type=Char ref=s-5
 expr e@22:41#1 memberCall recv=e@22:41 callee=toString args=[] type=String
 expr e@22:17 if cond=e@22:21#1 then=e@22:32 else=e@22:41#1 type=String
 expr e@22:9 lambda params=[ch] body=e@22:17 label=groupByTo type=(Char) -> String
-expr e@19:12#1 memberCall recv=e@19:12 callee=groupByTo args=[_:e@20:9,_:e@21:9,_:e@22:9] type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>> call=kotlin.text.groupByTo#1 targs=[Int,String,kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>>]
+expr e@19:12#1 memberCall recv=e@19:12 callee=groupByTo args=[_:e@20:9,_:e@21:9,_:e@22:9] type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>> call=kotlin.text.groupByTo[kind=fun;recv=kotlin.CharSequence;params=T2,fn{p=Char;ret=T0},fn{p=Char;ret=T1};gen=3] targs=[Int,String,kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>>]
 expr e@19:5 return value=e@19:12#1 type=Nothing
