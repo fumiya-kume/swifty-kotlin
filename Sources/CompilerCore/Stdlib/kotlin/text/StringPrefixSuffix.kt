@@ -154,3 +154,26 @@ public fun CharSequence.removeSurrounding(prefix: CharSequence, suffix: CharSequ
  * Otherwise returns this char sequence unchanged.
  */
 public fun CharSequence.removeSurrounding(delimiter: CharSequence): String = removeSurrounding(delimiter, delimiter)
+
+// KSP-1393: CharSequence.removeRange is source-backed. Keep the two overloads
+// separate from String.removeRange so static CharSequence receivers select the
+// Kotlin 2.3.10 contract and preserve indexed CharSequence dispatch.
+public fun CharSequence.removeRange(startIndex: Int, endIndex: Int): CharSequence {
+    if (endIndex < startIndex) {
+        throw IndexOutOfBoundsException("End index ($endIndex) is less than start index ($startIndex).")
+    }
+
+    if (endIndex == startIndex) {
+        return this.subSequence(0, length)
+    }
+
+    // Use StringBuilder's CharSequence-aware appendRange so custom receivers
+    // retain indexed UTF-16 dispatch and the stable bridge's range checks.
+    val sb = StringBuilder(length - (endIndex - startIndex))
+    sb.appendRange(this, 0, startIndex)
+    sb.appendRange(this, endIndex, length)
+    return sb
+}
+
+public fun CharSequence.removeRange(range: IntRange): CharSequence =
+    removeRange(range.start, range.endInclusive + 1)

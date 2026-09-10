@@ -1067,6 +1067,7 @@ extension ExprTypeChecker {
         } else {
             ctx
         }
+        bodyCtx = bodyCtx.enteringLambdaBody()
         // When the expected function type has a receiver (e.g. StringBuilder.() -> Unit),
         // set the implicit receiver so that unqualified member calls resolve correctly.
         if let receiverType = expectedFunctionType?.receiver {

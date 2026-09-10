@@ -1,0 +1,39 @@
+symbol fq=golden.sema.appendlnValues.$0.builder[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendlnValues.$0.nullableAny[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendlnValues.$0.nullableString[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendlnValues[kind=fun;params=kotlin.text.StringBuilder,Any?,String?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder,Any?,String?] ret=kotlin.text.StringBuilder
+file fstdlib_kotlin_text_StringBuilder_appendln package=golden.sema annotations=[@file:Suppress("DEPRECATION_ERROR")]
+  decl golden.sema.appendlnValues[kind=fun;params=kotlin.text.StringBuilder,Any?,String?] fun appendlnValues sym=golden.sema.appendlnValues[kind=fun;params=kotlin.text.StringBuilder,Any?,String?]
+expr e@10:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendlnValues.$0.builder[kind=vparam]
+expr e@10:5#1 memberCall recv=e@10:5 callee=appendln args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendln[kind=fun;recv=kotlin.text.StringBuilder;params=]
+expr e@11:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendlnValues.$0.builder[kind=vparam]
+expr e@11:22 name(nullableAny) type=Any? ref=golden.sema.appendlnValues.$0.nullableAny[kind=vparam]
+expr e@11:5#1 memberCall recv=e@11:5 callee=appendln args=[_:e@11:22] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendln[kind=fun;recv=kotlin.text.StringBuilder;params=Any?]
+expr e@12:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendlnValues.$0.builder[kind=vparam]
+expr e@12:22 bool(true) type=Boolean
+expr e@12:5#1 memberCall recv=e@12:5 callee=appendln args=[_:e@12:22] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendln[kind=fun;recv=kotlin.text.StringBuilder;params=Boolean]
+expr e@13:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendlnValues.$0.builder[kind=vparam]
+expr e@13:24 int(2) type=Int
+expr e@13:23 unary(unaryMinus) operand=e@13:24 type=Int
+expr e@13:23#1 memberCall recv=e@13:23 callee=toByte args=[] type=Byte
+expr e@13:5#1 memberCall recv=e@13:5 callee=appendln args=[_:e@13:23#1] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendln[kind=fun;recv=kotlin.text.StringBuilder;params=Byte]
+expr e@14:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendlnValues.$0.builder[kind=vparam]
+expr e@14:22 double(1.25) type=Double
+expr e@14:5#1 memberCall recv=e@14:5 callee=appendln args=[_:e@14:22] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendln[kind=fun;recv=kotlin.text.StringBuilder;params=Double]
+expr e@15:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendlnValues.$0.builder[kind=vparam]
+expr e@15:22 float(2.5) type=Float
+expr e@15:5#1 memberCall recv=e@15:5 callee=appendln args=[_:e@15:22] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendln[kind=fun;recv=kotlin.text.StringBuilder;params=Float]
+expr e@16:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendlnValues.$0.builder[kind=vparam]
+expr e@16:22 int(3) type=Int
+expr e@16:5#1 memberCall recv=e@16:5 callee=appendln args=[_:e@16:22] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendln[kind=fun;recv=kotlin.text.StringBuilder;params=Int]
+expr e@17:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendlnValues.$0.builder[kind=vparam]
+expr e@17:22 long(4) type=Long
+expr e@17:5#1 memberCall recv=e@17:5 callee=appendln args=[_:e@17:22] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendln[kind=fun;recv=kotlin.text.StringBuilder;params=Long]
+expr e@18:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendlnValues.$0.builder[kind=vparam]
+expr e@18:22 int(5) type=Int
+expr e@18:22#1 memberCall recv=e@18:22 callee=toShort args=[] type=Short
+expr e@18:5#1 memberCall recv=e@18:5 callee=appendln args=[_:e@18:22#1] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendln[kind=fun;recv=kotlin.text.StringBuilder;params=Short]
+expr e@19:12 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendlnValues.$0.builder[kind=vparam]
+expr e@19:29 name(nullableString) type=String? ref=golden.sema.appendlnValues.$0.nullableString[kind=vparam]
+expr e@19:12#1 memberCall recv=e@19:12 callee=appendln args=[_:e@19:29] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendln[kind=fun;recv=kotlin.text.StringBuilder;params=String?]
+expr e@19:5 return value=e@19:12#1 type=Nothing

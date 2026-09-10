@@ -20,7 +20,7 @@ expr e@5:47#1 memberCall recv=e@5:47 callee=get args=[_:e@5:54] type=Char call=k
 expr e@7:63 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceSubSequence.$2.cs[kind=vparam]
 expr e@7:78 int(0) type=Int
 expr e@7:81 int(1) type=Int
-expr e@7:63#1 memberCall recv=e@7:63 callee=subSequence args=[_:e@7:78,_:e@7:81] type=kotlin.CharSequence call=kotlin.text.subSequence[kind=fun;recv=kotlin.CharSequence;params=Int,Int]
+expr e@7:63#1 memberCall recv=e@7:63 callee=subSequence args=[_:e@7:78,_:e@7:81] type=kotlin.CharSequence call=kotlin.CharSequence.subSequence[kind=fun;recv=kotlin.CharSequence;params=Int,Int]
 expr e@9:44 string(hello) type=String
 expr e@11:65 string(hello) type=String
 expr e@11:51 call callee=e@11:51#1 args=[_:e@11:65] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=String]

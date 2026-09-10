@@ -6,11 +6,14 @@ package kotlin.text
 
 private fun buildStringFromCharRange(chars: List<Char>, startIndex: Int, endIndex: Int): String {
     val sb = StringBuilder()
+    // Append the collected range once so UTF-16 surrogate pairs stay intact.
+    val range = CharArray(endIndex - startIndex)
     var i = startIndex
     while (i < endIndex) {
-        sb.append(chars[i])
+        range[i - startIndex] = chars[i]
         i++
     }
+    sb.appendRange(range, 0, range.size)
     return sb.toString()
 }
 
