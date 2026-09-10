@@ -1,26 +1,26 @@
-symbol fq=__local_0.initializerCalls kind=local vis=private flags=mutable type=Int
-symbol fq=__local_1.empty kind=local vis=private flags=_ type=kotlin.native.BitSet
-symbol fq=__local_2.zero kind=local vis=private flags=_ type=kotlin.native.BitSet
-symbol fq=__local_3.negative kind=local vis=private flags=_ type=kotlin.native.BitSet
-symbol fq=__local_4.initialized kind=local vis=private flags=_ type=kotlin.native.BitSet
-symbol fq=__local_5.sized kind=local vis=private flags=_ type=kotlin.native.BitSet
-symbol fq=golden.sema.bitSetConstructors kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=__local_0.initializerCalls[kind=local] kind=local vis=private flags=mutable type=Int
+symbol fq=__local_1.empty[kind=local] kind=local vis=private flags=_ type=kotlin.native.BitSet
+symbol fq=__local_2.zero[kind=local] kind=local vis=private flags=_ type=kotlin.native.BitSet
+symbol fq=__local_3.negative[kind=local] kind=local vis=private flags=_ type=kotlin.native.BitSet
+symbol fq=__local_4.initialized[kind=local] kind=local vis=private flags=_ type=kotlin.native.BitSet
+symbol fq=__local_5.sized[kind=local] kind=local vis=private flags=_ type=kotlin.native.BitSet
+symbol fq=golden.sema.bitSetConstructors[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_native_BitSet_n_n package=golden.sema annotations=[@file:OptIn(kotlin.native.ObsoleteNativeApi::class)]
-  decl golden.sema.bitSetConstructors fun bitSetConstructors sym=golden.sema.bitSetConstructors
+  decl golden.sema.bitSetConstructors[kind=fun;params=] fun bitSetConstructors sym=golden.sema.bitSetConstructors[kind=fun;params=]
 expr e@8:28 int(0) type=Int
-expr e@8:5 localDecl initializerCalls mutable=1 type=_ init=e@8:28 type=Unit ref=__local_0.initializerCalls
-expr e@9:17 call callee=e@9:17#1 args=[] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>#0
-expr e@9:5 localDecl empty mutable=0 type=_ init=e@9:17 type=Unit ref=__local_1.empty
+expr e@8:5 localDecl initializerCalls mutable=1 type=_ init=e@8:28 type=Unit ref=__local_0.initializerCalls[kind=local]
+expr e@9:17 call callee=e@9:17#1 args=[] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>[kind=ctor;recv=kotlin.native.BitSet;params=Int]
+expr e@9:5 localDecl empty mutable=0 type=_ init=e@9:17 type=Unit ref=__local_1.empty[kind=local]
 expr e@10:23 int(0) type=Int
-expr e@10:16 call callee=e@10:16#1 args=[_:e@10:23] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>#0
-expr e@10:5 localDecl zero mutable=0 type=_ init=e@10:16 type=Unit ref=__local_2.zero
+expr e@10:16 call callee=e@10:16#1 args=[_:e@10:23] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>[kind=ctor;recv=kotlin.native.BitSet;params=Int]
+expr e@10:5 localDecl zero mutable=0 type=_ init=e@10:16 type=Unit ref=__local_2.zero[kind=local]
 expr e@11:28 int(1) type=Int
 expr e@11:27 unary(unaryMinus) operand=e@11:28 type=Int
-expr e@11:20 call callee=e@11:20#1 args=[_:e@11:27] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>#0
-expr e@11:5 localDecl negative mutable=0 type=_ init=e@11:20 type=Unit ref=__local_3.negative
+expr e@11:20 call callee=e@11:20#1 args=[_:e@11:27] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>[kind=ctor;recv=kotlin.native.BitSet;params=Int]
+expr e@11:5 localDecl negative mutable=0 type=_ init=e@11:20 type=Unit ref=__local_3.negative[kind=local]
 expr e@12:30 int(5) type=Int
 expr e@13:29 int(1) type=Int
-expr e@13:9 compoundAssign(plusAssign) name=initializerCalls value=e@13:29 type=Unit ref=__local_0.initializerCalls
+expr e@13:9 compoundAssign(plusAssign) name=initializerCalls value=e@13:29 type=Unit ref=__local_0.initializerCalls[kind=local]
 expr e@14:9 name(it) type=Int ref=s-0
 expr e@14:15 int(0) type=Int
 expr e@14:9#1 binary(equal) lhs=e@14:9 rhs=e@14:15 type=Boolean
@@ -30,29 +30,29 @@ expr e@14:20#1 binary(equal) lhs=e@14:20 rhs=e@14:26 type=Boolean
 expr e@14:9#2 binary(logicalOr) lhs=e@14:9#1 rhs=e@14:20#1 type=Boolean
 expr e@13:9#1 blockExpr stmts=[e@13:9] trailing=e@14:9#2 type=Boolean
 expr e@12:33 lambda params=[] body=e@13:9#1 label=BitSet type=(Int) -> Boolean
-expr e@12:23 call callee=e@12:23#1 args=[_:e@12:30,_:e@12:33] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>#1
-expr e@12:5 localDecl initialized mutable=0 type=_ init=e@12:23 type=Unit ref=__local_4.initialized
+expr e@12:23 call callee=e@12:23#1 args=[_:e@12:30,_:e@12:33] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>[kind=ctor;recv=kotlin.native.BitSet;params=Int,fn{p=Int;ret=Boolean}]
+expr e@12:5 localDecl initialized mutable=0 type=_ init=e@12:23 type=Unit ref=__local_4.initialized[kind=local]
 expr e@16:24 int(5) type=Int
-expr e@16:17 call callee=e@16:17#1 args=[_:e@16:24] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>#0
-expr e@16:5 localDecl sized mutable=0 type=_ init=e@16:17 type=Unit ref=__local_5.sized
-expr e@18:9 name(BitSet) type=kotlin.native.BitSet ref=kotlin.native.BitSet
-expr e@18:9#1 memberCall recv=e@18:9 callee=Companion args=[] type=kotlin.native.BitSet.Companion ref=kotlin.native.BitSet.Companion
-expr e@18:30 name(BitSet) type=kotlin.native.BitSet ref=kotlin.native.BitSet
-expr e@18:30#1 memberCall recv=e@18:30 callee=Companion args=[] type=kotlin.native.BitSet.Companion ref=kotlin.native.BitSet.Companion
+expr e@16:17 call callee=e@16:17#1 args=[_:e@16:24] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>[kind=ctor;recv=kotlin.native.BitSet;params=Int]
+expr e@16:5 localDecl sized mutable=0 type=_ init=e@16:17 type=Unit ref=__local_5.sized[kind=local]
+expr e@18:9 name(BitSet) type=kotlin.native.BitSet ref=kotlin.native.BitSet[kind=class]
+expr e@18:9#1 memberCall recv=e@18:9 callee=Companion args=[] type=kotlin.native.BitSet.Companion ref=kotlin.native.BitSet.Companion[kind=obj]
+expr e@18:30 name(BitSet) type=kotlin.native.BitSet ref=kotlin.native.BitSet[kind=class]
+expr e@18:30#1 memberCall recv=e@18:30 callee=Companion args=[] type=kotlin.native.BitSet.Companion ref=kotlin.native.BitSet.Companion[kind=obj]
 expr e@18:9#2 binary(identityEqual) lhs=e@18:9#1 rhs=e@18:30#1 type=Boolean
-expr e@19:9 name(empty) type=kotlin.native.BitSet ref=__local_1.empty
-expr e@19:19 name(sized) type=kotlin.native.BitSet ref=__local_5.sized
+expr e@19:9 name(empty) type=kotlin.native.BitSet ref=__local_1.empty[kind=local]
+expr e@19:19 name(sized) type=kotlin.native.BitSet ref=__local_5.sized[kind=local]
 expr e@19:9#1 binary(notIdentityEqual) lhs=e@19:9 rhs=e@19:19 type=Boolean
 expr e@18:9#3 binary(logicalAnd) lhs=e@18:9#2 rhs=e@19:9#1 type=Boolean
-expr e@20:9 name(zero) type=kotlin.native.BitSet ref=__local_2.zero
-expr e@20:18 name(negative) type=kotlin.native.BitSet ref=__local_3.negative
+expr e@20:9 name(zero) type=kotlin.native.BitSet ref=__local_2.zero[kind=local]
+expr e@20:18 name(negative) type=kotlin.native.BitSet ref=__local_3.negative[kind=local]
 expr e@20:9#1 binary(notIdentityEqual) lhs=e@20:9 rhs=e@20:18 type=Boolean
 expr e@18:9#4 binary(logicalAnd) lhs=e@18:9#3 rhs=e@20:9#1 type=Boolean
-expr e@21:9 name(initialized) type=kotlin.native.BitSet ref=__local_4.initialized
-expr e@21:25 name(empty) type=kotlin.native.BitSet ref=__local_1.empty
+expr e@21:9 name(initialized) type=kotlin.native.BitSet ref=__local_4.initialized[kind=local]
+expr e@21:25 name(empty) type=kotlin.native.BitSet ref=__local_1.empty[kind=local]
 expr e@21:9#1 binary(notIdentityEqual) lhs=e@21:9 rhs=e@21:25 type=Boolean
 expr e@18:9#5 binary(logicalAnd) lhs=e@18:9#4 rhs=e@21:9#1 type=Boolean
-expr e@23:9 name(initializerCalls) type=Int ref=__local_0.initializerCalls
+expr e@23:9 name(initializerCalls) type=Int ref=__local_0.initializerCalls[kind=local]
 expr e@22:7 blockExpr stmts=[] trailing=e@23:9 type=Int
 expr e@25:10 int(1) type=Int
 expr e@25:9 unary(unaryMinus) operand=e@25:10 type=Int

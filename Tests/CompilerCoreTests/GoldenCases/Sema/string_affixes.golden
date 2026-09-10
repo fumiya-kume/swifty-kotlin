@@ -1,38 +1,38 @@
-symbol fq=golden.sema.useContains kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useEndsWith kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useRemovePrefix kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useRemoveSuffix kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useRemoveSurrounding1 kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useRemoveSurrounding2 kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useStartsWith kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=golden.sema.useContains[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useEndsWith[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useRemovePrefix[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useRemoveSuffix[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useRemoveSurrounding1[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useRemoveSurrounding2[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useStartsWith[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstring_affixes package=golden.sema
-  decl golden.sema.useStartsWith fun useStartsWith sym=golden.sema.useStartsWith
-  decl golden.sema.useEndsWith fun useEndsWith sym=golden.sema.useEndsWith
-  decl golden.sema.useContains fun useContains sym=golden.sema.useContains
-  decl golden.sema.useRemovePrefix fun useRemovePrefix sym=golden.sema.useRemovePrefix
-  decl golden.sema.useRemoveSuffix fun useRemoveSuffix sym=golden.sema.useRemoveSuffix
-  decl golden.sema.useRemoveSurrounding1 fun useRemoveSurrounding1 sym=golden.sema.useRemoveSurrounding1
-  decl golden.sema.useRemoveSurrounding2 fun useRemoveSurrounding2 sym=golden.sema.useRemoveSurrounding2
+  decl golden.sema.useStartsWith[kind=fun;params=] fun useStartsWith sym=golden.sema.useStartsWith[kind=fun;params=]
+  decl golden.sema.useEndsWith[kind=fun;params=] fun useEndsWith sym=golden.sema.useEndsWith[kind=fun;params=]
+  decl golden.sema.useContains[kind=fun;params=] fun useContains sym=golden.sema.useContains[kind=fun;params=]
+  decl golden.sema.useRemovePrefix[kind=fun;params=] fun useRemovePrefix sym=golden.sema.useRemovePrefix[kind=fun;params=]
+  decl golden.sema.useRemoveSuffix[kind=fun;params=] fun useRemoveSuffix sym=golden.sema.useRemoveSuffix[kind=fun;params=]
+  decl golden.sema.useRemoveSurrounding1[kind=fun;params=] fun useRemoveSurrounding1 sym=golden.sema.useRemoveSurrounding1[kind=fun;params=]
+  decl golden.sema.useRemoveSurrounding2[kind=fun;params=] fun useRemoveSurrounding2 sym=golden.sema.useRemoveSurrounding2[kind=fun;params=]
 expr e@4:32 string(Kotlin) type=String
 expr e@4:52 string(Ko) type=String
-expr e@4:32#1 memberCall recv=e@4:32 callee=startsWith args=[_:e@4:52] type=Boolean call=kotlin.text.startsWith#1
+expr e@4:32#1 memberCall recv=e@4:32 callee=startsWith args=[_:e@4:52] type=Boolean call=kotlin.text.startsWith[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence,Boolean]
 expr e@6:30 string(Kotlin) type=String
 expr e@6:48 string(lin) type=String
-expr e@6:30#1 memberCall recv=e@6:30 callee=endsWith args=[_:e@6:48] type=Boolean call=kotlin.text.endsWith#1
+expr e@6:30#1 memberCall recv=e@6:30 callee=endsWith args=[_:e@6:48] type=Boolean call=kotlin.text.endsWith[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence,Boolean]
 expr e@8:30 string(Kotlin) type=String
 expr e@8:48 string(otl) type=String
-expr e@8:30#1 memberCall recv=e@8:30 callee=contains args=[_:e@8:48] type=Boolean call=kotlin.text.contains#1
+expr e@8:30#1 memberCall recv=e@8:30 callee=contains args=[_:e@8:48] type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence]
 expr e@10:33 string(hello) type=String
 expr e@10:54 string(he) type=String
-expr e@10:33#1 memberCall recv=e@10:33 callee=removePrefix args=[_:e@10:54] type=String call=kotlin.text.removePrefix#0
+expr e@10:33#1 memberCall recv=e@10:33 callee=removePrefix args=[_:e@10:54] type=String call=kotlin.text.removePrefix[kind=fun;recv=String;params=kotlin.CharSequence]
 expr e@12:33 string(hello) type=String
 expr e@12:54 string(lo) type=String
-expr e@12:33#1 memberCall recv=e@12:33 callee=removeSuffix args=[_:e@12:54] type=String call=kotlin.text.removeSuffix#0
+expr e@12:33#1 memberCall recv=e@12:33 callee=removeSuffix args=[_:e@12:54] type=String call=kotlin.text.removeSuffix[kind=fun;recv=String;params=kotlin.CharSequence]
 expr e@14:39 string([hello]) type=String
 expr e@14:67 string([) type=String
 expr e@14:72 string(]) type=String
-expr e@14:39#1 memberCall recv=e@14:39 callee=removeSurrounding args=[_:e@14:67,_:e@14:72] type=String call=kotlin.text.removeSurrounding#1
+expr e@14:39#1 memberCall recv=e@14:39 callee=removeSurrounding args=[_:e@14:67,_:e@14:72] type=String call=kotlin.text.removeSurrounding[kind=fun;recv=String;params=kotlin.CharSequence,kotlin.CharSequence]
 expr e@16:39 string(**foo**) type=String
 expr e@16:67 string(*) type=String
-expr e@16:39#1 memberCall recv=e@16:39 callee=removeSurrounding args=[_:e@16:67] type=String call=kotlin.text.removeSurrounding#0
+expr e@16:39#1 memberCall recv=e@16:39 callee=removeSurrounding args=[_:e@16:67] type=String call=kotlin.text.removeSurrounding[kind=fun;recv=String;params=kotlin.CharSequence]

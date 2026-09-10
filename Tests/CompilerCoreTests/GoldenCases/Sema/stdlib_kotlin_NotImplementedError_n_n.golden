@@ -1,22 +1,22 @@
-symbol fq=__try_0_catch_0.caught kind=local vis=internal flags=_ type=kotlin.NotImplementedError
-symbol fq=golden.sema.catchNotImplemented kind=function vis=public flags=_ sig=recv=_ params=[kotlin.NotImplementedError] ret=String
-symbol fq=golden.sema.catchNotImplemented.$0.error kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.fromMessage kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.NotImplementedError
-symbol fq=golden.sema.fromMessage.$1.message kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.fromNoArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.NotImplementedError
+symbol fq=__try_0_catch_0.caught[kind=local] kind=local vis=internal flags=_ type=kotlin.NotImplementedError
+symbol fq=golden.sema.catchNotImplemented.$0.error[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.catchNotImplemented[kind=fun;params=kotlin.NotImplementedError] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.NotImplementedError] ret=String
+symbol fq=golden.sema.fromMessage.$1.message[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.fromMessage[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.NotImplementedError
+symbol fq=golden.sema.fromNoArg[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.NotImplementedError
 file fstdlib_kotlin_NotImplementedError_n_n package=golden.sema
-  decl golden.sema.fromNoArg fun fromNoArg sym=golden.sema.fromNoArg
-  decl golden.sema.fromMessage fun fromMessage sym=golden.sema.fromMessage
-  decl golden.sema.catchNotImplemented fun catchNotImplemented sym=golden.sema.catchNotImplemented
-expr e@3:40 call callee=e@3:40#1 args=[] type=kotlin.NotImplementedError call=kotlin.NotImplementedError.<init>#0
-expr e@5:77 name(message) type=String ref=golden.sema.fromMessage.$1.message
-expr e@5:57 call callee=e@5:57#1 args=[_:e@5:77] type=kotlin.NotImplementedError call=kotlin.NotImplementedError.<init>#1
-expr e@8:17 name(error) type=kotlin.NotImplementedError ref=golden.sema.catchNotImplemented.$0.error
+  decl golden.sema.fromNoArg[kind=fun;params=] fun fromNoArg sym=golden.sema.fromNoArg[kind=fun;params=]
+  decl golden.sema.fromMessage[kind=fun;params=String] fun fromMessage sym=golden.sema.fromMessage[kind=fun;params=String]
+  decl golden.sema.catchNotImplemented[kind=fun;params=kotlin.NotImplementedError] fun catchNotImplemented sym=golden.sema.catchNotImplemented[kind=fun;params=kotlin.NotImplementedError]
+expr e@3:40 call callee=e@3:40#1 args=[] type=kotlin.NotImplementedError call=kotlin.NotImplementedError.<init>[kind=ctor;recv=kotlin.NotImplementedError;params=]
+expr e@5:77 name(message) type=String ref=golden.sema.fromMessage.$1.message[kind=vparam]
+expr e@5:57 call callee=e@5:57#1 args=[_:e@5:77] type=kotlin.NotImplementedError call=kotlin.NotImplementedError.<init>[kind=ctor;recv=kotlin.NotImplementedError;params=String]
+expr e@8:17 name(error) type=kotlin.NotImplementedError ref=golden.sema.catchNotImplemented.$0.error[kind=vparam]
 expr e@8:11 throw value=e@8:17 type=Nothing
 expr e@8:9 blockExpr stmts=[] trailing=e@8:11 type=Nothing
-expr e@8:63 name(caught) type=kotlin.NotImplementedError ref=__try_0_catch_0.caught
-expr e@8:63#1 memberCall recv=e@8:63 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@8:63 name(caught) type=kotlin.NotImplementedError ref=__try_0_catch_0.caught[kind=local]
+expr e@8:63#1 memberCall recv=e@8:63 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@8:81 string(null) type=String
 expr e@8:63#2 binary(elvis) lhs=e@8:63#1 rhs=e@8:81 type=String
-expr e@8:61 blockExpr stmts=[] trailing=e@8:63#2 type=String ref=__try_0_catch_0.caught
+expr e@8:61 blockExpr stmts=[] trailing=e@8:63#2 type=String ref=__try_0_catch_0.caught[kind=local]
 expr e@8:5 try body=e@8:9 catches=[e@8:61] finally=_ type=String

@@ -1,40 +1,40 @@
-symbol fq=__local_0.ubyteList kind=local vis=private flags=_ type=kotlin.collections.List<UByte>
-symbol fq=__local_1.checkedUByte kind=local vis=private flags=_ type=kotlin.collections.List<UByte>
-symbol fq=__local_2.ushortList kind=local vis=private flags=_ type=kotlin.collections.List<UShort>
-symbol fq=__local_3.checkedUShort kind=local vis=private flags=_ type=kotlin.collections.List<UShort>
-symbol fq=__local_4.uintList kind=local vis=private flags=_ type=kotlin.collections.List<UInt>
-symbol fq=__local_5.checkedUInt kind=local vis=private flags=_ type=kotlin.collections.List<UInt>
-symbol fq=__local_6.ulongList kind=local vis=private flags=_ type=kotlin.collections.List<ULong>
-symbol fq=__local_7.checkedULong kind=local vis=private flags=_ type=kotlin.collections.List<ULong>
-symbol fq=golden.sema.unsignedArrayViews kind=function vis=public flags=_ sig=recv=_ params=[kotlin.UByteArray,kotlin.UShortArray,kotlin.UIntArray,kotlin.ULongArray] ret=Unit
-symbol fq=golden.sema.unsignedArrayViews.$0.ubytes kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.unsignedArrayViews.$0.uints kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.unsignedArrayViews.$0.ulongs kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.unsignedArrayViews.$0.ushorts kind=valueParameter vis=private flags=_
-symbol fq=kotlin.UByteArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.UIntArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.ULongArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.UShortArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
+symbol fq=__local_0.ubyteList[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<UByte>
+symbol fq=__local_1.checkedUByte[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<UByte>
+symbol fq=__local_2.ushortList[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<UShort>
+symbol fq=__local_3.checkedUShort[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<UShort>
+symbol fq=__local_4.uintList[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<UInt>
+symbol fq=__local_5.checkedUInt[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<UInt>
+symbol fq=__local_6.ulongList[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<ULong>
+symbol fq=__local_7.checkedULong[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<ULong>
+symbol fq=golden.sema.unsignedArrayViews.$0.ubytes[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unsignedArrayViews.$0.uints[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unsignedArrayViews.$0.ulongs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unsignedArrayViews.$0.ushorts[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unsignedArrayViews[kind=fun;params=kotlin.UByteArray,kotlin.UShortArray,kotlin.UIntArray,kotlin.ULongArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.UByteArray,kotlin.UShortArray,kotlin.UIntArray,kotlin.ULongArray] ret=Unit
+symbol fq=kotlin.UByteArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.UIntArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.ULongArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.UShortArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file funsigned_array_as_list package=golden.sema
-  decl golden.sema.unsignedArrayViews fun unsignedArrayViews sym=golden.sema.unsignedArrayViews
-expr e@11:21 name(ubytes) type=kotlin.UByteArray ref=golden.sema.unsignedArrayViews.$0.ubytes
-expr e@11:21#1 memberCall recv=e@11:21 callee=asList args=[] type=kotlin.collections.List<UByte> call=kotlin.collections.asList#9
-expr e@11:5 localDecl ubyteList mutable=0 type=_ init=e@11:21#1 type=Unit ref=__local_0.ubyteList
-expr e@12:37 name(ubyteList) type=kotlin.collections.List<UByte> ref=__local_0.ubyteList
-expr e@12:5 localDecl checkedUByte mutable=0 type=List<UByte> init=e@12:37 type=Unit ref=__local_1.checkedUByte
-expr e@13:22 name(ushorts) type=kotlin.UShortArray ref=golden.sema.unsignedArrayViews.$0.ushorts
-expr e@13:22#1 memberCall recv=e@13:22 callee=asList args=[] type=kotlin.collections.List<UShort> call=kotlin.collections.asList#12
-expr e@13:5 localDecl ushortList mutable=0 type=_ init=e@13:22#1 type=Unit ref=__local_2.ushortList
-expr e@14:39 name(ushortList) type=kotlin.collections.List<UShort> ref=__local_2.ushortList
-expr e@14:5 localDecl checkedUShort mutable=0 type=List<UShort> init=e@14:39 type=Unit ref=__local_3.checkedUShort
-expr e@15:20 name(uints) type=kotlin.UIntArray ref=golden.sema.unsignedArrayViews.$0.uints
-expr e@15:20#1 memberCall recv=e@15:20 callee=asList args=[] type=kotlin.collections.List<UInt> call=kotlin.collections.asList#10
-expr e@15:5 localDecl uintList mutable=0 type=_ init=e@15:20#1 type=Unit ref=__local_4.uintList
-expr e@16:35 name(uintList) type=kotlin.collections.List<UInt> ref=__local_4.uintList
-expr e@16:5 localDecl checkedUInt mutable=0 type=List<UInt> init=e@16:35 type=Unit ref=__local_5.checkedUInt
-expr e@17:21 name(ulongs) type=kotlin.ULongArray ref=golden.sema.unsignedArrayViews.$0.ulongs
-expr e@17:21#1 memberCall recv=e@17:21 callee=asList args=[] type=kotlin.collections.List<ULong> call=kotlin.collections.asList#11
-expr e@17:5 localDecl ulongList mutable=0 type=_ init=e@17:21#1 type=Unit ref=__local_6.ulongList
-expr e@18:37 name(ulongList) type=kotlin.collections.List<ULong> ref=__local_6.ulongList
-expr e@18:5 localDecl checkedULong mutable=0 type=List<ULong> init=e@18:37 type=Unit ref=__local_7.checkedULong
+  decl golden.sema.unsignedArrayViews[kind=fun;params=kotlin.UByteArray,kotlin.UShortArray,kotlin.UIntArray,kotlin.ULongArray] fun unsignedArrayViews sym=golden.sema.unsignedArrayViews[kind=fun;params=kotlin.UByteArray,kotlin.UShortArray,kotlin.UIntArray,kotlin.ULongArray]
+expr e@11:21 name(ubytes) type=kotlin.UByteArray ref=golden.sema.unsignedArrayViews.$0.ubytes[kind=vparam]
+expr e@11:21#1 memberCall recv=e@11:21 callee=asList args=[] type=kotlin.collections.List<UByte> call=kotlin.collections.asList[kind=fun;recv=kotlin.UByteArray;params=]
+expr e@11:5 localDecl ubyteList mutable=0 type=_ init=e@11:21#1 type=Unit ref=__local_0.ubyteList[kind=local]
+expr e@12:37 name(ubyteList) type=kotlin.collections.List<UByte> ref=__local_0.ubyteList[kind=local]
+expr e@12:5 localDecl checkedUByte mutable=0 type=List<UByte> init=e@12:37 type=Unit ref=__local_1.checkedUByte[kind=local]
+expr e@13:22 name(ushorts) type=kotlin.UShortArray ref=golden.sema.unsignedArrayViews.$0.ushorts[kind=vparam]
+expr e@13:22#1 memberCall recv=e@13:22 callee=asList args=[] type=kotlin.collections.List<UShort> call=kotlin.collections.asList[kind=fun;recv=kotlin.UShortArray;params=]
+expr e@13:5 localDecl ushortList mutable=0 type=_ init=e@13:22#1 type=Unit ref=__local_2.ushortList[kind=local]
+expr e@14:39 name(ushortList) type=kotlin.collections.List<UShort> ref=__local_2.ushortList[kind=local]
+expr e@14:5 localDecl checkedUShort mutable=0 type=List<UShort> init=e@14:39 type=Unit ref=__local_3.checkedUShort[kind=local]
+expr e@15:20 name(uints) type=kotlin.UIntArray ref=golden.sema.unsignedArrayViews.$0.uints[kind=vparam]
+expr e@15:20#1 memberCall recv=e@15:20 callee=asList args=[] type=kotlin.collections.List<UInt> call=kotlin.collections.asList[kind=fun;recv=kotlin.UIntArray;params=]
+expr e@15:5 localDecl uintList mutable=0 type=_ init=e@15:20#1 type=Unit ref=__local_4.uintList[kind=local]
+expr e@16:35 name(uintList) type=kotlin.collections.List<UInt> ref=__local_4.uintList[kind=local]
+expr e@16:5 localDecl checkedUInt mutable=0 type=List<UInt> init=e@16:35 type=Unit ref=__local_5.checkedUInt[kind=local]
+expr e@17:21 name(ulongs) type=kotlin.ULongArray ref=golden.sema.unsignedArrayViews.$0.ulongs[kind=vparam]
+expr e@17:21#1 memberCall recv=e@17:21 callee=asList args=[] type=kotlin.collections.List<ULong> call=kotlin.collections.asList[kind=fun;recv=kotlin.ULongArray;params=]
+expr e@17:5 localDecl ulongList mutable=0 type=_ init=e@17:21#1 type=Unit ref=__local_6.ulongList[kind=local]
+expr e@18:37 name(ulongList) type=kotlin.collections.List<ULong> ref=__local_6.ulongList[kind=local]
+expr e@18:5 localDecl checkedULong mutable=0 type=List<ULong> init=e@18:37 type=Unit ref=__local_7.checkedULong[kind=local]

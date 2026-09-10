@@ -1,56 +1,56 @@
-symbol fq=__local_0.iterableAt kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.iterableElse kind=local vis=private flags=_ type=Int
-symbol fq=__local_2.iterableNull kind=local vis=private flags=_ type=Int?
-symbol fq=__local_3.negativeNull kind=local vis=private flags=_ type=Int?
-symbol fq=__local_4.nullableElement kind=local vis=private flags=_ type=String?
-symbol fq=__local_5.listAt kind=local vis=private flags=_ type=Int
-symbol fq=__local_6.listElse kind=local vis=private flags=_ type=Int
-symbol fq=__local_7.listNull kind=local vis=private flags=_ type=Int?
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
-symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<String?>,kotlin.collections.List<Int>] ret=Unit
-symbol fq=probe.$0.list kind=valueParameter vis=private flags=_
-symbol fq=probe.$0.nullable kind=valueParameter vis=private flags=_
-symbol fq=probe.$0.values kind=valueParameter vis=private flags=_
+symbol fq=__local_0.iterableAt[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.iterableElse[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.iterableNull[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_3.negativeNull[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_4.nullableElement[kind=local] kind=local vis=private flags=_ type=String?
+symbol fq=__local_5.listAt[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_6.listElse[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_7.listNull[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=probe.$0.list[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe.$0.nullable[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<String?>,kotlin.collections.List<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<String?>,kotlin.collections.List<Int>] ret=Unit
 file fstdlib_kotlin_collections_Iterable_element package=_
-  decl probe fun probe sym=probe
-expr e@2:22 name(values) type=kotlin.collections.Iterable<Int> ref=probe.$0.values
+  decl probe[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<String?>,kotlin.collections.List<Int>] fun probe sym=probe[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<String?>,kotlin.collections.List<Int>]
+expr e@2:22 name(values) type=kotlin.collections.Iterable<Int> ref=probe.$0.values[kind=vparam]
 expr e@2:39 int(1) type=Int
-expr e@2:22#1 memberCall recv=e@2:22 callee=elementAt args=[_:e@2:39] type=Int call=kotlin.collections.elementAt#0 targs=[Int]
-expr e@2:5 localDecl iterableAt mutable=0 type=_ init=e@2:22#1 type=Unit ref=__local_0.iterableAt
-expr e@3:24 name(values) type=kotlin.collections.Iterable<Int> ref=probe.$0.values
+expr e@2:22#1 memberCall recv=e@2:22 callee=elementAt args=[_:e@2:39] type=Int call=kotlin.collections.elementAt[kind=fun;recv=kotlin.collections.Iterable<T0>;params=Int;gen=1] targs=[Int]
+expr e@2:5 localDecl iterableAt mutable=0 type=_ init=e@2:22#1 type=Unit ref=__local_0.iterableAt[kind=local]
+expr e@3:24 name(values) type=kotlin.collections.Iterable<Int> ref=probe.$0.values[kind=vparam]
 expr e@3:47 int(3) type=Int
 expr e@3:52 name(it) type=Int ref=s-0
 expr e@3:57 int(10) type=Int
 expr e@3:52#1 binary(add) lhs=e@3:52 rhs=e@3:57 type=Int
 expr e@3:50 lambda params=[] body=e@3:52#1 label=elementAtOrElse type=(Int) -> Int
-expr e@3:24#1 memberCall recv=e@3:24 callee=elementAtOrElse args=[_:e@3:47,_:e@3:50] type=Int call=kotlin.collections.elementAtOrElse#0 targs=[Int]
-expr e@3:5 localDecl iterableElse mutable=0 type=_ init=e@3:24#1 type=Unit ref=__local_1.iterableElse
-expr e@4:24 name(values) type=kotlin.collections.Iterable<Int> ref=probe.$0.values
+expr e@3:24#1 memberCall recv=e@3:24 callee=elementAtOrElse args=[_:e@3:47,_:e@3:50] type=Int call=kotlin.collections.elementAtOrElse[kind=fun;recv=kotlin.collections.Iterable<T0>;params=Int,fn{p=Int;ret=T0};gen=1] targs=[Int]
+expr e@3:5 localDecl iterableElse mutable=0 type=_ init=e@3:24#1 type=Unit ref=__local_1.iterableElse[kind=local]
+expr e@4:24 name(values) type=kotlin.collections.Iterable<Int> ref=probe.$0.values[kind=vparam]
 expr e@4:47 int(99) type=Int
-expr e@4:24#1 memberCall recv=e@4:24 callee=elementAtOrNull args=[_:e@4:47] type=Int? call=kotlin.collections.elementAtOrNull#0 targs=[Int]
-expr e@4:5 localDecl iterableNull mutable=0 type=_ init=e@4:24#1 type=Unit ref=__local_2.iterableNull
-expr e@5:24 name(values) type=kotlin.collections.Iterable<Int> ref=probe.$0.values
+expr e@4:24#1 memberCall recv=e@4:24 callee=elementAtOrNull args=[_:e@4:47] type=Int? call=kotlin.collections.elementAtOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=Int;gen=1] targs=[Int]
+expr e@4:5 localDecl iterableNull mutable=0 type=_ init=e@4:24#1 type=Unit ref=__local_2.iterableNull[kind=local]
+expr e@5:24 name(values) type=kotlin.collections.Iterable<Int> ref=probe.$0.values[kind=vparam]
 expr e@5:48 int(1) type=Int
 expr e@5:47 unary(unaryMinus) operand=e@5:48 type=Int
-expr e@5:24#1 memberCall recv=e@5:24 callee=elementAtOrNull args=[_:e@5:47] type=Int? call=kotlin.collections.elementAtOrNull#0 targs=[Int]
-expr e@5:5 localDecl negativeNull mutable=0 type=_ init=e@5:24#1 type=Unit ref=__local_3.negativeNull
-expr e@6:27 name(nullable) type=kotlin.collections.Iterable<String?> ref=probe.$0.nullable
+expr e@5:24#1 memberCall recv=e@5:24 callee=elementAtOrNull args=[_:e@5:47] type=Int? call=kotlin.collections.elementAtOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=Int;gen=1] targs=[Int]
+expr e@5:5 localDecl negativeNull mutable=0 type=_ init=e@5:24#1 type=Unit ref=__local_3.negativeNull[kind=local]
+expr e@6:27 name(nullable) type=kotlin.collections.Iterable<String?> ref=probe.$0.nullable[kind=vparam]
 expr e@6:52 int(0) type=Int
-expr e@6:27#1 memberCall recv=e@6:27 callee=elementAtOrNull args=[_:e@6:52] type=String? call=kotlin.collections.elementAtOrNull#0 targs=[String?]
-expr e@6:5 localDecl nullableElement mutable=0 type=_ init=e@6:27#1 type=Unit ref=__local_4.nullableElement
-expr e@7:18 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list
+expr e@6:27#1 memberCall recv=e@6:27 callee=elementAtOrNull args=[_:e@6:52] type=String? call=kotlin.collections.elementAtOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=Int;gen=1] targs=[String?]
+expr e@6:5 localDecl nullableElement mutable=0 type=_ init=e@6:27#1 type=Unit ref=__local_4.nullableElement[kind=local]
+expr e@7:18 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list[kind=vparam]
 expr e@7:33 int(1) type=Int
-expr e@7:18#1 memberCall recv=e@7:18 callee=elementAt args=[_:e@7:33] type=Int call=kotlin.collections.elementAt#1 targs=[Int]
-expr e@7:5 localDecl listAt mutable=0 type=_ init=e@7:18#1 type=Unit ref=__local_5.listAt
-expr e@8:20 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list
+expr e@7:18#1 memberCall recv=e@7:18 callee=elementAt args=[_:e@7:33] type=Int call=kotlin.collections.elementAt[kind=fun;recv=kotlin.collections.List<T0>;params=Int;gen=1] targs=[Int]
+expr e@7:5 localDecl listAt mutable=0 type=_ init=e@7:18#1 type=Unit ref=__local_5.listAt[kind=local]
+expr e@8:20 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list[kind=vparam]
 expr e@8:41 int(1) type=Int
 expr e@8:47 int(1) type=Int
 expr e@8:46 unary(unaryMinus) operand=e@8:47 type=Int
 expr e@8:44 lambda params=[] body=e@8:46 label=elementAtOrElse type=(Int) -> Int
-expr e@8:20#1 memberCall recv=e@8:20 callee=elementAtOrElse args=[_:e@8:41,_:e@8:44] type=Int call=kotlin.collections.elementAtOrElse#1 targs=[Int]
-expr e@8:5 localDecl listElse mutable=0 type=_ init=e@8:20#1 type=Unit ref=__local_6.listElse
-expr e@9:20 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list
+expr e@8:20#1 memberCall recv=e@8:20 callee=elementAtOrElse args=[_:e@8:41,_:e@8:44] type=Int call=kotlin.collections.elementAtOrElse[kind=fun;recv=kotlin.collections.List<T0>;params=Int,fn{p=Int;ret=T0};gen=1] targs=[Int]
+expr e@8:5 localDecl listElse mutable=0 type=_ init=e@8:20#1 type=Unit ref=__local_6.listElse[kind=local]
+expr e@9:20 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list[kind=vparam]
 expr e@9:41 int(99) type=Int
-expr e@9:20#1 memberCall recv=e@9:20 callee=elementAtOrNull args=[_:e@9:41] type=Int? call=kotlin.collections.elementAtOrNull#1 targs=[Int]
-expr e@9:5 localDecl listNull mutable=0 type=_ init=e@9:20#1 type=Unit ref=__local_7.listNull
+expr e@9:20#1 memberCall recv=e@9:20 callee=elementAtOrNull args=[_:e@9:41] type=Int? call=kotlin.collections.elementAtOrNull[kind=fun;recv=kotlin.collections.List<T0>;params=Int;gen=1] targs=[Int]
+expr e@9:5 localDecl listNull mutable=0 type=_ init=e@9:20#1 type=Unit ref=__local_7.listNull[kind=local]

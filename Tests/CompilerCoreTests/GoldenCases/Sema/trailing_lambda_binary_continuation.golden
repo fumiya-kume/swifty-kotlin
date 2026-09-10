@@ -1,15 +1,15 @@
-symbol fq=golden.sema.sumPlusOne kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
+symbol fq=golden.sema.sumPlusOne[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file ftrailing_lambda_binary_continuation package=golden.sema
-  decl golden.sema.sumPlusOne fun sumPlusOne sym=golden.sema.sumPlusOne
+  decl golden.sema.sumPlusOne[kind=fun;params=] fun sumPlusOne sym=golden.sema.sumPlusOne[kind=fun;params=]
 expr e@3:32 int(1) type=Int
 expr e@3:35 int(2) type=Int
-expr e@3:25 call callee=e@3:25#1 args=[_:e@3:32,_:e@3:35] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@3:25 call callee=e@3:25#1 args=[_:e@3:32,_:e@3:35] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
 expr e@3:43 int(0) type=Int
 expr e@3:58 name(acc) type=Int ref=s-0
 expr e@3:64 name(x) type=Int ref=s-1
 expr e@3:58#1 binary(add) lhs=e@3:58 rhs=e@3:64 type=Int
 expr e@3:46 lambda params=[acc,x] body=e@3:58#1 label=fold type=(Int, Int) -> Int
-expr e@3:25#2 memberCall recv=e@3:25 callee=fold args=[_:e@3:43,_:e@3:46] type=Int call=kotlin.collections.fold#16 targs=[Int,Int]
+expr e@3:25#2 memberCall recv=e@3:25 callee=fold args=[_:e@3:43,_:e@3:46] type=Int call=kotlin.collections.fold[kind=fun;recv=kotlin.collections.List<T0>;params=T1,fn{p=T1,T0;ret=T1};gen=2] targs=[Int,Int]
 expr e@3:70 int(1) type=Int
 expr e@3:25#3 binary(add) lhs=e@3:25#2 rhs=e@3:70 type=Int

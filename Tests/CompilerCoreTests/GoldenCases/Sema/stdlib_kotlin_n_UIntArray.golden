@@ -1,12 +1,12 @@
-symbol fq=golden.sema.makeUIntArray kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=kotlin.UIntArray
-symbol fq=golden.sema.makeUIntArray.$0.size kind=valueParameter vis=private flags=_
-symbol fq=kotlin.UIntArray#0 kind=class vis=public flags=synthetic
+symbol fq=golden.sema.makeUIntArray.$0.size[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeUIntArray[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=kotlin.UIntArray
+symbol fq=kotlin.UIntArray[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_n_UIntArray package=golden.sema
-  decl golden.sema.makeUIntArray fun makeUIntArray sym=golden.sema.makeUIntArray
-expr e@3:53 name(size) type=Int ref=golden.sema.makeUIntArray.$0.size
+  decl golden.sema.makeUIntArray[kind=fun;params=Int] fun makeUIntArray sym=golden.sema.makeUIntArray[kind=fun;params=Int]
+expr e@3:53 name(size) type=Int ref=golden.sema.makeUIntArray.$0.size[kind=vparam]
 expr e@4:6 name(index) type=Int ref=s-0
 expr e@4:14 int(1) type=Int
 expr e@4:6#1 binary(add) lhs=e@4:6 rhs=e@4:14 type=Int
 expr e@4:6#2 memberCall recv=e@4:6#1 callee=toUInt args=[] type=UInt
 expr e@3:59 lambda params=[index] body=e@4:6#2 label=UIntArray type=(Int) -> UInt
-expr e@3:43 call callee=e@3:43#1 args=[_:e@3:53,_:e@3:59] type=kotlin.UIntArray call=kotlin.UIntArray#1
+expr e@3:43 call callee=e@3:43#1 args=[_:e@3:53,_:e@3:59] type=kotlin.UIntArray call=kotlin.UIntArray[kind=fun;params=Int,fn{p=Int;ret=UInt}]

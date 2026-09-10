@@ -1,15 +1,15 @@
-symbol fq=collectionSizeOrFallback kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>] ret=Int
-symbol fq=collectionSizeOrFallback.$0.values kind=valueParameter vis=private flags=_
-symbol fq=knownCollectionSize kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
-symbol fq=knownCollectionSize.$1.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=collectionSizeOrFallback.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=collectionSizeOrFallback[kind=fun;params=kotlin.collections.Iterable<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>] ret=Int
+symbol fq=knownCollectionSize.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=knownCollectionSize[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_collection package=_ annotations=[@file:Suppress("INVISIBLE_MEMBER","INVISIBLE_REFERENCE")]
-  decl knownCollectionSize fun knownCollectionSize sym=knownCollectionSize
-  decl collectionSizeOrFallback fun collectionSizeOrFallback sym=collectionSizeOrFallback
-expr e@4:12 name(values) type=kotlin.collections.Iterable<Int> ref=knownCollectionSize.$1.values
-expr e@4:12#1 memberCall recv=e@4:12 callee=collectionSizeOrNull args=[] type=Int? call=kotlin.collections.collectionSizeOrNull targs=[Int]
+  decl knownCollectionSize[kind=fun;params=kotlin.collections.Iterable<Int>] fun knownCollectionSize sym=knownCollectionSize[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl collectionSizeOrFallback[kind=fun;params=kotlin.collections.Iterable<String?>] fun collectionSizeOrFallback sym=collectionSizeOrFallback[kind=fun;params=kotlin.collections.Iterable<String?>]
+expr e@4:12 name(values) type=kotlin.collections.Iterable<Int> ref=knownCollectionSize.$1.values[kind=vparam]
+expr e@4:12#1 memberCall recv=e@4:12 callee=collectionSizeOrNull args=[] type=Int? call=kotlin.collections.collectionSizeOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
 expr e@4:5 return value=e@4:12#1 type=Nothing
-expr e@8:12 name(values) type=kotlin.collections.Iterable<String?> ref=collectionSizeOrFallback.$0.values
+expr e@8:12 name(values) type=kotlin.collections.Iterable<String?> ref=collectionSizeOrFallback.$0.values[kind=vparam]
 expr e@8:43 int(17) type=Int
-expr e@8:12#1 memberCall recv=e@8:12 callee=collectionSizeOrDefault args=[_:e@8:43] type=Int call=kotlin.collections.collectionSizeOrDefault targs=[String?]
+expr e@8:12#1 memberCall recv=e@8:12 callee=collectionSizeOrDefault args=[_:e@8:43] type=Int call=kotlin.collections.collectionSizeOrDefault[kind=fun;recv=kotlin.collections.Iterable<T0>;params=Int;gen=1] targs=[String?]
 expr e@8:5 return value=e@8:12#1 type=Nothing

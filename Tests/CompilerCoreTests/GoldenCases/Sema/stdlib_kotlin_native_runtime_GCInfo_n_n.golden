@@ -1,13 +1,13 @@
-symbol fq=golden.sema.gcInfoConstructor kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.runtime.RootSetStatistics,kotlin.collections.Map<String, kotlin.native.runtime.SweepStatistics>,kotlin.collections.Map<String, kotlin.native.runtime.MemoryUsage>,kotlin.collections.Map<String, kotlin.native.runtime.MemoryUsage>] ret=kotlin.native.runtime.GCInfo
-symbol fq=golden.sema.gcInfoConstructor.$0.memoryUsageAfter kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.gcInfoConstructor.$0.memoryUsageBefore kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.gcInfoConstructor.$0.rootSet kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.gcInfoConstructor.$0.sweepStatistics kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.native.runtime.RootSetStatistics kind=class vis=public flags=synthetic type=kotlin.native.runtime.RootSetStatistics
-symbol fq=kotlin.native.runtime.SweepStatistics kind=class vis=public flags=_ type=kotlin.native.runtime.SweepStatistics
+symbol fq=golden.sema.gcInfoConstructor.$0.memoryUsageAfter[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.gcInfoConstructor.$0.memoryUsageBefore[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.gcInfoConstructor.$0.rootSet[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.gcInfoConstructor.$0.sweepStatistics[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.gcInfoConstructor[kind=fun;params=kotlin.native.runtime.RootSetStatistics,kotlin.collections.Map<String,kotlin.native.runtime.SweepStatistics>,kotlin.collections.Map<String,kotlin.native.runtime.MemoryUsage>,kotlin.collections.Map<String,kotlin.native.runtime.MemoryUsage>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.runtime.RootSetStatistics,kotlin.collections.Map<String, kotlin.native.runtime.SweepStatistics>,kotlin.collections.Map<String, kotlin.native.runtime.MemoryUsage>,kotlin.collections.Map<String, kotlin.native.runtime.MemoryUsage>] ret=kotlin.native.runtime.GCInfo
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.native.runtime.RootSetStatistics[kind=class] kind=class vis=public flags=synthetic type=kotlin.native.runtime.RootSetStatistics
+symbol fq=kotlin.native.runtime.SweepStatistics[kind=class] kind=class vis=public flags=_ type=kotlin.native.runtime.SweepStatistics
 file fstdlib_kotlin_native_runtime_GCInfo_n_n package=golden.sema
-  decl golden.sema.gcInfoConstructor fun gcInfoConstructor sym=golden.sema.gcInfoConstructor
+  decl golden.sema.gcInfoConstructor[kind=fun;params=kotlin.native.runtime.RootSetStatistics,kotlin.collections.Map<String,kotlin.native.runtime.SweepStatistics>,kotlin.collections.Map<String,kotlin.native.runtime.MemoryUsage>,kotlin.collections.Map<String,kotlin.native.runtime.MemoryUsage>] fun gcInfoConstructor sym=golden.sema.gcInfoConstructor[kind=fun;params=kotlin.native.runtime.RootSetStatistics,kotlin.collections.Map<String,kotlin.native.runtime.SweepStatistics>,kotlin.collections.Map<String,kotlin.native.runtime.MemoryUsage>,kotlin.collections.Map<String,kotlin.native.runtime.MemoryUsage>]
 expr e@15:5 long(1) type=Long
 expr e@16:5 long(2) type=Long
 expr e@17:5 long(3) type=Long
@@ -18,9 +18,9 @@ expr e@21:5 name(null) type=Nothing?
 expr e@22:5 name(null) type=Nothing?
 expr e@23:5 name(null) type=Nothing?
 expr e@24:5 name(null) type=Nothing?
-expr e@25:5 name(rootSet) type=kotlin.native.runtime.RootSetStatistics ref=golden.sema.gcInfoConstructor.$0.rootSet
+expr e@25:5 name(rootSet) type=kotlin.native.runtime.RootSetStatistics ref=golden.sema.gcInfoConstructor.$0.rootSet[kind=vparam]
 expr e@26:5 long(7) type=Long
-expr e@27:5 name(sweepStatistics) type=kotlin.collections.Map<String, kotlin.native.runtime.SweepStatistics> ref=golden.sema.gcInfoConstructor.$0.sweepStatistics
-expr e@28:5 name(memoryUsageBefore) type=kotlin.collections.Map<String, kotlin.native.runtime.MemoryUsage> ref=golden.sema.gcInfoConstructor.$0.memoryUsageBefore
-expr e@29:5 name(memoryUsageAfter) type=kotlin.collections.Map<String, kotlin.native.runtime.MemoryUsage> ref=golden.sema.gcInfoConstructor.$0.memoryUsageAfter
-expr e@14:13 call callee=e@14:13#1 args=[_:e@15:5,_:e@16:5,_:e@17:5,_:e@18:5,_:e@19:5,_:e@20:5,_:e@21:5,_:e@22:5,_:e@23:5,_:e@24:5,_:e@25:5,_:e@26:5,_:e@27:5,_:e@28:5,_:e@29:5] type=kotlin.native.runtime.GCInfo call=kotlin.native.runtime.GCInfo.<init>
+expr e@27:5 name(sweepStatistics) type=kotlin.collections.Map<String, kotlin.native.runtime.SweepStatistics> ref=golden.sema.gcInfoConstructor.$0.sweepStatistics[kind=vparam]
+expr e@28:5 name(memoryUsageBefore) type=kotlin.collections.Map<String, kotlin.native.runtime.MemoryUsage> ref=golden.sema.gcInfoConstructor.$0.memoryUsageBefore[kind=vparam]
+expr e@29:5 name(memoryUsageAfter) type=kotlin.collections.Map<String, kotlin.native.runtime.MemoryUsage> ref=golden.sema.gcInfoConstructor.$0.memoryUsageAfter[kind=vparam]
+expr e@14:13 call callee=e@14:13#1 args=[_:e@15:5,_:e@16:5,_:e@17:5,_:e@18:5,_:e@19:5,_:e@20:5,_:e@21:5,_:e@22:5,_:e@23:5,_:e@24:5,_:e@25:5,_:e@26:5,_:e@27:5,_:e@28:5,_:e@29:5] type=kotlin.native.runtime.GCInfo call=kotlin.native.runtime.GCInfo.<init>[kind=ctor;recv=kotlin.native.runtime.GCInfo;params=Long,Long,Long,Long,Long,Long,Long?,Long?,Long?,Long?,kotlin.native.runtime.RootSetStatistics,Long,kotlin.collections.Map<String,kotlin.native.runtime.SweepStatistics>,kotlin.collections.Map<String,kotlin.native.runtime.MemoryUsage>,kotlin.collections.Map<String,kotlin.native.runtime.MemoryUsage>]

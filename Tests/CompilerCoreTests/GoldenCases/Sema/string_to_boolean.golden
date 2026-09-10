@@ -1,11 +1,11 @@
-symbol fq=golden.sema.parseStrict kind=function vis=public flags=_ sig=recv=_ params=[String] ret=Boolean
-symbol fq=golden.sema.parseStrict.$0.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.parseStrictOrNull kind=function vis=public flags=_ sig=recv=_ params=[String] ret=Boolean?
-symbol fq=golden.sema.parseStrictOrNull.$1.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.parseStrict.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.parseStrictOrNull.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.parseStrictOrNull[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=Boolean?
+symbol fq=golden.sema.parseStrict[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=Boolean
 file fstring_to_boolean package=golden.sema
-  decl golden.sema.parseStrict fun parseStrict sym=golden.sema.parseStrict
-  decl golden.sema.parseStrictOrNull fun parseStrictOrNull sym=golden.sema.parseStrictOrNull
-expr e@3:43 name(value) type=String ref=golden.sema.parseStrict.$0.value
-expr e@3:43#1 memberCall recv=e@3:43 callee=toBooleanStrict args=[] type=Boolean call=kotlin.text.toBooleanStrict
-expr e@4:50 name(value) type=String ref=golden.sema.parseStrictOrNull.$1.value
-expr e@4:50#1 memberCall recv=e@4:50 callee=toBooleanStrictOrNull args=[] type=Boolean? call=kotlin.text.toBooleanStrictOrNull
+  decl golden.sema.parseStrict[kind=fun;params=String] fun parseStrict sym=golden.sema.parseStrict[kind=fun;params=String]
+  decl golden.sema.parseStrictOrNull[kind=fun;params=String] fun parseStrictOrNull sym=golden.sema.parseStrictOrNull[kind=fun;params=String]
+expr e@3:43 name(value) type=String ref=golden.sema.parseStrict.$0.value[kind=vparam]
+expr e@3:43#1 memberCall recv=e@3:43 callee=toBooleanStrict args=[] type=Boolean call=kotlin.text.toBooleanStrict[kind=fun;recv=String;params=]
+expr e@4:50 name(value) type=String ref=golden.sema.parseStrictOrNull.$1.value[kind=vparam]
+expr e@4:50#1 memberCall recv=e@4:50 callee=toBooleanStrictOrNull args=[] type=Boolean? call=kotlin.text.toBooleanStrictOrNull[kind=fun;recv=String;params=]

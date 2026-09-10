@@ -1,18 +1,18 @@
-symbol fq=iterableWithIndex kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.Iterable<kotlin.collections.IndexedValue<Int>>
-symbol fq=iterableWithIndex.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
-symbol fq=listWithIndex kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=kotlin.collections.Iterable<kotlin.collections.IndexedValue<String>>
-symbol fq=listWithIndex.$1.values kind=valueParameter vis=private flags=_
-symbol fq=nullableWithIndex kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>] ret=kotlin.collections.Iterable<kotlin.collections.IndexedValue<String?>>
-symbol fq=nullableWithIndex.$2.values kind=valueParameter vis=private flags=_
+symbol fq=iterableWithIndex.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=iterableWithIndex[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.Iterable<kotlin.collections.IndexedValue<Int>>
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=listWithIndex.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=listWithIndex[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=kotlin.collections.Iterable<kotlin.collections.IndexedValue<String>>
+symbol fq=nullableWithIndex.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=nullableWithIndex[kind=fun;params=kotlin.collections.Iterable<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>] ret=kotlin.collections.Iterable<kotlin.collections.IndexedValue<String?>>
 file fstdlib_kotlin_collections_Iterable_with package=_
-  decl iterableWithIndex fun iterableWithIndex sym=iterableWithIndex
-  decl listWithIndex fun listWithIndex sym=listWithIndex
-  decl nullableWithIndex fun nullableWithIndex sym=nullableWithIndex
-expr e@1:77 name(values) type=kotlin.collections.Iterable<Int> ref=iterableWithIndex.$0.values
-expr e@1:77#1 memberCall recv=e@1:77 callee=withIndex args=[] type=kotlin.collections.Iterable<kotlin.collections.IndexedValue<Int>> call=kotlin.collections.withIndex#0 targs=[Int]
-expr e@3:75 name(values) type=kotlin.collections.List<String> ref=listWithIndex.$1.values
-expr e@3:75#1 memberCall recv=e@3:75 callee=withIndex args=[] type=kotlin.collections.Iterable<out kotlin.collections.IndexedValue<out String>> call=kotlin.collections.withIndex#0 targs=[String]
-expr e@5:85 name(values) type=kotlin.collections.Iterable<String?> ref=nullableWithIndex.$2.values
-expr e@5:85#1 memberCall recv=e@5:85 callee=withIndex args=[] type=kotlin.collections.Iterable<kotlin.collections.IndexedValue<String?>> call=kotlin.collections.withIndex#0 targs=[String?]
+  decl iterableWithIndex[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableWithIndex sym=iterableWithIndex[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl listWithIndex[kind=fun;params=kotlin.collections.List<String>] fun listWithIndex sym=listWithIndex[kind=fun;params=kotlin.collections.List<String>]
+  decl nullableWithIndex[kind=fun;params=kotlin.collections.Iterable<String?>] fun nullableWithIndex sym=nullableWithIndex[kind=fun;params=kotlin.collections.Iterable<String?>]
+expr e@1:77 name(values) type=kotlin.collections.Iterable<Int> ref=iterableWithIndex.$0.values[kind=vparam]
+expr e@1:77#1 memberCall recv=e@1:77 callee=withIndex args=[] type=kotlin.collections.Iterable<kotlin.collections.IndexedValue<Int>> call=kotlin.collections.withIndex[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
+expr e@3:75 name(values) type=kotlin.collections.List<String> ref=listWithIndex.$1.values[kind=vparam]
+expr e@3:75#1 memberCall recv=e@3:75 callee=withIndex args=[] type=kotlin.collections.Iterable<out kotlin.collections.IndexedValue<out String>> call=kotlin.collections.withIndex[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[String]
+expr e@5:85 name(values) type=kotlin.collections.Iterable<String?> ref=nullableWithIndex.$2.values[kind=vparam]
+expr e@5:85#1 memberCall recv=e@5:85 callee=withIndex args=[] type=kotlin.collections.Iterable<kotlin.collections.IndexedValue<String?>> call=kotlin.collections.withIndex[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[String?]
