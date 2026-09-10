@@ -1,23 +1,23 @@
-symbol fq=golden.sema.getOrElse kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=Char
-symbol fq=golden.sema.getOrElse.$0.index kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.getOrElse.$0.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.getOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=Char?
-symbol fq=golden.sema.getOrNull.$1.index kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.getOrNull.$1.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.namedReturn kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Char] ret=Char
-symbol fq=golden.sema.namedReturn.$2.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.namedReturn.$2.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.safeReturn kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence?,Char] ret=Char
-symbol fq=golden.sema.safeReturn.$3.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.safeReturn.$3.value kind=valueParameter vis=private flags=_
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=golden.sema.getOrElse.$0.index[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.getOrElse.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.getOrElse[kind=fun;params=kotlin.CharSequence,Int] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=Char
+symbol fq=golden.sema.getOrNull.$1.index[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.getOrNull.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.getOrNull[kind=fun;params=kotlin.CharSequence,Int] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=Char?
+symbol fq=golden.sema.namedReturn.$2.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.namedReturn.$2.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.namedReturn[kind=fun;params=kotlin.CharSequence,Char] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Char] ret=Char
+symbol fq=golden.sema.safeReturn.$3.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.safeReturn.$3.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.safeReturn[kind=fun;params=kotlin.CharSequence?,Char] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence?,Char] ret=Char
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_get package=golden.sema
-  decl golden.sema.getOrElse fun getOrElse sym=golden.sema.getOrElse
-  decl golden.sema.getOrNull fun getOrNull sym=golden.sema.getOrNull
-  decl golden.sema.namedReturn fun namedReturn sym=golden.sema.namedReturn
-  decl golden.sema.safeReturn fun safeReturn sym=golden.sema.safeReturn
-expr e@4:5 name(source) type=kotlin.CharSequence ref=golden.sema.getOrElse.$0.source
-expr e@4:22 name(index) type=Int ref=golden.sema.getOrElse.$0.index
+  decl golden.sema.getOrElse[kind=fun;params=kotlin.CharSequence,Int] fun getOrElse sym=golden.sema.getOrElse[kind=fun;params=kotlin.CharSequence,Int]
+  decl golden.sema.getOrNull[kind=fun;params=kotlin.CharSequence,Int] fun getOrNull sym=golden.sema.getOrNull[kind=fun;params=kotlin.CharSequence,Int]
+  decl golden.sema.namedReturn[kind=fun;params=kotlin.CharSequence,Char] fun namedReturn sym=golden.sema.namedReturn[kind=fun;params=kotlin.CharSequence,Char]
+  decl golden.sema.safeReturn[kind=fun;params=kotlin.CharSequence?,Char] fun safeReturn sym=golden.sema.safeReturn[kind=fun;params=kotlin.CharSequence?,Char]
+expr e@4:5 name(source) type=kotlin.CharSequence ref=golden.sema.getOrElse.$0.source[kind=vparam]
+expr e@4:22 name(index) type=Int ref=golden.sema.getOrElse.$0.index[kind=vparam]
 expr e@4:48 name(requested) type=Int ref=s-0
 expr e@4:60 int(0) type=Int
 expr e@4:48#1 binary(lessThan) lhs=e@4:48 rhs=e@4:60 type=Boolean
@@ -25,25 +25,25 @@ expr e@4:63 char(45) type=Char
 expr e@4:72 char(43) type=Char
 expr e@4:44 if cond=e@4:48#1 then=e@4:63 else=e@4:72 type=Char
 expr e@4:29 lambda params=[requested] body=e@4:44 label=getOrElse type=(Int) -> Char
-expr e@4:5#1 memberCall recv=e@4:5 callee=getOrElse args=[_:e@4:22,_:e@4:29] type=Char call=kotlin.text.getOrElse
-expr e@6:58 name(source) type=kotlin.CharSequence ref=golden.sema.getOrNull.$1.source
-expr e@6:75 name(index) type=Int ref=golden.sema.getOrNull.$1.index
-expr e@6:58#1 memberCall recv=e@6:58 callee=getOrNull args=[_:e@6:75] type=Char? call=kotlin.text.getOrNull#1
-expr e@9:5 name(source) type=kotlin.CharSequence ref=golden.sema.namedReturn.$2.source
-expr e@9:46 name(value) type=Char ref=golden.sema.namedReturn.$2.value
+expr e@4:5#1 memberCall recv=e@4:5 callee=getOrElse args=[_:e@4:22,_:e@4:29] type=Char call=kotlin.text.getOrElse[kind=fun;recv=kotlin.CharSequence;params=Int,fn{p=Int;ret=Char}]
+expr e@6:58 name(source) type=kotlin.CharSequence ref=golden.sema.getOrNull.$1.source[kind=vparam]
+expr e@6:75 name(index) type=Int ref=golden.sema.getOrNull.$1.index[kind=vparam]
+expr e@6:58#1 memberCall recv=e@6:58 callee=getOrNull args=[_:e@6:75] type=Char? call=kotlin.text.getOrNull[kind=fun;recv=kotlin.CharSequence;params=Int]
+expr e@9:5 name(source) type=kotlin.CharSequence ref=golden.sema.namedReturn.$2.source[kind=vparam]
+expr e@9:46 name(value) type=Char ref=golden.sema.namedReturn.$2.value[kind=vparam]
 expr e@9:39 return value=e@9:46 type=Nothing
 expr e@9:37 lambda params=[] body=e@9:39 label=getOrElse type=(Int) -> Char
 expr e@9:64 int(1) type=Int
 expr e@9:63 unary(unaryMinus) operand=e@9:64 type=Int
-expr e@9:5#1 memberCall recv=e@9:5 callee=getOrElse args=[defaultValue:e@9:37,index:e@9:63] type=Char call=kotlin.text.getOrElse
+expr e@9:5#1 memberCall recv=e@9:5 callee=getOrElse args=[defaultValue:e@9:37,index:e@9:63] type=Char call=kotlin.text.getOrElse[kind=fun;recv=kotlin.CharSequence;params=Int,fn{p=Int;ret=Char}]
 expr e@10:12 char(63) type=Char
 expr e@10:5 return value=e@10:12 type=Nothing
-expr e@14:5 name(source) type=kotlin.CharSequence? ref=golden.sema.safeReturn.$3.source
-expr e@14:47 name(value) type=Char ref=golden.sema.safeReturn.$3.value
+expr e@14:5 name(source) type=kotlin.CharSequence? ref=golden.sema.safeReturn.$3.source[kind=vparam]
+expr e@14:47 name(value) type=Char ref=golden.sema.safeReturn.$3.value[kind=vparam]
 expr e@14:40 return value=e@14:47 type=Nothing
 expr e@14:38 lambda params=[] body=e@14:40 label=getOrElse type=(Int) -> Char
 expr e@14:65 int(1) type=Int
 expr e@14:64 unary(unaryMinus) operand=e@14:65 type=Int
-expr e@14:5#1 safeMemberCall recv=e@14:5 callee=getOrElse args=[defaultValue:e@14:38,index:e@14:64] type=Char? call=kotlin.text.getOrElse
+expr e@14:5#1 safeMemberCall recv=e@14:5 callee=getOrElse args=[defaultValue:e@14:38,index:e@14:64] type=Char? call=kotlin.text.getOrElse[kind=fun;recv=kotlin.CharSequence;params=Int,fn{p=Int;ret=Char}]
 expr e@15:12 char(63) type=Char
 expr e@15:5 return value=e@15:12 type=Nothing
