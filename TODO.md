@@ -1341,7 +1341,7 @@
   - 未実装シンボル一覧:
     - `kotlin.collections.forEach` — fun Iterable.forEach(Function1): Unit  -- `final inline fun <#A: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlin.collections/forEach(kotlin/Function1<#A, kotlin/Unit>)`
 
-- [ ] KSP-978: kotlin.collections.Iterable.group-family の未実装 stdlib API を実装する（4 件）
+- [x] KSP-978: kotlin.collections.Iterable.group-family の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.collections` / receiver `Iterable` / family `group`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/Iterables.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1353,6 +1353,8 @@
     - `kotlin.collections.groupBy` — fun Iterable.groupBy(Function1, Function1): Map  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlin.collections/groupBy(kotlin/Function1<#A, #B>, kotlin/Function1<#A, #C>): kotlin.collections/Map<#B, kotlin.collections/List<#C>>`
     - `kotlin.collections.groupByTo` — fun Iterable.groupByTo(, Function1): #C  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin.collections/MutableMap<in #B, kotlin.collections/MutableList<#A>>> (kotlin.collections/Iterable<#A>).kotlin.collections/groupByTo(#C, kotlin/Function1<#A, #B>): #C`
     - `kotlin.collections.groupByTo` — fun Iterable.groupByTo(, Function1, Function1): #D  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin/Any?, #D: kotlin.collections/MutableMap<in #B, kotlin.collections/MutableList<#C>>> (kotlin.collections/Iterable<#A>).kotlin.collections/groupByTo(#D, kotlin/Function1<#A, #B>, kotlin/Function1<#A, #C>): #D`
+  - 完了確認（2026-09-04、KSP-978）：`Iterables.kt` に Kotlin 2.3.10 準拠の Iterable `groupBy` / `groupByTo` 4 overloads を source-backed 実装し、generic Iterable の Sema binding と既存 List 経路を固定した。対象の Runtime bridge、synthetic stub、RuntimeABI 宣言は追加せず、source-bound call は legacy member-like bridge を迂回する。
+  - 回帰: `stdlib_kotlin_collections_Iterable_group.golden` と focused Sema で Iterable/List の receiver・source path・4 overloads・型引数を確認し、diff で custom one-shot Iterable の encounter order、bucket/destination identity、lambda 評価回数、empty、iterator 例外伝播を kotlinc と比較した。Runtime ABI external-link validation も PASS。
 
 - [x] KSP-980: kotlin.collections.Iterable.join-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.collections` / receiver `Iterable` / family `join`

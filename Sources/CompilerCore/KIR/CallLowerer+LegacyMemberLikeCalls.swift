@@ -13,8 +13,7 @@ extension CallLowerer {
         return linkName.hasPrefix("kk_fn_")
     }
 
-    /// Member names whose generic Iterable/Collection implementations moved to
-    /// bundled Kotlin source in KSP-435, KSP-632, KSP-983, and KSP-986. A call bound to one of those
+    /// bundled Kotlin source in KSP-435, KSP-632, KSP-978, KSP-983, and KSP-986. A call bound to one of those
     /// source declarations bypasses this file's runtime-bridge special cases.
     static let sourceBackedIterableCollectionMemberNames: Set<String> = [
         "all", "any", "none", "firstNotNullOf", "firstNotNullOfOrNull", "joinTo", "joinToString",
@@ -32,6 +31,7 @@ extension CallLowerer {
         "distinct", "distinctBy", "flatten",
         "max", "maxBy", "maxByOrNull", "maxOf", "maxOfOrNull", "maxOfWith",
         "maxOfWithOrNull", "maxOrNull", "maxWith", "maxWithOrNull",
+        "groupBy", "groupByTo",
     ]
 
     // swiftlint:disable cyclomatic_complexity function_body_length
