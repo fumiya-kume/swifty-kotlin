@@ -63,6 +63,8 @@ struct CharSequenceRegionMatchesSourceMigrationTests {
         class CustomSequence(private val value: String) : CharSequence {
             override val length: Int get() = value.length
             override fun get(index: Int): Char = value[index]
+            override fun subSequence(startIndex: Int, endIndex: Int): CharSequence =
+                value.substring(startIndex, endIndex)
         }
 
         fun regionMatchesFamily(source: CharSequence, other: CharSequence): Boolean {
