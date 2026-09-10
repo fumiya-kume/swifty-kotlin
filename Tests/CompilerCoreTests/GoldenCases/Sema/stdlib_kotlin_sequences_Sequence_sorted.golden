@@ -1,41 +1,41 @@
-symbol fq=AnyAscendingComparator kind=class vis=private flags=_
-symbol fq=AnyAscendingComparator.<init> kind=constructor vis=private flags=_ sig=recv=AnyAscendingComparator params=[] ret=AnyAscendingComparator
-symbol fq=AnyAscendingComparator.compare.$0.a kind=valueParameter vis=private flags=_
-symbol fq=AnyAscendingComparator.compare.$0.b kind=valueParameter vis=private flags=_
-symbol fq=__local_0.comparator kind=local vis=private flags=_ type=kotlin.Comparator<Any>
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=sequenceSortedWithAnyComparator kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int>] ret=kotlin.sequences.Sequence<Int>
-symbol fq=sequenceSortedWithAnyComparator.$1.values kind=valueParameter vis=private flags=_
-symbol fq=sequenceSortedWithComparator kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int>,kotlin.Comparator<in Int>] ret=kotlin.sequences.Sequence<Int>
-symbol fq=sequenceSortedWithComparator.$2.comparator kind=valueParameter vis=private flags=_
-symbol fq=sequenceSortedWithComparator.$2.values kind=valueParameter vis=private flags=_
-symbol fq=sequenceSortedWithSam kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int>] ret=kotlin.sequences.Sequence<Int>
-symbol fq=sequenceSortedWithSam.$3.values kind=valueParameter vis=private flags=_
+symbol fq=AnyAscendingComparator.<init>[kind=ctor;recv=AnyAscendingComparator;params=] kind=constructor vis=private flags=_ sig=recv=AnyAscendingComparator params=[] ret=AnyAscendingComparator
+symbol fq=AnyAscendingComparator.compare.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=AnyAscendingComparator.compare.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=AnyAscendingComparator[kind=class] kind=class vis=private flags=_
+symbol fq=__local_0.comparator[kind=local] kind=local vis=private flags=_ type=kotlin.Comparator<Any>
+symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=sequenceSortedWithAnyComparator.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=sequenceSortedWithAnyComparator[kind=fun;params=kotlin.sequences.Sequence<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int>] ret=kotlin.sequences.Sequence<Int>
+symbol fq=sequenceSortedWithComparator.$2.comparator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=sequenceSortedWithComparator.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=sequenceSortedWithComparator[kind=fun;params=kotlin.sequences.Sequence<Int>,kotlin.Comparator<in Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int>,kotlin.Comparator<in Int>] ret=kotlin.sequences.Sequence<Int>
+symbol fq=sequenceSortedWithSam.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=sequenceSortedWithSam[kind=fun;params=kotlin.sequences.Sequence<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int>] ret=kotlin.sequences.Sequence<Int>
 file fstdlib_kotlin_sequences_Sequence_sorted package=_
-  decl AnyAscendingComparator class AnyAscendingComparator sym=AnyAscendingComparator
-  decl sequenceSortedWithComparator fun sequenceSortedWithComparator sym=sequenceSortedWithComparator
-  decl sequenceSortedWithSam fun sequenceSortedWithSam sym=sequenceSortedWithSam
-  decl sequenceSortedWithAnyComparator fun sequenceSortedWithAnyComparator sym=sequenceSortedWithAnyComparator
-expr e@3:17 name(a) type=Any ref=AnyAscendingComparator.compare.$0.a
+  decl AnyAscendingComparator[kind=class] class AnyAscendingComparator sym=AnyAscendingComparator[kind=class]
+  decl sequenceSortedWithComparator[kind=fun;params=kotlin.sequences.Sequence<Int>,kotlin.Comparator<in Int>] fun sequenceSortedWithComparator sym=sequenceSortedWithComparator[kind=fun;params=kotlin.sequences.Sequence<Int>,kotlin.Comparator<in Int>]
+  decl sequenceSortedWithSam[kind=fun;params=kotlin.sequences.Sequence<Int>] fun sequenceSortedWithSam sym=sequenceSortedWithSam[kind=fun;params=kotlin.sequences.Sequence<Int>]
+  decl sequenceSortedWithAnyComparator[kind=fun;params=kotlin.sequences.Sequence<Int>] fun sequenceSortedWithAnyComparator sym=sequenceSortedWithAnyComparator[kind=fun;params=kotlin.sequences.Sequence<Int>]
+expr e@3:17 name(a) type=Any ref=AnyAscendingComparator.compare.$0.a[kind=vparam]
 expr e@3:17#1 asCast expr=e@3:17 type=Int type=Int
-expr e@3:30 name(b) type=Any ref=AnyAscendingComparator.compare.$0.b
+expr e@3:30 name(b) type=Any ref=AnyAscendingComparator.compare.$0.b[kind=vparam]
 expr e@3:30#1 asCast expr=e@3:30 type=Int type=Int
 expr e@3:17#2 binary(subtract) lhs=e@3:17#1 rhs=e@3:30#1 type=Int
 expr e@3:9 return value=e@3:17#2 type=Nothing
-expr e@11:12 name(values) type=kotlin.sequences.Sequence<Int> ref=sequenceSortedWithComparator.$2.values
-expr e@11:30 name(comparator) type=kotlin.Comparator<in Int> ref=sequenceSortedWithComparator.$2.comparator
-expr e@11:12#1 memberCall recv=e@11:12 callee=sortedWith args=[_:e@11:30] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sortedWith targs=[Int]
+expr e@11:12 name(values) type=kotlin.sequences.Sequence<Int> ref=sequenceSortedWithComparator.$2.values[kind=vparam]
+expr e@11:30 name(comparator) type=kotlin.Comparator<in Int> ref=sequenceSortedWithComparator.$2.comparator[kind=vparam]
+expr e@11:12#1 memberCall recv=e@11:12 callee=sortedWith args=[_:e@11:30] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sortedWith[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=kotlin.Comparator<in T0>;gen=1] targs=[Int]
 expr e@11:5 return value=e@11:12#1 type=Nothing
-expr e@15:12 name(values) type=kotlin.sequences.Sequence<Int> ref=sequenceSortedWithSam.$3.values
+expr e@15:12 name(values) type=kotlin.sequences.Sequence<Int> ref=sequenceSortedWithSam.$3.values[kind=vparam]
 expr e@15:40 name(a) type=Int ref=s-0
 expr e@15:44 name(b) type=Int ref=s-1
 expr e@15:40#1 binary(subtract) lhs=e@15:40 rhs=e@15:44 type=Int
 expr e@15:30 lambda params=[a,b] body=e@15:40#1 label=sortedWith type=kotlin.Comparator<in Int>
-expr e@15:12#1 memberCall recv=e@15:12 callee=sortedWith args=[_:e@15:30] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sortedWith targs=[Int]
+expr e@15:12#1 memberCall recv=e@15:12 callee=sortedWith args=[_:e@15:30] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sortedWith[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=kotlin.Comparator<in T0>;gen=1] targs=[Int]
 expr e@15:5 return value=e@15:12#1 type=Nothing
-expr e@19:39 call callee=e@19:39#1 args=[] type=AnyAscendingComparator call=AnyAscendingComparator.<init>
-expr e@19:5 localDecl comparator mutable=0 type=Comparator<Any> init=e@19:39 type=Unit ref=__local_0.comparator
-expr e@20:12 name(values) type=kotlin.sequences.Sequence<Int> ref=sequenceSortedWithAnyComparator.$1.values
-expr e@20:30 name(comparator) type=kotlin.Comparator<Any> ref=__local_0.comparator
-expr e@20:12#1 memberCall recv=e@20:12 callee=sortedWith args=[_:e@20:30] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sortedWith targs=[Int]
+expr e@19:39 call callee=e@19:39#1 args=[] type=AnyAscendingComparator call=AnyAscendingComparator.<init>[kind=ctor;recv=AnyAscendingComparator;params=]
+expr e@19:5 localDecl comparator mutable=0 type=Comparator<Any> init=e@19:39 type=Unit ref=__local_0.comparator[kind=local]
+expr e@20:12 name(values) type=kotlin.sequences.Sequence<Int> ref=sequenceSortedWithAnyComparator.$1.values[kind=vparam]
+expr e@20:30 name(comparator) type=kotlin.Comparator<Any> ref=__local_0.comparator[kind=local]
+expr e@20:12#1 memberCall recv=e@20:12 callee=sortedWith args=[_:e@20:30] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sortedWith[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=kotlin.Comparator<in T0>;gen=1] targs=[Int]
 expr e@20:5 return value=e@20:12#1 type=Nothing

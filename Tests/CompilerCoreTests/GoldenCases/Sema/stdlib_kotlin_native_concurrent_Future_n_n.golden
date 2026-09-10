@@ -1,6 +1,6 @@
-symbol fq=kotlin.native.concurrent.Future.T kind=typeParameter vis=private flags=_
-symbol fq=preserveFuture kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=kotlin.native.concurrent.Future<Int>
-symbol fq=preserveFuture.$0.future kind=valueParameter vis=private flags=_
+symbol fq=kotlin.native.concurrent.Future.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=preserveFuture.$0.future[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=preserveFuture[kind=fun;params=kotlin.native.concurrent.Future<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=kotlin.native.concurrent.Future<Int>
 file fstdlib_kotlin_native_concurrent_Future_n_n package=_ annotations=[@file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class)]
-  decl preserveFuture fun preserveFuture sym=preserveFuture
-expr e@5:56 name(future) type=kotlin.native.concurrent.Future<Int> ref=preserveFuture.$0.future
+  decl preserveFuture[kind=fun;params=kotlin.native.concurrent.Future<Int>] fun preserveFuture sym=preserveFuture[kind=fun;params=kotlin.native.concurrent.Future<Int>]
+expr e@5:56 name(future) type=kotlin.native.concurrent.Future<Int> ref=preserveFuture.$0.future[kind=vparam]

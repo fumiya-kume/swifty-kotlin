@@ -1,7 +1,7 @@
-symbol fq=golden.sema.RestrictedScope kind=class vis=public flags=_
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.RestrictedScope[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_coroutines_RestrictsSuspension_n_n package=golden.sema
-  decl golden.sema.RestrictedScope class RestrictedScope sym=golden.sema.RestrictedScope
-  decl golden.sema.main fun main sym=golden.sema.main
+  decl golden.sema.RestrictedScope[kind=class] class RestrictedScope sym=golden.sema.RestrictedScope[kind=class]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@9:13 string(ok) type=String
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println#2
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println[kind=fun;params=String]

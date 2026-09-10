@@ -1,11 +1,11 @@
-symbol fq=__try_0_catch_0.e kind=local vis=internal flags=_ type=kotlin.TypeCastException
-symbol fq=golden.sema.catchTypeCast kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.TypeCastException
+symbol fq=golden.sema.catchTypeCast[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstdlib_kotlin_n_TypeCastException package=golden.sema
-  decl golden.sema.catchTypeCast fun catchTypeCast sym=golden.sema.catchTypeCast
+  decl golden.sema.catchTypeCast[kind=fun;params=] fun catchTypeCast sym=golden.sema.catchTypeCast[kind=fun;params=]
 expr e@4:35 string(bad type cast) type=String
-expr e@4:17 call callee=e@4:17#1 args=[_:e@4:35] type=kotlin.TypeCastException call=kotlin.TypeCastException.<init>#1
+expr e@4:17 call callee=e@4:17#1 args=[_:e@4:35] type=kotlin.TypeCastException call=kotlin.TypeCastException.<init>[kind=ctor;recv=kotlin.TypeCastException;params=String?]
 expr e@4:11 throw value=e@4:17 type=Nothing
 expr e@4:9 blockExpr stmts=[] trailing=e@4:11 type=Nothing
 expr e@5:36 string(caught) type=String
-expr e@5:34 blockExpr stmts=[] trailing=e@5:36 type=String ref=__try_0_catch_0.e
+expr e@5:34 blockExpr stmts=[] trailing=e@5:36 type=String ref=__try_0_catch_0.e[kind=local]
 expr e@4:5 try body=e@4:9 catches=[e@5:34] finally=_ type=String

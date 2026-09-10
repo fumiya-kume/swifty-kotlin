@@ -1,46 +1,43 @@
-symbol fq=__local_0.iterator kind=local vis=private flags=_ type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>>
-symbol fq=__local_1.checkedIterator kind=local vis=private flags=_ type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>>
-symbol fq=__local_2.entry kind=local vis=private flags=_ type=kotlin.collections.MutableMap.MutableEntry<String, Int?>
-symbol fq=__local_3.key kind=local vis=private flags=_ type=String
-symbol fq=__local_4.checkedKey kind=local vis=private flags=_ type=String
-symbol fq=iterateEntries kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>] ret=Unit
-symbol fq=iterateEntries.$0.map kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Iterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.hasNext kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
-symbol fq=kotlin.collections.Iterator.next kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
-symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableIterator kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableIterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap.MutableEntry kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap.MutableEntry.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap.MutableEntry.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap.MutableEntry.setValue kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableMap.MutableEntry<out kotlin.collections.MutableMap.MutableEntry.K, out kotlin.collections.MutableMap.MutableEntry.V> params=[kotlin.collections.MutableMap.MutableEntry.V] ret=kotlin.collections.MutableMap.MutableEntry.V
+symbol fq=__local_0.iterator[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>>
+symbol fq=__local_1.checkedIterator[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>>
+symbol fq=__local_2.entry[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap.MutableEntry<String, Int?>
+symbol fq=__local_3.key[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_4.checkedKey[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=iterateEntries.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=iterateEntries[kind=fun;params=kotlin.collections.MutableMap<String,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>] ret=Unit
+symbol fq=kotlin.collections.Iterator.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Iterator.hasNext[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
+symbol fq=kotlin.collections.Iterator.next[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
+symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
+symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableIterator.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableIterator[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableMap.MutableEntry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 file fmutable_map_iterator package=_
-  decl iterateEntries fun iterateEntries sym=iterateEntries
-expr e@4:20 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=iterateEntries.$0.map
-expr e@4:20#1 memberCall recv=e@4:20 callee=iterator args=[] type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>> call=kotlin.collections.iterator#1 targs=[String,Int?]
-expr e@4:5 localDecl iterator mutable=0 type=_ init=e@4:20#1 type=Unit ref=__local_0.iterator
-expr e@5:83 name(iterator) type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>> ref=__local_0.iterator
-expr e@5:5 localDecl checkedIterator mutable=0 type=MutableIterator<MutableMap.MutableEntry<String,Int?>> init=e@5:83 type=Unit ref=__local_1.checkedIterator
-expr e@6:9 name(iterator) type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>> ref=__local_0.iterator
-expr e@6:9#1 memberCall recv=e@6:9 callee=hasNext args=[] type=Boolean call=kotlin.collections.Iterator.hasNext targs=[kotlin.collections.MutableMap.MutableEntry<String, Int?>]
-expr e@7:21 name(iterator) type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>> ref=__local_0.iterator
-expr e@7:21#1 memberCall recv=e@7:21 callee=next args=[] type=kotlin.collections.MutableMap.MutableEntry<String, Int?> call=kotlin.collections.Iterator.next targs=[kotlin.collections.MutableMap.MutableEntry<String, Int?>]
-expr e@7:9 localDecl entry mutable=0 type=_ init=e@7:21#1 type=Unit ref=__local_2.entry
-expr e@8:19 name(entry) type=kotlin.collections.MutableMap.MutableEntry<String, Int?> ref=__local_2.entry
-expr e@8:19#1 memberCall recv=e@8:19 callee=key args=[] type=String call=kotlin.collections.Map.Entry.key targs=[String,Int?]
-expr e@8:9 localDecl key mutable=0 type=_ init=e@8:19#1 type=Unit ref=__local_3.key
-expr e@9:34 name(key) type=String ref=__local_3.key
-expr e@9:9 localDecl checkedKey mutable=0 type=String init=e@9:34 type=Unit ref=__local_4.checkedKey
-expr e@10:9 name(entry) type=kotlin.collections.MutableMap.MutableEntry<String, Int?> ref=__local_2.entry
+  decl iterateEntries[kind=fun;params=kotlin.collections.MutableMap<String,Int?>] fun iterateEntries sym=iterateEntries[kind=fun;params=kotlin.collections.MutableMap<String,Int?>]
+expr e@4:20 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=iterateEntries.$0.map[kind=vparam]
+expr e@4:20#1 memberCall recv=e@4:20 callee=iterator args=[] type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>> call=kotlin.collections.iterator[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=;gen=2] targs=[String,Int?]
+expr e@4:5 localDecl iterator mutable=0 type=_ init=e@4:20#1 type=Unit ref=__local_0.iterator[kind=local]
+expr e@5:83 name(iterator) type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>> ref=__local_0.iterator[kind=local]
+expr e@5:5 localDecl checkedIterator mutable=0 type=MutableIterator<MutableMap.MutableEntry<String,Int?>> init=e@5:83 type=Unit ref=__local_1.checkedIterator[kind=local]
+expr e@6:9 name(iterator) type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>> ref=__local_0.iterator[kind=local]
+expr e@6:9#1 memberCall recv=e@6:9 callee=hasNext args=[] type=Boolean call=kotlin.collections.Iterator.hasNext[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] targs=[kotlin.collections.MutableMap.MutableEntry<String, Int?>]
+expr e@7:21 name(iterator) type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>> ref=__local_0.iterator[kind=local]
+expr e@7:21#1 memberCall recv=e@7:21 callee=next args=[] type=kotlin.collections.MutableMap.MutableEntry<String, Int?> call=kotlin.collections.Iterator.next[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] targs=[kotlin.collections.MutableMap.MutableEntry<String, Int?>]
+expr e@7:9 localDecl entry mutable=0 type=_ init=e@7:21#1 type=Unit ref=__local_2.entry[kind=local]
+expr e@8:19 name(entry) type=kotlin.collections.MutableMap.MutableEntry<String, Int?> ref=__local_2.entry[kind=local]
+expr e@8:19#1 memberCall recv=e@8:19 callee=key args=[] type=String call=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int?]
+expr e@8:9 localDecl key mutable=0 type=_ init=e@8:19#1 type=Unit ref=__local_3.key[kind=local]
+expr e@9:34 name(key) type=String ref=__local_3.key[kind=local]
+expr e@9:9 localDecl checkedKey mutable=0 type=String init=e@9:34 type=Unit ref=__local_4.checkedKey[kind=local]
+expr e@10:9 name(entry) type=kotlin.collections.MutableMap.MutableEntry<String, Int?> ref=__local_2.entry[kind=local]
 expr e@10:24 int(999) type=Int
-expr e@10:9#1 memberCall recv=e@10:9 callee=setValue args=[_:e@10:24] type=Int? call=kotlin.collections.MutableMap.MutableEntry.setValue targs=[String,Int?]
-expr e@11:9 name(iterator) type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>> ref=__local_0.iterator
-expr e@11:9#1 memberCall recv=e@11:9 callee=remove args=[] type=Unit call=kotlin.collections.MutableIterator.remove targs=[kotlin.collections.MutableMap.MutableEntry<String, Int?>]
+expr e@10:9#1 memberCall recv=e@10:9 callee=setValue args=[_:e@10:24] type=Int? call=kotlin.collections.setValue[kind=fun;recv=kotlin.collections.MutableMap.MutableEntry<T0,T1>;params=T1;gen=2] targs=[String,Int?]
+expr e@11:9 name(iterator) type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>> ref=__local_0.iterator[kind=local]
+expr e@11:9#1 memberCall recv=e@11:9 callee=remove args=[] type=Unit call=kotlin.collections.MutableIterator.remove[kind=fun;recv=kotlin.collections.MutableIterator<T0>;params=;gen=1] targs=[kotlin.collections.MutableMap.MutableEntry<String, Int?>]
 expr e@6:29 blockExpr stmts=[e@7:9,e@8:9,e@9:9,e@10:9#1] trailing=e@11:9#1 type=Unit
 expr e@6:5 if cond=e@6:9#1 then=e@6:29 else=_ type=Unit

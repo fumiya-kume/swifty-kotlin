@@ -1,7 +1,7 @@
-symbol fq=golden.sema.newApi kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.oldApi kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.newApi[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.oldApi[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_ReplaceWith_n_n package=golden.sema
-  decl golden.sema.oldApi fun oldApi sym=golden.sema.oldApi
-  decl golden.sema.newApi fun newApi sym=golden.sema.newApi
+  decl golden.sema.oldApi[kind=fun;params=] fun oldApi sym=golden.sema.oldApi[kind=fun;params=]
+  decl golden.sema.newApi[kind=fun;params=] fun newApi sym=golden.sema.newApi[kind=fun;params=]
 expr e@7:21 int(1) type=Int
 expr e@9:21 int(2) type=Int

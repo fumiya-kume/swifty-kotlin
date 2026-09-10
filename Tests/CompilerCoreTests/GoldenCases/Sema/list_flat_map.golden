@@ -1,15 +1,15 @@
-symbol fq=__local_0.flattened kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=flat kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
-symbol fq=flat.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=__local_0.flattened[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=flat.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=flat[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file flist_flat_map package=_
-  decl flat fun flat sym=flat
-expr e@5:21 name(values) type=kotlin.collections.List<String> ref=flat.$0.values
+  decl flat[kind=fun;params=kotlin.collections.List<String>] fun flat sym=flat[kind=fun;params=kotlin.collections.List<String>]
+expr e@5:21 name(values) type=kotlin.collections.List<String> ref=flat.$0.values[kind=vparam]
 expr e@5:45 name(it) type=String ref=s-0
-expr e@5:38 call callee=e@5:38#1 args=[_:e@5:45] type=kotlin.collections.List<out String> call=kotlin.collections.listOf#1 targs=[String]
+expr e@5:38 call callee=e@5:38#1 args=[_:e@5:45] type=kotlin.collections.List<out String> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[String]
 expr e@5:36 lambda params=[] body=e@5:38 label=flatMap type=(String) -> Any
-expr e@5:21#1 memberCall recv=e@5:21 callee=flatMap args=[_:e@5:36] type=kotlin.collections.List<String> call=kotlin.collections.flatMap#15 targs=[String,String]
-expr e@5:5 localDecl flattened mutable=0 type=_ init=e@5:21#1 type=Unit ref=__local_0.flattened
-expr e@6:33 name(flattened) type=kotlin.collections.List<String> ref=__local_0.flattened
-expr e@6:5 localDecl checked mutable=0 type=List<String> init=e@6:33 type=Unit ref=__local_1.checked
+expr e@5:21#1 memberCall recv=e@5:21 callee=flatMap args=[_:e@5:36] type=kotlin.collections.List<String> call=kotlin.collections.flatMap[kind=fun;recv=kotlin.collections.List<T0>;params=fn{p=T0;ret=kotlin.collections.List<T1>};gen=2] targs=[String,String]
+expr e@5:5 localDecl flattened mutable=0 type=_ init=e@5:21#1 type=Unit ref=__local_0.flattened[kind=local]
+expr e@6:33 name(flattened) type=kotlin.collections.List<String> ref=__local_0.flattened[kind=local]
+expr e@6:5 localDecl checked mutable=0 type=List<String> init=e@6:33 type=Unit ref=__local_1.checked[kind=local]

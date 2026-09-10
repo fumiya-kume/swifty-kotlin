@@ -1,125 +1,125 @@
-symbol fq=golden.sema.iterableMaxBy kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
-symbol fq=golden.sema.iterableMaxBy.$0.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxByOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
-symbol fq=golden.sema.iterableMaxByOrNull.$1.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxComparable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
-symbol fq=golden.sema.iterableMaxComparable.$2.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxDouble kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Double>] ret=Double
-symbol fq=golden.sema.iterableMaxDouble.$3.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxFloat kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Float>] ret=Float
-symbol fq=golden.sema.iterableMaxFloat.$4.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOfComparable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
-symbol fq=golden.sema.iterableMaxOfComparable.$5.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOfDouble kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Double
-symbol fq=golden.sema.iterableMaxOfDouble.$6.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOfFloat kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Float
-symbol fq=golden.sema.iterableMaxOfFloat.$7.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOfOrNullComparable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
-symbol fq=golden.sema.iterableMaxOfOrNullComparable.$8.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOfOrNullDouble kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Double?
-symbol fq=golden.sema.iterableMaxOfOrNullDouble.$9.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOfOrNullFloat kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Float?
-symbol fq=golden.sema.iterableMaxOfOrNullFloat.$10.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOfWith kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] ret=Int
-symbol fq=golden.sema.iterableMaxOfWith.$11.comparator kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOfWith.$11.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOfWithOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] ret=Int?
-symbol fq=golden.sema.iterableMaxOfWithOrNull.$12.comparator kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOfWithOrNull.$12.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOrNullComparable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
-symbol fq=golden.sema.iterableMaxOrNullComparable.$13.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOrNullDouble kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Double>] ret=Double?
-symbol fq=golden.sema.iterableMaxOrNullDouble.$14.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxOrNullFloat kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Float>] ret=Float?
-symbol fq=golden.sema.iterableMaxOrNullFloat.$15.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxWith kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] ret=Int
-symbol fq=golden.sema.iterableMaxWith.$16.comparator kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxWith.$16.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxWithOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] ret=Int?
-symbol fq=golden.sema.iterableMaxWithOrNull.$17.comparator kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableMaxWithOrNull.$17.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=golden.sema.iterableMaxBy.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxByOrNull.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxByOrNull[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
+symbol fq=golden.sema.iterableMaxBy[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
+symbol fq=golden.sema.iterableMaxComparable.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxComparable[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
+symbol fq=golden.sema.iterableMaxDouble.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxDouble[kind=fun;params=kotlin.collections.Iterable<Double>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Double>] ret=Double
+symbol fq=golden.sema.iterableMaxFloat.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxFloat[kind=fun;params=kotlin.collections.Iterable<Float>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Float>] ret=Float
+symbol fq=golden.sema.iterableMaxOfComparable.$5.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOfComparable[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
+symbol fq=golden.sema.iterableMaxOfDouble.$6.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOfDouble[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Double
+symbol fq=golden.sema.iterableMaxOfFloat.$7.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOfFloat[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Float
+symbol fq=golden.sema.iterableMaxOfOrNullComparable.$8.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOfOrNullComparable[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
+symbol fq=golden.sema.iterableMaxOfOrNullDouble.$9.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOfOrNullDouble[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Double?
+symbol fq=golden.sema.iterableMaxOfOrNullFloat.$10.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOfOrNullFloat[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Float?
+symbol fq=golden.sema.iterableMaxOfWith.$11.comparator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOfWith.$11.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOfWithOrNull.$12.comparator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOfWithOrNull.$12.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOfWithOrNull[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] ret=Int?
+symbol fq=golden.sema.iterableMaxOfWith[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] ret=Int
+symbol fq=golden.sema.iterableMaxOrNullComparable.$13.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOrNullComparable[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
+symbol fq=golden.sema.iterableMaxOrNullDouble.$14.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOrNullDouble[kind=fun;params=kotlin.collections.Iterable<Double>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Double>] ret=Double?
+symbol fq=golden.sema.iterableMaxOrNullFloat.$15.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxOrNullFloat[kind=fun;params=kotlin.collections.Iterable<Float>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Float>] ret=Float?
+symbol fq=golden.sema.iterableMaxWith.$16.comparator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxWith.$16.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxWithOrNull.$17.comparator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxWithOrNull.$17.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableMaxWithOrNull[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] ret=Int?
+symbol fq=golden.sema.iterableMaxWith[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] ret=Int
+symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_max package=golden.sema
-  decl golden.sema.iterableMaxComparable fun iterableMaxComparable sym=golden.sema.iterableMaxComparable
-  decl golden.sema.iterableMaxDouble fun iterableMaxDouble sym=golden.sema.iterableMaxDouble
-  decl golden.sema.iterableMaxFloat fun iterableMaxFloat sym=golden.sema.iterableMaxFloat
-  decl golden.sema.iterableMaxBy fun iterableMaxBy sym=golden.sema.iterableMaxBy
-  decl golden.sema.iterableMaxByOrNull fun iterableMaxByOrNull sym=golden.sema.iterableMaxByOrNull
-  decl golden.sema.iterableMaxOfComparable fun iterableMaxOfComparable sym=golden.sema.iterableMaxOfComparable
-  decl golden.sema.iterableMaxOfDouble fun iterableMaxOfDouble sym=golden.sema.iterableMaxOfDouble
-  decl golden.sema.iterableMaxOfFloat fun iterableMaxOfFloat sym=golden.sema.iterableMaxOfFloat
-  decl golden.sema.iterableMaxOfOrNullComparable fun iterableMaxOfOrNullComparable sym=golden.sema.iterableMaxOfOrNullComparable
-  decl golden.sema.iterableMaxOfOrNullDouble fun iterableMaxOfOrNullDouble sym=golden.sema.iterableMaxOfOrNullDouble
-  decl golden.sema.iterableMaxOfOrNullFloat fun iterableMaxOfOrNullFloat sym=golden.sema.iterableMaxOfOrNullFloat
-  decl golden.sema.iterableMaxOfWith fun iterableMaxOfWith sym=golden.sema.iterableMaxOfWith
-  decl golden.sema.iterableMaxOfWithOrNull fun iterableMaxOfWithOrNull sym=golden.sema.iterableMaxOfWithOrNull
-  decl golden.sema.iterableMaxOrNullComparable fun iterableMaxOrNullComparable sym=golden.sema.iterableMaxOrNullComparable
-  decl golden.sema.iterableMaxOrNullDouble fun iterableMaxOrNullDouble sym=golden.sema.iterableMaxOrNullDouble
-  decl golden.sema.iterableMaxOrNullFloat fun iterableMaxOrNullFloat sym=golden.sema.iterableMaxOrNullFloat
-  decl golden.sema.iterableMaxWith fun iterableMaxWith sym=golden.sema.iterableMaxWith
-  decl golden.sema.iterableMaxWithOrNull fun iterableMaxWithOrNull sym=golden.sema.iterableMaxWithOrNull
-expr e@5:57 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxComparable.$2.values
-expr e@5:57#1 memberCall recv=e@5:57 callee=max args=[] type=Int call=kotlin.collections.max#2 targs=[Int]
-expr e@6:59 name(values) type=kotlin.collections.Iterable<Double> ref=golden.sema.iterableMaxDouble.$3.values
-expr e@6:59#1 memberCall recv=e@6:59 callee=max args=[] type=Double call=kotlin.collections.max#0
-expr e@7:56 name(values) type=kotlin.collections.Iterable<Float> ref=golden.sema.iterableMaxFloat.$4.values
-expr e@7:56#1 memberCall recv=e@7:56 callee=max args=[] type=Float call=kotlin.collections.max#1
-expr e@8:49 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxBy.$0.values
+  decl golden.sema.iterableMaxComparable[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableMaxComparable sym=golden.sema.iterableMaxComparable[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.iterableMaxDouble[kind=fun;params=kotlin.collections.Iterable<Double>] fun iterableMaxDouble sym=golden.sema.iterableMaxDouble[kind=fun;params=kotlin.collections.Iterable<Double>]
+  decl golden.sema.iterableMaxFloat[kind=fun;params=kotlin.collections.Iterable<Float>] fun iterableMaxFloat sym=golden.sema.iterableMaxFloat[kind=fun;params=kotlin.collections.Iterable<Float>]
+  decl golden.sema.iterableMaxBy[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableMaxBy sym=golden.sema.iterableMaxBy[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.iterableMaxByOrNull[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableMaxByOrNull sym=golden.sema.iterableMaxByOrNull[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.iterableMaxOfComparable[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableMaxOfComparable sym=golden.sema.iterableMaxOfComparable[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.iterableMaxOfDouble[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableMaxOfDouble sym=golden.sema.iterableMaxOfDouble[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.iterableMaxOfFloat[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableMaxOfFloat sym=golden.sema.iterableMaxOfFloat[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.iterableMaxOfOrNullComparable[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableMaxOfOrNullComparable sym=golden.sema.iterableMaxOfOrNullComparable[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.iterableMaxOfOrNullDouble[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableMaxOfOrNullDouble sym=golden.sema.iterableMaxOfOrNullDouble[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.iterableMaxOfOrNullFloat[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableMaxOfOrNullFloat sym=golden.sema.iterableMaxOfOrNullFloat[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.iterableMaxOfWith[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] fun iterableMaxOfWith sym=golden.sema.iterableMaxOfWith[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>]
+  decl golden.sema.iterableMaxOfWithOrNull[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] fun iterableMaxOfWithOrNull sym=golden.sema.iterableMaxOfWithOrNull[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>]
+  decl golden.sema.iterableMaxOrNullComparable[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableMaxOrNullComparable sym=golden.sema.iterableMaxOrNullComparable[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.iterableMaxOrNullDouble[kind=fun;params=kotlin.collections.Iterable<Double>] fun iterableMaxOrNullDouble sym=golden.sema.iterableMaxOrNullDouble[kind=fun;params=kotlin.collections.Iterable<Double>]
+  decl golden.sema.iterableMaxOrNullFloat[kind=fun;params=kotlin.collections.Iterable<Float>] fun iterableMaxOrNullFloat sym=golden.sema.iterableMaxOrNullFloat[kind=fun;params=kotlin.collections.Iterable<Float>]
+  decl golden.sema.iterableMaxWith[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] fun iterableMaxWith sym=golden.sema.iterableMaxWith[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>]
+  decl golden.sema.iterableMaxWithOrNull[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] fun iterableMaxWithOrNull sym=golden.sema.iterableMaxWithOrNull[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>]
+expr e@5:57 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxComparable.$2.values[kind=vparam]
+expr e@5:57#1 memberCall recv=e@5:57 callee=max args=[] type=Int call=kotlin.collections.max[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
+expr e@6:59 name(values) type=kotlin.collections.Iterable<Double> ref=golden.sema.iterableMaxDouble.$3.values[kind=vparam]
+expr e@6:59#1 memberCall recv=e@6:59 callee=max args=[] type=Double call=kotlin.collections.max[kind=fun;recv=kotlin.collections.Iterable<Double>;params=]
+expr e@7:56 name(values) type=kotlin.collections.Iterable<Float> ref=golden.sema.iterableMaxFloat.$4.values[kind=vparam]
+expr e@7:56#1 memberCall recv=e@7:56 callee=max args=[] type=Float call=kotlin.collections.max[kind=fun;recv=kotlin.collections.Iterable<Float>;params=]
+expr e@8:49 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxBy.$0.values[kind=vparam]
 expr e@8:64 name(it) type=Int ref=s-0
 expr e@8:62 lambda params=[] body=e@8:64 label=maxBy type=(Int) -> Int
-expr e@8:49#1 memberCall recv=e@8:49 callee=maxBy args=[_:e@8:62] type=Int call=kotlin.collections.maxBy#0 targs=[Int,Int]
-expr e@9:56 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxByOrNull.$1.values
+expr e@8:49#1 memberCall recv=e@8:49 callee=maxBy args=[_:e@8:62] type=Int call=kotlin.collections.maxBy[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[Int,Int]
+expr e@9:56 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxByOrNull.$1.values[kind=vparam]
 expr e@9:77 name(it) type=Int ref=s-1
 expr e@9:75 lambda params=[] body=e@9:77 label=maxByOrNull type=(Int) -> Int
-expr e@9:56#1 memberCall recv=e@9:56 callee=maxByOrNull args=[_:e@9:75] type=Int? call=kotlin.collections.maxByOrNull#0 targs=[Int,Int]
-expr e@10:59 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfComparable.$5.values
+expr e@9:56#1 memberCall recv=e@9:56 callee=maxByOrNull args=[_:e@9:75] type=Int? call=kotlin.collections.maxByOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[Int,Int]
+expr e@10:59 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfComparable.$5.values[kind=vparam]
 expr e@10:74 name(it) type=Int ref=s-2
 expr e@10:72 lambda params=[] body=e@10:74 label=maxOf type=(Int) -> Any
-expr e@10:59#1 memberCall recv=e@10:59 callee=maxOf args=[_:e@10:72] type=Int call=kotlin.collections.maxOf#2 targs=[Int,Int]
-expr e@11:58 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfDouble.$6.values
+expr e@10:59#1 memberCall recv=e@10:59 callee=maxOf args=[_:e@10:72] type=Int call=kotlin.collections.maxOf[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[Int,Int]
+expr e@11:58 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfDouble.$6.values[kind=vparam]
 expr e@11:73 name(it) type=Int ref=s-3
-expr e@11:73#1 memberCall recv=e@11:73 callee=toDouble args=[] type=Double call=kotlin.toDouble#1
+expr e@11:73#1 memberCall recv=e@11:73 callee=toDouble args=[] type=Double call=kotlin.toDouble[kind=fun;recv=Int;params=]
 expr e@11:71 lambda params=[] body=e@11:73#1 label=maxOf type=(Int) -> Any
-expr e@11:58#1 memberCall recv=e@11:58 callee=maxOf args=[_:e@11:71] type=Double call=kotlin.collections.maxOf#0 targs=[Int]
-expr e@12:56 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfFloat.$7.values
+expr e@11:58#1 memberCall recv=e@11:58 callee=maxOf args=[_:e@11:71] type=Double call=kotlin.collections.maxOf[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Double};gen=1] targs=[Int]
+expr e@12:56 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfFloat.$7.values[kind=vparam]
 expr e@12:71 name(it) type=Int ref=s-4
 expr e@12:71#1 memberCall recv=e@12:71 callee=toFloat args=[] type=Float
 expr e@12:69 lambda params=[] body=e@12:71#1 label=maxOf type=(Int) -> Any
-expr e@12:56#1 memberCall recv=e@12:56 callee=maxOf args=[_:e@12:69] type=Float call=kotlin.collections.maxOf#1 targs=[Int]
-expr e@13:66 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfOrNullComparable.$8.values
+expr e@12:56#1 memberCall recv=e@12:56 callee=maxOf args=[_:e@12:69] type=Float call=kotlin.collections.maxOf[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Float};gen=1] targs=[Int]
+expr e@13:66 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfOrNullComparable.$8.values[kind=vparam]
 expr e@13:87 name(it) type=Int ref=s-5
 expr e@13:85 lambda params=[] body=e@13:87 label=maxOfOrNull type=(Int) -> Any
-expr e@13:66#1 memberCall recv=e@13:66 callee=maxOfOrNull args=[_:e@13:85] type=Int? call=kotlin.collections.maxOfOrNull#2 targs=[Int,Int]
-expr e@14:65 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfOrNullDouble.$9.values
+expr e@13:66#1 memberCall recv=e@13:66 callee=maxOfOrNull args=[_:e@13:85] type=Int? call=kotlin.collections.maxOfOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[Int,Int]
+expr e@14:65 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfOrNullDouble.$9.values[kind=vparam]
 expr e@14:86 name(it) type=Int ref=s-6
-expr e@14:86#1 memberCall recv=e@14:86 callee=toDouble args=[] type=Double call=kotlin.toDouble#1
+expr e@14:86#1 memberCall recv=e@14:86 callee=toDouble args=[] type=Double call=kotlin.toDouble[kind=fun;recv=Int;params=]
 expr e@14:84 lambda params=[] body=e@14:86#1 label=maxOfOrNull type=(Int) -> Any
-expr e@14:65#1 memberCall recv=e@14:65 callee=maxOfOrNull args=[_:e@14:84] type=Double? call=kotlin.collections.maxOfOrNull#0 targs=[Int]
-expr e@15:63 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfOrNullFloat.$10.values
+expr e@14:65#1 memberCall recv=e@14:65 callee=maxOfOrNull args=[_:e@14:84] type=Double? call=kotlin.collections.maxOfOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Double};gen=1] targs=[Int]
+expr e@15:63 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfOrNullFloat.$10.values[kind=vparam]
 expr e@15:84 name(it) type=Int ref=s-7
 expr e@15:84#1 memberCall recv=e@15:84 callee=toFloat args=[] type=Float
 expr e@15:82 lambda params=[] body=e@15:84#1 label=maxOfOrNull type=(Int) -> Any
-expr e@15:63#1 memberCall recv=e@15:63 callee=maxOfOrNull args=[_:e@15:82] type=Float? call=kotlin.collections.maxOfOrNull#1 targs=[Int]
-expr e@16:82 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfWith.$11.values
-expr e@16:99 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.iterableMaxOfWith.$11.comparator
+expr e@15:63#1 memberCall recv=e@15:63 callee=maxOfOrNull args=[_:e@15:82] type=Float? call=kotlin.collections.maxOfOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Float};gen=1] targs=[Int]
+expr e@16:82 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfWith.$11.values[kind=vparam]
+expr e@16:99 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.iterableMaxOfWith.$11.comparator[kind=vparam]
 expr e@16:113 name(it) type=Int ref=s-8
 expr e@16:111 lambda params=[] body=e@16:113 label=maxOfWith type=(Int) -> Int
-expr e@16:82#1 memberCall recv=e@16:82 callee=maxOfWith args=[_:e@16:99,_:e@16:111] type=Int call=kotlin.collections.maxOfWith#0 targs=[Int,Int]
-expr e@17:89 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfWithOrNull.$12.values
-expr e@17:112 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.iterableMaxOfWithOrNull.$12.comparator
+expr e@16:82#1 memberCall recv=e@16:82 callee=maxOfWith args=[_:e@16:99,_:e@16:111] type=Int call=kotlin.collections.maxOfWith[kind=fun;recv=kotlin.collections.Iterable<T0>;params=kotlin.Comparator<in T1>,fn{p=T0;ret=T1};gen=2] targs=[Int,Int]
+expr e@17:89 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOfWithOrNull.$12.values[kind=vparam]
+expr e@17:112 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.iterableMaxOfWithOrNull.$12.comparator[kind=vparam]
 expr e@17:126 name(it) type=Int ref=s-9
 expr e@17:124 lambda params=[] body=e@17:126 label=maxOfWithOrNull type=(Int) -> Int
-expr e@17:89#1 memberCall recv=e@17:89 callee=maxOfWithOrNull args=[_:e@17:112,_:e@17:124] type=Int? call=kotlin.collections.maxOfWithOrNull#0 targs=[Int,Int]
-expr e@18:64 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOrNullComparable.$13.values
-expr e@18:64#1 memberCall recv=e@18:64 callee=maxOrNull args=[] type=Int? call=kotlin.collections.maxOrNull#2 targs=[Int]
-expr e@19:66 name(values) type=kotlin.collections.Iterable<Double> ref=golden.sema.iterableMaxOrNullDouble.$14.values
-expr e@19:66#1 memberCall recv=e@19:66 callee=maxOrNull args=[] type=Double? call=kotlin.collections.maxOrNull#0
-expr e@20:63 name(values) type=kotlin.collections.Iterable<Float> ref=golden.sema.iterableMaxOrNullFloat.$15.values
-expr e@20:63#1 memberCall recv=e@20:63 callee=maxOrNull args=[] type=Float? call=kotlin.collections.maxOrNull#1
-expr e@21:80 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxWith.$16.values
-expr e@21:95 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.iterableMaxWith.$16.comparator
-expr e@21:80#1 memberCall recv=e@21:80 callee=maxWith args=[_:e@21:95] type=Int call=kotlin.collections.maxWith#0 targs=[Int]
-expr e@22:87 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxWithOrNull.$17.values
-expr e@22:108 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.iterableMaxWithOrNull.$17.comparator
-expr e@22:87#1 memberCall recv=e@22:87 callee=maxWithOrNull args=[_:e@22:108] type=Int? call=kotlin.collections.maxWithOrNull#0 targs=[Int]
+expr e@17:89#1 memberCall recv=e@17:89 callee=maxOfWithOrNull args=[_:e@17:112,_:e@17:124] type=Int? call=kotlin.collections.maxOfWithOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=kotlin.Comparator<in T1>,fn{p=T0;ret=T1};gen=2] targs=[Int,Int]
+expr e@18:64 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxOrNullComparable.$13.values[kind=vparam]
+expr e@18:64#1 memberCall recv=e@18:64 callee=maxOrNull args=[] type=Int? call=kotlin.collections.maxOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
+expr e@19:66 name(values) type=kotlin.collections.Iterable<Double> ref=golden.sema.iterableMaxOrNullDouble.$14.values[kind=vparam]
+expr e@19:66#1 memberCall recv=e@19:66 callee=maxOrNull args=[] type=Double? call=kotlin.collections.maxOrNull[kind=fun;recv=kotlin.collections.Iterable<Double>;params=]
+expr e@20:63 name(values) type=kotlin.collections.Iterable<Float> ref=golden.sema.iterableMaxOrNullFloat.$15.values[kind=vparam]
+expr e@20:63#1 memberCall recv=e@20:63 callee=maxOrNull args=[] type=Float? call=kotlin.collections.maxOrNull[kind=fun;recv=kotlin.collections.Iterable<Float>;params=]
+expr e@21:80 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxWith.$16.values[kind=vparam]
+expr e@21:95 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.iterableMaxWith.$16.comparator[kind=vparam]
+expr e@21:80#1 memberCall recv=e@21:80 callee=maxWith args=[_:e@21:95] type=Int call=kotlin.collections.maxWith[kind=fun;recv=kotlin.collections.Iterable<T0>;params=kotlin.Comparator<in T0>;gen=1] targs=[Int]
+expr e@22:87 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.iterableMaxWithOrNull.$17.values[kind=vparam]
+expr e@22:108 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.iterableMaxWithOrNull.$17.comparator[kind=vparam]
+expr e@22:87#1 memberCall recv=e@22:87 callee=maxWithOrNull args=[_:e@22:108] type=Int? call=kotlin.collections.maxWithOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=kotlin.Comparator<in T0>;gen=1] targs=[Int]

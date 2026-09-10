@@ -1,10 +1,10 @@
-symbol fq=golden.sema.threeArgMaxFloat kind=function vis=public flags=_ sig=recv=_ params=[Float,Float,Float] ret=Float
-symbol fq=golden.sema.threeArgMaxFloat.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxFloat.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxFloat.$0.c kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxFloat.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxFloat.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxFloat.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxFloat[kind=fun;params=Float,Float,Float] kind=function vis=public flags=_ sig=recv=_ params=[Float,Float,Float] ret=Float
 file fmaxof_float_3args package=golden.sema
-  decl golden.sema.threeArgMaxFloat fun threeArgMaxFloat sym=golden.sema.threeArgMaxFloat
-expr e@3:67 name(a) type=Float ref=golden.sema.threeArgMaxFloat.$0.a
-expr e@3:70 name(b) type=Float ref=golden.sema.threeArgMaxFloat.$0.b
-expr e@3:73 name(c) type=Float ref=golden.sema.threeArgMaxFloat.$0.c
-expr e@3:61 call callee=e@3:61#1 args=[_:e@3:67,_:e@3:70,_:e@3:73] type=Float call=kotlin.comparisons.maxOf#8
+  decl golden.sema.threeArgMaxFloat[kind=fun;params=Float,Float,Float] fun threeArgMaxFloat sym=golden.sema.threeArgMaxFloat[kind=fun;params=Float,Float,Float]
+expr e@3:67 name(a) type=Float ref=golden.sema.threeArgMaxFloat.$0.a[kind=vparam]
+expr e@3:70 name(b) type=Float ref=golden.sema.threeArgMaxFloat.$0.b[kind=vparam]
+expr e@3:73 name(c) type=Float ref=golden.sema.threeArgMaxFloat.$0.c[kind=vparam]
+expr e@3:61 call callee=e@3:61#1 args=[_:e@3:67,_:e@3:70,_:e@3:73] type=Float call=kotlin.comparisons.maxOf[kind=fun;params=Float,Float,Float]

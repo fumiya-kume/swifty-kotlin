@@ -1,12 +1,12 @@
-symbol fq=golden.sema.Bar kind=class vis=public flags=_
-symbol fq=golden.sema.Baz kind=class vis=public flags=_
-symbol fq=golden.sema.Foo kind=class vis=public flags=_
-symbol fq=golden.sema.Marker kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.MyLabel kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.Bar[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.Baz[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.Foo[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.Marker[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.MyLabel[kind=anno] kind=annotationClass vis=public flags=_
 file fannotation_basic package=golden.sema
-  decl golden.sema.MyLabel class MyLabel sym=golden.sema.MyLabel
-  decl golden.sema.Foo class Foo sym=golden.sema.Foo
-  decl golden.sema.Bar class Bar sym=golden.sema.Bar
-  decl golden.sema.Marker class Marker sym=golden.sema.Marker
-  decl golden.sema.Baz class Baz sym=golden.sema.Baz
+  decl golden.sema.MyLabel[kind=anno] class MyLabel sym=golden.sema.MyLabel[kind=anno]
+  decl golden.sema.Foo[kind=class] class Foo sym=golden.sema.Foo[kind=class]
+  decl golden.sema.Bar[kind=class] class Bar sym=golden.sema.Bar[kind=class]
+  decl golden.sema.Marker[kind=anno] class Marker sym=golden.sema.Marker[kind=anno]
+  decl golden.sema.Baz[kind=class] class Baz sym=golden.sema.Baz[kind=class]
 expr e@3:45 string(default) type=String

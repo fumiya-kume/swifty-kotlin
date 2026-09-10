@@ -341,6 +341,16 @@ final class CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        // `contract { ... }` is a compiler-only DSL. Sema has already recorded
+        // its effects, so lowering the builder lambda would create dead KIR
+        // (including enum references such as InvocationKind.EXACTLY_ONCE)
+        // with no runtime meaning and potentially undefined link symbols.
+        if sema.bindings.stdlibSpecialCallKind(for: exprID) == .contract {
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+        }
+
         // SAM constructor calls: `Transformer { ... }` — the single lambda
         // argument is already marked as a SAM conversion and no call binding
         // exists for the constructor (the callee name is the fun interface itself).
@@ -1112,8 +1122,29 @@ final class CallLowerer {
                 instructions: &instructions,
                 arguments: &finalArgIDs
             )
+            let shouldUseULongRangeContainsRuntime: Bool = {
+                guard sourceCalleeName == interner.intern("contains"),
+                      let chosen,
+                      let signature = sema.symbols.functionSignature(for: chosen),
+                      signature.parameterTypes.count == 1,
+                      sema.types.makeNonNullable(signature.parameterTypes[0]) == sema.types.ulongType,
+                      let declaredReceiver = signature.receiverType,
+                      let (_, receiverSymbol) = resolveClassTypeSymbol(
+                          sema.types.makeNonNullable(declaredReceiver), sema: sema
+                      )
+                else {
+                    return false
+                }
+                return interner.resolve(receiverSymbol.name) == "ULongRange"
+            }()
             let loweredCalleeName: InternedString = if let callableInvokeCallee {
                 callableInvokeCallee
+            } else if shouldUseULongRangeContainsRuntime {
+                // KSP-1292: source-backed ULongRange.contains(UByte/UInt/UShort)
+                // widens into the existing ULong overload. That overload's
+                // source declaration has a generic __kk_range_contains link,
+                // so keep the widened call on the unsigned runtime ABI.
+                interner.intern("kk_ulong_range_contains")
             } else if let chosen,
                                                        let externalLinkName = sema.symbols.externalLinkName(for: chosen),
                                                        !externalLinkName.isEmpty
@@ -1180,14 +1211,16 @@ final class CallLowerer {
             // When calling a callable value (function-type local/parameter),
             // use its symbol so InlineLoweringPass can match it against lambda
             // parameter symbols and expand the lambda body in place.
-            let callSymbol: SymbolID? = chosen ?? loweredCallable?.symbol ?? {
+            let callSymbol: SymbolID? = shouldUseULongRangeContainsRuntime
+                ? nil
+                : (chosen ?? loweredCallable?.symbol ?? {
                 if let binding = callableValueCallBinding,
                    case let .localValue(sym) = binding.target
                 {
                     return sym
                 }
                 return nil
-            }()
+            }())
             if let implicitReceiverDispatch, finalArgIDs.first == implicitReceiverDispatch.receiver {
                 instructions.append(.virtualCall(
                     symbol: callSymbol,

@@ -1,16 +1,16 @@
-symbol fq=golden.sema.readKotlinVersionMajor kind=function vis=public flags=_ sig=recv=_ params=[kotlin.KotlinVersion] ret=Int
-symbol fq=golden.sema.readKotlinVersionMajor.$0.version kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.readKotlinVersionMinor kind=function vis=public flags=_ sig=recv=_ params=[kotlin.KotlinVersion] ret=Int
-symbol fq=golden.sema.readKotlinVersionMinor.$1.version kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.readKotlinVersionPatch kind=function vis=public flags=_ sig=recv=_ params=[kotlin.KotlinVersion] ret=Int
-symbol fq=golden.sema.readKotlinVersionPatch.$2.version kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.readKotlinVersionMajor.$0.version[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.readKotlinVersionMajor[kind=fun;params=kotlin.KotlinVersion] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.KotlinVersion] ret=Int
+symbol fq=golden.sema.readKotlinVersionMinor.$1.version[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.readKotlinVersionMinor[kind=fun;params=kotlin.KotlinVersion] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.KotlinVersion] ret=Int
+symbol fq=golden.sema.readKotlinVersionPatch.$2.version[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.readKotlinVersionPatch[kind=fun;params=kotlin.KotlinVersion] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.KotlinVersion] ret=Int
 file fstdlib_kotlin_KotlinVersion_KotlinVersion_n package=golden.sema
-  decl golden.sema.readKotlinVersionMajor fun readKotlinVersionMajor sym=golden.sema.readKotlinVersionMajor
-  decl golden.sema.readKotlinVersionMinor fun readKotlinVersionMinor sym=golden.sema.readKotlinVersionMinor
-  decl golden.sema.readKotlinVersionPatch fun readKotlinVersionPatch sym=golden.sema.readKotlinVersionPatch
-expr e@3:59 name(version) type=kotlin.KotlinVersion ref=golden.sema.readKotlinVersionMajor.$0.version
-expr e@3:59#1 memberCall recv=e@3:59 callee=major args=[] type=Int ref=kotlin.KotlinVersion.major
-expr e@5:59 name(version) type=kotlin.KotlinVersion ref=golden.sema.readKotlinVersionMinor.$1.version
-expr e@5:59#1 memberCall recv=e@5:59 callee=minor args=[] type=Int ref=kotlin.KotlinVersion.minor
-expr e@7:59 name(version) type=kotlin.KotlinVersion ref=golden.sema.readKotlinVersionPatch.$2.version
-expr e@7:59#1 memberCall recv=e@7:59 callee=patch args=[] type=Int ref=kotlin.KotlinVersion.patch
+  decl golden.sema.readKotlinVersionMajor[kind=fun;params=kotlin.KotlinVersion] fun readKotlinVersionMajor sym=golden.sema.readKotlinVersionMajor[kind=fun;params=kotlin.KotlinVersion]
+  decl golden.sema.readKotlinVersionMinor[kind=fun;params=kotlin.KotlinVersion] fun readKotlinVersionMinor sym=golden.sema.readKotlinVersionMinor[kind=fun;params=kotlin.KotlinVersion]
+  decl golden.sema.readKotlinVersionPatch[kind=fun;params=kotlin.KotlinVersion] fun readKotlinVersionPatch sym=golden.sema.readKotlinVersionPatch[kind=fun;params=kotlin.KotlinVersion]
+expr e@3:59 name(version) type=kotlin.KotlinVersion ref=golden.sema.readKotlinVersionMajor.$0.version[kind=vparam]
+expr e@3:59#1 memberCall recv=e@3:59 callee=major args=[] type=Int ref=kotlin.KotlinVersion.major[kind=prop]
+expr e@5:59 name(version) type=kotlin.KotlinVersion ref=golden.sema.readKotlinVersionMinor.$1.version[kind=vparam]
+expr e@5:59#1 memberCall recv=e@5:59 callee=minor args=[] type=Int ref=kotlin.KotlinVersion.minor[kind=prop]
+expr e@7:59 name(version) type=kotlin.KotlinVersion ref=golden.sema.readKotlinVersionPatch.$2.version[kind=vparam]
+expr e@7:59#1 memberCall recv=e@7:59 callee=patch args=[] type=Int ref=kotlin.KotlinVersion.patch[kind=prop]

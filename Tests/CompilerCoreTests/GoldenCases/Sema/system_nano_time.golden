@@ -1,15 +1,15 @@
-symbol fq=__local_0.t1 kind=local vis=private flags=_ type=Long
-symbol fq=__local_1.t2 kind=local vis=private flags=_ type=Long
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.t1[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_1.t2[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fsystem_nano_time package=_
-  decl main fun main sym=main
-expr e@2:20 name(System) type=kotlin.system.System ref=kotlin.system.System
-expr e@2:20#1 memberCall recv=e@2:20 callee=nanoTime args=[] type=Long call=kotlin.system.System.nanoTime
-expr e@2:5 localDecl t1 mutable=0 type=Long init=e@2:20#1 type=Unit ref=__local_0.t1
-expr e@3:20 name(System) type=kotlin.system.System ref=kotlin.system.System
-expr e@3:20#1 memberCall recv=e@3:20 callee=nanoTime args=[] type=Long call=kotlin.system.System.nanoTime
-expr e@3:5 localDecl t2 mutable=0 type=Long init=e@3:20#1 type=Unit ref=__local_1.t2
-expr e@4:13 name(t2) type=Long ref=__local_1.t2
-expr e@4:19 name(t1) type=Long ref=__local_0.t1
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+expr e@2:20 name(System) type=kotlin.system.System ref=kotlin.system.System[kind=obj]
+expr e@2:20#1 memberCall recv=e@2:20 callee=nanoTime args=[] type=Long call=kotlin.system.System.nanoTime[kind=fun;recv=kotlin.system.System;params=]
+expr e@2:5 localDecl t1 mutable=0 type=Long init=e@2:20#1 type=Unit ref=__local_0.t1[kind=local]
+expr e@3:20 name(System) type=kotlin.system.System ref=kotlin.system.System[kind=obj]
+expr e@3:20#1 memberCall recv=e@3:20 callee=nanoTime args=[] type=Long call=kotlin.system.System.nanoTime[kind=fun;recv=kotlin.system.System;params=]
+expr e@3:5 localDecl t2 mutable=0 type=Long init=e@3:20#1 type=Unit ref=__local_1.t2[kind=local]
+expr e@4:13 name(t2) type=Long ref=__local_1.t2[kind=local]
+expr e@4:19 name(t1) type=Long ref=__local_0.t1[kind=local]
 expr e@4:13#1 binary(greaterOrEqual) lhs=e@4:13 rhs=e@4:19 type=Boolean
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13#1] type=Unit call=kotlin.io.println#1
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

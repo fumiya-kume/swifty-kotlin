@@ -1,14 +1,14 @@
-symbol fq=golden.sema.CustomDelegate kind=class vis=public flags=_
-symbol fq=golden.sema.CustomDelegate.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.CustomDelegate params=[] ret=golden.sema.CustomDelegate
-symbol fq=golden.sema.Holder kind=class vis=public flags=_
-symbol fq=golden.sema.LazyHolder kind=class vis=public flags=_
+symbol fq=golden.sema.CustomDelegate.<init>[kind=ctor;recv=golden.sema.CustomDelegate;params=] kind=constructor vis=public flags=_ sig=recv=golden.sema.CustomDelegate params=[] ret=golden.sema.CustomDelegate
+symbol fq=golden.sema.CustomDelegate[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.Holder[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.LazyHolder[kind=class] kind=class vis=public flags=_
 file fproperty_delegation package=golden.sema
-  decl golden.sema.LazyHolder class LazyHolder sym=golden.sema.LazyHolder
-  decl golden.sema.CustomDelegate class CustomDelegate sym=golden.sema.CustomDelegate
-  decl golden.sema.Holder class Holder sym=golden.sema.Holder
+  decl golden.sema.LazyHolder[kind=class] class LazyHolder sym=golden.sema.LazyHolder[kind=class]
+  decl golden.sema.CustomDelegate[kind=class] class CustomDelegate sym=golden.sema.CustomDelegate[kind=class]
+  decl golden.sema.Holder[kind=class] class Holder sym=golden.sema.Holder[kind=class]
 expr e@4:26 int(42) type=Int
 expr e@4:24 lambda params=[] body=e@4:26 label=lazy type=() -> Int
-expr e@4:19 call callee=e@4:19#1 args=[_:e@4:24] type=kotlin.Lazy<Int> call=kotlin.lazy#0 targs=[Int]
+expr e@4:19 call callee=e@4:19#1 args=[_:e@4:24] type=kotlin.Lazy<Int> call=kotlin.lazy[kind=fun;params=fn{p=;ret=T0};gen=1] targs=[Int]
 expr e@8:68 string(hello) type=String
-expr e@13:25 call callee=e@13:25#1 args=[] type=golden.sema.CustomDelegate call=golden.sema.CustomDelegate.<init>
-expr e@14:28 call callee=e@14:28#1 args=[] type=golden.sema.CustomDelegate call=golden.sema.CustomDelegate.<init>
+expr e@13:25 call callee=e@13:25#1 args=[] type=golden.sema.CustomDelegate call=golden.sema.CustomDelegate.<init>[kind=ctor;recv=golden.sema.CustomDelegate;params=]
+expr e@14:28 call callee=e@14:28#1 args=[] type=golden.sema.CustomDelegate call=golden.sema.CustomDelegate.<init>[kind=ctor;recv=golden.sema.CustomDelegate;params=]
