@@ -559,5 +559,57 @@ struct CoroutineSyntheticStubTests {
             #expect(ctx.diagnostics.diagnostics.isEmpty, "\(ctx.diagnostics.diagnostics)")
         }
     }
+
+    @Test
+    func testCoroutineContextNestedTypeContract() throws {
+        let source = """
+        package sample
+
+        import kotlin.coroutines.CoroutineContext
+
+        fun useElement(value: CoroutineContext.Element): CoroutineContext.Element = value
+        fun useKey(value: CoroutineContext.Key<CoroutineContext.Element>): CoroutineContext.Key<CoroutineContext.Element> = value
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            #expect(!ctx.diagnostics.hasError, "CoroutineContext nested types must type-check: \(ctx.diagnostics.diagnostics)")
+
+            let sema = try #require(ctx.sema)
+            let interner = ctx.interner
+            let coroutineContextFQName = ["kotlin", "coroutines", "CoroutineContext"].map(interner.intern)
+            let coroutineContextSymbol = try #require(sema.symbols.lookup(fqName: coroutineContextFQName))
+
+            let elementFQName = coroutineContextFQName + [interner.intern("Element")]
+            let elementSymbol = try #require(sema.symbols.lookup(fqName: elementFQName))
+            let elementInfo = try #require(sema.symbols.symbol(elementSymbol))
+            #expect(elementInfo.kind == .interface)
+            #expect(elementInfo.visibility == .public)
+            #expect(elementInfo.flags.contains(.synthetic))
+            #expect(sema.symbols.parentSymbol(for: elementSymbol) == coroutineContextSymbol)
+            #expect(sema.symbols.directSupertypes(for: elementSymbol) == [coroutineContextSymbol])
+
+            let keyFQName = coroutineContextFQName + [interner.intern("Key")]
+            let keySymbol = try #require(sema.symbols.lookup(fqName: keyFQName))
+            let keyInfo = try #require(sema.symbols.symbol(keySymbol))
+            #expect(keyInfo.kind == .interface)
+            #expect(keyInfo.visibility == .public)
+            #expect(keyInfo.flags.contains(.synthetic))
+            #expect(sema.symbols.parentSymbol(for: keySymbol) == coroutineContextSymbol)
+
+            let keyTypeParameters = sema.types.nominalTypeParameterSymbols(for: keySymbol)
+            #expect(keyTypeParameters.count == 1)
+            #expect(sema.types.nominalTypeParameterVariances(for: keySymbol) == [.invariant])
+            let keyTypeParameter = try #require(keyTypeParameters.first)
+            let elementType = sema.types.make(.classType(ClassType(
+                classSymbol: elementSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            #expect(sema.symbols.typeParameterUpperBounds(for: keyTypeParameter) == [elementType])
+        }
+    }
 }
 #endif
