@@ -1,16 +1,16 @@
-symbol fq=golden.sema.MyAutoResource kind=class vis=public flags=_
-symbol fq=golden.sema.MyAutoResource.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.MyAutoResource params=[] ret=golden.sema.MyAutoResource
-symbol fq=golden.sema.callSite kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.useIt kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.useIt.$0.T] ret=Unit bounds=[kotlin.AutoCloseable]
-symbol fq=golden.sema.useIt.$0.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.useIt.$0.t kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.MyAutoResource.<init>[kind=ctor;recv=golden.sema.MyAutoResource;params=] kind=constructor vis=public flags=_ sig=recv=golden.sema.MyAutoResource params=[] ret=golden.sema.MyAutoResource
+symbol fq=golden.sema.MyAutoResource[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.callSite[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.useIt.$0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.useIt.$0.t[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useIt[kind=fun;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.useIt.$0.T] ret=Unit bounds=[kotlin.AutoCloseable]
 file fgeneric_autocloseable_use package=golden.sema
-  decl golden.sema.MyAutoResource class MyAutoResource sym=golden.sema.MyAutoResource
-  decl golden.sema.useIt fun useIt sym=golden.sema.useIt
-  decl golden.sema.callSite fun callSite sym=golden.sema.callSite
-expr e@12:5 name(t) type=golden.sema.useIt.$0.T ref=golden.sema.useIt.$0.t
+  decl golden.sema.MyAutoResource[kind=class] class MyAutoResource sym=golden.sema.MyAutoResource[kind=class]
+  decl golden.sema.useIt[kind=fun;params=T0;gen=1] fun useIt sym=golden.sema.useIt[kind=fun;params=T0;gen=1]
+  decl golden.sema.callSite[kind=fun;params=] fun callSite sym=golden.sema.callSite[kind=fun;params=]
+expr e@12:5 name(t) type=golden.sema.useIt.$0.T ref=golden.sema.useIt.$0.t[kind=vparam]
 expr e@12:12 blockExpr stmts=[] trailing=_ type=Unit
 expr e@12:11 lambda params=[] body=e@12:12 label=use type=(golden.sema.useIt.$0.T) -> Any?
 expr e@12:5#1 memberCall recv=e@12:5 callee=use args=[_:e@12:11] type=Unit
-expr e@16:11 call callee=e@16:11#1 args=[] type=golden.sema.MyAutoResource call=golden.sema.MyAutoResource.<init>
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:11] type=Unit call=golden.sema.useIt targs=[golden.sema.MyAutoResource]
+expr e@16:11 call callee=e@16:11#1 args=[] type=golden.sema.MyAutoResource call=golden.sema.MyAutoResource.<init>[kind=ctor;recv=golden.sema.MyAutoResource;params=]
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:11] type=Unit call=golden.sema.useIt[kind=fun;params=T0;gen=1] targs=[golden.sema.MyAutoResource]

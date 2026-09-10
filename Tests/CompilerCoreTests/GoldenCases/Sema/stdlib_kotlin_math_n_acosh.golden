@@ -1,11 +1,11 @@
-symbol fq=golden.sema.testAcoshDouble kind=function vis=public flags=_ sig=recv=_ params=[Double] ret=Double
-symbol fq=golden.sema.testAcoshDouble.$0.x kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.testAcoshFloat kind=function vis=public flags=_ sig=recv=_ params=[Float] ret=Float
-symbol fq=golden.sema.testAcoshFloat.$1.x kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.testAcoshDouble.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.testAcoshDouble[kind=fun;params=Double] kind=function vis=public flags=_ sig=recv=_ params=[Double] ret=Double
+symbol fq=golden.sema.testAcoshFloat.$1.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.testAcoshFloat[kind=fun;params=Float] kind=function vis=public flags=_ sig=recv=_ params=[Float] ret=Float
 file fstdlib_kotlin_math_n_acosh package=golden.sema
-  decl golden.sema.testAcoshDouble fun testAcoshDouble sym=golden.sema.testAcoshDouble
-  decl golden.sema.testAcoshFloat fun testAcoshFloat sym=golden.sema.testAcoshFloat
-expr e@5:48 name(x) type=Double ref=golden.sema.testAcoshDouble.$0.x
-expr e@5:42 call callee=e@5:42#1 args=[_:e@5:48] type=Double call=kotlin.math.acosh#0
-expr e@6:45 name(x) type=Float ref=golden.sema.testAcoshFloat.$1.x
-expr e@6:39 call callee=e@6:39#1 args=[_:e@6:45] type=Float call=kotlin.math.acosh#1
+  decl golden.sema.testAcoshDouble[kind=fun;params=Double] fun testAcoshDouble sym=golden.sema.testAcoshDouble[kind=fun;params=Double]
+  decl golden.sema.testAcoshFloat[kind=fun;params=Float] fun testAcoshFloat sym=golden.sema.testAcoshFloat[kind=fun;params=Float]
+expr e@5:48 name(x) type=Double ref=golden.sema.testAcoshDouble.$0.x[kind=vparam]
+expr e@5:42 call callee=e@5:42#1 args=[_:e@5:48] type=Double call=kotlin.math.acosh[kind=fun;params=Double]
+expr e@6:45 name(x) type=Float ref=golden.sema.testAcoshFloat.$1.x[kind=vparam]
+expr e@6:39 call callee=e@6:39#1 args=[_:e@6:45] type=Float call=kotlin.math.acosh[kind=fun;params=Float]

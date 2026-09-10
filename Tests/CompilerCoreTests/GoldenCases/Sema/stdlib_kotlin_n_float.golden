@@ -1,55 +1,55 @@
-symbol fq=__local_0.empty kind=local vis=private flags=_ type=kotlin.FloatArray
-symbol fq=__local_1.values kind=local vis=private flags=_ type=kotlin.FloatArray
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.FloatArray#0 kind=class vis=public flags=synthetic
+symbol fq=__local_0.empty[kind=local] kind=local vis=private flags=_ type=kotlin.FloatArray
+symbol fq=__local_1.values[kind=local] kind=local vis=private flags=_ type=kotlin.FloatArray
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.FloatArray[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_n_float package=golden.sema
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@4:17 call callee=e@4:17#1 args=[] type=kotlin.FloatArray call=kotlin.floatArrayOf
-expr e@4:5 localDecl empty mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.empty
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@4:17 call callee=e@4:17#1 args=[] type=kotlin.FloatArray call=kotlin.floatArrayOf[kind=fun;params=*Float]
+expr e@4:5 localDecl empty mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.empty[kind=local]
 expr e@5:31 float(1.5) type=Float
 expr e@5:38 float(2.5) type=Float
 expr e@5:37 unary(unaryMinus) operand=e@5:38 type=Float
 expr e@5:44 float(3.0) type=Float
-expr e@5:18 call callee=e@5:18#1 args=[_:e@5:31,_:e@5:37,_:e@5:44] type=kotlin.FloatArray call=kotlin.floatArrayOf
-expr e@5:5 localDecl values mutable=0 type=_ init=e@5:18 type=Unit ref=__local_1.values
-expr e@6:13 name(empty) type=kotlin.FloatArray ref=__local_0.empty
-expr e@6:13#1 memberCall recv=e@6:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#5
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println#1
-expr e@7:13 name(values) type=kotlin.FloatArray ref=__local_1.values
-expr e@7:13#1 memberCall recv=e@7:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#5
-expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println#1
-expr e@8:13 name(values) type=kotlin.FloatArray ref=__local_1.values
+expr e@5:18 call callee=e@5:18#1 args=[_:e@5:31,_:e@5:37,_:e@5:44] type=kotlin.FloatArray call=kotlin.floatArrayOf[kind=fun;params=*Float]
+expr e@5:5 localDecl values mutable=0 type=_ init=e@5:18 type=Unit ref=__local_1.values[kind=local]
+expr e@6:13 name(empty) type=kotlin.FloatArray ref=__local_0.empty[kind=local]
+expr e@6:13#1 memberCall recv=e@6:13 callee=size args=[] type=Int call=kotlin.collections.size.$get[kind=fun;recv=kotlin.FloatArray;params=]
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@7:13 name(values) type=kotlin.FloatArray ref=__local_1.values[kind=local]
+expr e@7:13#1 memberCall recv=e@7:13 callee=size args=[] type=Int call=kotlin.collections.size.$get[kind=fun;recv=kotlin.FloatArray;params=]
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@8:13 name(values) type=kotlin.FloatArray ref=__local_1.values[kind=local]
 expr e@8:20 int(0) type=Int
 expr e@8:13#1 indexedAccess receiver=e@8:13 indices=[e@8:20] type=Float
 expr e@8:13#2 memberCall recv=e@8:13#1 callee=toInt args=[] type=Int
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#2] type=Unit call=kotlin.io.println#1
-expr e@9:13 name(values) type=kotlin.FloatArray ref=__local_1.values
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@9:13 name(values) type=kotlin.FloatArray ref=__local_1.values[kind=local]
 expr e@9:20 int(1) type=Int
 expr e@9:13#1 indexedAccess receiver=e@9:13 indices=[e@9:20] type=Float
 expr e@9:13#2 memberCall recv=e@9:13#1 callee=toInt args=[] type=Int
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#2] type=Unit call=kotlin.io.println#1
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@10:13 float(3.14) type=Float
-expr e@10:13#1 memberCall recv=e@10:13 callee=toUInt args=[] type=UInt call=kotlin.toUInt#1
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#1
+expr e@10:13#1 memberCall recv=e@10:13 callee=toUInt args=[] type=UInt call=kotlin.toUInt[kind=fun;recv=Float;params=]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@11:15 float(1.5) type=Float
 expr e@11:14 unary(unaryMinus) operand=e@11:15 type=Float
-expr e@11:14#1 memberCall recv=e@11:14 callee=toUInt args=[] type=UInt call=kotlin.toUInt#1
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:14#1] type=Unit call=kotlin.io.println#1
+expr e@11:14#1 memberCall recv=e@11:14 callee=toUInt args=[] type=UInt call=kotlin.toUInt[kind=fun;recv=Float;params=]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:14#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@12:13 float(2147483648.0) type=Float
-expr e@12:13#1 memberCall recv=e@12:13 callee=toUInt args=[] type=UInt call=kotlin.toUInt#1
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
+expr e@12:13#1 memberCall recv=e@12:13 callee=toUInt args=[] type=UInt call=kotlin.toUInt[kind=fun;recv=Float;params=]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@13:13 memberCall recv=e@13:13#1 callee=POSITIVE_INFINITY args=[] type=Float
-expr e@13:13#2 memberCall recv=e@13:13 callee=toUInt args=[] type=UInt call=kotlin.toUInt#1
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#2] type=Unit call=kotlin.io.println#1
+expr e@13:13#2 memberCall recv=e@13:13 callee=toUInt args=[] type=UInt call=kotlin.toUInt[kind=fun;recv=Float;params=]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@14:13 memberCall recv=e@14:13#1 callee=NaN args=[] type=Float
-expr e@14:13#2 memberCall recv=e@14:13 callee=toULong args=[] type=ULong call=kotlin.toULong#1
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#2] type=Unit call=kotlin.io.println#1
+expr e@14:13#2 memberCall recv=e@14:13 callee=toULong args=[] type=ULong call=kotlin.toULong[kind=fun;recv=Float;params=]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@15:13 float(3.14) type=Float
-expr e@15:13#1 memberCall recv=e@15:13 callee=toULong args=[] type=ULong call=kotlin.toULong#1
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println#1
+expr e@15:13#1 memberCall recv=e@15:13 callee=toULong args=[] type=ULong call=kotlin.toULong[kind=fun;recv=Float;params=]
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@16:13 float(9.223372036854776e+18) type=Float
-expr e@16:13#1 memberCall recv=e@16:13 callee=toULong args=[] type=ULong call=kotlin.toULong#1
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println#1
+expr e@16:13#1 memberCall recv=e@16:13 callee=toULong args=[] type=ULong call=kotlin.toULong[kind=fun;recv=Float;params=]
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@17:13 memberCall recv=e@17:13#1 callee=POSITIVE_INFINITY args=[] type=Float
-expr e@17:13#2 memberCall recv=e@17:13 callee=toULong args=[] type=ULong call=kotlin.toULong#1
-expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#2] type=Unit call=kotlin.io.println#1
+expr e@17:13#2 memberCall recv=e@17:13 callee=toULong args=[] type=ULong call=kotlin.toULong[kind=fun;recv=Float;params=]
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

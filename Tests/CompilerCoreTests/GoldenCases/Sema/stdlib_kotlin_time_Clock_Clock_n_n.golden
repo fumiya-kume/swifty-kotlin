@@ -1,0 +1,14 @@
+symbol fq=FixedClock[kind=class] kind=class vis=public flags=_
+symbol fq=kotlin.time.Clock[kind=iface] kind=interface vis=public flags=_
+symbol fq=kotlin.time.Instant.Companion[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.time.Instant[kind=class] kind=class vis=public flags=synthetic
+symbol fq=readClock.$0.clock[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=readClock[kind=fun;params=kotlin.time.Clock] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.time.Clock] ret=kotlin.time.Instant
+file fstdlib_kotlin_time_Clock_Clock_n_n package=_
+  decl FixedClock[kind=class] class FixedClock sym=FixedClock[kind=class]
+  decl readClock[kind=fun;params=kotlin.time.Clock] fun readClock sym=readClock[kind=fun;params=kotlin.time.Clock]
+expr e@5:35 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant[kind=class]
+expr e@5:65 long(1234) type=Long
+expr e@5:35#1 memberCall recv=e@5:35 callee=fromEpochMilliseconds args=[_:e@5:65] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds[kind=fun;recv=kotlin.time.Instant.Companion;params=Long]
+expr e@8:40 name(clock) type=kotlin.time.Clock ref=readClock.$0.clock[kind=vparam]
+expr e@8:40#1 memberCall recv=e@8:40 callee=now args=[] type=kotlin.time.Instant call=kotlin.time.Clock.now[kind=fun;recv=kotlin.time.Clock;params=]

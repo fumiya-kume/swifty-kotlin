@@ -1,15 +1,15 @@
-symbol fq=__local_0.r kind=local vis=private flags=_ type=kotlin.random.Random
-symbol fq=__local_1.a kind=local vis=private flags=_ type=Int
-symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
-symbol fq=useRandomNextIntRange kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.r[kind=local] kind=local vis=private flags=_ type=kotlin.random.Random
+symbol fq=__local_1.a[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
+symbol fq=useRandomNextIntRange[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file frandom_nextint_range package=_
-  decl useRandomNextIntRange fun useRandomNextIntRange sym=useRandomNextIntRange
+  decl useRandomNextIntRange[kind=fun;params=] fun useRandomNextIntRange sym=useRandomNextIntRange[kind=fun;params=]
 expr e@4:20 int(42) type=Int
-expr e@4:13 call callee=e@4:13#1 args=[_:e@4:20] type=kotlin.random.Random call=kotlin.random.Random#1
-expr e@4:5 localDecl r mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.r
-expr e@5:13 name(r) type=kotlin.random.Random ref=__local_0.r
+expr e@4:13 call callee=e@4:13#1 args=[_:e@4:20] type=kotlin.random.Random call=kotlin.random.Random[kind=fun;params=Int]
+expr e@4:5 localDecl r mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.r[kind=local]
+expr e@5:13 name(r) type=kotlin.random.Random ref=__local_0.r[kind=local]
 expr e@5:23 int(10) type=Int
 expr e@5:27 int(15) type=Int
 expr e@5:23#1 binary(rangeTo) lhs=e@5:23 rhs=e@5:27 type=Int
-expr e@5:13#1 memberCall recv=e@5:13 callee=nextInt args=[_:e@5:23#1] type=Int call=kotlin.random.Random.nextInt#3
-expr e@5:5 localDecl a mutable=0 type=_ init=e@5:13#1 type=Unit ref=__local_1.a
+expr e@5:13#1 memberCall recv=e@5:13 callee=nextInt args=[_:e@5:23#1] type=Int call=kotlin.random.Random.nextInt[kind=fun;recv=kotlin.random.Random;params=kotlin.ranges.IntRange]
+expr e@5:5 localDecl a mutable=0 type=_ init=e@5:13#1 type=Unit ref=__local_1.a[kind=local]

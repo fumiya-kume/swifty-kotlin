@@ -1,26 +1,26 @@
-symbol fq=__local_0.w1 kind=local vis=private flags=_ type=golden.sema.Widget
-symbol fq=__local_1.w2 kind=local vis=private flags=_ type=golden.sema.Widget
-symbol fq=golden.sema.Widget kind=class vis=public flags=_
-symbol fq=golden.sema.Widget.<init>#0 kind=constructor vis=public flags=_ sig=recv=golden.sema.Widget params=[String] ret=golden.sema.Widget
-symbol fq=golden.sema.Widget.<init>#1 kind=constructor vis=public flags=_ sig=recv=golden.sema.Widget params=[String,String] ret=golden.sema.Widget
-symbol fq=golden.sema.Widget.<init>.$sec0_0.name kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Widget.<init>.$sec1_1.name kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Widget.<init>.$sec1_1.suffix kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Widget.label kind=property vis=public flags=mutable type=String
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.w1[kind=local] kind=local vis=private flags=_ type=golden.sema.Widget
+symbol fq=__local_1.w2[kind=local] kind=local vis=private flags=_ type=golden.sema.Widget
+symbol fq=golden.sema.Widget.<init>.$sec0_0.name[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Widget.<init>.$sec1_1.name[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Widget.<init>.$sec1_1.suffix[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Widget.<init>[kind=ctor;recv=golden.sema.Widget;params=String,String] kind=constructor vis=public flags=_ sig=recv=golden.sema.Widget params=[String,String] ret=golden.sema.Widget
+symbol fq=golden.sema.Widget.<init>[kind=ctor;recv=golden.sema.Widget;params=String] kind=constructor vis=public flags=_ sig=recv=golden.sema.Widget params=[String] ret=golden.sema.Widget
+symbol fq=golden.sema.Widget.label[kind=prop] kind=property vis=public flags=mutable type=String
+symbol fq=golden.sema.Widget[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fsecondary_constructor_scope package=golden.sema
-  decl golden.sema.Widget class Widget sym=golden.sema.Widget
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@7:17 name(name) type=String ref=golden.sema.Widget.<init>.$sec0_0.name
-expr e@7:9 localAssign label value=e@7:17 type=Unit ref=golden.sema.Widget.label
-expr e@11:17 name(name) type=String ref=golden.sema.Widget.<init>.$sec1_1.name
-expr e@11:24 name(suffix) type=String ref=golden.sema.Widget.<init>.$sec1_1.suffix
+  decl golden.sema.Widget[kind=class] class Widget sym=golden.sema.Widget[kind=class]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@7:17 name(name) type=String ref=golden.sema.Widget.<init>.$sec0_0.name[kind=vparam]
+expr e@7:9 localAssign label value=e@7:17 type=Unit ref=golden.sema.Widget.label[kind=prop]
+expr e@11:17 name(name) type=String ref=golden.sema.Widget.<init>.$sec1_1.name[kind=vparam]
+expr e@11:24 name(suffix) type=String ref=golden.sema.Widget.<init>.$sec1_1.suffix[kind=vparam]
 expr e@11:17#1 binary(add) lhs=e@11:17 rhs=e@11:24 type=String
-expr e@11:9 localAssign label value=e@11:17#1 type=Unit ref=golden.sema.Widget.label
+expr e@11:9 localAssign label value=e@11:17#1 type=Unit ref=golden.sema.Widget.label[kind=prop]
 expr e@16:21 string(a) type=String
-expr e@16:14 call callee=e@16:14#1 args=[_:e@16:21] type=golden.sema.Widget call=golden.sema.Widget.<init>#0
-expr e@16:5 localDecl w1 mutable=0 type=_ init=e@16:14 type=Unit ref=__local_0.w1
+expr e@16:14 call callee=e@16:14#1 args=[_:e@16:21] type=golden.sema.Widget call=golden.sema.Widget.<init>[kind=ctor;recv=golden.sema.Widget;params=String]
+expr e@16:5 localDecl w1 mutable=0 type=_ init=e@16:14 type=Unit ref=__local_0.w1[kind=local]
 expr e@17:21 string(a) type=String
 expr e@17:26 string(b) type=String
-expr e@17:14 call callee=e@17:14#1 args=[_:e@17:21,_:e@17:26] type=golden.sema.Widget call=golden.sema.Widget.<init>#1
-expr e@17:5 localDecl w2 mutable=0 type=_ init=e@17:14 type=Unit ref=__local_1.w2
+expr e@17:14 call callee=e@17:14#1 args=[_:e@17:21,_:e@17:26] type=golden.sema.Widget call=golden.sema.Widget.<init>[kind=ctor;recv=golden.sema.Widget;params=String,String]
+expr e@17:5 localDecl w2 mutable=0 type=_ init=e@17:14 type=Unit ref=__local_1.w2[kind=local]

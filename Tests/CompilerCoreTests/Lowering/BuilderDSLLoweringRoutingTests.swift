@@ -202,21 +202,13 @@ struct BuilderDSLLoweringRoutingTests {
         }
     }
 
-    // MARK: - the --no-stdlib fallback (the only production path that rewrites)
+    // MARK: - builder entry points require the bundled stdlib
 
-    /// Without the bundled stdlib, `buildList` still resolves — to the residual
-    /// synthetic stub in `HeaderHelpers+SyntheticBuilderDSLStubs.swift` — and
-    /// the `.synthetic` branch of `isStdlibBuilderDSLCall` routes it to the
-    /// legacy runtime helpers.  This is the single reachable consumer of the
-    /// buildList rewrite; RF-LOWER-CALL-004 must resolve it before deleting.
-    @Test
-    func noStdlibBuildListRewritesToLegacyRuntimeHelper() throws {
-        let source = """
-        fun main() {
-            val a = buildList<Int> { add(1) }
-            val b = buildList<Int>(4) { add(2) }
-        }
-        """
+    /// Both buildList overloads are supplied by CollectionBuilders.kt. Without
+    /// that source, neither registry may recreate a synthetic entry point.
+    @Test(arguments: ["buildList<Int> { add(1) }", "buildList<Int>(4) { add(2) }"])
+    func noStdlibHasNoBuildListEntryPoint(expression: String) throws {
+        let source = "fun main() { val result = \(expression) }"
         try withTemporaryFile(contents: source) { path in
             let ctx = makeCompilationContext(
                 inputs: [path],
@@ -225,27 +217,14 @@ struct BuilderDSLLoweringRoutingTests {
                 includeStdlib: false
             )
             try runToKIR(ctx)
-            #expect(!ctx.diagnostics.hasError, "diagnostics: \(ctx.diagnostics.diagnostics)")
 
-            let module = try #require(ctx.kir)
-            let preBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let unresolved = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-0023" }
+            #expect(
+                unresolved.contains { $0.message.contains("'buildList'") },
+                "buildList must require stdlib source; diagnostics: \(ctx.diagnostics.diagnostics)"
+            )
             let sema = try #require(ctx.sema)
-            for call in Self.builderCalls(in: preBody, interner: ctx.interner) {
-                let symbolID = try #require(call.symbol)
-                let symbol = try #require(sema.symbols.symbol(symbolID))
-                #expect(
-                    symbol.flags.contains(.synthetic),
-                    "\(call.name)/\(call.argumentCount) without stdlib must resolve to the synthetic stub"
-                )
-            }
-
-            _ = try Self.runCollectionLiteralPassOnly(ctx)
-            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
-            let callees = extractCallees(from: body, interner: ctx.interner)
-
-            #expect(!callees.contains("buildList"), "the synthetic stub call must be rewritten; callees: \(callees)")
-            #expect(callees.contains("__kk_build_list"), "callees: \(callees)")
-            #expect(callees.contains("__kk_build_list_with_capacity"), "callees: \(callees)")
+            #expect(sema.symbols.lookup(fqName: ["kotlin", "collections", "buildList"].map(ctx.interner.intern)) == nil)
         }
     }
 

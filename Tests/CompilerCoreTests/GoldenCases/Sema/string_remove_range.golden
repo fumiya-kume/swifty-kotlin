@@ -1,27 +1,27 @@
-symbol fq=golden.sema.useRemoveRangeEmpty kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useRemoveRangeIndices kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useRemoveRangeIntRange kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useRemoveRangeStart kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
+symbol fq=golden.sema.useRemoveRangeEmpty[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useRemoveRangeIndices[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useRemoveRangeIntRange[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useRemoveRangeStart[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
 file fstring_remove_range package=golden.sema
-  decl golden.sema.useRemoveRangeIndices fun useRemoveRangeIndices sym=golden.sema.useRemoveRangeIndices
-  decl golden.sema.useRemoveRangeStart fun useRemoveRangeStart sym=golden.sema.useRemoveRangeStart
-  decl golden.sema.useRemoveRangeEmpty fun useRemoveRangeEmpty sym=golden.sema.useRemoveRangeEmpty
-  decl golden.sema.useRemoveRangeIntRange fun useRemoveRangeIntRange sym=golden.sema.useRemoveRangeIntRange
+  decl golden.sema.useRemoveRangeIndices[kind=fun;params=] fun useRemoveRangeIndices sym=golden.sema.useRemoveRangeIndices[kind=fun;params=]
+  decl golden.sema.useRemoveRangeStart[kind=fun;params=] fun useRemoveRangeStart sym=golden.sema.useRemoveRangeStart[kind=fun;params=]
+  decl golden.sema.useRemoveRangeEmpty[kind=fun;params=] fun useRemoveRangeEmpty sym=golden.sema.useRemoveRangeEmpty[kind=fun;params=]
+  decl golden.sema.useRemoveRangeIntRange[kind=fun;params=] fun useRemoveRangeIntRange sym=golden.sema.useRemoveRangeIntRange[kind=fun;params=]
 expr e@3:39 string(hello world) type=String
 expr e@3:65 int(5) type=Int
 expr e@3:68 int(11) type=Int
-expr e@3:39#1 memberCall recv=e@3:39 callee=removeRange args=[_:e@3:65,_:e@3:68] type=String call=kotlin.text.removeRange#0
+expr e@3:39#1 memberCall recv=e@3:39 callee=removeRange args=[_:e@3:65,_:e@3:68] type=String call=kotlin.text.removeRange[kind=fun;recv=String;params=Int,Int]
 expr e@5:37 string(hello world) type=String
 expr e@5:63 int(0) type=Int
 expr e@5:66 int(6) type=Int
-expr e@5:37#1 memberCall recv=e@5:37 callee=removeRange args=[_:e@5:63,_:e@5:66] type=String call=kotlin.text.removeRange#0
+expr e@5:37#1 memberCall recv=e@5:37 callee=removeRange args=[_:e@5:63,_:e@5:66] type=String call=kotlin.text.removeRange[kind=fun;recv=String;params=Int,Int]
 expr e@7:37 string(hello) type=String
 expr e@7:57 int(2) type=Int
 expr e@7:60 int(2) type=Int
-expr e@7:37#1 memberCall recv=e@7:37 callee=removeRange args=[_:e@7:57,_:e@7:60] type=String call=kotlin.text.removeRange#0
+expr e@7:37#1 memberCall recv=e@7:37 callee=removeRange args=[_:e@7:57,_:e@7:60] type=String call=kotlin.text.removeRange[kind=fun;recv=String;params=Int,Int]
 expr e@9:40 string(hello world) type=String
 expr e@9:66 int(5) type=Int
 expr e@9:69 int(10) type=Int
 expr e@9:66#1 binary(rangeTo) lhs=e@9:66 rhs=e@9:69 type=Int
-expr e@9:40#1 memberCall recv=e@9:40 callee=removeRange args=[_:e@9:66#1] type=String call=kotlin.text.removeRange#1
+expr e@9:40#1 memberCall recv=e@9:40 callee=removeRange args=[_:e@9:66#1] type=String call=kotlin.text.removeRange[kind=fun;recv=String;params=kotlin.ranges.IntRange]

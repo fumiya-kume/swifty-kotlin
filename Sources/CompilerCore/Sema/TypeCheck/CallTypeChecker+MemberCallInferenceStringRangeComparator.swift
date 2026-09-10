@@ -59,19 +59,6 @@ extension CallTypeChecker {
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
         }
-        if let boundType = tryBindStringChunkedTransform(
-            id,
-            calleeName: calleeName,
-            receiverType: stringHOFReceiverType,
-            args: args,
-            safeCall: safeCall,
-            ast: ast,
-            ctx: ctx,
-            locals: &locals,
-            explicitTypeArgs: explicitTypeArgs
-        ) {
-            return boundType
-        }
         if let boundType = tryBindStringWindowedTransform(
             id,
             calleeName: calleeName,
@@ -89,7 +76,8 @@ extension CallTypeChecker {
         if args.count == 1 {
             let stringHOFCalleeStr = interner.resolve(calleeName)
             let isStringHOFReceiver = sema.types.isSubtype(stringHOFReceiverType, sema.types.stringType)
-                || ((stringHOFCalleeStr == "ifBlank" || stringHOFCalleeStr == "ifEmpty" || stringHOFCalleeStr == "zipWithNext")
+                || ((stringHOFCalleeStr == "ifBlank" || stringHOFCalleeStr == "ifEmpty" || stringHOFCalleeStr == "zipWithNext"
+                    || stringHOFCalleeStr == "onEach" || stringHOFCalleeStr == "onEachIndexed")
                     && isSyntheticStringLikeType(stringHOFReceiverType, sema: sema))
             if isStringHOFReceiver,
                [
@@ -98,6 +86,7 @@ extension CallTypeChecker {
                    "takeWhile", "dropWhile",
                    "trim", "trimStart", "trimEnd",
                    "zipWithNext",
+                   "onEach", "onEachIndexed",
                    "ifBlank",
                    "ifEmpty",
                ].contains(stringHOFCalleeStr)
@@ -134,6 +123,20 @@ extension CallTypeChecker {
                         sema.types.make(.functionType(FunctionType(
                             params: [charType, charType],
                             returnType: sema.types.anyType,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                    case "onEach":
+                        sema.types.make(.functionType(FunctionType(
+                            params: [charType],
+                            returnType: sema.types.unitType,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                    case "onEachIndexed":
+                        sema.types.make(.functionType(FunctionType(
+                            params: [intType, charType],
+                            returnType: sema.types.unitType,
                             isSuspend: false,
                             nullability: .nonNull
                         )))
@@ -249,6 +252,7 @@ extension CallTypeChecker {
                 case "takeWhile", "dropWhile",
                      "trim", "trimStart", "trimEnd": sema.types.stringType
                 case "map", "mapIndexed", "mapNotNull": sema.types.anyType
+                case "onEach", "onEachIndexed": sema.types.stringType
                 case "splitToSequence": sequenceStringType
                 case "ifBlank", "ifEmpty": sema.types.stringType
                 default: sema.types.anyType

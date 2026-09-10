@@ -1,52 +1,52 @@
-symbol fq=golden.sema.charSequencePadEnd kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int,Char] ret=kotlin.CharSequence
-symbol fq=golden.sema.charSequencePadEnd.$0.length kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequencePadEnd.$0.padChar kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequencePadEnd.$0.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequencePadEndDefault kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=kotlin.CharSequence
-symbol fq=golden.sema.charSequencePadEndDefault.$1.length kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequencePadEndDefault.$1.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequencePadStart kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int,Char] ret=kotlin.CharSequence
-symbol fq=golden.sema.charSequencePadStart.$2.length kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequencePadStart.$2.padChar kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequencePadStart.$2.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequencePadStartDefault kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=kotlin.CharSequence
-symbol fq=golden.sema.charSequencePadStartDefault.$3.length kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequencePadStartDefault.$3.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.stringPadEnd kind=function vis=public flags=_ sig=recv=_ params=[String,Int,Char] ret=String
-symbol fq=golden.sema.stringPadEnd.$4.length kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.stringPadEnd.$4.padChar kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.stringPadEnd.$4.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.stringPadStart kind=function vis=public flags=_ sig=recv=_ params=[String,Int,Char] ret=String
-symbol fq=golden.sema.stringPadStart.$5.length kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.stringPadStart.$5.padChar kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.stringPadStart.$5.source kind=valueParameter vis=private flags=_
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=golden.sema.charSequencePadEnd.$0.length[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequencePadEnd.$0.padChar[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequencePadEnd.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequencePadEndDefault.$1.length[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequencePadEndDefault.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequencePadEndDefault[kind=fun;params=kotlin.CharSequence,Int] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=kotlin.CharSequence
+symbol fq=golden.sema.charSequencePadEnd[kind=fun;params=kotlin.CharSequence,Int,Char] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int,Char] ret=kotlin.CharSequence
+symbol fq=golden.sema.charSequencePadStart.$2.length[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequencePadStart.$2.padChar[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequencePadStart.$2.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequencePadStartDefault.$3.length[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequencePadStartDefault.$3.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequencePadStartDefault[kind=fun;params=kotlin.CharSequence,Int] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=kotlin.CharSequence
+symbol fq=golden.sema.charSequencePadStart[kind=fun;params=kotlin.CharSequence,Int,Char] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int,Char] ret=kotlin.CharSequence
+symbol fq=golden.sema.stringPadEnd.$4.length[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringPadEnd.$4.padChar[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringPadEnd.$4.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringPadEnd[kind=fun;params=String,Int,Char] kind=function vis=public flags=_ sig=recv=_ params=[String,Int,Char] ret=String
+symbol fq=golden.sema.stringPadStart.$5.length[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringPadStart.$5.padChar[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringPadStart.$5.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringPadStart[kind=fun;params=String,Int,Char] kind=function vis=public flags=_ sig=recv=_ params=[String,Int,Char] ret=String
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_pad package=golden.sema
-  decl golden.sema.charSequencePadStart fun charSequencePadStart sym=golden.sema.charSequencePadStart
-  decl golden.sema.charSequencePadStartDefault fun charSequencePadStartDefault sym=golden.sema.charSequencePadStartDefault
-  decl golden.sema.charSequencePadEnd fun charSequencePadEnd sym=golden.sema.charSequencePadEnd
-  decl golden.sema.charSequencePadEndDefault fun charSequencePadEndDefault sym=golden.sema.charSequencePadEndDefault
-  decl golden.sema.stringPadStart fun stringPadStart sym=golden.sema.stringPadStart
-  decl golden.sema.stringPadEnd fun stringPadEnd sym=golden.sema.stringPadEnd
-expr e@4:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequencePadStart.$2.source
-expr e@4:21 name(length) type=Int ref=golden.sema.charSequencePadStart.$2.length
-expr e@4:29 name(padChar) type=Char ref=golden.sema.charSequencePadStart.$2.padChar
-expr e@4:5#1 memberCall recv=e@4:5 callee=padStart args=[_:e@4:21,_:e@4:29] type=kotlin.CharSequence call=kotlin.text.padStart#1
-expr e@7:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequencePadStartDefault.$3.source
-expr e@7:21 name(length) type=Int ref=golden.sema.charSequencePadStartDefault.$3.length
-expr e@7:5#1 memberCall recv=e@7:5 callee=padStart args=[_:e@7:21] type=kotlin.CharSequence call=kotlin.text.padStart#1
-expr e@10:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequencePadEnd.$0.source
-expr e@10:19 name(length) type=Int ref=golden.sema.charSequencePadEnd.$0.length
-expr e@10:27 name(padChar) type=Char ref=golden.sema.charSequencePadEnd.$0.padChar
-expr e@10:5#1 memberCall recv=e@10:5 callee=padEnd args=[_:e@10:19,_:e@10:27] type=kotlin.CharSequence call=kotlin.text.padEnd#1
-expr e@13:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequencePadEndDefault.$1.source
-expr e@13:19 name(length) type=Int ref=golden.sema.charSequencePadEndDefault.$1.length
-expr e@13:5#1 memberCall recv=e@13:5 callee=padEnd args=[_:e@13:19] type=kotlin.CharSequence call=kotlin.text.padEnd#1
-expr e@16:5 name(source) type=String ref=golden.sema.stringPadStart.$5.source
-expr e@16:21 name(length) type=Int ref=golden.sema.stringPadStart.$5.length
-expr e@16:29 name(padChar) type=Char ref=golden.sema.stringPadStart.$5.padChar
-expr e@16:5#1 memberCall recv=e@16:5 callee=padStart args=[_:e@16:21,_:e@16:29] type=String call=kotlin.text.padStart#0
-expr e@19:5 name(source) type=String ref=golden.sema.stringPadEnd.$4.source
-expr e@19:19 name(length) type=Int ref=golden.sema.stringPadEnd.$4.length
-expr e@19:27 name(padChar) type=Char ref=golden.sema.stringPadEnd.$4.padChar
-expr e@19:5#1 memberCall recv=e@19:5 callee=padEnd args=[_:e@19:19,_:e@19:27] type=String call=kotlin.text.padEnd#0
+  decl golden.sema.charSequencePadStart[kind=fun;params=kotlin.CharSequence,Int,Char] fun charSequencePadStart sym=golden.sema.charSequencePadStart[kind=fun;params=kotlin.CharSequence,Int,Char]
+  decl golden.sema.charSequencePadStartDefault[kind=fun;params=kotlin.CharSequence,Int] fun charSequencePadStartDefault sym=golden.sema.charSequencePadStartDefault[kind=fun;params=kotlin.CharSequence,Int]
+  decl golden.sema.charSequencePadEnd[kind=fun;params=kotlin.CharSequence,Int,Char] fun charSequencePadEnd sym=golden.sema.charSequencePadEnd[kind=fun;params=kotlin.CharSequence,Int,Char]
+  decl golden.sema.charSequencePadEndDefault[kind=fun;params=kotlin.CharSequence,Int] fun charSequencePadEndDefault sym=golden.sema.charSequencePadEndDefault[kind=fun;params=kotlin.CharSequence,Int]
+  decl golden.sema.stringPadStart[kind=fun;params=String,Int,Char] fun stringPadStart sym=golden.sema.stringPadStart[kind=fun;params=String,Int,Char]
+  decl golden.sema.stringPadEnd[kind=fun;params=String,Int,Char] fun stringPadEnd sym=golden.sema.stringPadEnd[kind=fun;params=String,Int,Char]
+expr e@4:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequencePadStart.$2.source[kind=vparam]
+expr e@4:21 name(length) type=Int ref=golden.sema.charSequencePadStart.$2.length[kind=vparam]
+expr e@4:29 name(padChar) type=Char ref=golden.sema.charSequencePadStart.$2.padChar[kind=vparam]
+expr e@4:5#1 memberCall recv=e@4:5 callee=padStart args=[_:e@4:21,_:e@4:29] type=kotlin.CharSequence call=kotlin.text.padStart[kind=fun;recv=kotlin.CharSequence;params=Int,Char]
+expr e@7:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequencePadStartDefault.$3.source[kind=vparam]
+expr e@7:21 name(length) type=Int ref=golden.sema.charSequencePadStartDefault.$3.length[kind=vparam]
+expr e@7:5#1 memberCall recv=e@7:5 callee=padStart args=[_:e@7:21] type=kotlin.CharSequence call=kotlin.text.padStart[kind=fun;recv=kotlin.CharSequence;params=Int,Char]
+expr e@10:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequencePadEnd.$0.source[kind=vparam]
+expr e@10:19 name(length) type=Int ref=golden.sema.charSequencePadEnd.$0.length[kind=vparam]
+expr e@10:27 name(padChar) type=Char ref=golden.sema.charSequencePadEnd.$0.padChar[kind=vparam]
+expr e@10:5#1 memberCall recv=e@10:5 callee=padEnd args=[_:e@10:19,_:e@10:27] type=kotlin.CharSequence call=kotlin.text.padEnd[kind=fun;recv=kotlin.CharSequence;params=Int,Char]
+expr e@13:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequencePadEndDefault.$1.source[kind=vparam]
+expr e@13:19 name(length) type=Int ref=golden.sema.charSequencePadEndDefault.$1.length[kind=vparam]
+expr e@13:5#1 memberCall recv=e@13:5 callee=padEnd args=[_:e@13:19] type=kotlin.CharSequence call=kotlin.text.padEnd[kind=fun;recv=kotlin.CharSequence;params=Int,Char]
+expr e@16:5 name(source) type=String ref=golden.sema.stringPadStart.$5.source[kind=vparam]
+expr e@16:21 name(length) type=Int ref=golden.sema.stringPadStart.$5.length[kind=vparam]
+expr e@16:29 name(padChar) type=Char ref=golden.sema.stringPadStart.$5.padChar[kind=vparam]
+expr e@16:5#1 memberCall recv=e@16:5 callee=padStart args=[_:e@16:21,_:e@16:29] type=String call=kotlin.text.padStart[kind=fun;recv=String;params=Int,Char]
+expr e@19:5 name(source) type=String ref=golden.sema.stringPadEnd.$4.source[kind=vparam]
+expr e@19:19 name(length) type=Int ref=golden.sema.stringPadEnd.$4.length[kind=vparam]
+expr e@19:27 name(padChar) type=Char ref=golden.sema.stringPadEnd.$4.padChar[kind=vparam]
+expr e@19:5#1 memberCall recv=e@19:5 callee=padEnd args=[_:e@19:19,_:e@19:27] type=String call=kotlin.text.padEnd[kind=fun;recv=String;params=Int,Char]

@@ -1,5 +1,5 @@
-symbol fq=golden.sema.acceptUuid kind=function vis=public flags=_ sig=recv=_ params=[kotlin.uuid.Uuid] ret=kotlin.uuid.Uuid
-symbol fq=golden.sema.acceptUuid.$0.uuid kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptUuid.$0.uuid[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptUuid[kind=fun;params=kotlin.uuid.Uuid] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.uuid.Uuid] ret=kotlin.uuid.Uuid
 file fstdlib_kotlin_uuid_n_n package=golden.sema
-  decl golden.sema.acceptUuid fun acceptUuid sym=golden.sema.acceptUuid
-expr e@7:36 name(uuid) type=kotlin.uuid.Uuid ref=golden.sema.acceptUuid.$0.uuid
+  decl golden.sema.acceptUuid[kind=fun;params=kotlin.uuid.Uuid] fun acceptUuid sym=golden.sema.acceptUuid[kind=fun;params=kotlin.uuid.Uuid]
+expr e@7:36 name(uuid) type=kotlin.uuid.Uuid ref=golden.sema.acceptUuid.$0.uuid[kind=vparam]

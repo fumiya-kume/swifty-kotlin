@@ -4,12 +4,10 @@ import Foundation
 import Testing
 
 extension BuildKIRRegressionTests {
-    /// KSP-417 keeps normalization, codePointCount, and random as runtime bridges,
+    /// KSP-417 keeps normalization and codePointCount as runtime bridges,
     /// but demotes their symbols to the private `__kk_` tier.
-    @Test func testUnicodeNormalizationAndRandomLowerToPrivateRuntimeBridges() throws {
+    @Test func testUnicodeNormalizationAndCodePointCountLowerToPrivateRuntimeBridges() throws {
         let source = """
-        import kotlin.random.Random
-
         fun main() {
             val s = "e\\u0301abc"
             val nfc = s.normalize(NormalizationForms.NFC)
@@ -20,9 +18,7 @@ extension BuildKIRRegressionTests {
             val total = s.codePointCount()
             val from = s.codePointCount(1)
             val range = s.codePointCount(0, 2)
-            val any = s.random()
-            val seeded = s.random(Random(42))
-            println("$nfd $nfkc $nfkd $stable $total $from $range $any $seeded")
+            println("$nfd $nfkc $nfkd $stable $total $from $range")
         }
         """
 
@@ -44,8 +40,6 @@ extension BuildKIRRegressionTests {
                 "__kk_string_codePointCount",
                 "__kk_string_codePointCount_from",
                 "__kk_string_codePointCount_range",
-                "__kk_string_random",
-                "__kk_string_random_random",
             ]
             for callee in expected {
                 #expect(callees.contains(callee), "\(callee) should be the emitted runtime callee")
