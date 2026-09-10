@@ -3518,7 +3518,7 @@
     - `kotlin.ranges.first` — fun IntProgression.first(): Int  -- `final fun (kotlin.ranges/IntProgression).kotlin.ranges/first(): kotlin/Int`
     - `kotlin.ranges.last` — fun IntProgression.last(): Int  -- `final fun (kotlin.ranges/IntProgression).kotlin.ranges/last(): kotlin/Int`
 
-- [ ] KSP-1285: kotlin.ranges.IntRange の未実装 stdlib API を実装する（3 件）
+- [x] KSP-1285: kotlin.ranges.IntRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `IntRange`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3529,6 +3529,7 @@
     - `kotlin.ranges.contains` — fun IntRange.contains(Byte): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Byte): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun IntRange.contains(Long): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Long): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun IntRange.contains(Short): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Short): kotlin/Boolean`
+  - 完了根拠: `RangeHOF.kt` に Byte/Long/Short の exact overload と Long の Int 範囲外 guard を追加。Sema の source-backed contains routing は exact 引数型・`value` ラベルを照合し、direct/`in` と nullable/wrong-label 回帰を追加した。既存 `stdlib_kotlin_ranges_OpenEndRange_n.golden` の contains overload 番号更新（+3）を反映し、全 Golden テストが green。
 
 - [ ] KSP-1286: kotlin.ranges.LongProgression の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.ranges` / receiver `LongProgression`
@@ -3593,7 +3594,7 @@
     - `kotlin.ranges.last` — fun ULongProgression.last(): ULong  -- `final fun (kotlin.ranges/ULongProgression).kotlin.ranges/last(): kotlin/ULong`
     - `kotlin.ranges.lastOrNull` — fun ULongProgression.lastOrNull(): ULong  -- `final fun (kotlin.ranges/ULongProgression).kotlin.ranges/lastOrNull(): kotlin/ULong?`
 
-- [ ] KSP-1292: kotlin.ranges.ULongRange の未実装 stdlib API を実装する（3 件）
+- [~] KSP-1292: kotlin.ranges.ULongRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `ULongRange`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3604,6 +3605,8 @@
     - `kotlin.ranges.contains` — fun ULongRange.contains(UByte): Boolean  -- `final fun (kotlin.ranges/ULongRange).kotlin.ranges/contains(kotlin/UByte): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun ULongRange.contains(UInt): Boolean  -- `final fun (kotlin.ranges/ULongRange).kotlin.ranges/contains(kotlin/UInt): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun ULongRange.contains(UShort): Boolean  -- `final fun (kotlin.ranges/ULongRange).kotlin.ranges/contains(kotlin/UShort): kotlin/Boolean`
+
+  - focused根拠: Kotlin 2.3.10 `_URanges.kt` と同じ `@SinceKotlin("1.5")` source extension を `RangeHOF.kt` に追加し、各 unsigned 値を `toULong()` で既存の `ULongRange.contains(ULong)` へ widening する。専用 Sema/Golden fixture は named argument、`in`、直接 `contains`、通常の `ULong` overload、full/narrow/empty range と unsigned 境界を固定する。全 Swift/Golden/diff の変更 head G は未実行のため完了は保留する。
 
 - [ ] KSP-1293: kotlin.ranges.CharProgression top-level の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.ranges.CharProgression` / top-level
