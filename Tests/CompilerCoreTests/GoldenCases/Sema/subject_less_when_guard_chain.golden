@@ -1,24 +1,24 @@
-symbol fq=__local_0.result kind=local vis=private flags=_ type=Int
-symbol fq=boolExhaustive kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=multiGuard kind=function vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=String
-symbol fq=multiGuard.$0.a kind=valueParameter vis=private flags=_
-symbol fq=multiGuard.$0.b kind=valueParameter vis=private flags=_
-symbol fq=multiGuard.$0.c kind=valueParameter vis=private flags=_
-symbol fq=noElseGuard kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
-symbol fq=noElseGuard.$1.x kind=valueParameter vis=private flags=_
+symbol fq=__local_0.result[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=boolExhaustive[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=multiGuard.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=multiGuard.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=multiGuard.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=multiGuard[kind=fun;params=Int,Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=String
+symbol fq=noElseGuard.$1.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=noElseGuard[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
 file fsubject_less_when_guard_chain package=_
-  decl multiGuard fun multiGuard sym=multiGuard
-  decl noElseGuard fun noElseGuard sym=noElseGuard
-  decl boolExhaustive fun boolExhaustive sym=boolExhaustive
-expr e@3:9 name(a) type=Int ref=multiGuard.$0.a
+  decl multiGuard[kind=fun;params=Int,Int,Int] fun multiGuard sym=multiGuard[kind=fun;params=Int,Int,Int]
+  decl noElseGuard[kind=fun;params=Int] fun noElseGuard sym=noElseGuard[kind=fun;params=Int]
+  decl boolExhaustive[kind=fun;params=] fun boolExhaustive sym=boolExhaustive[kind=fun;params=]
+expr e@3:9 name(a) type=Int ref=multiGuard.$0.a[kind=vparam]
 expr e@3:13 int(0) type=Int
 expr e@3:9#1 binary(greaterThan) lhs=e@3:9 rhs=e@3:13 type=Boolean
 expr e@3:18 string(positive_a) type=String
-expr e@4:9 name(b) type=Int ref=multiGuard.$0.b
+expr e@4:9 name(b) type=Int ref=multiGuard.$0.b[kind=vparam]
 expr e@4:13 int(0) type=Int
 expr e@4:9#1 binary(greaterThan) lhs=e@4:9 rhs=e@4:13 type=Boolean
 expr e@4:18 string(positive_b) type=String
-expr e@5:9 name(c) type=Int ref=multiGuard.$0.c
+expr e@5:9 name(c) type=Int ref=multiGuard.$0.c[kind=vparam]
 expr e@5:13 int(0) type=Int
 expr e@5:9#1 binary(greaterThan) lhs=e@5:9 rhs=e@5:13 type=Boolean
 expr e@5:18 string(positive_c) type=String
@@ -26,17 +26,17 @@ expr e@6:17 string(all_non_positive) type=String
 expr e@2:12 when subject=_ branches=[e@3:9#1->e@3:18,e@4:9#1->e@4:18,e@5:9#1->e@5:18] else=e@6:17 type=String
 expr e@2:5 return value=e@2:12 type=Nothing
 expr e@11:18 int(0) type=Int
-expr e@11:5 localDecl result mutable=0 type=_ init=e@11:18 type=Unit ref=__local_0.result
-expr e@13:9 name(x) type=Int ref=noElseGuard.$1.x
+expr e@11:5 localDecl result mutable=0 type=_ init=e@11:18 type=Unit ref=__local_0.result[kind=local]
+expr e@13:9 name(x) type=Int ref=noElseGuard.$1.x[kind=vparam]
 expr e@13:13 int(10) type=Int
 expr e@13:9#1 binary(greaterThan) lhs=e@13:9 rhs=e@13:13 type=Boolean
-expr e@13:19 name(result) type=Int ref=__local_0.result
-expr e@14:9 name(x) type=Int ref=noElseGuard.$1.x
+expr e@13:19 name(result) type=Int ref=__local_0.result[kind=local]
+expr e@14:9 name(x) type=Int ref=noElseGuard.$1.x[kind=vparam]
 expr e@14:13 int(0) type=Int
 expr e@14:9#1 binary(greaterThan) lhs=e@14:9 rhs=e@14:13 type=Boolean
-expr e@14:18 name(result) type=Int ref=__local_0.result
+expr e@14:18 name(result) type=Int ref=__local_0.result[kind=local]
 expr e@12:5 when subject=_ branches=[e@13:9#1->e@13:19,e@14:9#1->e@14:18] else=_ type=Int
-expr e@16:12 name(result) type=Int ref=__local_0.result
+expr e@16:12 name(result) type=Int ref=__local_0.result[kind=local]
 expr e@16:5 return value=e@16:12 type=Nothing
 expr e@21:9 bool(true) type=Boolean
 expr e@21:17 int(1) type=Int

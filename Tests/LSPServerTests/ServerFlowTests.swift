@@ -40,6 +40,7 @@ struct ServerFlowTests {
             #expect((capabilities["hoverProvider"] as? Bool) == true)
             #expect((capabilities["definitionProvider"] as? Bool) == true)
             #expect((capabilities["documentSymbolProvider"] as? Bool) == true)
+            #expect((capabilities["codeActionProvider"] as? Bool) == true)
         } else {
             Issue.record("initialize result should contain capabilities")
         }

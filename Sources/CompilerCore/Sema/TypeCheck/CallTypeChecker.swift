@@ -470,17 +470,17 @@ final class CallTypeChecker {
         let suspendCoroutineIntrinsicFQName = knownNames.kotlinCoroutinesIntrinsicsFQName + [knownNames.suspendCoroutineUninterceptedOrReturn]
         let isSuspendCoroutineIntrinsic = if let calleeName {
             calleeName == knownNames.suspendCoroutineUninterceptedOrReturn
-                && !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
-                && isSyntheticStdlibSymbol(
+                && locals[calleeName] == nil
+                && sourceOrSyntheticStdlibFunctionSymbol(
                     calleeName,
                     fqComponents: ["kotlin", "coroutines", "intrinsics", "suspendCoroutineUninterceptedOrReturn"],
                     ctx: ctx
-                )
+                ) != nil
         } else {
             calleePath == suspendCoroutineIntrinsicFQName
         }
         let isSuspendCoroutineShadowed = calleeName.map {
-            isShadowedByNonSyntheticSymbol($0, locals: locals, ctx: ctx)
+            locals[$0] != nil
         } ?? false
         if isSuspendCoroutineIntrinsic,
            args.count == 1,
@@ -1169,6 +1169,11 @@ final class CallTypeChecker {
                 locals: &locals,
                 expectedType: lambdaExpectedType
             )
+            // Contract effects are consumed by Sema and have no runtime
+            // representation. Mark the call so KIR does not lower its builder
+            // lambda, whose effect expressions may otherwise become runtime
+            // calls even though the contract itself is compiler-only.
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: .contract)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
         }

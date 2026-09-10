@@ -1,12 +1,12 @@
-symbol fq=golden.sema.add kind=function vis=public flags=_ sig=recv=Int params=[Int] ret=Int
-symbol fq=golden.sema.add.$0.other kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.useInfix kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.add.$0.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.add[kind=fun;recv=Int;params=Int] kind=function vis=public flags=_ sig=recv=Int params=[Int] ret=Int
+symbol fq=golden.sema.useInfix[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file finfix_fun package=golden.sema
-  decl golden.sema.add fun add sym=golden.sema.add
-  decl golden.sema.useInfix fun useInfix sym=golden.sema.useInfix
+  decl golden.sema.add[kind=fun;recv=Int;params=Int] fun add sym=golden.sema.add[kind=fun;recv=Int;params=Int]
+  decl golden.sema.useInfix[kind=fun;params=] fun useInfix sym=golden.sema.useInfix[kind=fun;params=]
 expr e@3:38 this type=Int
-expr e@3:45 name(other) type=Int ref=golden.sema.add.$0.other
+expr e@3:45 name(other) type=Int ref=golden.sema.add.$0.other[kind=vparam]
 expr e@3:38#1 binary(add) lhs=e@3:38 rhs=e@3:45 type=Int
 expr e@5:23 int(1) type=Int
 expr e@5:29 int(2) type=Int
-expr e@5:23#1 memberCall recv=e@5:23 callee=add args=[_:e@5:29] type=Int call=golden.sema.add
+expr e@5:23#1 memberCall recv=e@5:23 callee=add args=[_:e@5:29] type=Int call=golden.sema.add[kind=fun;recv=Int;params=Int]

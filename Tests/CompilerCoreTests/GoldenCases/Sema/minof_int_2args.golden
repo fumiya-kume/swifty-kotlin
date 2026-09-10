@@ -1,8 +1,8 @@
-symbol fq=golden.sema.minOfIntTwoArg kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=golden.sema.minOfIntTwoArg.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.minOfIntTwoArg.$0.b kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfIntTwoArg.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfIntTwoArg.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfIntTwoArg[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
 file fminof_int_2args package=golden.sema
-  decl golden.sema.minOfIntTwoArg fun minOfIntTwoArg sym=golden.sema.minOfIntTwoArg
-expr e@3:49 name(a) type=Int ref=golden.sema.minOfIntTwoArg.$0.a
-expr e@3:52 name(b) type=Int ref=golden.sema.minOfIntTwoArg.$0.b
-expr e@3:43 call callee=e@3:43#1 args=[_:e@3:49,_:e@3:52] type=Int call=kotlin.comparisons.minOf#9
+  decl golden.sema.minOfIntTwoArg[kind=fun;params=Int,Int] fun minOfIntTwoArg sym=golden.sema.minOfIntTwoArg[kind=fun;params=Int,Int]
+expr e@3:49 name(a) type=Int ref=golden.sema.minOfIntTwoArg.$0.a[kind=vparam]
+expr e@3:52 name(b) type=Int ref=golden.sema.minOfIntTwoArg.$0.b[kind=vparam]
+expr e@3:43 call callee=e@3:43#1 args=[_:e@3:49,_:e@3:52] type=Int call=kotlin.comparisons.minOf[kind=fun;params=Int,Int]

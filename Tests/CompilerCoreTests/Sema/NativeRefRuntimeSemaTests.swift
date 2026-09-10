@@ -79,16 +79,21 @@ struct NativeRefRuntimeSemaTests {
         #expect(interner.resolve(mapSymbol.name) == "Map")
         let valueType = try requireTestValue(
             { () -> TypeID? in
-                guard mapType.args.count >= 2,
-                      case let .out(valueType) = mapType.args[1]
-                else {
-                    return nil
-                }
-                return valueType
+                guard mapType.args.count >= 2 else { return nil }
+                return typeArgument(mapType.args[1])
             }(),
             "Expected Map<String, V> value projection"
         )
         return try className(for: valueType, sema: sema, interner: interner)
+    }
+
+    private func typeArgument(_ argument: TypeArg) -> TypeID? {
+        switch argument {
+        case let .invariant(type), let .out(type), let .in(type):
+            return type
+        case .star:
+            return nil
+        }
     }
 
     // MARK: - Package hierarchy
@@ -577,7 +582,11 @@ struct NativeRefRuntimeSemaTests {
             let propertySymbol = try #require(
                 sema.symbols.lookup(fqName: classFQName + [interner.intern(property)])
             )
-            #expect(sema.symbols.symbol(propertySymbol)?.flags.contains(.synthetic) == true)
+            let propertyInfo = try #require(sema.symbols.symbol(propertySymbol))
+            #expect(!propertyInfo.flags.contains(.synthetic))
+            #expect(!propertyInfo.flags.contains(.mutable))
+            #expect(sema.symbols.isSourceBackedSymbol(propertySymbol))
+            #expect(sema.symbols.externalLinkName(for: propertySymbol) == nil)
         }
     }
 
@@ -625,13 +634,27 @@ struct NativeRefRuntimeSemaTests {
         )
         let rootSetType = try #require(sema.symbols.propertyType(for: rootSetSymbol))
         #expect(signature.parameterTypes[10] == rootSetType)
-        let sweepStatisticsSymbol = try #require(
-            sema.symbols.lookup(fqName: classFQName + [interner.intern("sweepStatistics")])
+        #expect(
+            try mapValueClassName(
+                for: signature.parameterTypes[12],
+                sema: sema,
+                interner: interner
+            ) == "SweepStatistics"
         )
-        let sweepStatisticsType = try #require(
-            sema.symbols.propertyType(for: sweepStatisticsSymbol)
+        #expect(
+            try mapValueClassName(
+                for: signature.parameterTypes[13],
+                sema: sema,
+                interner: interner
+            ) == "MemoryUsage"
         )
-        #expect(signature.parameterTypes[12] == sweepStatisticsType)
+        #expect(
+            try mapValueClassName(
+                for: signature.parameterTypes[14],
+                sema: sema,
+                interner: interner
+            ) == "MemoryUsage"
+        )
     }
 
     @Test

@@ -1,46 +1,46 @@
-symbol fq=__destructuring_0.key kind=local vis=private flags=_ type=String
-symbol fq=__destructuring_0.value kind=local vis=private flags=_ type=Int
-symbol fq=__destructuring_1.value kind=local vis=private flags=_ type=Int
-symbol fq=__local_0.checkedKey kind=local vis=private flags=_ type=String
-symbol fq=__local_1.checkedValue kind=local vis=private flags=_ type=Int
-symbol fq=__local_2.lengths kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=__local_3.checked kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=__local_4.filtered kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
-symbol fq=__local_5.checked kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
-symbol fq=filterDestructured kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
-symbol fq=filterDestructured.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
-symbol fq=mapDestructured kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
-symbol fq=mapDestructured.$1.values kind=valueParameter vis=private flags=_
+symbol fq=__destructuring_0.key[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__destructuring_0.value[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__destructuring_1.value[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_0.checkedKey[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_1.checkedValue[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.lengths[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_4.filtered[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
+symbol fq=__local_5.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
+symbol fq=filterDestructured.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=filterDestructured[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=mapDestructured.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=mapDestructured[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
 file fmap_filter_lambda_types package=_
-  decl mapDestructured fun mapDestructured sym=mapDestructured
-  decl filterDestructured fun filterDestructured sym=filterDestructured
-expr e@5:19 name(values) type=kotlin.collections.Map<String, Int> ref=mapDestructured.$1.values
-expr e@6:34 name(key) type=String ref=__destructuring_0.key
-expr e@6:9 localDecl checkedKey mutable=0 type=String init=e@6:34 type=Unit ref=__local_0.checkedKey
-expr e@7:33 name(value) type=Int ref=__destructuring_0.value
-expr e@7:9 localDecl checkedValue mutable=0 type=Int init=e@7:33 type=Unit ref=__local_1.checkedValue
-expr e@8:9 name(checkedValue) type=Int ref=__local_1.checkedValue
+  decl mapDestructured[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapDestructured sym=mapDestructured[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl filterDestructured[kind=fun;params=kotlin.collections.Map<String,Int>] fun filterDestructured sym=filterDestructured[kind=fun;params=kotlin.collections.Map<String,Int>]
+expr e@5:19 name(values) type=kotlin.collections.Map<String, Int> ref=mapDestructured.$1.values[kind=vparam]
+expr e@6:34 name(key) type=String ref=__destructuring_0.key[kind=local]
+expr e@6:9 localDecl checkedKey mutable=0 type=String init=e@6:34 type=Unit ref=__local_0.checkedKey[kind=local]
+expr e@7:33 name(value) type=Int ref=__destructuring_0.value[kind=local]
+expr e@7:9 localDecl checkedValue mutable=0 type=Int init=e@7:33 type=Unit ref=__local_1.checkedValue[kind=local]
+expr e@8:9 name(checkedValue) type=Int ref=__local_1.checkedValue[kind=local]
 expr e@6:9#1 blockExpr stmts=[e@6:9,e@7:9] trailing=e@8:9 type=Int
 expr e@5:30 name(__destructured_0) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-0
 expr e@5:30#1 destructuringDecl names=[key,value] mutable=0 init=e@5:30 type=Unit
 expr e@5:30#2 blockExpr stmts=[e@5:30#1] trailing=e@6:9#1 type=Int
 expr e@5:30#3 lambda params=[__destructured_0] body=e@5:30#2 label=map type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
-expr e@5:19#1 memberCall recv=e@5:19 callee=map args=[_:e@5:30#3] type=kotlin.collections.List<Int> call=kotlin.collections.map#15 targs=[String,Int,Int]
-expr e@5:5 localDecl lengths mutable=0 type=_ init=e@5:19#1 type=Unit ref=__local_2.lengths
-expr e@10:30 name(lengths) type=kotlin.collections.List<Int> ref=__local_2.lengths
-expr e@10:5 localDecl checked mutable=0 type=List<Int> init=e@10:30 type=Unit ref=__local_3.checked
-expr e@14:20 name(values) type=kotlin.collections.Map<String, Int> ref=filterDestructured.$0.values
-expr e@14:50 name(value) type=Int ref=__destructuring_1.value
+expr e@5:19#1 memberCall recv=e@5:19 callee=map args=[_:e@5:30#3] type=kotlin.collections.List<Int> call=kotlin.collections.map[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=T2};gen=3] targs=[String,Int,Int]
+expr e@5:5 localDecl lengths mutable=0 type=_ init=e@5:19#1 type=Unit ref=__local_2.lengths[kind=local]
+expr e@10:30 name(lengths) type=kotlin.collections.List<Int> ref=__local_2.lengths[kind=local]
+expr e@10:5 localDecl checked mutable=0 type=List<Int> init=e@10:30 type=Unit ref=__local_3.checked[kind=local]
+expr e@14:20 name(values) type=kotlin.collections.Map<String, Int> ref=filterDestructured.$0.values[kind=vparam]
+expr e@14:50 name(value) type=Int ref=__destructuring_1.value[kind=local]
 expr e@14:58 int(1) type=Int
 expr e@14:50#1 binary(greaterThan) lhs=e@14:50 rhs=e@14:58 type=Boolean
 expr e@14:34 name(__destructured_0) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-1
 expr e@14:34#1 destructuringDecl names=[_,value] mutable=0 init=e@14:34 type=Unit
 expr e@14:34#2 blockExpr stmts=[e@14:34#1] trailing=e@14:50#1 type=Boolean
 expr e@14:34#3 lambda params=[__destructured_0] body=e@14:34#2 label=filter type=(kotlin.collections.Map.Entry<out String, out Int>) -> Boolean
-expr e@14:20#1 memberCall recv=e@14:20 callee=filter args=[_:e@14:34#3] type=kotlin.collections.Map<String, Int> call=kotlin.collections.filter#15 targs=[String,Int]
-expr e@14:5 localDecl filtered mutable=0 type=_ init=e@14:20#1 type=Unit ref=__local_4.filtered
-expr e@15:37 name(filtered) type=kotlin.collections.Map<String, Int> ref=__local_4.filtered
-expr e@15:5 localDecl checked mutable=0 type=Map<String,Int> init=e@15:37 type=Unit ref=__local_5.checked
+expr e@14:20#1 memberCall recv=e@14:20 callee=filter args=[_:e@14:34#3] type=kotlin.collections.Map<String, Int> call=kotlin.collections.filter[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=Boolean};gen=2] targs=[String,Int]
+expr e@14:5 localDecl filtered mutable=0 type=_ init=e@14:20#1 type=Unit ref=__local_4.filtered[kind=local]
+expr e@15:37 name(filtered) type=kotlin.collections.Map<String, Int> ref=__local_4.filtered[kind=local]
+expr e@15:5 localDecl checked mutable=0 type=Map<String,Int> init=e@15:37 type=Unit ref=__local_5.checked[kind=local]

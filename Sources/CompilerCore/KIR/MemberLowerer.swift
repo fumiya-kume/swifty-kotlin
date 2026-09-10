@@ -353,6 +353,32 @@ final class MemberLowerer {
             directMembers.append(kirID)
             allDecls.append(kirID)
             allDecls.append(contentsOf: nestedAll)
+
+            // Nested objects that implement interfaces need a heap-backed global
+            // and initializer so interface-typed receivers can use dynamic
+            // itable dispatch. Without this, a source-backed extension such as
+            // TimeSource.measureTime reaches TimeSource.markNow() with an object
+            // that has no registered interface entry.
+            let hasInterfaceSupertypes = sema.symbols.directSupertypes(for: symbol).contains { superSymbol in
+                sema.symbols.symbol(superSymbol)?.kind == .interface
+            }
+            if hasInterfaceSupertypes {
+                let objectType = sema.types.make(.classType(ClassType(
+                    classSymbol: symbol, args: [], nullability: .nonNull
+                )))
+                allDecls.append(arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: objectType))))
+                allDecls.append(contentsOf: driver.synthesizeObjectInitializer(
+                    nested,
+                    objectSymbol: symbol,
+                    shared: KIRLoweringSharedContext(
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers
+                    )
+                ))
+            }
         }
 
         return (directMembers, allDecls)

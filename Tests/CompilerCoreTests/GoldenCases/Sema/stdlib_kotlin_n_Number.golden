@@ -1,41 +1,41 @@
-symbol fq=golden.sema.numberToByte kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Byte
-symbol fq=golden.sema.numberToByte.$0.n kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.numberToDouble kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Double
-symbol fq=golden.sema.numberToDouble.$1.n kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.numberToFloat kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Float
-symbol fq=golden.sema.numberToFloat.$2.n kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.numberToInt kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Int
-symbol fq=golden.sema.numberToInt.$3.n kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.numberToLong kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Long
-symbol fq=golden.sema.numberToLong.$4.n kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.numberToShort kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Short
-symbol fq=golden.sema.numberToShort.$5.n kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.sumOf kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.sumOf.$6.T,golden.sema.sumOf.$6.T] ret=Double bounds=[kotlin.Number]
-symbol fq=golden.sema.sumOf.$6.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.sumOf.$6.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.sumOf.$6.b kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.numberToByte.$0.n[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.numberToByte[kind=fun;params=kotlin.Number] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Byte
+symbol fq=golden.sema.numberToDouble.$1.n[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.numberToDouble[kind=fun;params=kotlin.Number] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Double
+symbol fq=golden.sema.numberToFloat.$2.n[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.numberToFloat[kind=fun;params=kotlin.Number] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Float
+symbol fq=golden.sema.numberToInt.$3.n[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.numberToInt[kind=fun;params=kotlin.Number] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Int
+symbol fq=golden.sema.numberToLong.$4.n[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.numberToLong[kind=fun;params=kotlin.Number] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Long
+symbol fq=golden.sema.numberToShort.$5.n[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.numberToShort[kind=fun;params=kotlin.Number] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Number] ret=Short
+symbol fq=golden.sema.sumOf.$6.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.sumOf.$6.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.sumOf.$6.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.sumOf[kind=fun;params=T0,T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.sumOf.$6.T,golden.sema.sumOf.$6.T] ret=Double bounds=[kotlin.Number]
 file fstdlib_kotlin_n_Number package=golden.sema
-  decl golden.sema.numberToDouble fun numberToDouble sym=golden.sema.numberToDouble
-  decl golden.sema.numberToFloat fun numberToFloat sym=golden.sema.numberToFloat
-  decl golden.sema.numberToLong fun numberToLong sym=golden.sema.numberToLong
-  decl golden.sema.numberToInt fun numberToInt sym=golden.sema.numberToInt
-  decl golden.sema.numberToShort fun numberToShort sym=golden.sema.numberToShort
-  decl golden.sema.numberToByte fun numberToByte sym=golden.sema.numberToByte
-  decl golden.sema.sumOf fun sumOf sym=golden.sema.sumOf
-expr e@3:41 name(n) type=kotlin.Number ref=golden.sema.numberToDouble.$1.n
-expr e@3:41#1 memberCall recv=e@3:41 callee=toDouble args=[] type=Double call=kotlin.Number.toDouble
-expr e@4:39 name(n) type=kotlin.Number ref=golden.sema.numberToFloat.$2.n
-expr e@4:39#1 memberCall recv=e@4:39 callee=toFloat args=[] type=Float call=kotlin.Number.toFloat
-expr e@5:37 name(n) type=kotlin.Number ref=golden.sema.numberToLong.$4.n
-expr e@5:37#1 memberCall recv=e@5:37 callee=toLong args=[] type=Long call=kotlin.Number.toLong
-expr e@6:35 name(n) type=kotlin.Number ref=golden.sema.numberToInt.$3.n
-expr e@6:35#1 memberCall recv=e@6:35 callee=toInt args=[] type=Int call=kotlin.Number.toInt
-expr e@7:39 name(n) type=kotlin.Number ref=golden.sema.numberToShort.$5.n
-expr e@7:39#1 memberCall recv=e@7:39 callee=toShort args=[] type=Short call=kotlin.Number.toShort
-expr e@8:37 name(n) type=kotlin.Number ref=golden.sema.numberToByte.$0.n
-expr e@8:37#1 memberCall recv=e@8:37 callee=toByte args=[] type=Byte call=kotlin.Number.toByte
-expr e@10:46 name(a) type=golden.sema.sumOf.$6.T ref=golden.sema.sumOf.$6.a
-expr e@10:46#1 memberCall recv=e@10:46 callee=toDouble args=[] type=Double call=kotlin.Number.toDouble
-expr e@10:61 name(b) type=golden.sema.sumOf.$6.T ref=golden.sema.sumOf.$6.b
-expr e@10:61#1 memberCall recv=e@10:61 callee=toDouble args=[] type=Double call=kotlin.Number.toDouble
+  decl golden.sema.numberToDouble[kind=fun;params=kotlin.Number] fun numberToDouble sym=golden.sema.numberToDouble[kind=fun;params=kotlin.Number]
+  decl golden.sema.numberToFloat[kind=fun;params=kotlin.Number] fun numberToFloat sym=golden.sema.numberToFloat[kind=fun;params=kotlin.Number]
+  decl golden.sema.numberToLong[kind=fun;params=kotlin.Number] fun numberToLong sym=golden.sema.numberToLong[kind=fun;params=kotlin.Number]
+  decl golden.sema.numberToInt[kind=fun;params=kotlin.Number] fun numberToInt sym=golden.sema.numberToInt[kind=fun;params=kotlin.Number]
+  decl golden.sema.numberToShort[kind=fun;params=kotlin.Number] fun numberToShort sym=golden.sema.numberToShort[kind=fun;params=kotlin.Number]
+  decl golden.sema.numberToByte[kind=fun;params=kotlin.Number] fun numberToByte sym=golden.sema.numberToByte[kind=fun;params=kotlin.Number]
+  decl golden.sema.sumOf[kind=fun;params=T0,T0;gen=1] fun sumOf sym=golden.sema.sumOf[kind=fun;params=T0,T0;gen=1]
+expr e@3:41 name(n) type=kotlin.Number ref=golden.sema.numberToDouble.$1.n[kind=vparam]
+expr e@3:41#1 memberCall recv=e@3:41 callee=toDouble args=[] type=Double call=kotlin.Number.toDouble[kind=fun;recv=kotlin.Number;params=]
+expr e@4:39 name(n) type=kotlin.Number ref=golden.sema.numberToFloat.$2.n[kind=vparam]
+expr e@4:39#1 memberCall recv=e@4:39 callee=toFloat args=[] type=Float call=kotlin.Number.toFloat[kind=fun;recv=kotlin.Number;params=]
+expr e@5:37 name(n) type=kotlin.Number ref=golden.sema.numberToLong.$4.n[kind=vparam]
+expr e@5:37#1 memberCall recv=e@5:37 callee=toLong args=[] type=Long call=kotlin.Number.toLong[kind=fun;recv=kotlin.Number;params=]
+expr e@6:35 name(n) type=kotlin.Number ref=golden.sema.numberToInt.$3.n[kind=vparam]
+expr e@6:35#1 memberCall recv=e@6:35 callee=toInt args=[] type=Int call=kotlin.Number.toInt[kind=fun;recv=kotlin.Number;params=]
+expr e@7:39 name(n) type=kotlin.Number ref=golden.sema.numberToShort.$5.n[kind=vparam]
+expr e@7:39#1 memberCall recv=e@7:39 callee=toShort args=[] type=Short call=kotlin.Number.toShort[kind=fun;recv=kotlin.Number;params=]
+expr e@8:37 name(n) type=kotlin.Number ref=golden.sema.numberToByte.$0.n[kind=vparam]
+expr e@8:37#1 memberCall recv=e@8:37 callee=toByte args=[] type=Byte call=kotlin.Number.toByte[kind=fun;recv=kotlin.Number;params=]
+expr e@10:46 name(a) type=golden.sema.sumOf.$6.T ref=golden.sema.sumOf.$6.a[kind=vparam]
+expr e@10:46#1 memberCall recv=e@10:46 callee=toDouble args=[] type=Double call=kotlin.Number.toDouble[kind=fun;recv=kotlin.Number;params=]
+expr e@10:61 name(b) type=golden.sema.sumOf.$6.T ref=golden.sema.sumOf.$6.b[kind=vparam]
+expr e@10:61#1 memberCall recv=e@10:61 callee=toDouble args=[] type=Double call=kotlin.Number.toDouble[kind=fun;recv=kotlin.Number;params=]
 expr e@10:46#2 binary(add) lhs=e@10:46#1 rhs=e@10:61#1 type=Double

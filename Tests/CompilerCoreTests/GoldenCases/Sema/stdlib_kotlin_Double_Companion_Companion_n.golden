@@ -1,96 +1,96 @@
-symbol fq=__local_0.directMin kind=local vis=private flags=_ type=Double
-symbol fq=__local_1.directMax kind=local vis=private flags=_ type=Double
-symbol fq=__local_2.directPositiveInfinity kind=local vis=private flags=_ type=Double
-symbol fq=__local_3.directNegativeInfinity kind=local vis=private flags=_ type=Double
-symbol fq=__local_4.directNaN kind=local vis=private flags=_ type=Double
-symbol fq=__local_5.directBytes kind=local vis=private flags=_ type=Int
-symbol fq=__local_6.directBits kind=local vis=private flags=_ type=Int
-symbol fq=__local_7.explicitMin kind=local vis=private flags=_ type=Double
-symbol fq=__local_8.explicitMax kind=local vis=private flags=_ type=Double
-symbol fq=__local_9.explicitPositiveInfinity kind=local vis=private flags=_ type=Double
-symbol fq=__local_10.explicitNegativeInfinity kind=local vis=private flags=_ type=Double
-symbol fq=__local_11.explicitNaN kind=local vis=private flags=_ type=Double
-symbol fq=__local_12.explicitBytes kind=local vis=private flags=_ type=Int
-symbol fq=__local_13.explicitBits kind=local vis=private flags=_ type=Int
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Double kind=class vis=public flags=synthetic
-symbol fq=kotlin.Double.Companion kind=object vis=public flags=synthetic|static
+symbol fq=__local_0.directMin[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_1.directMax[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_2.directPositiveInfinity[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_3.directNegativeInfinity[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_4.directNaN[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_5.directBytes[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_6.directBits[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_7.explicitMin[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_8.explicitMax[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_9.explicitPositiveInfinity[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_10.explicitNegativeInfinity[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_11.explicitNaN[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_12.explicitBytes[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_13.explicitBits[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.Double.Companion[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.Double[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_Double_Companion_Companion_n package=golden.sema
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@4:29 name(Double) type=kotlin.Double.Companion ref=kotlin.Double
-expr e@4:29#1 memberCall recv=e@4:29 callee=MIN_VALUE args=[] type=Double call=kotlin.MIN_VALUE.$get#1
-expr e@4:5 localDecl directMin mutable=0 type=Double init=e@4:29#1 type=Unit ref=__local_0.directMin
-expr e@5:29 name(Double) type=kotlin.Double.Companion ref=kotlin.Double
-expr e@5:29#1 memberCall recv=e@5:29 callee=MAX_VALUE args=[] type=Double call=kotlin.MAX_VALUE.$get#1
-expr e@5:5 localDecl directMax mutable=0 type=Double init=e@5:29#1 type=Unit ref=__local_1.directMax
-expr e@6:42 name(Double) type=kotlin.Double.Companion ref=kotlin.Double
-expr e@6:42#1 memberCall recv=e@6:42 callee=POSITIVE_INFINITY args=[] type=Double call=kotlin.POSITIVE_INFINITY.$get
-expr e@6:5 localDecl directPositiveInfinity mutable=0 type=Double init=e@6:42#1 type=Unit ref=__local_2.directPositiveInfinity
-expr e@7:42 name(Double) type=kotlin.Double.Companion ref=kotlin.Double
-expr e@7:42#1 memberCall recv=e@7:42 callee=NEGATIVE_INFINITY args=[] type=Double call=kotlin.NEGATIVE_INFINITY.$get
-expr e@7:5 localDecl directNegativeInfinity mutable=0 type=Double init=e@7:42#1 type=Unit ref=__local_3.directNegativeInfinity
-expr e@8:29 name(Double) type=kotlin.Double.Companion ref=kotlin.Double
-expr e@8:29#1 memberCall recv=e@8:29 callee=NaN args=[] type=Double call=kotlin.NaN.$get
-expr e@8:5 localDecl directNaN mutable=0 type=Double init=e@8:29#1 type=Unit ref=__local_4.directNaN
-expr e@9:28 name(Double) type=kotlin.Double.Companion ref=kotlin.Double
-expr e@9:28#1 memberCall recv=e@9:28 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#1
-expr e@9:5 localDecl directBytes mutable=0 type=Int init=e@9:28#1 type=Unit ref=__local_5.directBytes
-expr e@10:27 name(Double) type=kotlin.Double.Companion ref=kotlin.Double
-expr e@10:27#1 memberCall recv=e@10:27 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#1
-expr e@10:5 localDecl directBits mutable=0 type=Int init=e@10:27#1 type=Unit ref=__local_6.directBits
-expr e@11:31 name(Double) type=kotlin.Double ref=kotlin.Double
-expr e@11:31#1 memberCall recv=e@11:31 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion
-expr e@11:31#2 memberCall recv=e@11:31#1 callee=MIN_VALUE args=[] type=Double call=kotlin.MIN_VALUE.$get#1
-expr e@11:5 localDecl explicitMin mutable=0 type=Double init=e@11:31#2 type=Unit ref=__local_7.explicitMin
-expr e@12:31 name(Double) type=kotlin.Double ref=kotlin.Double
-expr e@12:31#1 memberCall recv=e@12:31 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion
-expr e@12:31#2 memberCall recv=e@12:31#1 callee=MAX_VALUE args=[] type=Double call=kotlin.MAX_VALUE.$get#1
-expr e@12:5 localDecl explicitMax mutable=0 type=Double init=e@12:31#2 type=Unit ref=__local_8.explicitMax
-expr e@13:44 name(Double) type=kotlin.Double ref=kotlin.Double
-expr e@13:44#1 memberCall recv=e@13:44 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion
-expr e@13:44#2 memberCall recv=e@13:44#1 callee=POSITIVE_INFINITY args=[] type=Double call=kotlin.POSITIVE_INFINITY.$get
-expr e@13:5 localDecl explicitPositiveInfinity mutable=0 type=Double init=e@13:44#2 type=Unit ref=__local_9.explicitPositiveInfinity
-expr e@14:44 name(Double) type=kotlin.Double ref=kotlin.Double
-expr e@14:44#1 memberCall recv=e@14:44 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion
-expr e@14:44#2 memberCall recv=e@14:44#1 callee=NEGATIVE_INFINITY args=[] type=Double call=kotlin.NEGATIVE_INFINITY.$get
-expr e@14:5 localDecl explicitNegativeInfinity mutable=0 type=Double init=e@14:44#2 type=Unit ref=__local_10.explicitNegativeInfinity
-expr e@15:31 name(Double) type=kotlin.Double ref=kotlin.Double
-expr e@15:31#1 memberCall recv=e@15:31 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion
-expr e@15:31#2 memberCall recv=e@15:31#1 callee=NaN args=[] type=Double call=kotlin.NaN.$get
-expr e@15:5 localDecl explicitNaN mutable=0 type=Double init=e@15:31#2 type=Unit ref=__local_11.explicitNaN
-expr e@16:30 name(Double) type=kotlin.Double ref=kotlin.Double
-expr e@16:30#1 memberCall recv=e@16:30 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion
-expr e@16:30#2 memberCall recv=e@16:30#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#1
-expr e@16:5 localDecl explicitBytes mutable=0 type=Int init=e@16:30#2 type=Unit ref=__local_12.explicitBytes
-expr e@17:29 name(Double) type=kotlin.Double ref=kotlin.Double
-expr e@17:29#1 memberCall recv=e@17:29 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion
-expr e@17:29#2 memberCall recv=e@17:29#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#1
-expr e@17:5 localDecl explicitBits mutable=0 type=Int init=e@17:29#2 type=Unit ref=__local_13.explicitBits
-expr e@18:13 name(directMin) type=Double ref=__local_0.directMin
-expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println#1
-expr e@19:13 name(directMax) type=Double ref=__local_1.directMax
-expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13] type=Unit call=kotlin.io.println#1
-expr e@20:13 name(directPositiveInfinity) type=Double ref=__local_2.directPositiveInfinity
-expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13] type=Unit call=kotlin.io.println#1
-expr e@21:13 name(directNegativeInfinity) type=Double ref=__local_3.directNegativeInfinity
-expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13] type=Unit call=kotlin.io.println#1
-expr e@22:13 name(directNaN) type=Double ref=__local_4.directNaN
-expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13] type=Unit call=kotlin.io.println#1
-expr e@23:13 name(directBytes) type=Int ref=__local_5.directBytes
-expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println#1
-expr e@24:13 name(directBits) type=Int ref=__local_6.directBits
-expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println#1
-expr e@25:13 name(explicitMin) type=Double ref=__local_7.explicitMin
-expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println#1
-expr e@26:13 name(explicitMax) type=Double ref=__local_8.explicitMax
-expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println#1
-expr e@27:13 name(explicitPositiveInfinity) type=Double ref=__local_9.explicitPositiveInfinity
-expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println#1
-expr e@28:13 name(explicitNegativeInfinity) type=Double ref=__local_10.explicitNegativeInfinity
-expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println#1
-expr e@29:13 name(explicitNaN) type=Double ref=__local_11.explicitNaN
-expr e@29:5 call callee=e@29:5#1 args=[_:e@29:13] type=Unit call=kotlin.io.println#1
-expr e@30:13 name(explicitBytes) type=Int ref=__local_12.explicitBytes
-expr e@30:5 call callee=e@30:5#1 args=[_:e@30:13] type=Unit call=kotlin.io.println#1
-expr e@31:13 name(explicitBits) type=Int ref=__local_13.explicitBits
-expr e@31:5 call callee=e@31:5#1 args=[_:e@31:13] type=Unit call=kotlin.io.println#1
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@4:29 name(Double) type=kotlin.Double.Companion ref=kotlin.Double[kind=class]
+expr e@4:29#1 memberCall recv=e@4:29 callee=MIN_VALUE args=[] type=Double call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@4:5 localDecl directMin mutable=0 type=Double init=e@4:29#1 type=Unit ref=__local_0.directMin[kind=local]
+expr e@5:29 name(Double) type=kotlin.Double.Companion ref=kotlin.Double[kind=class]
+expr e@5:29#1 memberCall recv=e@5:29 callee=MAX_VALUE args=[] type=Double call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@5:5 localDecl directMax mutable=0 type=Double init=e@5:29#1 type=Unit ref=__local_1.directMax[kind=local]
+expr e@6:42 name(Double) type=kotlin.Double.Companion ref=kotlin.Double[kind=class]
+expr e@6:42#1 memberCall recv=e@6:42 callee=POSITIVE_INFINITY args=[] type=Double call=kotlin.POSITIVE_INFINITY.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@6:5 localDecl directPositiveInfinity mutable=0 type=Double init=e@6:42#1 type=Unit ref=__local_2.directPositiveInfinity[kind=local]
+expr e@7:42 name(Double) type=kotlin.Double.Companion ref=kotlin.Double[kind=class]
+expr e@7:42#1 memberCall recv=e@7:42 callee=NEGATIVE_INFINITY args=[] type=Double call=kotlin.NEGATIVE_INFINITY.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@7:5 localDecl directNegativeInfinity mutable=0 type=Double init=e@7:42#1 type=Unit ref=__local_3.directNegativeInfinity[kind=local]
+expr e@8:29 name(Double) type=kotlin.Double.Companion ref=kotlin.Double[kind=class]
+expr e@8:29#1 memberCall recv=e@8:29 callee=NaN args=[] type=Double call=kotlin.NaN.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@8:5 localDecl directNaN mutable=0 type=Double init=e@8:29#1 type=Unit ref=__local_4.directNaN[kind=local]
+expr e@9:28 name(Double) type=kotlin.Double.Companion ref=kotlin.Double[kind=class]
+expr e@9:28#1 memberCall recv=e@9:28 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@9:5 localDecl directBytes mutable=0 type=Int init=e@9:28#1 type=Unit ref=__local_5.directBytes[kind=local]
+expr e@10:27 name(Double) type=kotlin.Double.Companion ref=kotlin.Double[kind=class]
+expr e@10:27#1 memberCall recv=e@10:27 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@10:5 localDecl directBits mutable=0 type=Int init=e@10:27#1 type=Unit ref=__local_6.directBits[kind=local]
+expr e@11:31 name(Double) type=kotlin.Double ref=kotlin.Double[kind=class]
+expr e@11:31#1 memberCall recv=e@11:31 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion[kind=obj]
+expr e@11:31#2 memberCall recv=e@11:31#1 callee=MIN_VALUE args=[] type=Double call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@11:5 localDecl explicitMin mutable=0 type=Double init=e@11:31#2 type=Unit ref=__local_7.explicitMin[kind=local]
+expr e@12:31 name(Double) type=kotlin.Double ref=kotlin.Double[kind=class]
+expr e@12:31#1 memberCall recv=e@12:31 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion[kind=obj]
+expr e@12:31#2 memberCall recv=e@12:31#1 callee=MAX_VALUE args=[] type=Double call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@12:5 localDecl explicitMax mutable=0 type=Double init=e@12:31#2 type=Unit ref=__local_8.explicitMax[kind=local]
+expr e@13:44 name(Double) type=kotlin.Double ref=kotlin.Double[kind=class]
+expr e@13:44#1 memberCall recv=e@13:44 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion[kind=obj]
+expr e@13:44#2 memberCall recv=e@13:44#1 callee=POSITIVE_INFINITY args=[] type=Double call=kotlin.POSITIVE_INFINITY.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@13:5 localDecl explicitPositiveInfinity mutable=0 type=Double init=e@13:44#2 type=Unit ref=__local_9.explicitPositiveInfinity[kind=local]
+expr e@14:44 name(Double) type=kotlin.Double ref=kotlin.Double[kind=class]
+expr e@14:44#1 memberCall recv=e@14:44 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion[kind=obj]
+expr e@14:44#2 memberCall recv=e@14:44#1 callee=NEGATIVE_INFINITY args=[] type=Double call=kotlin.NEGATIVE_INFINITY.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@14:5 localDecl explicitNegativeInfinity mutable=0 type=Double init=e@14:44#2 type=Unit ref=__local_10.explicitNegativeInfinity[kind=local]
+expr e@15:31 name(Double) type=kotlin.Double ref=kotlin.Double[kind=class]
+expr e@15:31#1 memberCall recv=e@15:31 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion[kind=obj]
+expr e@15:31#2 memberCall recv=e@15:31#1 callee=NaN args=[] type=Double call=kotlin.NaN.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@15:5 localDecl explicitNaN mutable=0 type=Double init=e@15:31#2 type=Unit ref=__local_11.explicitNaN[kind=local]
+expr e@16:30 name(Double) type=kotlin.Double ref=kotlin.Double[kind=class]
+expr e@16:30#1 memberCall recv=e@16:30 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion[kind=obj]
+expr e@16:30#2 memberCall recv=e@16:30#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@16:5 localDecl explicitBytes mutable=0 type=Int init=e@16:30#2 type=Unit ref=__local_12.explicitBytes[kind=local]
+expr e@17:29 name(Double) type=kotlin.Double ref=kotlin.Double[kind=class]
+expr e@17:29#1 memberCall recv=e@17:29 callee=Companion args=[] type=kotlin.Double.Companion ref=kotlin.Double.Companion[kind=obj]
+expr e@17:29#2 memberCall recv=e@17:29#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@17:5 localDecl explicitBits mutable=0 type=Int init=e@17:29#2 type=Unit ref=__local_13.explicitBits[kind=local]
+expr e@18:13 name(directMin) type=Double ref=__local_0.directMin[kind=local]
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@19:13 name(directMax) type=Double ref=__local_1.directMax[kind=local]
+expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@20:13 name(directPositiveInfinity) type=Double ref=__local_2.directPositiveInfinity[kind=local]
+expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@21:13 name(directNegativeInfinity) type=Double ref=__local_3.directNegativeInfinity[kind=local]
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@22:13 name(directNaN) type=Double ref=__local_4.directNaN[kind=local]
+expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@23:13 name(directBytes) type=Int ref=__local_5.directBytes[kind=local]
+expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@24:13 name(directBits) type=Int ref=__local_6.directBits[kind=local]
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@25:13 name(explicitMin) type=Double ref=__local_7.explicitMin[kind=local]
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@26:13 name(explicitMax) type=Double ref=__local_8.explicitMax[kind=local]
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@27:13 name(explicitPositiveInfinity) type=Double ref=__local_9.explicitPositiveInfinity[kind=local]
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@28:13 name(explicitNegativeInfinity) type=Double ref=__local_10.explicitNegativeInfinity[kind=local]
+expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@29:13 name(explicitNaN) type=Double ref=__local_11.explicitNaN[kind=local]
+expr e@29:5 call callee=e@29:5#1 args=[_:e@29:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@30:13 name(explicitBytes) type=Int ref=__local_12.explicitBytes[kind=local]
+expr e@30:5 call callee=e@30:5#1 args=[_:e@30:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@31:13 name(explicitBits) type=Int ref=__local_13.explicitBits[kind=local]
+expr e@31:5 call callee=e@31:5#1 args=[_:e@31:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

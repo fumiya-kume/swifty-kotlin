@@ -1,23 +1,23 @@
-symbol fq=__local_0.mutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
-symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
-symbol fq=__local_2.hashSet kind=local vis=private flags=_ type=kotlin.collections.HashSet<Int>
-symbol fq=__local_3.checked kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
-symbol fq=iterableToHashSet kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
-symbol fq=iterableToHashSet.$0.items kind=valueParameter vis=private flags=_
-symbol fq=iterableToMutableSet kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
-symbol fq=iterableToMutableSet.$1.items kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
+symbol fq=__local_0.mutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
+symbol fq=__local_2.hashSet[kind=local] kind=local vis=private flags=_ type=kotlin.collections.HashSet<Int>
+symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
+symbol fq=iterableToHashSet.$0.items[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=iterableToHashSet[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
+symbol fq=iterableToMutableSet.$1.items[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=iterableToMutableSet[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableSet[kind=iface;gen=1] kind=interface vis=public flags=synthetic
 file fiterable_to_mutable_set package=_
-  decl iterableToMutableSet fun iterableToMutableSet sym=iterableToMutableSet
-  decl iterableToHashSet fun iterableToHashSet sym=iterableToHashSet
-expr e@5:19 name(items) type=kotlin.collections.Iterable<Int> ref=iterableToMutableSet.$1.items
-expr e@5:19#1 memberCall recv=e@5:19 callee=toMutableSet args=[] type=kotlin.collections.MutableSet<Int> call=kotlin.collections.toMutableSet targs=[Int]
-expr e@5:5 localDecl mutable mutable=0 type=_ init=e@5:19#1 type=Unit ref=__local_0.mutable
-expr e@6:36 name(mutable) type=kotlin.collections.MutableSet<Int> ref=__local_0.mutable
-expr e@6:5 localDecl checked mutable=0 type=MutableSet<Int> init=e@6:36 type=Unit ref=__local_1.checked
-expr e@10:19 name(items) type=kotlin.collections.Iterable<Int> ref=iterableToHashSet.$0.items
-expr e@10:19#1 memberCall recv=e@10:19 callee=toHashSet args=[] type=kotlin.collections.HashSet<Int> call=kotlin.collections.toHashSet targs=[Int]
-expr e@10:5 localDecl hashSet mutable=0 type=_ init=e@10:19#1 type=Unit ref=__local_2.hashSet
-expr e@11:36 name(hashSet) type=kotlin.collections.HashSet<Int> ref=__local_2.hashSet
-expr e@11:5 localDecl checked mutable=0 type=MutableSet<Int> init=e@11:36 type=Unit ref=__local_3.checked
+  decl iterableToMutableSet[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableToMutableSet sym=iterableToMutableSet[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl iterableToHashSet[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableToHashSet sym=iterableToHashSet[kind=fun;params=kotlin.collections.Iterable<Int>]
+expr e@5:19 name(items) type=kotlin.collections.Iterable<Int> ref=iterableToMutableSet.$1.items[kind=vparam]
+expr e@5:19#1 memberCall recv=e@5:19 callee=toMutableSet args=[] type=kotlin.collections.MutableSet<Int> call=kotlin.collections.toMutableSet[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
+expr e@5:5 localDecl mutable mutable=0 type=_ init=e@5:19#1 type=Unit ref=__local_0.mutable[kind=local]
+expr e@6:36 name(mutable) type=kotlin.collections.MutableSet<Int> ref=__local_0.mutable[kind=local]
+expr e@6:5 localDecl checked mutable=0 type=MutableSet<Int> init=e@6:36 type=Unit ref=__local_1.checked[kind=local]
+expr e@10:19 name(items) type=kotlin.collections.Iterable<Int> ref=iterableToHashSet.$0.items[kind=vparam]
+expr e@10:19#1 memberCall recv=e@10:19 callee=toHashSet args=[] type=kotlin.collections.HashSet<Int> call=kotlin.collections.toHashSet[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
+expr e@10:5 localDecl hashSet mutable=0 type=_ init=e@10:19#1 type=Unit ref=__local_2.hashSet[kind=local]
+expr e@11:36 name(hashSet) type=kotlin.collections.HashSet<Int> ref=__local_2.hashSet[kind=local]
+expr e@11:5 localDecl checked mutable=0 type=MutableSet<Int> init=e@11:36 type=Unit ref=__local_3.checked[kind=local]

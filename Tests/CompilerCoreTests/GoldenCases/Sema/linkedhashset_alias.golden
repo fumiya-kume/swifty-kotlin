@@ -1,83 +1,83 @@
-symbol fq=OrderedTags kind=class vis=public flags=_
-symbol fq=OrderedTags.<init> kind=constructor vis=public flags=_ sig=recv=OrderedTags params=[] ret=OrderedTags
-symbol fq=OrderedTags.ids kind=property vis=public flags=_ type=kotlin.collections.LinkedHashSet<Int>
-symbol fq=OrderedTags.tags kind=property vis=public flags=_ type=kotlin.collections.LinkedHashSet<String>
-symbol fq=__local_0.explicit kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<String>
-symbol fq=__local_1.explicitAsMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
-symbol fq=__local_2.fromNominal kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<Double>
-symbol fq=__local_3.fromFactory kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<Double>
-symbol fq=__local_4.fromMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Boolean>
-symbol fq=__local_5.asReadOnly kind=local vis=private flags=_ type=kotlin.collections.Set<String>
-symbol fq=__local_6.created kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<Int>
-symbol fq=__local_7.createdAsMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
-symbol fq=__local_8.holder kind=local vis=private flags=_ type=OrderedTags
-symbol fq=__local_9.tags kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
-symbol fq=__local_10.ids kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<Int>
-symbol fq=__local_11.nested kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<kotlin.collections.LinkedHashSet<String>>
-symbol fq=__local_12.nestedAsMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<kotlin.collections.LinkedHashSet<String>>
-symbol fq=__local_13.constrained kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<String>
-symbol fq=__local_14.constrainedAsMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
-symbol fq=__local_15.extended kind=local vis=private flags=_ type=String
-symbol fq=constrainLinked kind=function vis=public flags=_ sig=recv=_ params=[constrainLinked.$0.T] ret=constrainLinked.$0.T bounds=[kotlin.collections.LinkedHashSet<String>]
-symbol fq=constrainLinked.$0.T kind=typeParameter vis=private flags=_
-symbol fq=constrainLinked.$0.set kind=valueParameter vis=private flags=_
-symbol fq=createLinkedSet kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.LinkedHashSet<Int>
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
-symbol fq=linkedExtension kind=function vis=public flags=_ sig=recv=kotlin.collections.LinkedHashSet<String> params=[] ret=String
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=processLinkedSet kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.LinkedHashSet<String>] ret=Unit
-symbol fq=processLinkedSet.$1.set kind=valueParameter vis=private flags=_
+symbol fq=OrderedTags.<init>[kind=ctor;recv=OrderedTags;params=] kind=constructor vis=public flags=_ sig=recv=OrderedTags params=[] ret=OrderedTags
+symbol fq=OrderedTags.ids[kind=prop] kind=property vis=public flags=_ type=kotlin.collections.LinkedHashSet<Int>
+symbol fq=OrderedTags.tags[kind=prop] kind=property vis=public flags=_ type=kotlin.collections.LinkedHashSet<String>
+symbol fq=OrderedTags[kind=class] kind=class vis=public flags=_
+symbol fq=__local_0.explicit[kind=local] kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<String>
+symbol fq=__local_1.explicitAsMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
+symbol fq=__local_2.fromNominal[kind=local] kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<Double>
+symbol fq=__local_3.fromFactory[kind=local] kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<Double>
+symbol fq=__local_4.fromMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Boolean>
+symbol fq=__local_5.asReadOnly[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Set<String>
+symbol fq=__local_6.created[kind=local] kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<Int>
+symbol fq=__local_7.createdAsMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
+symbol fq=__local_8.holder[kind=local] kind=local vis=private flags=_ type=OrderedTags
+symbol fq=__local_9.tags[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
+symbol fq=__local_10.ids[kind=local] kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<Int>
+symbol fq=__local_11.nested[kind=local] kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<kotlin.collections.LinkedHashSet<String>>
+symbol fq=__local_12.nestedAsMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<kotlin.collections.LinkedHashSet<String>>
+symbol fq=__local_13.constrained[kind=local] kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<String>
+symbol fq=__local_14.constrainedAsMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
+symbol fq=__local_15.extended[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=constrainLinked.$0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=constrainLinked.$0.set[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=constrainLinked[kind=fun;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[constrainLinked.$0.T] ret=constrainLinked.$0.T bounds=[kotlin.collections.LinkedHashSet<String>]
+symbol fq=createLinkedSet[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.LinkedHashSet<Int>
+symbol fq=kotlin.collections.MutableSet[kind=iface;gen=1] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=linkedExtension[kind=fun;recv=kotlin.collections.LinkedHashSet<String>;params=] kind=function vis=public flags=_ sig=recv=kotlin.collections.LinkedHashSet<String> params=[] ret=String
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=processLinkedSet.$1.set[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=processLinkedSet[kind=fun;params=kotlin.collections.LinkedHashSet<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.LinkedHashSet<String>] ret=Unit
 file flinkedhashset_alias package=_
-  decl processLinkedSet fun processLinkedSet sym=processLinkedSet
-  decl createLinkedSet fun createLinkedSet sym=createLinkedSet
-  decl OrderedTags class OrderedTags sym=OrderedTags
-  decl constrainLinked fun constrainLinked sym=constrainLinked
-  decl linkedExtension fun linkedExtension sym=linkedExtension
-  decl main fun main sym=main
+  decl processLinkedSet[kind=fun;params=kotlin.collections.LinkedHashSet<String>] fun processLinkedSet sym=processLinkedSet[kind=fun;params=kotlin.collections.LinkedHashSet<String>]
+  decl createLinkedSet[kind=fun;params=] fun createLinkedSet sym=createLinkedSet[kind=fun;params=]
+  decl OrderedTags[kind=class] class OrderedTags sym=OrderedTags[kind=class]
+  decl constrainLinked[kind=fun;params=T0;gen=1] fun constrainLinked sym=constrainLinked[kind=fun;params=T0;gen=1]
+  decl linkedExtension[kind=fun;recv=kotlin.collections.LinkedHashSet<String>;params=] fun linkedExtension sym=linkedExtension[kind=fun;recv=kotlin.collections.LinkedHashSet<String>;params=]
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@14:12 call callee=e@14:12#1 args=[] type=kotlin.collections.LinkedHashSet<Int>
 expr e@14:5 return value=e@14:12 type=Nothing
 expr e@18:39 call callee=e@18:39#1 args=[] type=kotlin.collections.LinkedHashSet<String>
 expr e@19:35 call callee=e@19:35#1 args=[] type=kotlin.collections.LinkedHashSet<Int>
-expr e@23:12 name(set) type=constrainLinked.$0.T ref=constrainLinked.$0.set
+expr e@23:12 name(set) type=constrainLinked.$0.T ref=constrainLinked.$0.set[kind=vparam]
 expr e@23:5 return value=e@23:12 type=Nothing
 expr e@27:12 string(linked) type=String
 expr e@27:5 return value=e@27:12 type=Nothing
 expr e@33:20 call callee=e@33:20#1 args=[] type=kotlin.collections.LinkedHashSet<String>
-expr e@33:5 localDecl explicit mutable=0 type=_ init=e@33:20 type=Unit ref=__local_0.explicit
-expr e@34:49 name(explicit) type=kotlin.collections.LinkedHashSet<String> ref=__local_0.explicit
-expr e@34:5 localDecl explicitAsMutable mutable=0 type=MutableSet<String> init=e@34:49 type=Unit ref=__local_1.explicitAsMutable
-expr e@35:22 name(explicit) type=kotlin.collections.LinkedHashSet<String> ref=__local_0.explicit
-expr e@35:5 call callee=e@35:5#1 args=[_:e@35:22] type=Unit call=processLinkedSet
+expr e@33:5 localDecl explicit mutable=0 type=_ init=e@33:20 type=Unit ref=__local_0.explicit[kind=local]
+expr e@34:49 name(explicit) type=kotlin.collections.LinkedHashSet<String> ref=__local_0.explicit[kind=local]
+expr e@34:5 localDecl explicitAsMutable mutable=0 type=MutableSet<String> init=e@34:49 type=Unit ref=__local_1.explicitAsMutable[kind=local]
+expr e@35:22 name(explicit) type=kotlin.collections.LinkedHashSet<String> ref=__local_0.explicit[kind=local]
+expr e@35:5 call callee=e@35:5#1 args=[_:e@35:22] type=Unit call=processLinkedSet[kind=fun;params=kotlin.collections.LinkedHashSet<String>]
 expr e@39:46 call callee=e@39:46#1 args=[] type=kotlin.collections.LinkedHashSet<Double>
-expr e@39:5 localDecl fromNominal mutable=0 type=LinkedHashSet<Double> init=e@39:46 type=Unit ref=__local_2.fromNominal
-expr e@40:46 call callee=e@40:46#1 args=[] type=kotlin.collections.LinkedHashSet<Double> call=kotlin.collections.linkedSetOf#0 targs=[Double]
-expr e@40:5 localDecl fromFactory mutable=0 type=LinkedHashSet<Double> init=e@40:46 type=Unit ref=__local_3.fromFactory
+expr e@39:5 localDecl fromNominal mutable=0 type=LinkedHashSet<Double> init=e@39:46 type=Unit ref=__local_2.fromNominal[kind=local]
+expr e@40:46 call callee=e@40:46#1 args=[] type=kotlin.collections.LinkedHashSet<Double> call=kotlin.collections.linkedSetOf[kind=fun;params=;gen=1] targs=[Double]
+expr e@40:5 localDecl fromFactory mutable=0 type=LinkedHashSet<Double> init=e@40:46 type=Unit ref=__local_3.fromFactory[kind=local]
 expr e@41:44 call callee=e@41:44#1 args=[] type=kotlin.collections.LinkedHashSet<Boolean>
-expr e@41:5 localDecl fromMutable mutable=0 type=MutableSet<Boolean> init=e@41:44 type=Unit ref=__local_4.fromMutable
+expr e@41:5 localDecl fromMutable mutable=0 type=MutableSet<Boolean> init=e@41:44 type=Unit ref=__local_4.fromMutable[kind=local]
 expr e@44:35 call callee=e@44:35#1 args=[] type=kotlin.collections.LinkedHashSet<String>
-expr e@44:5 localDecl asReadOnly mutable=0 type=Set<String> init=e@44:35 type=Unit ref=__local_5.asReadOnly
-expr e@47:19 call callee=e@47:19#1 args=[] type=kotlin.collections.LinkedHashSet<Int> call=createLinkedSet
-expr e@47:5 localDecl created mutable=0 type=_ init=e@47:19 type=Unit ref=__local_6.created
-expr e@48:45 name(created) type=kotlin.collections.LinkedHashSet<Int> ref=__local_6.created
-expr e@48:5 localDecl createdAsMutable mutable=0 type=MutableSet<Int> init=e@48:45 type=Unit ref=__local_7.createdAsMutable
-expr e@51:18 call callee=e@51:18#1 args=[] type=OrderedTags call=OrderedTags.<init>
-expr e@51:5 localDecl holder mutable=0 type=_ init=e@51:18 type=Unit ref=__local_8.holder
-expr e@52:36 name(holder) type=OrderedTags ref=__local_8.holder
-expr e@52:36#1 memberCall recv=e@52:36 callee=tags args=[] type=kotlin.collections.LinkedHashSet<String> ref=OrderedTags.tags
-expr e@52:5 localDecl tags mutable=0 type=MutableSet<String> init=e@52:36#1 type=Unit ref=__local_9.tags
-expr e@53:35 name(holder) type=OrderedTags ref=__local_8.holder
-expr e@53:35#1 memberCall recv=e@53:35 callee=ids args=[] type=kotlin.collections.LinkedHashSet<Int> ref=OrderedTags.ids
-expr e@53:5 localDecl ids mutable=0 type=LinkedHashSet<Int> init=e@53:35#1 type=Unit ref=__local_10.ids
+expr e@44:5 localDecl asReadOnly mutable=0 type=Set<String> init=e@44:35 type=Unit ref=__local_5.asReadOnly[kind=local]
+expr e@47:19 call callee=e@47:19#1 args=[] type=kotlin.collections.LinkedHashSet<Int> call=createLinkedSet[kind=fun;params=]
+expr e@47:5 localDecl created mutable=0 type=_ init=e@47:19 type=Unit ref=__local_6.created[kind=local]
+expr e@48:45 name(created) type=kotlin.collections.LinkedHashSet<Int> ref=__local_6.created[kind=local]
+expr e@48:5 localDecl createdAsMutable mutable=0 type=MutableSet<Int> init=e@48:45 type=Unit ref=__local_7.createdAsMutable[kind=local]
+expr e@51:18 call callee=e@51:18#1 args=[] type=OrderedTags call=OrderedTags.<init>[kind=ctor;recv=OrderedTags;params=]
+expr e@51:5 localDecl holder mutable=0 type=_ init=e@51:18 type=Unit ref=__local_8.holder[kind=local]
+expr e@52:36 name(holder) type=OrderedTags ref=__local_8.holder[kind=local]
+expr e@52:36#1 memberCall recv=e@52:36 callee=tags args=[] type=kotlin.collections.LinkedHashSet<String> ref=OrderedTags.tags[kind=prop]
+expr e@52:5 localDecl tags mutable=0 type=MutableSet<String> init=e@52:36#1 type=Unit ref=__local_9.tags[kind=local]
+expr e@53:35 name(holder) type=OrderedTags ref=__local_8.holder[kind=local]
+expr e@53:35#1 memberCall recv=e@53:35 callee=ids args=[] type=kotlin.collections.LinkedHashSet<Int> ref=OrderedTags.ids[kind=prop]
+expr e@53:5 localDecl ids mutable=0 type=LinkedHashSet<Int> init=e@53:35#1 type=Unit ref=__local_10.ids[kind=local]
 expr e@56:56 call callee=e@56:56#1 args=[] type=kotlin.collections.LinkedHashSet<kotlin.collections.LinkedHashSet<String>>
-expr e@56:5 localDecl nested mutable=0 type=LinkedHashSet<LinkedHashSet<String>> init=e@56:56 type=Unit ref=__local_11.nested
-expr e@57:62 name(nested) type=kotlin.collections.LinkedHashSet<kotlin.collections.LinkedHashSet<String>> ref=__local_11.nested
-expr e@57:5 localDecl nestedAsMutable mutable=0 type=MutableSet<LinkedHashSet<String>> init=e@57:62 type=Unit ref=__local_12.nestedAsMutable
-expr e@60:39 name(explicit) type=kotlin.collections.LinkedHashSet<String> ref=__local_0.explicit
-expr e@60:23 call callee=e@60:23#1 args=[_:e@60:39] type=kotlin.collections.LinkedHashSet<String> call=constrainLinked targs=[kotlin.collections.LinkedHashSet<String>]
-expr e@60:5 localDecl constrained mutable=0 type=_ init=e@60:23 type=Unit ref=__local_13.constrained
-expr e@61:52 name(constrained) type=kotlin.collections.LinkedHashSet<String> ref=__local_13.constrained
-expr e@61:5 localDecl constrainedAsMutable mutable=0 type=MutableSet<String> init=e@61:52 type=Unit ref=__local_14.constrainedAsMutable
-expr e@64:28 name(explicit) type=kotlin.collections.LinkedHashSet<String> ref=__local_0.explicit
-expr e@64:28#1 memberCall recv=e@64:28 callee=linkedExtension args=[] type=String call=linkedExtension
-expr e@64:5 localDecl extended mutable=0 type=String init=e@64:28#1 type=Unit ref=__local_15.extended
+expr e@56:5 localDecl nested mutable=0 type=LinkedHashSet<LinkedHashSet<String>> init=e@56:56 type=Unit ref=__local_11.nested[kind=local]
+expr e@57:62 name(nested) type=kotlin.collections.LinkedHashSet<kotlin.collections.LinkedHashSet<String>> ref=__local_11.nested[kind=local]
+expr e@57:5 localDecl nestedAsMutable mutable=0 type=MutableSet<LinkedHashSet<String>> init=e@57:62 type=Unit ref=__local_12.nestedAsMutable[kind=local]
+expr e@60:39 name(explicit) type=kotlin.collections.LinkedHashSet<String> ref=__local_0.explicit[kind=local]
+expr e@60:23 call callee=e@60:23#1 args=[_:e@60:39] type=kotlin.collections.LinkedHashSet<String> call=constrainLinked[kind=fun;params=T0;gen=1] targs=[kotlin.collections.LinkedHashSet<String>]
+expr e@60:5 localDecl constrained mutable=0 type=_ init=e@60:23 type=Unit ref=__local_13.constrained[kind=local]
+expr e@61:52 name(constrained) type=kotlin.collections.LinkedHashSet<String> ref=__local_13.constrained[kind=local]
+expr e@61:5 localDecl constrainedAsMutable mutable=0 type=MutableSet<String> init=e@61:52 type=Unit ref=__local_14.constrainedAsMutable[kind=local]
+expr e@64:28 name(explicit) type=kotlin.collections.LinkedHashSet<String> ref=__local_0.explicit[kind=local]
+expr e@64:28#1 memberCall recv=e@64:28 callee=linkedExtension args=[] type=String call=linkedExtension[kind=fun;recv=kotlin.collections.LinkedHashSet<String>;params=]
+expr e@64:5 localDecl extended mutable=0 type=String init=e@64:28#1 type=Unit ref=__local_15.extended[kind=local]

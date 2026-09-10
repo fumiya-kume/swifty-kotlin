@@ -1,13 +1,13 @@
-symbol fq=__local_0.f kind=local vis=private flags=_ type=java.io.File
-symbol fq=java.io.File kind=class vis=public flags=synthetic type=java.io.File
-symbol fq=java.io.File.<init>#0 kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
-symbol fq=java.io.File.<init>.path kind=valueParameter vis=private flags=synthetic
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.f[kind=local] kind=local vis=private flags=_ type=java.io.File
+symbol fq=java.io.File.<init>.path[kind=vparam] kind=valueParameter vis=private flags=synthetic
+symbol fq=java.io.File.<init>[kind=ctor;params=String] kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
+symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ffile_is_rooted package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@4:18 string(/tmp/golden_isrooted.txt) type=String
-expr e@4:13 call callee=e@4:13#1 args=[_:e@4:18] type=java.io.File call=java.io.File.<init>#0
-expr e@4:5 localDecl f mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.f
-expr e@5:13 name(f) type=java.io.File ref=__local_0.f
-expr e@5:13#1 memberCall recv=e@5:13 callee=isRooted args=[] type=Boolean call=kotlin.io.isRooted.$get
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println#1
+expr e@4:13 call callee=e@4:13#1 args=[_:e@4:18] type=java.io.File call=java.io.File.<init>[kind=ctor;params=String]
+expr e@4:5 localDecl f mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.f[kind=local]
+expr e@5:13 name(f) type=java.io.File ref=__local_0.f[kind=local]
+expr e@5:13#1 memberCall recv=e@5:13 callee=isRooted args=[] type=Boolean call=kotlin.io.isRooted.$get[kind=fun;recv=java.io.File;params=]
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

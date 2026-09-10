@@ -1,22 +1,22 @@
-symbol fq=__try_0_catch_0.e kind=local vis=internal flags=_ type=kotlin.ArrayIndexOutOfBoundsException
-symbol fq=golden.sema.catchArrayIndex kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.message kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.ArrayIndexOutOfBoundsException
-symbol fq=golden.sema.message.$0.m kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.noArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.ArrayIndexOutOfBoundsException
+symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.ArrayIndexOutOfBoundsException
+symbol fq=golden.sema.catchArrayIndex[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.message.$0.m[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.message[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.ArrayIndexOutOfBoundsException
+symbol fq=golden.sema.noArg[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.ArrayIndexOutOfBoundsException
 file fstdlib_kotlin_n_ArrayIndexOutOfBoundsException package=golden.sema
-  decl golden.sema.noArg fun noArg sym=golden.sema.noArg
-  decl golden.sema.message fun message sym=golden.sema.message
-  decl golden.sema.catchArrayIndex fun catchArrayIndex sym=golden.sema.catchArrayIndex
-expr e@3:47 call callee=e@3:47#1 args=[] type=kotlin.ArrayIndexOutOfBoundsException call=kotlin.ArrayIndexOutOfBoundsException.<init>#0
-expr e@4:90 name(m) type=String? ref=golden.sema.message.$0.m
-expr e@4:59 call callee=e@4:59#1 args=[_:e@4:90] type=kotlin.ArrayIndexOutOfBoundsException call=kotlin.ArrayIndexOutOfBoundsException.<init>#1
+  decl golden.sema.noArg[kind=fun;params=] fun noArg sym=golden.sema.noArg[kind=fun;params=]
+  decl golden.sema.message[kind=fun;params=String?] fun message sym=golden.sema.message[kind=fun;params=String?]
+  decl golden.sema.catchArrayIndex[kind=fun;params=] fun catchArrayIndex sym=golden.sema.catchArrayIndex[kind=fun;params=]
+expr e@3:47 call callee=e@3:47#1 args=[] type=kotlin.ArrayIndexOutOfBoundsException call=kotlin.ArrayIndexOutOfBoundsException.<init>[kind=ctor;recv=kotlin.ArrayIndexOutOfBoundsException;params=]
+expr e@4:90 name(m) type=String? ref=golden.sema.message.$0.m[kind=vparam]
+expr e@4:59 call callee=e@4:59#1 args=[_:e@4:90] type=kotlin.ArrayIndexOutOfBoundsException call=kotlin.ArrayIndexOutOfBoundsException.<init>[kind=ctor;recv=kotlin.ArrayIndexOutOfBoundsException;params=String?]
 expr e@8:46 string(out of bounds) type=String
-expr e@8:15 call callee=e@8:15#1 args=[_:e@8:46] type=kotlin.ArrayIndexOutOfBoundsException call=kotlin.ArrayIndexOutOfBoundsException.<init>#1
+expr e@8:15 call callee=e@8:15#1 args=[_:e@8:46] type=kotlin.ArrayIndexOutOfBoundsException call=kotlin.ArrayIndexOutOfBoundsException.<init>[kind=ctor;recv=kotlin.ArrayIndexOutOfBoundsException;params=String?]
 expr e@8:9 throw value=e@8:15 type=Nothing
 expr e@7:9 blockExpr stmts=[] trailing=e@8:9 type=Nothing
-expr e@10:9 name(e) type=kotlin.ArrayIndexOutOfBoundsException ref=__try_0_catch_0.e
-expr e@10:9#1 memberCall recv=e@10:9 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@10:9 name(e) type=kotlin.ArrayIndexOutOfBoundsException ref=__try_0_catch_0.e[kind=local]
+expr e@10:9#1 memberCall recv=e@10:9 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@10:22 string(caught) type=String
 expr e@10:9#2 binary(elvis) lhs=e@10:9#1 rhs=e@10:22 type=String
-expr e@9:49 blockExpr stmts=[] trailing=e@10:9#2 type=String ref=__try_0_catch_0.e
+expr e@9:49 blockExpr stmts=[] trailing=e@10:9#2 type=String ref=__try_0_catch_0.e[kind=local]
 expr e@7:5 try body=e@7:9 catches=[e@9:49] finally=_ type=String
