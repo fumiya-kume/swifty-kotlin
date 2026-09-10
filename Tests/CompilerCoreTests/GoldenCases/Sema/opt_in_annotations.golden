@@ -1,9 +1,9 @@
-symbol fq=golden.sema.ExperimentalSemaApi kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.callerSema kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.unstableSema kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.ExperimentalSemaApi[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.callerSema[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.unstableSema[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fopt_in_annotations package=golden.sema
-  decl golden.sema.ExperimentalSemaApi class ExperimentalSemaApi sym=golden.sema.ExperimentalSemaApi
-  decl golden.sema.unstableSema fun unstableSema sym=golden.sema.unstableSema
-  decl golden.sema.callerSema fun callerSema sym=golden.sema.callerSema
+  decl golden.sema.ExperimentalSemaApi[kind=anno] class ExperimentalSemaApi sym=golden.sema.ExperimentalSemaApi[kind=anno]
+  decl golden.sema.unstableSema[kind=fun;params=] fun unstableSema sym=golden.sema.unstableSema[kind=fun;params=]
+  decl golden.sema.callerSema[kind=fun;params=] fun callerSema sym=golden.sema.callerSema[kind=fun;params=]
 expr e@7:27 int(1) type=Int
-expr e@10:25 call callee=e@10:25#1 args=[] type=Int call=golden.sema.unstableSema
+expr e@10:25 call callee=e@10:25#1 args=[] type=Int call=golden.sema.unstableSema[kind=fun;params=]

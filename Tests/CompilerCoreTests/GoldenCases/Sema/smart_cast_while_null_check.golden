@@ -1,16 +1,16 @@
-symbol fq=__local_0.y kind=local vis=private flags=_ type=Int
-symbol fq=whileNullCheck kind=function vis=public flags=_ sig=recv=_ params=[Int?] ret=Int
-symbol fq=whileNullCheck.$0.x kind=valueParameter vis=private flags=_
+symbol fq=__local_0.y[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=whileNullCheck.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=whileNullCheck[kind=fun;params=Int?] kind=function vis=public flags=_ sig=recv=_ params=[Int?] ret=Int
 file fsmart_cast_while_null_check package=_
-  decl whileNullCheck fun whileNullCheck sym=whileNullCheck
+  decl whileNullCheck[kind=fun;params=Int?] fun whileNullCheck sym=whileNullCheck[kind=fun;params=Int?]
 expr e@2:18 int(0) type=Int
-expr e@2:5 localDecl y mutable=0 type=Int init=e@2:18 type=Unit ref=__local_0.y
-expr e@3:12 name(x) type=Int? ref=whileNullCheck.$0.x
+expr e@2:5 localDecl y mutable=0 type=Int init=e@2:18 type=Unit ref=__local_0.y[kind=local]
+expr e@3:12 name(x) type=Int? ref=whileNullCheck.$0.x[kind=vparam]
 expr e@3:17 name(null) type=Nothing?
 expr e@3:12#1 binary(notEqual) lhs=e@3:12 rhs=e@3:17 type=Boolean
-expr e@4:16 name(x) type=Int ref=whileNullCheck.$0.x
+expr e@4:16 name(x) type=Int ref=whileNullCheck.$0.x[kind=vparam]
 expr e@4:9 return value=e@4:16 type=Nothing
 expr e@3:23 blockExpr stmts=[] trailing=e@4:9 type=Nothing
 expr e@3:5 while cond=e@3:12#1 body=e@3:23 type=Unit
-expr e@6:12 name(y) type=Int ref=__local_0.y
+expr e@6:12 name(y) type=Int ref=__local_0.y[kind=local]
 expr e@6:5 return value=e@6:12 type=Nothing

@@ -197,12 +197,9 @@ struct CoroutineSyntheticStubTests {
                 let semanticSymbol = try #require(sema.symbols.symbol(symbol))
                 #expect(semanticSymbol.kind == .property)
                 #expect(semanticSymbol.visibility == .public)
-                #expect(semanticSymbol.flags.contains(.synthetic))
-                #expect(sema.symbols.propertyType(for: symbol) == sema.types.nullableAnyType)
-                #expect(
-                    sema.symbols.externalLinkName(for: symbol) ==
-                    "kk_coroutine_suspended"
-                )
+                #expect(!semanticSymbol.flags.contains(.synthetic))
+                #expect(sema.symbols.propertyType(for: symbol) == sema.types.anyType)
+                #expect(sema.symbols.externalLinkName(for: symbol) == nil)
             }
 
             // testCoroutineContextTopLevelPropertyIsRegistered
@@ -236,7 +233,7 @@ struct CoroutineSyntheticStubTests {
                 let symbol = try #require(sema.symbols.lookup(fqName: fqName))
                 let info = try #require(sema.symbols.symbol(symbol))
                 #expect(info.kind == .function)
-                #expect(info.flags.contains(.synthetic))
+                #expect(!info.flags.contains(.synthetic))
                 #expect(info.flags.contains(.inlineFunction))
                 #expect(info.flags.contains(.suspendFunction))
 

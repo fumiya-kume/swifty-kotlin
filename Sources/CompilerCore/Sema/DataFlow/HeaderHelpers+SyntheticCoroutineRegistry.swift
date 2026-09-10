@@ -726,7 +726,12 @@ extension DataFlowSemaPhase {
 
         let suspendIntrinsicName = interner.intern("suspendCoroutineUninterceptedOrReturn")
         let suspendIntrinsicFQName = kotlinCoroutinesIntrinsicsPkg + [suspendIntrinsicName]
-        if symbols.lookup(fqName: suspendIntrinsicFQName) == nil {
+        let hasBundledSuspendIntrinsic = BundledSyntheticStubRegistration.bundledIndex.contains(
+            ownerFQName: kotlinCoroutinesIntrinsicsPkg,
+            name: suspendIntrinsicName,
+            arity: 1
+        )
+        if !hasBundledSuspendIntrinsic, symbols.lookup(fqName: suspendIntrinsicFQName) == nil {
             let suspendIntrinsicSymbol = symbols.define(
                 kind: .function,
                 name: suspendIntrinsicName,
@@ -1894,17 +1899,25 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        registerSyntheticCoroutineTopLevelProperty(
-            named: "COROUTINE_SUSPENDED",
-            packageFQName: kotlinCoroutinesIntrinsicsPkg,
-            returnType: coroutineSuspendedType,
-            externalLinkName: "kk_coroutine_suspended",
-            symbols: symbols,
-            interner: interner
+        let coroutineSuspendedName = interner.intern("COROUTINE_SUSPENDED")
+        let hasBundledCoroutineSuspended = BundledSyntheticStubRegistration.bundledIndex.contains(
+            ownerFQName: kotlinCoroutinesIntrinsicsPkg,
+            name: coroutineSuspendedName,
+            arity: 0
         )
+        if !hasBundledCoroutineSuspended {
+            registerSyntheticCoroutineTopLevelProperty(
+                named: "COROUTINE_SUSPENDED",
+                packageFQName: kotlinCoroutinesIntrinsicsPkg,
+                returnType: coroutineSuspendedType,
+                externalLinkName: "kk_coroutine_suspended",
+                symbols: symbols,
+                interner: interner
+            )
+        }
         let suspendCoroutineName = interner.intern("suspendCoroutineUninterceptedOrReturn")
         let suspendCoroutineFQName = kotlinCoroutinesIntrinsicsPkg + [suspendCoroutineName]
-        if symbols.lookup(fqName: suspendCoroutineFQName) == nil {
+        if !hasBundledSuspendIntrinsic, symbols.lookup(fqName: suspendCoroutineFQName) == nil {
             let suspendCoroutineTypeParamName = interner.intern("T")
             let suspendCoroutineTypeParamFQName = suspendCoroutineFQName + [suspendCoroutineTypeParamName]
             let suspendCoroutineTypeParamSymbol = symbols.define(
@@ -3066,14 +3079,22 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        registerSyntheticCoroutineTopLevelProperty(
-            named: "COROUTINE_SUSPENDED",
-            packageFQName: intrinsicsPkg,
-            returnType: types.nullableAnyType,
-            externalLinkName: "kk_coroutine_suspended",
-            symbols: symbols,
-            interner: interner
+        let coroutineSuspendedName = interner.intern("COROUTINE_SUSPENDED")
+        let hasBundledCoroutineSuspended = BundledSyntheticStubRegistration.bundledIndex.contains(
+            ownerFQName: intrinsicsPkg,
+            name: coroutineSuspendedName,
+            arity: 0
         )
+        if !hasBundledCoroutineSuspended {
+            registerSyntheticCoroutineTopLevelProperty(
+                named: "COROUTINE_SUSPENDED",
+                packageFQName: intrinsicsPkg,
+                returnType: types.nullableAnyType,
+                externalLinkName: "kk_coroutine_suspended",
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 
     func attachRestrictsSuspensionAnnotationMetadata(

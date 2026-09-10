@@ -434,5 +434,77 @@ final class RuntimeListIteratorTests {
         #expect(kk_list_iterator_nextIndex(iterHandle) == 0)
         #expect(kk_list_iterator_previousIndex(iterHandle) == -1)
     }
+
+    @Test
+    func testMutableListIteratorMutationDispatchesThroughItable() throws {
+        let listHandle = makeList([1, 2, 3])
+        let list = try #require(runtimeListBox(from: listHandle))
+        let iterHandle = kk_list_iterator(listHandle)
+        let interfaceTypeID = Int(runtimeStableNominalTypeID(
+            fqName: "kotlin.collections.MutableListIterator"
+        ))
+        let iteratorTypeID = Int(runtimeStableNominalTypeID(
+            fqName: "kotlin.collections.Iterator"
+        ))
+        let mutableIteratorTypeID = Int(runtimeStableNominalTypeID(
+            fqName: "kotlin.collections.MutableIterator"
+        ))
+
+        // Slots belong to each declaring interface: Iterator hasNext/next,
+        // MutableIterator remove, and MutableListIterator set/add.
+        let hasNextPtr = kk_itable_lookup_dynamic(iterHandle, iteratorTypeID, 0)
+        let nextPtr = kk_itable_lookup_dynamic(iterHandle, iteratorTypeID, 1)
+        let removePtr = kk_itable_lookup_dynamic(iterHandle, mutableIteratorTypeID, 0)
+        let setPtr = kk_itable_lookup_dynamic(iterHandle, interfaceTypeID, 0)
+        let addPtr = kk_itable_lookup_dynamic(iterHandle, interfaceTypeID, 1)
+        try #require(hasNextPtr != 0)
+        try #require(nextPtr != 0)
+        try #require(removePtr != 0)
+        try #require(setPtr != 0)
+        try #require(addPtr != 0)
+
+        let unaryCall = { (functionRaw: Int) -> (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int) in
+            unsafeBitCast(functionRaw, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        }
+        let binaryCall = { (functionRaw: Int) -> (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int) in
+            unsafeBitCast(functionRaw, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        }
+        let hasNext = unaryCall(hasNextPtr)
+        let next = unaryCall(nextPtr)
+        let remove = unaryCall(removePtr)
+        let set = binaryCall(setPtr)
+        let add = binaryCall(addPtr)
+
+        var thrown = 0
+        #expect(hasNext(iterHandle, &thrown) == 1)
+        #expect(thrown == 0)
+        #expect(next(iterHandle, &thrown) == 1)
+        #expect(thrown == 0)
+        #expect(set(iterHandle, 10, &thrown) == 0)
+        #expect(thrown == 0)
+        #expect(list.elements == [10, 2, 3])
+        #expect(add(iterHandle, 20, &thrown) == 0)
+        #expect(thrown == 0)
+        #expect(list.elements == [10, 20, 2, 3])
+        #expect(kk_list_iterator_previous(iterHandle) == 20)
+        #expect(remove(iterHandle, &thrown) == 0)
+        #expect(thrown == 0)
+        #expect(list.elements == [10, 2, 3])
+
+        let indexedListHandle = makeList([4, 5])
+        var creationThrown = 0
+        let indexedIterHandle = kk_list_iterator_at(indexedListHandle, 1, &creationThrown)
+        #expect(creationThrown == 0)
+        let indexedAddPtr = kk_itable_lookup_dynamic(indexedIterHandle, interfaceTypeID, 1)
+        guard indexedAddPtr != 0 else {
+            Issue.record("Indexed MutableList.listIterator should expose MutableListIterator.add")
+            return
+        }
+        let indexedAdd = binaryCall(indexedAddPtr)
+        let indexedList = try #require(runtimeListBox(from: indexedListHandle))
+        #expect(indexedAdd(indexedIterHandle, 6, &thrown) == 0)
+        #expect(thrown == 0)
+        #expect(indexedList.elements == [4, 6, 5])
+    }
 }
 #endif

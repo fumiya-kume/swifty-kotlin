@@ -969,6 +969,40 @@ extension CallTypeChecker {
                     allCandidates = labelMatches
                 }
             }
+            // KSP-1001: List.slice has both IntRange and Iterable<Int>
+            // overloads. The collection fallback is intentionally arity-based
+            // for most legacy members, but selecting the first slice overload
+            // would route a List<Int> argument to the IntRange declaration.
+            if memberName == interner.intern("slice"),
+               argCount == 1,
+               let firstArgExpr = argExprs.first
+            {
+                let isIntRangeArgument: Bool = if let firstArgType = sema.bindings.exprTypes[firstArgExpr] {
+                    if let (_, argumentSymbol) = resolveClassTypeSymbol(
+                        sema.types.makeNonNullable(firstArgType), sema: sema
+                    ) {
+                        interner.resolve(argumentSymbol.name) == "IntRange"
+                    } else {
+                        sema.bindings.isRangeExpr(firstArgExpr) && firstArgType == sema.types.intType
+                    }
+                } else {
+                    sema.bindings.isRangeExpr(firstArgExpr)
+                }
+                let targetParameterName = isIntRangeArgument ? "IntRange" : "Iterable"
+                if let sliceMatch = allCandidates.first(where: { candidate in
+                    guard let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.parameterTypes.count == 1,
+                          let (_, parameterSymbol) = resolveClassTypeSymbol(
+                              sema.types.makeNonNullable(signature.parameterTypes[0]), sema: sema
+                          )
+                    else {
+                        return false
+                    }
+                    return interner.resolve(parameterSymbol.name) == targetParameterName
+                }) {
+                    return sliceMatch
+                }
+            }
             if memberName == interner.intern("addAll"),
                argCount == 1,
                let firstArgExpr = argExprs.first,

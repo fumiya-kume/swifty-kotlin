@@ -31,6 +31,11 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             sema: sema,
             interner: ctx.interner
         )
+        appendReferencedSourceBackedCpuArchitectureNominalIfNeeded(
+            module: module,
+            sema: sema,
+            interner: ctx.interner
+        )
 
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let existingFunctionSymbols = Set(module.arena.declarations.compactMap { decl -> SymbolID? in
@@ -307,6 +312,72 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             return
         }
         _ = module.arena.appendDecl(.nominalType(KIRNominalType(symbol: kVarianceSymbol)))
+    }
+
+    /// Makes the bundled Native CpuArchitecture enum available to the shared
+    /// enum synthesis pass when a consumer KIR references one of its generated
+    /// APIs or the `Platform.cpuArchitecture` property type.
+    /// Bundled source declarations are omitted from consumer KIR, but their
+    /// source-backed nominal identity is still required by enum helper bodies.
+    private func appendReferencedSourceBackedCpuArchitectureNominalIfNeeded(
+        module: KIRModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) {
+        let cpuArchitectureFQName = [
+            interner.intern("kotlin"),
+            interner.intern("native"),
+            interner.intern("CpuArchitecture"),
+        ]
+        guard let cpuArchitectureSymbol = sema.symbols.lookup(fqName: cpuArchitectureFQName),
+              let cpuArchitecture = sema.symbols.symbol(cpuArchitectureSymbol),
+              cpuArchitecture.kind == .enumClass,
+              sema.symbols.isSourceBackedSymbol(cpuArchitectureSymbol)
+        else {
+            return
+        }
+
+        var generatedMembers = Set(
+            sema.symbols.lookupAll(fqName: cpuArchitectureFQName + [interner.intern("values")])
+        )
+        if let companionSymbol = sema.symbols.companionObjectSymbol(for: cpuArchitectureSymbol),
+           let companion = sema.symbols.symbol(companionSymbol)
+        {
+            generatedMembers.formUnion(
+                sema.symbols.lookupAll(fqName: companion.fqName + [interner.intern("entries")])
+            )
+            generatedMembers.formUnion(
+                sema.symbols.lookupAll(fqName: companion.fqName + [interner.intern("valueOf")])
+            )
+        }
+        guard !generatedMembers.isEmpty else {
+            return
+        }
+
+        let isReferenced = sema.bindings.identifierSymbols.values.contains {
+            generatedMembers.contains($0)
+        } || sema.bindings.callBindings.values.contains {
+            generatedMembers.contains($0.chosenCallee)
+        } || sema.bindings.exprTypes.values.contains {
+            guard case let .classType(classType) = sema.types.kind(of: $0) else {
+                return false
+            }
+            return classType.classSymbol == cpuArchitectureSymbol
+        }
+        guard isReferenced else {
+            return
+        }
+
+        let alreadyDeclared = module.arena.declarations.contains { declaration in
+            guard case let .nominalType(nominal) = declaration else {
+                return false
+            }
+            return nominal.symbol == cpuArchitectureSymbol
+        }
+        guard !alreadyDeclared else {
+            return
+        }
+        _ = module.arena.appendDecl(.nominalType(KIRNominalType(symbol: cpuArchitectureSymbol)))
     }
 
     /// Replaces `constValue(result: r, value: .symbolRef(sym))` where `sym`

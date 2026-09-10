@@ -1,91 +1,91 @@
-symbol fq=__local_0.a kind=local vis=private flags=_ type=golden.sema.Vec
-symbol fq=__local_1.b kind=local vis=private flags=_ type=golden.sema.Vec
-symbol fq=__local_2.c kind=local vis=private flags=_ type=golden.sema.Vec
-symbol fq=__local_3.d kind=local vis=private flags=_ type=golden.sema.Vec
-symbol fq=__local_4.e kind=local vis=private flags=_ type=golden.sema.Vec
-symbol fq=__local_5.f kind=local vis=private flags=_ type=golden.sema.Vec
-symbol fq=__local_6.g kind=local vis=private flags=_ type=Int
-symbol fq=golden.sema.Vec kind=class vis=public flags=_
-symbol fq=golden.sema.Vec.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.Vec params=[Int,Int] ret=golden.sema.Vec
-symbol fq=golden.sema.Vec.<init>.$0.x0 kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Vec.<init>.$0.y0 kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Vec.get kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Vec params=[Int] ret=Int
-symbol fq=golden.sema.Vec.get.$1.index kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Vec.minus kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Vec params=[golden.sema.Vec] ret=golden.sema.Vec
-symbol fq=golden.sema.Vec.minus.$2.other kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Vec.plus kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Vec params=[golden.sema.Vec] ret=golden.sema.Vec
-symbol fq=golden.sema.Vec.plus.$3.other kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Vec.times kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Vec params=[Int] ret=golden.sema.Vec
-symbol fq=golden.sema.Vec.times.$4.scalar kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Vec.unaryMinus kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Vec params=[] ret=golden.sema.Vec
-symbol fq=golden.sema.Vec.x kind=property vis=public flags=_ type=Int
-symbol fq=golden.sema.Vec.y kind=property vis=public flags=_ type=Int
-symbol fq=golden.sema.useOperators kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.a[kind=local] kind=local vis=private flags=_ type=golden.sema.Vec
+symbol fq=__local_1.b[kind=local] kind=local vis=private flags=_ type=golden.sema.Vec
+symbol fq=__local_2.c[kind=local] kind=local vis=private flags=_ type=golden.sema.Vec
+symbol fq=__local_3.d[kind=local] kind=local vis=private flags=_ type=golden.sema.Vec
+symbol fq=__local_4.e[kind=local] kind=local vis=private flags=_ type=golden.sema.Vec
+symbol fq=__local_5.f[kind=local] kind=local vis=private flags=_ type=golden.sema.Vec
+symbol fq=__local_6.g[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=golden.sema.Vec.<init>.$0.x0[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Vec.<init>.$0.y0[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Vec.<init>[kind=ctor;recv=golden.sema.Vec;params=Int,Int] kind=constructor vis=public flags=_ sig=recv=golden.sema.Vec params=[Int,Int] ret=golden.sema.Vec
+symbol fq=golden.sema.Vec.get.$1.index[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Vec.get[kind=fun;recv=golden.sema.Vec;params=Int] kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Vec params=[Int] ret=Int
+symbol fq=golden.sema.Vec.minus.$2.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Vec.minus[kind=fun;recv=golden.sema.Vec;params=golden.sema.Vec] kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Vec params=[golden.sema.Vec] ret=golden.sema.Vec
+symbol fq=golden.sema.Vec.plus.$3.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Vec.plus[kind=fun;recv=golden.sema.Vec;params=golden.sema.Vec] kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Vec params=[golden.sema.Vec] ret=golden.sema.Vec
+symbol fq=golden.sema.Vec.times.$4.scalar[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Vec.times[kind=fun;recv=golden.sema.Vec;params=Int] kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Vec params=[Int] ret=golden.sema.Vec
+symbol fq=golden.sema.Vec.unaryMinus[kind=fun;recv=golden.sema.Vec;params=] kind=function vis=public flags=operatorFunction sig=recv=golden.sema.Vec params=[] ret=golden.sema.Vec
+symbol fq=golden.sema.Vec.x[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.Vec.y[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.Vec[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.useOperators[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file foperator_fun_all package=golden.sema
-  decl golden.sema.Vec class Vec sym=golden.sema.Vec
-  decl golden.sema.useOperators fun useOperators sym=golden.sema.useOperators
-expr e@4:18 name(x0) type=Int ref=golden.sema.Vec.<init>.$0.x0
-expr e@5:18 name(y0) type=Int ref=golden.sema.Vec.<init>.$0.y0
-expr e@7:46 name(x) type=Int ref=golden.sema.Vec.x
-expr e@7:50 name(other) type=golden.sema.Vec ref=golden.sema.Vec.plus.$3.other
-expr e@7:50#1 memberCall recv=e@7:50 callee=x args=[] type=Int ref=golden.sema.Vec.x
+  decl golden.sema.Vec[kind=class] class Vec sym=golden.sema.Vec[kind=class]
+  decl golden.sema.useOperators[kind=fun;params=] fun useOperators sym=golden.sema.useOperators[kind=fun;params=]
+expr e@4:18 name(x0) type=Int ref=golden.sema.Vec.<init>.$0.x0[kind=vparam]
+expr e@5:18 name(y0) type=Int ref=golden.sema.Vec.<init>.$0.y0[kind=vparam]
+expr e@7:46 name(x) type=Int ref=golden.sema.Vec.x[kind=prop]
+expr e@7:50 name(other) type=golden.sema.Vec ref=golden.sema.Vec.plus.$3.other[kind=vparam]
+expr e@7:50#1 memberCall recv=e@7:50 callee=x args=[] type=Int ref=golden.sema.Vec.x[kind=prop]
 expr e@7:46#1 binary(add) lhs=e@7:46 rhs=e@7:50#1 type=Int
-expr e@7:59 name(y) type=Int ref=golden.sema.Vec.y
-expr e@7:63 name(other) type=golden.sema.Vec ref=golden.sema.Vec.plus.$3.other
-expr e@7:63#1 memberCall recv=e@7:63 callee=y args=[] type=Int ref=golden.sema.Vec.y
+expr e@7:59 name(y) type=Int ref=golden.sema.Vec.y[kind=prop]
+expr e@7:63 name(other) type=golden.sema.Vec ref=golden.sema.Vec.plus.$3.other[kind=vparam]
+expr e@7:63#1 memberCall recv=e@7:63 callee=y args=[] type=Int ref=golden.sema.Vec.y[kind=prop]
 expr e@7:59#1 binary(add) lhs=e@7:59 rhs=e@7:63#1 type=Int
-expr e@7:42 call callee=e@7:42#1 args=[_:e@7:46#1,_:e@7:59#1] type=golden.sema.Vec call=golden.sema.Vec.<init>
-expr e@8:47 name(x) type=Int ref=golden.sema.Vec.x
-expr e@8:51 name(other) type=golden.sema.Vec ref=golden.sema.Vec.minus.$2.other
-expr e@8:51#1 memberCall recv=e@8:51 callee=x args=[] type=Int ref=golden.sema.Vec.x
+expr e@7:42 call callee=e@7:42#1 args=[_:e@7:46#1,_:e@7:59#1] type=golden.sema.Vec call=golden.sema.Vec.<init>[kind=ctor;recv=golden.sema.Vec;params=Int,Int]
+expr e@8:47 name(x) type=Int ref=golden.sema.Vec.x[kind=prop]
+expr e@8:51 name(other) type=golden.sema.Vec ref=golden.sema.Vec.minus.$2.other[kind=vparam]
+expr e@8:51#1 memberCall recv=e@8:51 callee=x args=[] type=Int ref=golden.sema.Vec.x[kind=prop]
 expr e@8:47#1 binary(subtract) lhs=e@8:47 rhs=e@8:51#1 type=Int
-expr e@8:60 name(y) type=Int ref=golden.sema.Vec.y
-expr e@8:64 name(other) type=golden.sema.Vec ref=golden.sema.Vec.minus.$2.other
-expr e@8:64#1 memberCall recv=e@8:64 callee=y args=[] type=Int ref=golden.sema.Vec.y
+expr e@8:60 name(y) type=Int ref=golden.sema.Vec.y[kind=prop]
+expr e@8:64 name(other) type=golden.sema.Vec ref=golden.sema.Vec.minus.$2.other[kind=vparam]
+expr e@8:64#1 memberCall recv=e@8:64 callee=y args=[] type=Int ref=golden.sema.Vec.y[kind=prop]
 expr e@8:60#1 binary(subtract) lhs=e@8:60 rhs=e@8:64#1 type=Int
-expr e@8:43 call callee=e@8:43#1 args=[_:e@8:47#1,_:e@8:60#1] type=golden.sema.Vec call=golden.sema.Vec.<init>
-expr e@9:48 name(x) type=Int ref=golden.sema.Vec.x
-expr e@9:52 name(scalar) type=Int ref=golden.sema.Vec.times.$4.scalar
+expr e@8:43 call callee=e@8:43#1 args=[_:e@8:47#1,_:e@8:60#1] type=golden.sema.Vec call=golden.sema.Vec.<init>[kind=ctor;recv=golden.sema.Vec;params=Int,Int]
+expr e@9:48 name(x) type=Int ref=golden.sema.Vec.x[kind=prop]
+expr e@9:52 name(scalar) type=Int ref=golden.sema.Vec.times.$4.scalar[kind=vparam]
 expr e@9:48#1 binary(multiply) lhs=e@9:48 rhs=e@9:52 type=Int
-expr e@9:60 name(y) type=Int ref=golden.sema.Vec.y
-expr e@9:64 name(scalar) type=Int ref=golden.sema.Vec.times.$4.scalar
+expr e@9:60 name(y) type=Int ref=golden.sema.Vec.y[kind=prop]
+expr e@9:64 name(scalar) type=Int ref=golden.sema.Vec.times.$4.scalar[kind=vparam]
 expr e@9:60#1 binary(multiply) lhs=e@9:60 rhs=e@9:64 type=Int
-expr e@9:44 call callee=e@9:44#1 args=[_:e@9:48#1,_:e@9:60#1] type=golden.sema.Vec call=golden.sema.Vec.<init>
-expr e@10:43 name(x) type=Int ref=golden.sema.Vec.x
+expr e@9:44 call callee=e@9:44#1 args=[_:e@9:48#1,_:e@9:60#1] type=golden.sema.Vec call=golden.sema.Vec.<init>[kind=ctor;recv=golden.sema.Vec;params=Int,Int]
+expr e@10:43 name(x) type=Int ref=golden.sema.Vec.x[kind=prop]
 expr e@10:42 unary(unaryMinus) operand=e@10:43 type=Int
-expr e@10:47 name(y) type=Int ref=golden.sema.Vec.y
+expr e@10:47 name(y) type=Int ref=golden.sema.Vec.y[kind=prop]
 expr e@10:46 unary(unaryMinus) operand=e@10:47 type=Int
-expr e@10:38 call callee=e@10:38#1 args=[_:e@10:42,_:e@10:46] type=golden.sema.Vec call=golden.sema.Vec.<init>
-expr e@11:45 name(index) type=Int ref=golden.sema.Vec.get.$1.index
+expr e@10:38 call callee=e@10:38#1 args=[_:e@10:42,_:e@10:46] type=golden.sema.Vec call=golden.sema.Vec.<init>[kind=ctor;recv=golden.sema.Vec;params=Int,Int]
+expr e@11:45 name(index) type=Int ref=golden.sema.Vec.get.$1.index[kind=vparam]
 expr e@11:54 int(0) type=Int
 expr e@11:45#1 binary(equal) lhs=e@11:45 rhs=e@11:54 type=Boolean
-expr e@11:57 name(x) type=Int ref=golden.sema.Vec.x
-expr e@11:64 name(y) type=Int ref=golden.sema.Vec.y
+expr e@11:57 name(x) type=Int ref=golden.sema.Vec.x[kind=prop]
+expr e@11:64 name(y) type=Int ref=golden.sema.Vec.y[kind=prop]
 expr e@11:41 if cond=e@11:45#1 then=e@11:57 else=e@11:64 type=Int
 expr e@15:17 int(1) type=Int
 expr e@15:20 int(2) type=Int
-expr e@15:13 call callee=e@15:13#1 args=[_:e@15:17,_:e@15:20] type=golden.sema.Vec call=golden.sema.Vec.<init>
-expr e@15:5 localDecl a mutable=0 type=_ init=e@15:13 type=Unit ref=__local_0.a
+expr e@15:13 call callee=e@15:13#1 args=[_:e@15:17,_:e@15:20] type=golden.sema.Vec call=golden.sema.Vec.<init>[kind=ctor;recv=golden.sema.Vec;params=Int,Int]
+expr e@15:5 localDecl a mutable=0 type=_ init=e@15:13 type=Unit ref=__local_0.a[kind=local]
 expr e@16:17 int(3) type=Int
 expr e@16:20 int(4) type=Int
-expr e@16:13 call callee=e@16:13#1 args=[_:e@16:17,_:e@16:20] type=golden.sema.Vec call=golden.sema.Vec.<init>
-expr e@16:5 localDecl b mutable=0 type=_ init=e@16:13 type=Unit ref=__local_1.b
-expr e@17:13 name(a) type=golden.sema.Vec ref=__local_0.a
-expr e@17:17 name(b) type=golden.sema.Vec ref=__local_1.b
-expr e@17:13#1 binary(add) lhs=e@17:13 rhs=e@17:17 type=golden.sema.Vec call=golden.sema.Vec.plus
-expr e@17:5 localDecl c mutable=0 type=_ init=e@17:13#1 type=Unit ref=__local_2.c
-expr e@18:13 name(a) type=golden.sema.Vec ref=__local_0.a
-expr e@18:17 name(b) type=golden.sema.Vec ref=__local_1.b
-expr e@18:13#1 binary(subtract) lhs=e@18:13 rhs=e@18:17 type=golden.sema.Vec call=golden.sema.Vec.minus
-expr e@18:5 localDecl d mutable=0 type=_ init=e@18:13#1 type=Unit ref=__local_3.d
-expr e@19:13 name(a) type=golden.sema.Vec ref=__local_0.a
+expr e@16:13 call callee=e@16:13#1 args=[_:e@16:17,_:e@16:20] type=golden.sema.Vec call=golden.sema.Vec.<init>[kind=ctor;recv=golden.sema.Vec;params=Int,Int]
+expr e@16:5 localDecl b mutable=0 type=_ init=e@16:13 type=Unit ref=__local_1.b[kind=local]
+expr e@17:13 name(a) type=golden.sema.Vec ref=__local_0.a[kind=local]
+expr e@17:17 name(b) type=golden.sema.Vec ref=__local_1.b[kind=local]
+expr e@17:13#1 binary(add) lhs=e@17:13 rhs=e@17:17 type=golden.sema.Vec call=golden.sema.Vec.plus[kind=fun;recv=golden.sema.Vec;params=golden.sema.Vec]
+expr e@17:5 localDecl c mutable=0 type=_ init=e@17:13#1 type=Unit ref=__local_2.c[kind=local]
+expr e@18:13 name(a) type=golden.sema.Vec ref=__local_0.a[kind=local]
+expr e@18:17 name(b) type=golden.sema.Vec ref=__local_1.b[kind=local]
+expr e@18:13#1 binary(subtract) lhs=e@18:13 rhs=e@18:17 type=golden.sema.Vec call=golden.sema.Vec.minus[kind=fun;recv=golden.sema.Vec;params=golden.sema.Vec]
+expr e@18:5 localDecl d mutable=0 type=_ init=e@18:13#1 type=Unit ref=__local_3.d[kind=local]
+expr e@19:13 name(a) type=golden.sema.Vec ref=__local_0.a[kind=local]
 expr e@19:17 int(2) type=Int
-expr e@19:13#1 binary(multiply) lhs=e@19:13 rhs=e@19:17 type=golden.sema.Vec call=golden.sema.Vec.times
-expr e@19:5 localDecl e mutable=0 type=_ init=e@19:13#1 type=Unit ref=__local_4.e
-expr e@20:14 name(a) type=golden.sema.Vec ref=__local_0.a
-expr e@20:13 unary(unaryMinus) operand=e@20:14 type=golden.sema.Vec call=golden.sema.Vec.unaryMinus
-expr e@20:5 localDecl f mutable=0 type=_ init=e@20:13 type=Unit ref=__local_5.f
-expr e@21:13 name(a) type=golden.sema.Vec ref=__local_0.a
+expr e@19:13#1 binary(multiply) lhs=e@19:13 rhs=e@19:17 type=golden.sema.Vec call=golden.sema.Vec.times[kind=fun;recv=golden.sema.Vec;params=Int]
+expr e@19:5 localDecl e mutable=0 type=_ init=e@19:13#1 type=Unit ref=__local_4.e[kind=local]
+expr e@20:14 name(a) type=golden.sema.Vec ref=__local_0.a[kind=local]
+expr e@20:13 unary(unaryMinus) operand=e@20:14 type=golden.sema.Vec call=golden.sema.Vec.unaryMinus[kind=fun;recv=golden.sema.Vec;params=]
+expr e@20:5 localDecl f mutable=0 type=_ init=e@20:13 type=Unit ref=__local_5.f[kind=local]
+expr e@21:13 name(a) type=golden.sema.Vec ref=__local_0.a[kind=local]
 expr e@21:15 int(0) type=Int
-expr e@21:13#1 indexedAccess receiver=e@21:13 indices=[e@21:15] type=Int call=golden.sema.Vec.get
-expr e@21:5 localDecl g mutable=0 type=_ init=e@21:13#1 type=Unit ref=__local_6.g
+expr e@21:13#1 indexedAccess receiver=e@21:13 indices=[e@21:15] type=Int call=golden.sema.Vec.get[kind=fun;recv=golden.sema.Vec;params=Int]
+expr e@21:5 localDecl g mutable=0 type=_ init=e@21:13#1 type=Unit ref=__local_6.g[kind=local]

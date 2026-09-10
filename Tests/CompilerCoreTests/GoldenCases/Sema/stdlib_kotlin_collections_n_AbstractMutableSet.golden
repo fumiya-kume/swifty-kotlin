@@ -1,18 +1,18 @@
-symbol fq=ProbeMutableSet kind=class vis=public flags=abstractType|openType
-symbol fq=acceptMutableSet kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableSet<Int>] ret=Unit
-symbol fq=acceptMutableSet.$0.values kind=valueParameter vis=private flags=_
-symbol fq=acceptSet kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int>] ret=Unit
-symbol fq=acceptSet.$1.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
-symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[ProbeMutableSet] ret=Unit
-symbol fq=probe.$2.values kind=valueParameter vis=private flags=_
+symbol fq=ProbeMutableSet[kind=class] kind=class vis=public flags=abstractType|openType
+symbol fq=acceptMutableSet.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=acceptMutableSet[kind=fun;params=kotlin.collections.MutableSet<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableSet<Int>] ret=Unit
+symbol fq=acceptSet.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=acceptSet[kind=fun;params=kotlin.collections.Set<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int>] ret=Unit
+symbol fq=kotlin.collections.MutableSet[kind=iface;gen=1] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=probe.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe[kind=fun;params=ProbeMutableSet] kind=function vis=public flags=_ sig=recv=_ params=[ProbeMutableSet] ret=Unit
 file fstdlib_kotlin_collections_n_AbstractMutableSet package=_
-  decl ProbeMutableSet class ProbeMutableSet sym=ProbeMutableSet
-  decl acceptSet fun acceptSet sym=acceptSet
-  decl acceptMutableSet fun acceptMutableSet sym=acceptMutableSet
-  decl probe fun probe sym=probe
-expr e@11:15 name(values) type=ProbeMutableSet ref=probe.$2.values
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:15] type=Unit call=acceptSet
-expr e@12:22 name(values) type=ProbeMutableSet ref=probe.$2.values
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:22] type=Unit call=acceptMutableSet
+  decl ProbeMutableSet[kind=class] class ProbeMutableSet sym=ProbeMutableSet[kind=class]
+  decl acceptSet[kind=fun;params=kotlin.collections.Set<Int>] fun acceptSet sym=acceptSet[kind=fun;params=kotlin.collections.Set<Int>]
+  decl acceptMutableSet[kind=fun;params=kotlin.collections.MutableSet<Int>] fun acceptMutableSet sym=acceptMutableSet[kind=fun;params=kotlin.collections.MutableSet<Int>]
+  decl probe[kind=fun;params=ProbeMutableSet] fun probe sym=probe[kind=fun;params=ProbeMutableSet]
+expr e@11:15 name(values) type=ProbeMutableSet ref=probe.$2.values[kind=vparam]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:15] type=Unit call=acceptSet[kind=fun;params=kotlin.collections.Set<Int>]
+expr e@12:22 name(values) type=ProbeMutableSet ref=probe.$2.values[kind=vparam]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:22] type=Unit call=acceptMutableSet[kind=fun;params=kotlin.collections.MutableSet<Int>]

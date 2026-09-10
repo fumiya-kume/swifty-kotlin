@@ -1,9 +1,9 @@
-symbol fq=golden.sema.MyUnsignedMarker kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.caller kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.experimentalUnsigned kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.MyUnsignedMarker[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.caller[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.experimentalUnsigned[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_n_ExperimentalUnsignedTypes package=golden.sema
-  decl golden.sema.MyUnsignedMarker class MyUnsignedMarker sym=golden.sema.MyUnsignedMarker
-  decl golden.sema.experimentalUnsigned fun experimentalUnsigned sym=golden.sema.experimentalUnsigned
-  decl golden.sema.caller fun caller sym=golden.sema.caller
+  decl golden.sema.MyUnsignedMarker[kind=anno] class MyUnsignedMarker sym=golden.sema.MyUnsignedMarker[kind=anno]
+  decl golden.sema.experimentalUnsigned[kind=fun;params=] fun experimentalUnsigned sym=golden.sema.experimentalUnsigned[kind=fun;params=]
+  decl golden.sema.caller[kind=fun;params=] fun caller sym=golden.sema.caller[kind=fun;params=]
 expr e@7:35 int(42) type=Int
-expr e@10:21 call callee=e@10:21#1 args=[] type=Int call=golden.sema.experimentalUnsigned
+expr e@10:21 call callee=e@10:21#1 args=[] type=Int call=golden.sema.experimentalUnsigned[kind=fun;params=]

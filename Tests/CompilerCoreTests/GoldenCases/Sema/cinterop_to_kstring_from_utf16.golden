@@ -1,10 +1,10 @@
-symbol fq=golden.sema.decodeUtf16 kind=function vis=public flags=_ sig=recv=_ params=[kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar>] ret=String
-symbol fq=golden.sema.decodeUtf16.$0.ptr kind=valueParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.CPointer kind=class vis=public flags=synthetic type=kotlinx.cinterop.CPointer<kotlinx.cinterop.CPointer.T>
-symbol fq=kotlinx.cinterop.CPointer.T kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.UShortVar kind=class vis=public flags=synthetic type=kotlinx.cinterop.UShortVar
-symbol fq=kotlinx.cinterop.toKStringFromUtf16 kind=function vis=public flags=synthetic sig=recv=kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar> params=[] ret=String
+symbol fq=golden.sema.decodeUtf16.$0.ptr[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.decodeUtf16[kind=fun;params=kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar>] kind=function vis=public flags=_ sig=recv=_ params=[kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar>] ret=String
+symbol fq=kotlinx.cinterop.CPointer.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlinx.cinterop.CPointer[kind=class;gen=1] kind=class vis=public flags=synthetic type=kotlinx.cinterop.CPointer<kotlinx.cinterop.CPointer.T>
+symbol fq=kotlinx.cinterop.UShortVar[kind=class] kind=class vis=public flags=synthetic type=kotlinx.cinterop.UShortVar
+symbol fq=kotlinx.cinterop.toKStringFromUtf16[kind=fun;recv=kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar>;params=] kind=function vis=public flags=synthetic sig=recv=kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar> params=[] ret=String
 file fcinterop_to_kstring_from_utf16 package=golden.sema
-  decl golden.sema.decodeUtf16 fun decodeUtf16 sym=golden.sema.decodeUtf16
-expr e@9:53 name(ptr) type=kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar> ref=golden.sema.decodeUtf16.$0.ptr
-expr e@9:53#1 memberCall recv=e@9:53 callee=toKStringFromUtf16 args=[] type=String call=kotlinx.cinterop.toKStringFromUtf16
+  decl golden.sema.decodeUtf16[kind=fun;params=kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar>] fun decodeUtf16 sym=golden.sema.decodeUtf16[kind=fun;params=kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar>]
+expr e@9:53 name(ptr) type=kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar> ref=golden.sema.decodeUtf16.$0.ptr[kind=vparam]
+expr e@9:53#1 memberCall recv=e@9:53 callee=toKStringFromUtf16 args=[] type=String call=kotlinx.cinterop.toKStringFromUtf16[kind=fun;recv=kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar>;params=]

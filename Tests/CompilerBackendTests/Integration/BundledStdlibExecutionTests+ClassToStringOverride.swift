@@ -65,4 +65,28 @@ extension BundledStdlibExecutionTests {
             expectedOutput: "poly=Dog\nDog\n"
         )
     }
+
+    @Test
+    func testInheritedAndAnyErasedClassToStringUseOverrides() throws {
+        try compileAndRunKotlin(
+            """
+            open class Base {
+                override fun toString(): String = "Base!"
+            }
+            class Derived : Base()
+            class Foo(val x: Int) {
+                override fun toString(): String = "Foo(" + x + ")"
+            }
+            fun main() {
+                val derived: Derived = Derived()
+                println("derived=" + derived)
+                println(derived)
+                val erased: Any = Foo(1)
+                println("any=" + erased)
+                println("method=" + erased.toString())
+            }
+            """,
+            expectedOutput: "derived=Base!\nBase!\nany=Foo(1)\nmethod=Foo(1)\n"
+        )
+    }
 }

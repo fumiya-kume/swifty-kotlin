@@ -118,36 +118,46 @@ struct GoldenHarnessPersistenceTests {
     }
 
     @Test
-    func overloadSortKeysUseNumericGenericOwnerIDs() {
-        let lowerOwner = "kotlin.sequences.Sequence<kotlin.collections.any.$9999.T>|"
-        let higherOwner = """
-        kotlin.sequences.Sequence<kotlin.collections.any.$10001.T>|\
-        (kotlin.collections.any.$10001.T) -> Boolean
-        """
+    func semaDumpIsByteIdenticalWhenUnreferencedSameFQNameSymbolsAppear() throws {
+        // RF-GOLDEN-010: symbol references are keyed by declaration meaning, so
+        // injecting an unreferenced bundled declaration — which changes symbol
+        // counts, registration order, and raw SymbolIDs — must not alter any
+        // rendered reference. This replaces the old `#N` ordinal ordering test:
+        // the contract is now "no renumbering at all", not "renumber in a
+        // numerically sorted order".
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        #expect(
-            StableRenderContext.overloadSortKeyPrecedes(
-                lowerOwner,
-                lhsSymbolID: 9_999,
-                higherOwner,
-                rhsSymbolID: 10_001
-            )
+        let sourceURL = tempDir.appendingPathComponent("sample.kt")
+        try """
+        package sample
+
+        fun main() {
+            val s = listOf(1)
+            s.isEmpty()
+        }
+        """.write(to: sourceURL, atomically: false, encoding: .utf8)
+
+        let baseline = try GoldenHarnessDump.dumpSema(sourcePath: sourceURL.path)
+        let injected = try GoldenHarnessDump.dumpSema(
+            sourcePath: sourceURL.path,
+            preInjectedFiles: [(
+                "__bundled_extra_candidates.kt",
+                Data("package sample\nfun unrelatedOverload(x: Int): Int = x\n".utf8)
+            )]
         )
+
+        // The persisted `.golden` is `stableOutputForPersistence` output, so
+        // compare at that level: injected bundled declarations legitimately
+        // shift raw `__local_N` scope ordinals (a pre-existing mechanism this
+        // task does not own), while `call=`/`ref=`/`fq=` semantic keys must be
+        // identical.
+        let normalize = { GoldenHarness.normalizedForComparison(suiteName: "Sema", output: $0) }
         #expect(
-            !StableRenderContext.overloadSortKeyPrecedes(
-                higherOwner,
-                lhsSymbolID: 10_001,
-                lowerOwner,
-                rhsSymbolID: 9_999
-            )
-        )
-        #expect(
-            StableRenderContext.overloadSortKeyPrecedes(
-                lowerOwner,
-                lhsSymbolID: 32,
-                lowerOwner,
-                rhsSymbolID: 33
-            )
+            normalize(baseline) == normalize(injected),
+            Comment(rawValue: "Sema dump changed after injecting an unreferenced bundled declaration")
         )
     }
 
