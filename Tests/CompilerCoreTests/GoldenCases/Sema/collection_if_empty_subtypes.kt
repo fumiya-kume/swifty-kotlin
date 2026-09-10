@@ -2,7 +2,7 @@
 // Collection and Map subtypes — an AbstractCollection subclass and a
 // Map-delegation class. Map-delegated members are reached through the Map
 // interface parameter because direct member lookup on the delegating class
-// misses them (BUG-239). size-override based isEmpty results and fallback
+// misses them (BUG-240). size-override based isEmpty results and fallback
 // call counts are executed by the same-name diff case.
 class CustomCollection : AbstractCollection<String?>() {
     override val size: Int get() = 1
