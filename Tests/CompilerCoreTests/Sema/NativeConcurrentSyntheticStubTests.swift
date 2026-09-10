@@ -549,6 +549,59 @@ struct NativeConcurrentSyntheticStubTests {
         ), "Expected FreezingException constructor to resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))")
     }
 
+    // MARK: - AtomicLong constructor
+
+    @Test
+    func testAtomicLongConstructorIsRegistered() throws {
+        let (sema, interner) = try sharedSema()
+        let atomicLongFQName = ["kotlin", "native", "concurrent", "AtomicLong"]
+            .map { interner.intern($0) }
+        let atomicLong = try #require(sema.symbols.lookup(fqName: atomicLongFQName))
+        let atomicLongType = sema.types.make(.classType(ClassType(
+            classSymbol: atomicLong,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        #expect(sema.symbols.symbol(atomicLong)?.kind == .class)
+        #expect(sema.symbols.symbol(atomicLong)?.flags.contains(.synthetic) == false)
+        #expect(sema.symbols.sourceFileID(for: atomicLong) != nil)
+
+        let constructors = sema.symbols.lookupAll(
+            fqName: atomicLongFQName + [interner.intern("<init>")]
+        )
+        let constructor = try #require(constructors.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.parameterTypes == [sema.types.longType]
+                && signature.returnType == atomicLongType
+        })
+        let signature = try #require(sema.symbols.functionSignature(for: constructor))
+
+        #expect(sema.symbols.symbol(constructor)?.kind == .constructor)
+        #expect(signature.valueParameterHasDefaultValues == [true])
+        #expect(sema.symbols.externalLinkName(for: constructor) == "kk_atomic_long_create")
+    }
+
+    @Test
+    func testAtomicLongConstructorResolvesInSource() {
+        let source = """
+        @file:Suppress("DEPRECATION_ERROR")
+        import kotlin.native.concurrent.AtomicLong
+
+        fun probe(): AtomicLong {
+            AtomicLong()
+            return AtomicLong(42L)
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        #expect(!(
+            ctx.diagnostics.hasError
+        ), "Expected AtomicLong constructors to resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))")
+    }
+
     // MARK: - InvalidMutabilityException class
 
     @Test
@@ -833,9 +886,41 @@ struct NativeConcurrentSyntheticStubTests {
             "Expected kotlin.native.concurrent.Future to be registered"
         )
         #expect(sema.symbols.symbol(symbol)?.kind == .class)
+        #expect(sema.symbols.symbol(symbol)?.flags.contains(.valueType) == true)
+        #expect(sema.symbols.symbol(symbol)?.flags.contains(.synthetic) == false)
+        #expect(sema.symbols.isSourceBackedSymbol(symbol))
 
         let typeParams = sema.types.nominalTypeParameterSymbols(for: symbol)
         #expect(typeParams.count == 1)
+    }
+
+    @Test
+    func testFutureScalarAndObjectMembersAreSourceBacked() throws {
+        let (sema, interner) = try sharedSema()
+
+        let futureFQName = ["kotlin", "native", "concurrent", "Future"].map { interner.intern($0) }
+        let idSymbol = try #require(
+            sema.symbols.lookup(fqName: futureFQName + [interner.intern("id")]),
+            "Expected Future.id property"
+        )
+        #expect(sema.symbols.propertyType(for: idSymbol) == sema.types.intType)
+        #expect(sema.symbols.externalLinkName(for: idSymbol) == nil)
+        #expect(sema.symbols.isSourceBackedSymbol(idSymbol))
+
+        let stateSymbol = try #require(
+            sema.symbols.lookup(fqName: futureFQName + [interner.intern("state")]),
+            "Expected Future.state property"
+        )
+        #expect(sema.symbols.propertyType(for: stateSymbol) != nil)
+        #expect(sema.symbols.externalLinkName(for: stateSymbol) == nil)
+        #expect(sema.symbols.isSourceBackedSymbol(stateSymbol))
+
+        for name in ["equals", "hashCode", "toString"] {
+            let methods = sema.symbols.lookupAll(fqName: futureFQName + [interner.intern(name)])
+            let method = try #require(methods.first, "Expected Future.(name) method")
+            #expect(sema.symbols.externalLinkName(for: method) == nil)
+            #expect(sema.symbols.isSourceBackedSymbol(method))
+        }
     }
 
     @Test
@@ -848,7 +933,8 @@ struct NativeConcurrentSyntheticStubTests {
             sema.symbols.lookup(fqName: propFQName),
             "Expected Future.result property"
         )
-        #expect(sema.symbols.externalLinkName(for: propSymbol) == "kk_future_result")
+        #expect(sema.symbols.externalLinkName(for: propSymbol) == nil)
+        #expect(sema.symbols.isSourceBackedSymbol(propSymbol))
     }
 
     @Test
@@ -862,32 +948,30 @@ struct NativeConcurrentSyntheticStubTests {
 
         let method = try #require(methods.first)
         let sig = try #require(sema.symbols.functionSignature(for: method))
-        #expect(sig.parameterTypes == [])
-        #expect(sema.symbols.externalLinkName(for: method) == "kk_future_consume")
+        #expect(sig.parameterTypes.count == 1)
+        #expect(sig.typeParameterSymbols.count == 2)
+        #expect(sema.symbols.externalLinkName(for: method) == nil)
+        #expect(sema.symbols.isSourceBackedSymbol(method))
     }
 
     @Test
-    func testFutureGetStateMethodIsRegistered() throws {
+    func testFutureGetStateBridgeIsRegistered() throws {
         let (sema, interner) = try sharedSema()
 
         let futureFQName = ["kotlin", "native", "concurrent", "Future"].map { interner.intern($0) }
         let methodFQName = futureFQName + [interner.intern("getState")]
         let methods = sema.symbols.lookupAll(fqName: methodFQName)
-        #expect(!methods.isEmpty, "Expected Future.getState to be registered")
+        #expect(methods.isEmpty, "Future.getState is an internal bridge, not a public API")
 
-        let method = try #require(methods.first)
-        let sig = try #require(sema.symbols.functionSignature(for: method))
-        #expect(sig.parameterTypes == [])
+        let bridgeFQName = [
+            "kotlin", "native", "concurrent", "__kkFutureGetState"
+        ].map { interner.intern($0) }
+        let bridge = try #require(sema.symbols.lookup(fqName: bridgeFQName))
+        let sig = try #require(sema.symbols.functionSignature(for: bridge))
+        #expect(sig.parameterTypes == [sema.types.intType])
 
-        let futureStateFQName = ["kotlin", "native", "concurrent", "FutureState"].map { interner.intern($0) }
-        let futureStateSymbol = try #require(sema.symbols.lookup(fqName: futureStateFQName))
-        let futureStateType = sema.types.make(.classType(ClassType(
-            classSymbol: futureStateSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        #expect(sig.returnType == futureStateType)
-        #expect(sema.symbols.externalLinkName(for: method) == "kk_future_getState")
+        #expect(sig.returnType == sema.types.intType)
+        #expect(sema.symbols.externalLinkName(for: bridge) == "kk_future_getState")
     }
     // MARK: - @SharedImmutable annotation
 
@@ -901,20 +985,42 @@ struct NativeConcurrentSyntheticStubTests {
             "Expected kotlin.native.concurrent.SharedImmutable annotation to be registered"
         )
         #expect(sema.symbols.symbol(symbol)?.kind == .annotationClass)
+        #expect(
+            sema.symbols.symbol(symbol)?.flags.contains(.synthetic) == false,
+            "SharedImmutable should be provided by bundled Kotlin source"
+        )
 
         let annotations = sema.symbols.annotations(for: symbol)
-        let targetAnnotation = annotations.first { $0.annotationFQName == "kotlin.annotation.Target" }
+        let targetAnnotation = annotations.first { $0.annotationFQName == "Target" }
         #expect(targetAnnotation != nil, "Expected @Target annotation on @SharedImmutable")
         let targetArguments = targetAnnotation?.arguments ?? []
         #expect(
             Set(targetArguments) == ["AnnotationTarget.PROPERTY"],
             "Expected only PROPERTY target for @SharedImmutable"
         )
+
+        #expect(annotations.contains { $0.annotationFQName == "Deprecated" })
+        #expect(annotations.contains {
+            $0.annotationFQName == "DeprecatedSinceKotlin"
+                && $0.arguments.contains { $0.contains("errorSince") && $0.contains("2.1") }
+        })
+
+        let constructor = try #require(
+            sema.symbols.lookupAll(fqName: fqName + [interner.intern("<init>")]).first {
+                sema.symbols.symbol($0)?.kind == .constructor
+            },
+            "Expected SharedImmutable to expose a public implicit no-arg constructor"
+        )
+        let signature = try #require(sema.symbols.functionSignature(for: constructor))
+        #expect(signature.parameterTypes.isEmpty)
+        #expect(sema.symbols.externalLinkName(for: constructor) == nil)
     }
 
     @Test
     func testSharedImmutableAnnotationResolvesOnProperty() {
         let source = """
+        @file:Suppress("DEPRECATION_ERROR")
+
         import kotlin.native.concurrent.SharedImmutable
 
         @SharedImmutable
@@ -932,6 +1038,8 @@ struct NativeConcurrentSyntheticStubTests {
         // @SharedImmutable is only valid on PROPERTY, not on functions.
         // The AnnotationTargetValidation phase should emit KSWIFTK-SEMA-ANNOTATION-TARGET.
         let source = """
+        @file:Suppress("DEPRECATION_ERROR")
+
         import kotlin.native.concurrent.SharedImmutable
 
         @SharedImmutable
@@ -951,6 +1059,8 @@ struct NativeConcurrentSyntheticStubTests {
     @Test
     func testSharedImmutableFieldUseSiteTargetIsRejected() {
         let source = """
+        @file:Suppress("DEPRECATION_ERROR")
+
         import kotlin.native.concurrent.SharedImmutable
 
         class Box {

@@ -2,7 +2,7 @@ symbol fq=golden.sema.probe kind=function vis=public flags=_ sig=recv=_ params=[
 symbol fq=golden.sema.probe.$0.throwable kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Throwable kind=class vis=public flags=openType
 symbol fq=kotlin.Throwable.getStackTraceAddresses kind=function vis=public flags=synthetic sig=recv=kotlin.Throwable params=[] ret=kotlin.collections.List<Long>
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 file fstdlib_kotlin_native_Throwable_n package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)]
   decl golden.sema.probe fun probe sym=golden.sema.probe
 expr e@7:47 name(throwable) type=kotlin.Throwable ref=golden.sema.probe.$0.throwable

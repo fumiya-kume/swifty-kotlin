@@ -1,7 +1,7 @@
 symbol fq=golden.sema.useBuildList kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
 symbol fq=golden.sema.useBuildMap kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.Map<String, Int>
 symbol fq=golden.sema.useBuildSet kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.Set<Int>
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_

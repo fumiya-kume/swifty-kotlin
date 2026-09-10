@@ -4,6 +4,15 @@ import kotlin.internal.KsSymbolName
 
 // KSP-443: Sequence 変換・集合演算を Kotlin 化
 
+public inline fun <T> Sequence<T>.forEach(action: (T) -> Unit): Unit {
+    for (element in this) action(element)
+}
+
+public inline fun <T> Sequence<T>.forEachIndexed(action: (index: Int, T) -> Unit): Unit {
+    var index = 0
+    for (item in this) action(checkIndexOverflow(index++), item)
+}
+
 public inline fun <T> Sequence<T>.find(predicate: (T) -> Boolean): T? {
     val iterator = this.iterator()
     while (iterator.hasNext()) {
@@ -21,6 +30,25 @@ public inline fun <T> Sequence<T>.findLast(predicate: (T) -> Boolean): T? {
         if (predicate(element)) last = element
     }
     return last
+}
+
+// KSP-1346: Sequence fold-family APIs are source-backed with the Kotlin 2.3.10
+// terminal traversal contract.
+public inline fun <T, R> Sequence<T>.fold(initial: R, operation: (acc: R, T) -> R): R {
+    var accumulator = initial
+    for (element in this) accumulator = operation(accumulator, element)
+    return accumulator
+}
+
+public inline fun <T, R> Sequence<T>.foldIndexed(initial: R, operation: (index: Int, acc: R, T) -> R): R {
+    var index = 0
+    var accumulator = initial
+    for (element in this) {
+        if (index < 0) throw ArithmeticException("Index overflow has happened.")
+        accumulator = operation(index, accumulator, element)
+        index += 1
+    }
+    return accumulator
 }
 
 @KsSymbolName("kk_sequence_to_list")

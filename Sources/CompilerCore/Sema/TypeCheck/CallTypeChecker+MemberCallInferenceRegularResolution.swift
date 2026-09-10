@@ -46,6 +46,15 @@ extension CallTypeChecker {
         // Skip lambda literals and callable refs so that their first inference
         // happens inside prepareCallArguments with a contextual expected type,
         // preventing a stale no-expectedType binding from poisoning the cache.
+        let isULongRangeLiteralContainsCall = interner.resolve(calleeName) == "contains"
+            && args.count == 1
+            && MemberRuntimeDispatch.rangeReceiverKind(
+                receiverExpr: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner
+            ) == .ulongRange
+            && driver.callChecker.isContextualizableUnsignedIntegerLiteral(args[0].expr, ast: ast)
         let argTypes = args.map { arg -> TypeID in
             if let expr = ast.arena.expr(arg.expr) {
                 switch expr {
@@ -54,6 +63,14 @@ extension CallTypeChecker {
                 default:
                     break
                 }
+            }
+            if isULongRangeLiteralContainsCall {
+                return driver.inferExpr(
+                    arg.expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: sema.types.ulongType
+                )
             }
             let inferredType = sema.bindings.exprType(for: arg.expr)
                 ?? driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
@@ -796,6 +813,47 @@ extension CallTypeChecker {
                     interner: interner
                 )
             } ?? []
+            // Source-backed range overloads are recovered from the bundled
+            // declaration index because their extensions are not generally
+            // visible through member lookup. A same-named extension in the
+            // active Kotlin scope still has normal overload priority, though;
+            // keep it ahead of the bundled candidates so a user declaration
+            // is not silently replaced by the stdlib fallback.
+            let scopedRangeUserCandidates: [SymbolID] = if interner.resolve(calleeName) == "contains",
+                                                               let rangeSourceMemberLookupType,
+                                                               MemberRuntimeDispatch.rangeReceiverKind(
+                                                                   receiverExpr: receiverID,
+                                                                   receiverType: lookupReceiverType,
+                                                                   sema: sema,
+                                                                   interner: interner
+                                                               ) == .intRange
+            {
+                collectScopedRangeUserExtensionCandidates(
+                    named: calleeName,
+                    receiverType: rangeSourceMemberLookupType,
+                    ctx: ctx,
+                    sema: sema,
+                    interner: interner
+                ).filter { candidate in
+                    guard isIntRangeCrossTypeContainsCandidate(candidate, sema: sema),
+                          args.count == 1,
+                          argTypes.count == 1,
+                          let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.parameterTypes[0] == argTypes[0]
+                    else {
+                        return false
+                    }
+                    guard let label = args[0].label else { return true }
+                    guard signature.valueParameterSymbols.count == 1,
+                          let parameter = sema.symbols.symbol(signature.valueParameterSymbols[0])
+                    else {
+                        return false
+                    }
+                    return parameter.name == label
+                }
+            } else {
+                []
+            }
             let atomicSourceCandidates: [SymbolID] = if rangeSourceCandidates.isEmpty,
                 isBundledAtomicSourceMember(calleeName, interner: interner),
                 isBundledAtomicSourceReceiver(memberLookupType, sema: sema, interner: interner)
@@ -810,6 +868,12 @@ extension CallTypeChecker {
                 []
             }
             let primitiveArraySourceCandidates = collectPrimitiveArraySourceHOFs(
+                named: calleeName,
+                receiverType: memberLookupType,
+                sema: sema,
+                interner: interner
+            )
+            let arrayConversionSourceCandidates = collectArraySourceConversionCandidates(
                 named: calleeName,
                 receiverType: memberLookupType,
                 sema: sema,
@@ -876,13 +940,17 @@ extension CallTypeChecker {
                 }
             }
             let memberCandidates: [SymbolID]
-            if !mutableMapPutAllSourceCandidates.isEmpty {
+            if !arrayConversionSourceCandidates.isEmpty {
+                memberCandidates = arrayConversionSourceCandidates
+            } else if !mutableMapPutAllSourceCandidates.isEmpty {
                 memberCandidates = mutableMapPutAllSourceCandidates
             } else if !primitiveArraySourceCandidates.isEmpty {
                 // Primitive-array HOFs are bundled Kotlin extensions. Prefer the
                 // exact source receiver over synthetic member stubs, including
                 // joinToString(transform), whose legacy stub shares the same name.
                 memberCandidates = primitiveArraySourceCandidates
+            } else if !scopedRangeUserCandidates.isEmpty {
+                memberCandidates = scopedRangeUserCandidates
             } else if !rangeSourceCandidates.isEmpty {
                 memberCandidates = rangeSourceCandidates
             } else if !atomicSourceCandidates.isEmpty {
@@ -946,7 +1014,15 @@ extension CallTypeChecker {
                         sema: sema,
                         interner: interner
                     )
-                    if !primitiveArraySourceCandidates.isEmpty {
+                    let arrayConversionSourceCandidates = collectArraySourceConversionCandidates(
+                        named: calleeName,
+                        receiverType: nonNullReceiverForScope,
+                        sema: sema,
+                        interner: interner
+                    )
+                    if !arrayConversionSourceCandidates.isEmpty {
+                        scopeCandidates = arrayConversionSourceCandidates
+                    } else if !primitiveArraySourceCandidates.isEmpty {
                         scopeCandidates = primitiveArraySourceCandidates
                     }
                     // Extension functions are excluded from scope by the scope
@@ -1413,11 +1489,15 @@ extension CallTypeChecker {
         // STDLIB-pipeline §5 / KSP-441: Source-backed Sequence transforms
         // (map, filter, etc.) must bind to the real Kotlin declaration so the
         // object-expression pipeline runs instead of a `kk_*` runtime shortcut.
-        let sourceBackedCollectionMemberNames: Set<String> = ["take", "drop", "chunked", "windowed", "asSequence", "constrainOnce", "orEmpty", "distinct", "flatten", "filterNotNull", "withIndex", "toList", "toMutableList", "toSet", "toMutableSet", "toHashSet", "toSortedSet", "toCollection", "toMap", "unzip", "union", "intersect", "subtract", "plus", "plusElement", "minus", "minusElement", "average"]
+        let sourceBackedCollectionMemberNames: Set<String> = ["take", "drop", "chunked", "windowed", "asSequence", "constrainOnce", "orEmpty", "distinct", "flatten", "filterNotNull", "withIndex", "toList", "toMutableList", "toSet", "toMutableSet", "toHashSet", "toSortedSet", "toCollection", "toMap", "unzip", "union", "intersect", "subtract", "plus", "plusElement", "minus", "minusElement", "average", "sliceArray", "reversedArray", "asList", "toTypedArray", "putAll", "remove", "clear"]
         let sourceBackedTrailingLambdaMemberNames: Set<String> = ["map", "filter", "filterNot", "mapIndexed", "mapNotNull", "filterIndexed", "onEach", "onEachIndexed", "ifEmpty", "flatMap", "flatMapIndexed", "joinTo", "joinToString", "isNotEmpty"]
         let memberNameText = interner.resolve(calleeName)
         let isMutableMapIteratorSource = memberNameText == "iterator"
             && ReceiverClassifier(sema: sema, interner: interner).isMutableMapType(memberLookupType)
+        // MutableSet inherits independent Set.iterator and MutableIterable.iterator
+        // candidates. Keep the mutable-aware collection fallback when lookup is
+        // ambiguous, while a unique source member retains normal dispatch.
+        let isUniqueIteratorSource = memberNameText == "iterator" && candidates.count == 1
         // KSP-687 resolves Array.joinToString through the dedicated primitive
         // and generic-array source candidates. KSP-429's broad trailing-lambda
         // gate is for List/Iterable source calls; applying it to Array receivers
@@ -1427,6 +1507,7 @@ extension CallTypeChecker {
         let isSourceBackedMemberName = sourceBackedCollectionMemberNames.contains(memberNameText)
             || (sourceBackedTrailingLambdaMemberNames.contains(memberNameText) && !isArrayJoinToString)
             || isMutableMapIteratorSource
+            || isUniqueIteratorSource
         let hasSourceBackedCandidate = isSourceBackedMemberName
             && (!sourceBackedCollectionMemberNames.contains(memberNameText) || !hasTrailingLambdaArg)
             && candidates.contains { candidateID in
@@ -1485,6 +1566,9 @@ extension CallTypeChecker {
             args: args,
             candidates: candidates,
             preInferredNonLambdaArgTypes: cachedNonLambdaArgTypes,
+            expectedTypeOverrides: isULongRangeLiteralContainsCall
+                ? [0: sema.types.ulongType]
+                : [:],
             explicitTypeArgs: explicitTypeArgs,
             receiverType: effectiveReceiverType,
             ctx: ctx,
@@ -2049,7 +2133,8 @@ extension CallTypeChecker {
         case "contains", "isEmpty", "iterator",
              "toList", "forEach", "map", "mapIndexed", "mapNotNull",
              "filter", "filterIndexed", "filterNot",
-             "take", "drop", "sorted", "average", "random", "randomOrNull":
+             "take", "drop", "chunked", "windowed", "sorted", "average",
+             "random", "randomOrNull", "step":
             return true
         default:
             return false
@@ -2169,7 +2254,7 @@ extension CallTypeChecker {
         return nil
     }
 
-    private func collectRangeSourceExtensionCandidates(
+    func collectRangeSourceExtensionCandidates(
         named calleeName: InternedString,
         receiverType: TypeID,
         sema: SemaModule,
@@ -2183,12 +2268,22 @@ extension CallTypeChecker {
             return []
         }
         let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        let isUIntRangeReceiver: Bool = {
+            guard let (_, symbol) = resolveClassTypeSymbol(nonNullReceiver, sema: sema) else {
+                return false
+            }
+            return ["UIntRange", "UIntProgression"].contains(interner.resolve(symbol.name))
+        }()
+        let isUIntRangeMigrationMember = isUIntRangeReceiver
+            && ["iterator", "step", "take", "drop", "chunked", "windowed"]
+                .contains(interner.resolve(calleeName))
         return sema.symbols.lookupAll(fqName: rangesFQName + [calleeName])
             .filter { candidate in
                 guard let symbol = sema.symbols.symbol(candidate),
                       symbol.kind == .function,
-                      !symbol.flags.contains(.synthetic),
-                      sema.symbols.parentSymbol(for: candidate) == rangesPackageSymbol,
+                      (!symbol.flags.contains(.synthetic) || sema.symbols.isSourceBackedSymbol(candidate)),
+                      (sema.symbols.parentSymbol(for: candidate) == rangesPackageSymbol
+                          || (isUIntRangeMigrationMember && sema.symbols.isSourceBackedSymbol(candidate))),
                       let signature = sema.symbols.functionSignature(for: candidate),
                       let declaredReceiver = signature.receiverType
                 else {
@@ -2203,6 +2298,38 @@ extension CallTypeChecker {
             .sorted { $0.rawValue < $1.rawValue }
     }
 
+    func collectScopedRangeUserExtensionCandidates(
+        named calleeName: InternedString,
+        receiverType: TypeID,
+        ctx: TypeInferenceContext,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [SymbolID] {
+        let rangesPackageFQName = [
+            interner.intern("kotlin"),
+            interner.intern("ranges"),
+        ]
+        let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        return ctx.cachedScopeLookup(calleeName).filter { candidate in
+            guard let symbol = ctx.cachedSymbol(candidate),
+                  symbol.kind == .function,
+                  sema.symbols.isSourceBackedSymbol(candidate),
+                  let parentID = sema.symbols.parentSymbol(for: candidate),
+                  let parent = sema.symbols.symbol(parentID),
+                  parent.fqName != rangesPackageFQName,
+                  let signature = sema.symbols.functionSignature(for: candidate),
+                  let declaredReceiver = signature.receiverType
+            else {
+                return false
+            }
+            return extensionSyntheticFallbackReceiverMatches(
+                callSiteReceiver: nonNullReceiver,
+                declaredReceiver: declaredReceiver,
+                sema: sema
+            )
+        }
+    }
+
     /// The CAS-loop update operators migrated to bundled Kotlin source
     /// (`AtomicMigration.kt`).  Like the range-source members these live as
     /// package-scoped extension functions in `kotlin.concurrent`, so they must
@@ -2213,7 +2340,7 @@ extension CallTypeChecker {
         interner: StringInterner
     ) -> Bool {
         switch interner.resolve(calleeName) {
-        case "getAndUpdate", "updateAndGet", "fetchAndUpdate", "updateAndFetch",
+        case "compareAndExchange", "getAndUpdate", "updateAndGet", "fetchAndUpdate", "updateAndFetch",
              "fetchAndUpdateAt", "updateAt", "updateAndFetchAt", "compareAndSet":
             return true
         default:

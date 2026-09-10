@@ -39,6 +39,7 @@ xctest_available="$tests_use_xctest"
 has_parallel_flag=false
 has_workers_flag=false
 has_jobs_flag=false
+has_swift_testing_width_flag=false
 supports_parallel_flags=true
 for arg in "$@"; do
     case "$arg" in
@@ -50,6 +51,9 @@ for arg in "$@"; do
             ;;
         -j|--jobs|--jobs=*)
             has_jobs_flag=true
+            ;;
+        --experimental-maximum-parallelization-width|--experimental-maximum-parallelization-width=*)
+            has_swift_testing_width_flag=true
             ;;
         --list-tests|-l|list|last)
             supports_parallel_flags=false
@@ -109,6 +113,19 @@ if [[ "$has_jobs_flag" == false ]]; then
 fi
 
 if [[ "$supports_parallel_flags" == true ]]; then
+    # --num-workers only controls XCTest. Swift Testing (including Golden)
+    # needs its own width, even when the repo has no XCTest imports at all.
+    # Preserve explicit Swift Testing CLI/environment overrides and let
+    # --no-parallel disable parallelization in the runner as usual.
+    if [[ -n "$workers_override" && "$has_swift_testing_width_flag" == false \
+        && -z "${SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH:-}" ]]; then
+        if ! [[ "$workers_override" =~ ^[1-9][0-9]*$ ]]; then
+            echo "error: SWIFT_TEST_WORKERS must be a positive integer" >&2
+            exit 1
+        fi
+        export SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH="$workers_override"
+    fi
+
     if [[ "$parallel_mode" == "0" || "$parallel_mode" == "false" ]]; then
         if [[ "$has_parallel_flag" == false ]]; then
             command+=(--no-parallel)

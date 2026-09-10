@@ -969,18 +969,38 @@ extension CallTypeChecker {
                     allCandidates = labelMatches
                 }
             }
-            if argCount == 1,
-               allCandidates.count > 1,
-               let firstArgExpr = argExprs.first,
-               allCandidates.contains(where: { sema.symbols.externalLinkName(for: $0) == "kk_array_sliceArray_range" }),
-               allCandidates.contains(where: { sema.symbols.externalLinkName(for: $0) == "kk_array_sliceArray_iterable" })
+            // KSP-1001: List.slice has both IntRange and Iterable<Int>
+            // overloads. The collection fallback is intentionally arity-based
+            // for most legacy members, but selecting the first slice overload
+            // would route a List<Int> argument to the IntRange declaration.
+            if memberName == interner.intern("slice"),
+               argCount == 1,
+               let firstArgExpr = argExprs.first
             {
-                let isRangeArg = sema.bindings.isRangeExpr(firstArgExpr)
-                let targetLinkName = isRangeArg ? "kk_array_sliceArray_range" : "kk_array_sliceArray_iterable"
-                if let sliceArrayMatch = allCandidates.first(where: { candidate in
-                    sema.symbols.externalLinkName(for: candidate) == targetLinkName
+                let isIntRangeArgument: Bool = if let firstArgType = sema.bindings.exprTypes[firstArgExpr] {
+                    if let (_, argumentSymbol) = resolveClassTypeSymbol(
+                        sema.types.makeNonNullable(firstArgType), sema: sema
+                    ) {
+                        interner.resolve(argumentSymbol.name) == "IntRange"
+                    } else {
+                        sema.bindings.isRangeExpr(firstArgExpr) && firstArgType == sema.types.intType
+                    }
+                } else {
+                    sema.bindings.isRangeExpr(firstArgExpr)
+                }
+                let targetParameterName = isIntRangeArgument ? "IntRange" : "Iterable"
+                if let sliceMatch = allCandidates.first(where: { candidate in
+                    guard let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.parameterTypes.count == 1,
+                          let (_, parameterSymbol) = resolveClassTypeSymbol(
+                              sema.types.makeNonNullable(signature.parameterTypes[0]), sema: sema
+                          )
+                    else {
+                        return false
+                    }
+                    return interner.resolve(parameterSymbol.name) == targetParameterName
                 }) {
-                    return sliceArrayMatch
+                    return sliceMatch
                 }
             }
             if memberName == interner.intern("addAll"),
@@ -2859,6 +2879,8 @@ extension CallTypeChecker {
                 ? sema.types.doubleType
                 : memberName == interner.intern("firstNotNullOf") || memberName == interner.intern("firstNotNullOfOrNull")
                 ? sema.types.nullableAnyType
+                : memberName == interner.intern("sortedByDescending")
+                ? sema.types.nullableAnyType
                 : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [receiverElementType],
@@ -2881,7 +2903,7 @@ extension CallTypeChecker {
         {
             let expectedType = sema.types.make(.classType(ClassType(
                 classSymbol: comparatorSymbol,
-                args: [.invariant(receiverElementType)],
+                args: [.in(receiverElementType)],
                 nullability: .nonNull
             )))
             return (argumentIndex: 0, expectedType: expectedType)

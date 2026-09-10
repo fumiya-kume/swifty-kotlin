@@ -23,6 +23,9 @@ Metrics:
   interner_resolve_literal_comparison_count Occurrences of interner.resolve(...) == "..." in Swift sources
   typecheck_interner_resolve_literal_comparison_count
                                             Same as above, scoped to Sources/CompilerCore/Sema/TypeCheck
+  typecheck_string_literal_switch_case_count
+                                            `case "..."` clauses in TypeCheck Swift sources
+  typecheck_inline_string_set_entry_count   String literal entries in TypeCheck `Set<String> = [...]` tables
 USAGE
 }
 
@@ -33,16 +36,26 @@ fi
 
 cd "$ROOT_DIR"
 
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+LOC_REPORT_METRICS="$SCRIPT_DIR/loc_report_metrics.py"
+
 # File lists are fed to xargs as NUL-separated stdin (printf is a builtin, so
 # no exec() argument limit applies); xargs may split them across several tool
 # invocations, so per-invocation counts are summed afterwards.
 count_lines() {
-  if [[ $# -eq 0 ]]; then
+  local existing_files=()
+  for file in "$@"; do
+    # `git ls-files` also returns paths deleted in the working tree. Ignore
+    # those paths so refactor metrics remain usable during file migrations.
+    [[ -f "$file" ]] && existing_files+=("$file")
+  done
+
+  if [[ ${#existing_files[@]} -eq 0 ]]; then
     printf '0\n'
     return
   fi
 
-  printf '%s\0' "$@" \
+  printf '%s\0' "${existing_files[@]}" \
     | xargs -0 awk 'END { print NR + 0 }' \
     | awk '{ total += $1 } END { print total + 0 }'
 }
@@ -59,12 +72,18 @@ count_regex_occurrences() {
   local pattern="$1"
   shift
 
-  if [[ $# -eq 0 ]]; then
+  local existing_files=()
+  for file in "$@"; do
+    [[ -f "$file" ]] && existing_files+=("$file")
+  done
+
+  if [[ ${#existing_files[@]} -eq 0 ]]; then
     printf '0\n'
     return
   fi
 
-  grep_matches "$pattern" "$@" | awk 'END { print NR + 0 }'
+  { printf '%s\0' "${existing_files[@]}" | xargs -0 grep -hEo "$pattern" || true; } \
+    | awk 'END { print NR + 0 }'
 }
 
 count_unique_regex_matches() {
@@ -77,6 +96,20 @@ count_unique_regex_matches() {
   fi
 
   grep_matches "$pattern" "$@" | LC_ALL=C sort -u | awk 'END { print NR + 0 }'
+}
+
+emit_typecheck_metric() {
+  local metric="$1"
+  local scope="$2"
+  local scanner_metric="$3"
+  shift 3
+
+  local value
+  if ! value=$("$PYTHON_BIN" "$LOC_REPORT_METRICS" "$scanner_metric" "$@"); then
+    printf 'loc_report: failed to compute %s\n' "$metric" >&2
+    return 1
+  fi
+  printf '%s\t%s\t%s\n' "$metric" "$scope" "$value"
 }
 
 emit_directory_loc() {
@@ -176,3 +209,13 @@ printf 'interner_resolve_literal_comparison_count\tSwift sources\t%s\n' \
   "$(count_regex_occurrences 'interner\.resolve[^=]*==[[:space:]]*"[^"]+"' "${SWIFT_FILES[@]}")"
 printf 'typecheck_interner_resolve_literal_comparison_count\tSources/CompilerCore/Sema/TypeCheck\t%s\n' \
   "$(count_regex_occurrences 'interner\.resolve[^=]*==[[:space:]]*"[^"]+"' "${SEMA_TYPECHECK_FILES[@]}")"
+emit_typecheck_metric \
+  typecheck_string_literal_switch_case_count \
+  'Sources/CompilerCore/Sema/TypeCheck/*.swift' \
+  string-switch-cases \
+  "${SEMA_TYPECHECK_FILES[@]}"
+emit_typecheck_metric \
+  typecheck_inline_string_set_entry_count \
+  'Sources/CompilerCore/Sema/TypeCheck/*.swift' \
+  inline-string-set-entries \
+  "${SEMA_TYPECHECK_FILES[@]}"

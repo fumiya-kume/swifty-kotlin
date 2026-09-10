@@ -57,15 +57,15 @@ struct RuntimePlatformInfoTests {
 
     // MARK: - CpuArchitecture
 
-    /// On Apple Silicon the architecture ordinal must equal 4 (ARM64);
-    /// on Intel it must equal 2 (X64).
+    /// On Apple Silicon the architecture ordinal must equal 2 (ARM64);
+    /// on Intel it must equal 4 (X64), matching Kotlin 2.3.10 declaration order.
     @Test
     func testCpuArchitectureIsARM64orX64() {
         let ordinal = kk_unbox_int(kk_platform_cpuArchitecture(0))
 #if arch(arm64)
-        #expect(ordinal == 4, "Expected CpuArchitecture.ARM64 (4) on Apple Silicon, got \(ordinal)")
+        #expect(ordinal == 2, "Expected CpuArchitecture.ARM64 (2) on Apple Silicon, got \(ordinal)")
 #elseif arch(x86_64)
-        #expect(ordinal == 2, "Expected CpuArchitecture.X64 (2) on Intel, got \(ordinal)")
+        #expect(ordinal == 4, "Expected CpuArchitecture.X64 (4) on Intel, got \(ordinal)")
 #else
         #expect(ordinal >= 0)
 #endif
@@ -227,9 +227,9 @@ struct RuntimePlatformInfoTests {
         let ordinal = kk_unbox_int(kk_platform_cpuArchitecture(0))
         #expect(ordinal >= 0)
 #if arch(arm64)
-        #expect(ordinal == 4, "CpuArchitecture.ARM64 must be 4 (ABI stability)")
+        #expect(ordinal == 2, "CpuArchitecture.ARM64 must be 2 (ABI stability)")
 #elseif arch(x86_64)
-        #expect(ordinal == 2, "CpuArchitecture.X64 must be 2 (ABI stability)")
+        #expect(ordinal == 4, "CpuArchitecture.X64 must be 4 (ABI stability)")
 #endif
     }
 }

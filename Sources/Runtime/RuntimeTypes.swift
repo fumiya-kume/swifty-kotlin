@@ -73,13 +73,17 @@ struct RuntimeValue {
     var payload1: Int
     var payload2: Int
     var payload3: Int
+    // Static type information used by Any fallback operations. This is kept
+    // separate from `tag`, which describes the storage representation.
+    var anyFallbackTag: Int32
 
-    init(raw: Int) {
+    init(raw: Int, anyFallbackTag: Int32 = 0) {
         self.tag = Self.rawTag
         self.payload0 = raw
         self.payload1 = 0
         self.payload2 = 0
         self.payload3 = 0
+        self.anyFallbackTag = anyFallbackTag
     }
 
     init(stringData data: Int, length: Int, byteCount: Int, hash: Int) {
@@ -88,6 +92,7 @@ struct RuntimeValue {
         self.payload1 = length
         self.payload2 = byteCount
         self.payload3 = hash
+        self.anyFallbackTag = 0
     }
 
     init(charScalar value: Int) {
@@ -96,6 +101,7 @@ struct RuntimeValue {
         self.payload1 = 0
         self.payload2 = 0
         self.payload3 = 0
+        self.anyFallbackTag = 0
     }
 
     var legacyRawValue: Int {
@@ -228,7 +234,18 @@ class RuntimeArrayBox {
     /// loop access O(n) per iteration.
     subscript(index: Int) -> Int {
         get { storage[index].legacyRawValue }
-        set { storage[index] = RuntimeValue(raw: newValue) }
+        set {
+            storage[index] = RuntimeValue(
+                raw: newValue,
+                anyFallbackTag: storage[index].anyFallbackTag
+            )
+        }
+    }
+
+    /// Stores a raw field value together with the static tag needed by
+    /// Any-erased operations such as `hashCode()`.
+    func setValue(_ value: Int, at index: Int, anyFallbackTag: Int32) {
+        storage[index] = RuntimeValue(raw: value, anyFallbackTag: anyFallbackTag)
     }
 
     var count: Int {
@@ -307,10 +324,15 @@ final class RuntimeIntBox {
     /// the raw ordinal once the static enum type has been erased. See
     /// kk_enum_box_ordinal.
     let enumEntryName: String?
+    /// Stable nominal ID for the enum class represented by this box. Unlike a
+    /// plain boxed Int, enum equality must keep two entries from different
+    /// enum classes unequal even when their ordinals match.
+    let enumClassID: Int64?
 
-    init(_ value: Int, enumEntryName: String? = nil) {
+    init(_ value: Int, enumEntryName: String? = nil, enumClassID: Int64? = nil) {
         self.value = value
         self.enumEntryName = enumEntryName
+        self.enumClassID = enumClassID
     }
 }
 
@@ -378,6 +400,7 @@ enum RuntimeCallableRefKind {
 
 struct RuntimeCallableRefMetadata {
     let nameRaw: Int
+    let returnTypeRaw: Int
     let arity: Int
     let kind: RuntimeCallableRefKind
     let isSuspend: Bool
@@ -921,23 +944,61 @@ final class RuntimeIndexingIteratorBox {
 final class RuntimeListIteratorBox {
     var elements: [Int]
     var index: Int
+    /// Index last returned by `next()`/`previous()`, or -1 before any
+    /// traversal call or once consumed by `remove()`/`add()` — mirrors
+    /// Java/Kotlin's `AbstractList.Itr.lastRet` invariant.
+    var lastReturnedIndex: Int
     let removeAction: ((Int) -> Void)?
+    let setAction: ((Int, Int) -> Void)?
+    let addAction: ((Int, Int) -> Void)?
 
-    init(elements: [Int], removeAction: ((Int) -> Void)? = nil) {
+    init(
+        elements: [Int],
+        removeAction: ((Int) -> Void)? = nil,
+        setAction: ((Int, Int) -> Void)? = nil,
+        addAction: ((Int, Int) -> Void)? = nil
+    ) {
         self.elements = elements
         index = 0
+        lastReturnedIndex = -1
         self.removeAction = removeAction
+        self.setAction = setAction
+        self.addAction = addAction
     }
 
     func removeLastReturned() -> Bool {
-        guard index > 0, index <= elements.count else {
+        guard lastReturnedIndex >= 0, lastReturnedIndex < elements.count else {
             return false
         }
-        let removedIndex = index - 1
-        elements.remove(at: removedIndex)
-        index = removedIndex
-        removeAction?(removedIndex)
+        elements.remove(at: lastReturnedIndex)
+        index = lastReturnedIndex
+        removeAction?(lastReturnedIndex)
+        lastReturnedIndex = -1
         return true
+    }
+
+    /// `MutableListIterator.set`: replaces the element most recently returned
+    /// by `next()`/`previous()`, at the same position `removeLastReturned()`
+    /// targets.
+    func setLastReturned(_ rawValue: Int) -> Bool {
+        guard lastReturnedIndex >= 0, lastReturnedIndex < elements.count else {
+            return false
+        }
+        elements[lastReturnedIndex] = rawValue
+        setAction?(lastReturnedIndex, rawValue)
+        return true
+    }
+
+    /// `MutableListIterator.add`: inserts before the element `next()` would
+    /// return, then advances the cursor past the inserted element so a
+    /// following `next()` does not return it again. Invalidates
+    /// `lastReturnedIndex`: `add()` cannot be followed directly by
+    /// `set()`/`remove()`.
+    func addBeforeNext(_ rawValue: Int) {
+        elements.insert(rawValue, at: index)
+        addAction?(index, rawValue)
+        index += 1
+        lastReturnedIndex = -1
     }
 }
 
@@ -1951,11 +2012,19 @@ final class RuntimeKTypeBox {
     let argumentRaws: [Int]
     /// Whether the type is marked nullable (`T?`).
     let isMarkedNullable: Bool
+    /// Optional compact type descriptor used by callable reflection metadata.
+    let typeNameRaw: Int
 
-    init(classifierRaw: Int, argumentRaws: [Int], isMarkedNullable: Bool) {
+    init(
+        classifierRaw: Int,
+        argumentRaws: [Int],
+        isMarkedNullable: Bool,
+        typeNameRaw: Int = 0
+    ) {
         self.classifierRaw = classifierRaw
         self.argumentRaws = argumentRaws
         self.isMarkedNullable = isMarkedNullable
+        self.typeNameRaw = typeNameRaw
     }
 }
 

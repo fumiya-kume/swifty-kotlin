@@ -31,23 +31,6 @@ extension CallLowerer {
             || resolvedName == "KMutableProperty2"
     }
 
-    private func isKPropertyReceiverType(
-        _ receiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> Bool {
-        let nonNullType = sema.types.makeNonNullable(receiverType)
-        guard let (_, symbol) = resolveClassTypeSymbol(nonNullType, sema: sema) else {
-            return false
-        }
-        let resolvedName = interner.resolve(symbol.name)
-        return resolvedName == "KProperty" || resolvedName == "KProperty0"
-            || resolvedName == "KProperty1" || resolvedName == "KProperty2"
-            || resolvedName == "KCallable"
-            || resolvedName == "KMutableProperty" || resolvedName == "KMutableProperty0"
-            || resolvedName == "KMutableProperty1" || resolvedName == "KMutableProperty2"
-    }
-
     func tryLowerKPropertyMemberAccess(
         _ exprID: ExprID,
         receiverExpr: ExprID,
@@ -60,9 +43,9 @@ extension CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
         let calleeStr = interner.resolve(calleeName)
-        guard calleeStr == "name" else { return nil }
+        guard calleeStr == "name" || calleeStr == "returnType" else { return nil }
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-        guard isKPropertyReceiverType(receiverType, sema: sema, interner: interner) else { return nil }
+        guard isKCallableReceiverType(receiverType, sema: sema, interner: interner) else { return nil }
 
         // Lower the receiver expression.
         let receiverID = driver.exprLowerer.lowerExpr(
@@ -72,10 +55,12 @@ extension CallLowerer {
         )
 
         let resultType = sema.bindings.exprTypes[exprID]
-            ?? sema.types.stringType
+            ?? (calleeStr == "name" ? sema.types.stringType : sema.types.anyType)
         let result = arena.appendTemporary(type: resultType)
         emitNonThrowingCall(
-            callee: interner.intern("__kk_kcallable_get_name"),
+            callee: interner.intern(
+                calleeStr == "name" ? "__kk_kcallable_get_name" : "__kk_kcallable_get_return_type"
+            ),
             arg: receiverID,
             result: result,
             into: &instructions
@@ -83,7 +68,8 @@ extension CallLowerer {
         return result
     }
 
-    /// Emits KCallable.name after the safe-call null check has already passed.
+    /// Emits a KCallable metadata property after the safe-call null check has
+    /// already passed.
     func tryLowerKCallableNameAccess(
         receiverType: TypeID,
         receiverID: KIRExprID,
@@ -93,13 +79,16 @@ extension CallLowerer {
         interner: StringInterner,
         instructions: inout [KIRInstruction]
     ) -> Bool {
-        guard interner.resolve(calleeName) == "name",
+        let memberName = interner.resolve(calleeName)
+        guard (memberName == "name" || memberName == "returnType"),
               isKCallableReceiverType(receiverType, sema: sema, interner: interner)
         else {
             return false
         }
         emitNonThrowingCall(
-            callee: interner.intern("__kk_kcallable_get_name"),
+            callee: interner.intern(
+                memberName == "name" ? "__kk_kcallable_get_name" : "__kk_kcallable_get_return_type"
+            ),
             arg: receiverID,
             result: result,
             into: &instructions
@@ -134,7 +123,7 @@ extension CallLowerer {
     /// Known KFunction member names and their corresponding runtime function.
     private static let kFunctionMemberMap: [String: String] = [
         "name": "__kk_kcallable_get_name",
-        "returnType": "__kk_kfunction_get_return_type",
+        "returnType": "__kk_kcallable_get_return_type",
         "parameters": "__kk_kfunction_get_parameters",
         "valueParameters": "__kk_kfunction_get_value_parameters",
         "isSuspend": "__kk_kfunction_is_suspend",

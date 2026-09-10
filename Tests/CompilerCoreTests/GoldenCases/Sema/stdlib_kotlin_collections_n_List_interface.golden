@@ -1,0 +1,27 @@
+symbol fq=golden.sema.CustomList kind=class vis=public flags=abstractType|openType
+symbol fq=golden.sema.listFactoryProbe kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
+symbol fq=golden.sema.listProbe kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=kotlin.collections.List<kotlin.Number>
+symbol fq=golden.sema.listProbe.$0.values kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.listResidualProbe kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=Int
+symbol fq=golden.sema.listResidualProbe.$1.values kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.listTypeProbe kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
+symbol fq=golden.sema.listTypeProbe.$2.value kind=valueParameter vis=private flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.List.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[Int] ret=kotlin.collections.List.E
+file fstdlib_kotlin_collections_n_List_interface package=golden.sema
+  decl golden.sema.CustomList class CustomList sym=golden.sema.CustomList
+  decl golden.sema.listProbe fun listProbe sym=golden.sema.listProbe
+  decl golden.sema.listFactoryProbe fun listFactoryProbe sym=golden.sema.listFactoryProbe
+  decl golden.sema.listTypeProbe fun listTypeProbe sym=golden.sema.listTypeProbe
+  decl golden.sema.listResidualProbe fun listResidualProbe sym=golden.sema.listResidualProbe
+expr e@5:50 name(values) type=kotlin.collections.List<Int> ref=golden.sema.listProbe.$0.values
+expr e@7:42 int(3) type=Int
+expr e@7:47 name(it) type=Int ref=s-0
+expr e@7:45 lambda params=[] body=e@7:47 label=List type=(Int) -> Int
+expr e@7:37 call callee=e@7:37#1 args=[_:e@7:42,_:e@7:45] type=kotlin.collections.List<Int> call=kotlin.collections.List#1 targs=[Int]
+expr e@9:42 name(value) type=Any ref=golden.sema.listTypeProbe.$2.value
+expr e@9:42#1 isCheck expr=e@9:42 type=kotlin.collections.List<*> type=Boolean
+expr e@11:49 name(values) type=kotlin.collections.List<Int> ref=golden.sema.listResidualProbe.$1.values
+expr e@11:56 int(0) type=Int
+expr e@11:49#1 indexedAccess receiver=e@11:49 indices=[e@11:56] type=Int call=kotlin.collections.List.get targs=[Int]

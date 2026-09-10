@@ -3,7 +3,7 @@ symbol fq=charSequenceZip.$0.cs kind=valueParameter vis=private flags=_
 symbol fq=charSequenceZip.$0.other kind=valueParameter vis=private flags=_
 symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=stringZip kind=function vis=public flags=_ sig=recv=_ params=[String,kotlin.CharSequence] ret=kotlin.collections.List<kotlin.Pair<Char, Char>>
 symbol fq=stringZip.$1.other kind=valueParameter vis=private flags=_
 symbol fq=stringZip.$1.s kind=valueParameter vis=private flags=_

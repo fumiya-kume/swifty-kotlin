@@ -3,17 +3,17 @@ import Foundation
 
 // MARK: - Native Concurrent ABI (STDLIB-NATIVE-CONCURRENT-ABI-001..006)
 //
-// Implements the six runtime entry-points required by the Kotlin/Native
+// Implements the seven runtime entry-points required by the Kotlin/Native
 // concurrent standard library:
 //
 //   ABI-001  Worker.id              — kk_worker_id
 //   ABI-002  Future<T>              — kk_future_new / kk_future_complete /
 //                                     kk_future_result / kk_future_consume /
-//                                     kk_future_is_ready
+//                                     kk_future_is_ready / kk_future_getState /
+//                                     kk_future_invoke
 //   ABI-003  TransferMode           — kk_transfer_object  (SAFE freezes; UNSAFE is pass-through)
 //   ABI-004  FreezableAtomicReference<T> — kk_freezable_atomic_ref_create / _load / _store / _is_frozen
-//   ABI-005  @SharedImmutable       — kk_shared_immutable_init
-//   ABI-006  Worker.executeAfter    — kk_worker_execute_after
+//   ABI-005  Worker.executeAfter    — kk_worker_execute_after
 //
 // Deferred / known limitations:
 //   • TransferMode SAFE: full cycle-detection DFS over the managed object graph
@@ -127,6 +127,13 @@ final class RuntimeFutureBox: @unchecked Sendable {
         return _ready
     }
 
+    var stateRaw: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        if _consumed { return 0 } // FutureState.INVALID
+        return _ready ? 2 : 1 // FutureState.COMPUTED : FutureState.SCHEDULED
+    }
+
     /// Non-consuming read.  Blocks until a value is available.
     func result() -> Int {
         blockUntilReady()
@@ -176,6 +183,33 @@ public func kk_future_is_ready(_ futureHandle: Int) -> Int {
         return 0
     }
     return box.isReady ? 1 : 0
+}
+
+/// Returns the FutureState ordinal for a valid runtime Future handle.
+@_cdecl("kk_future_getState")
+public func kk_future_getState(_ futureHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: futureHandle),
+          let box = tryCast(ptr, to: RuntimeFutureBox.self)
+    else {
+        return 0 // FutureState.INVALID
+    }
+    return box.stateRaw
+}
+
+/// Invoke a Future.consume callback through the function-value ABI.
+@_cdecl("kk_future_invoke")
+public func kk_future_invoke(
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ valueRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeInvokeCollectionLambda1(
+        fnPtr: fnPtr,
+        closureRaw: closureRaw,
+        value: valueRaw,
+        outThrown: outThrown
+    )
 }
 
 /// Blocking, non-consuming read of the resolved value.
@@ -350,26 +384,7 @@ public func kk_freezable_atomic_ref_is_frozen(_ refHandle: Int) -> Int {
     return box.isFrozen ? 1 : 0
 }
 
-// MARK: - ABI-005  @SharedImmutable
-
-/// Initializer lowering hook for `@SharedImmutable` annotated globals.
-///
-/// Called immediately after the initializer of a `@SharedImmutable` property
-/// completes.  Freezes the object so that all subsequent cross-thread reads
-/// observe immutable data.
-///
-/// - Returns: the same `objectRaw` handle (pass-through).
-@discardableResult
-@_cdecl("kk_shared_immutable_init")
-public func kk_shared_immutable_init(_ objectRaw: Int) -> Int {
-    guard objectRaw != 0 else {
-        return 0
-    }
-    _ = kk_freeze_object(objectRaw)
-    return objectRaw
-}
-
-// MARK: - ABI-006  Worker.executeAfter(delayNs, op)
+// MARK: - ABI-005  Worker.executeAfter(delayNs, op)
 
 /// Schedule a closure to run on a Worker after `delayNs` nanoseconds.
 ///

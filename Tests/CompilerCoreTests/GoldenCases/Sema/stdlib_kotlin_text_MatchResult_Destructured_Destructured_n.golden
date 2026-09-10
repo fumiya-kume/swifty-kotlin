@@ -1,7 +1,7 @@
 symbol fq=__local_0.match kind=local vis=private flags=_ type=kotlin.text.MatchResult
 symbol fq=__local_1.destructured kind=local vis=private flags=_ type=kotlin.text.MatchResult.Destructured
 symbol fq=__local_2.captures kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String?
 symbol fq=probe.$0.input kind=valueParameter vis=private flags=_
 file fstdlib_kotlin_text_MatchResult_Destructured_Destructured_n package=_
