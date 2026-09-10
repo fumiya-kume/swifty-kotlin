@@ -1,61 +1,60 @@
-symbol fq=__local_0.x kind=local vis=private flags=_ type=String
-symbol fq=__local_1.x kind=local vis=private flags=mutable type=Int
-symbol fq=__try_0_catch_0.e kind=local vis=internal flags=_ type=kotlin.Exception
-symbol fq=__try_1_catch_0.e kind=local vis=internal flags=_ type=kotlin.IllegalArgumentException
-symbol fq=__try_1_catch_1.e kind=local vis=internal flags=_ type=kotlin.Exception
-symbol fq=__try_2_catch_0.e kind=local vis=internal flags=_ type=kotlin.Exception
-symbol fq=__try_3_catch_0.e kind=local vis=internal flags=_ type=kotlin.Exception
-symbol fq=__try_4_catch_0.e kind=local vis=internal flags=_ type=golden.sema.Handled
-symbol fq=__try_4_catch_1.e kind=local vis=internal flags=_ type=golden.sema.Unhandled
-symbol fq=__try_5_catch_0.e kind=local vis=internal flags=_ type=golden.sema.Handled
-symbol fq=__try_6_catch_0.e kind=local vis=internal flags=_ type=kotlin.Exception
-symbol fq=golden.sema.Handled kind=class vis=public flags=_
-symbol fq=golden.sema.Handled.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.Handled params=[] ret=golden.sema.Handled
-symbol fq=golden.sema.Unhandled kind=class vis=public flags=_
-symbol fq=golden.sema.Unhandled.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.Unhandled params=[] ret=golden.sema.Unhandled
-symbol fq=golden.sema.propTryCatch kind=property vis=public flags=_ type=String
-symbol fq=golden.sema.propTryFinally kind=property vis=public flags=_ type=String
-symbol fq=golden.sema.tryCatchExpr kind=function vis=public flags=_ sig=recv=_ params=[Boolean] ret=String
-symbol fq=golden.sema.tryCatchExpr.$0.flag kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.tryCatchFinally kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.tryCompletionCriteria kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.tryFinally kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.tryFinallyIgnoresValue kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.tryMultiCatch kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.tryMultiCatchJoin kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Any?
-symbol fq=golden.sema.tryMultiCatchJoin.$1.flag kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.tryPartialCatchRethrow kind=function vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int
-symbol fq=golden.sema.tryPartialCatchRethrow.$2.flag kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Exception kind=class vis=public flags=openType type=kotlin.Exception
+symbol fq=__local_0.x[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_1.x[kind=local] kind=local vis=private flags=mutable type=Int
+symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.Exception
+symbol fq=__try_1_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.IllegalArgumentException
+symbol fq=__try_1_catch_1.e[kind=local] kind=local vis=internal flags=_ type=kotlin.Exception
+symbol fq=__try_2_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.Exception
+symbol fq=__try_3_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.Exception
+symbol fq=__try_4_catch_0.e[kind=local] kind=local vis=internal flags=_ type=golden.sema.Handled
+symbol fq=__try_4_catch_1.e[kind=local] kind=local vis=internal flags=_ type=golden.sema.Unhandled
+symbol fq=__try_5_catch_0.e[kind=local] kind=local vis=internal flags=_ type=golden.sema.Handled
+symbol fq=__try_6_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.Exception
+symbol fq=golden.sema.Handled.<init>[kind=ctor;recv=golden.sema.Handled;params=] kind=constructor vis=public flags=_ sig=recv=golden.sema.Handled params=[] ret=golden.sema.Handled
+symbol fq=golden.sema.Handled[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.Unhandled.<init>[kind=ctor;recv=golden.sema.Unhandled;params=] kind=constructor vis=public flags=_ sig=recv=golden.sema.Unhandled params=[] ret=golden.sema.Unhandled
+symbol fq=golden.sema.Unhandled[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.propTryCatch[kind=prop] kind=property vis=public flags=_ type=String
+symbol fq=golden.sema.propTryFinally[kind=prop] kind=property vis=public flags=_ type=String
+symbol fq=golden.sema.tryCatchExpr.$0.flag[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.tryCatchExpr[kind=fun;params=Boolean] kind=function vis=public flags=_ sig=recv=_ params=[Boolean] ret=String
+symbol fq=golden.sema.tryCatchFinally[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.tryCompletionCriteria[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.tryFinallyIgnoresValue[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.tryFinally[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.tryMultiCatchJoin.$1.flag[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.tryMultiCatchJoin[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Any?
+symbol fq=golden.sema.tryMultiCatch[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.tryPartialCatchRethrow.$2.flag[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.tryPartialCatchRethrow[kind=fun;params=Boolean] kind=function vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int
 file ftry_expression package=golden.sema
-  decl golden.sema.Handled class Handled sym=golden.sema.Handled
-  decl golden.sema.Unhandled class Unhandled sym=golden.sema.Unhandled
-  decl golden.sema.tryCatchExpr fun tryCatchExpr sym=golden.sema.tryCatchExpr
-  decl golden.sema.tryMultiCatch fun tryMultiCatch sym=golden.sema.tryMultiCatch
-  decl golden.sema.tryFinally fun tryFinally sym=golden.sema.tryFinally
-  decl golden.sema.tryCatchFinally fun tryCatchFinally sym=golden.sema.tryCatchFinally
-  decl golden.sema.tryCompletionCriteria fun tryCompletionCriteria sym=golden.sema.tryCompletionCriteria
-  decl golden.sema.tryFinallyIgnoresValue fun tryFinallyIgnoresValue sym=golden.sema.tryFinallyIgnoresValue
-  decl golden.sema.tryMultiCatchJoin fun tryMultiCatchJoin sym=golden.sema.tryMultiCatchJoin
-  decl golden.sema.tryPartialCatchRethrow fun tryPartialCatchRethrow sym=golden.sema.tryPartialCatchRethrow
-  decl golden.sema.propTryCatch property propTryCatch var=0 sym=golden.sema.propTryCatch
-  decl golden.sema.propTryFinally property propTryFinally var=0 sym=golden.sema.propTryFinally
-expr e@7:15 name(flag) type=Boolean ref=golden.sema.tryCatchExpr.$0.flag
+  decl golden.sema.Handled[kind=class] class Handled sym=golden.sema.Handled[kind=class]
+  decl golden.sema.Unhandled[kind=class] class Unhandled sym=golden.sema.Unhandled[kind=class]
+  decl golden.sema.tryCatchExpr[kind=fun;params=Boolean] fun tryCatchExpr sym=golden.sema.tryCatchExpr[kind=fun;params=Boolean]
+  decl golden.sema.tryMultiCatch[kind=fun;params=] fun tryMultiCatch sym=golden.sema.tryMultiCatch[kind=fun;params=]
+  decl golden.sema.tryFinally[kind=fun;params=] fun tryFinally sym=golden.sema.tryFinally[kind=fun;params=]
+  decl golden.sema.tryCatchFinally[kind=fun;params=] fun tryCatchFinally sym=golden.sema.tryCatchFinally[kind=fun;params=]
+  decl golden.sema.tryCompletionCriteria[kind=fun;params=] fun tryCompletionCriteria sym=golden.sema.tryCompletionCriteria[kind=fun;params=]
+  decl golden.sema.tryFinallyIgnoresValue[kind=fun;params=] fun tryFinallyIgnoresValue sym=golden.sema.tryFinallyIgnoresValue[kind=fun;params=]
+  decl golden.sema.tryMultiCatchJoin[kind=fun;params=Int] fun tryMultiCatchJoin sym=golden.sema.tryMultiCatchJoin[kind=fun;params=Int]
+  decl golden.sema.tryPartialCatchRethrow[kind=fun;params=Boolean] fun tryPartialCatchRethrow sym=golden.sema.tryPartialCatchRethrow[kind=fun;params=Boolean]
+  decl golden.sema.propTryCatch[kind=prop] property propTryCatch var=0 sym=golden.sema.propTryCatch[kind=prop]
+  decl golden.sema.propTryFinally[kind=prop] property propTryFinally var=0 sym=golden.sema.propTryFinally[kind=prop]
+expr e@7:15 name(flag) type=Boolean ref=golden.sema.tryCatchExpr.$0.flag[kind=vparam]
 expr e@7:21 string(ok) type=String
 expr e@7:47 string(fail) type=String
-expr e@7:37 call callee=e@7:37#1 args=[_:e@7:47] type=kotlin.Exception call=kotlin.Exception.<init>#1
+expr e@7:37 call callee=e@7:37#1 args=[_:e@7:47] type=kotlin.Exception call=kotlin.Exception.<init>[kind=ctor;recv=kotlin.Exception;params=String?]
 expr e@7:31 throw value=e@7:37 type=Nothing
 expr e@7:11 if cond=e@7:15 then=e@7:21 else=e@7:31 type=String
 expr e@7:9 blockExpr stmts=[] trailing=e@7:11 type=String
 expr e@8:28 string(error) type=String
-expr e@8:26 blockExpr stmts=[] trailing=e@8:28 type=String ref=__try_0_catch_0.e
+expr e@8:26 blockExpr stmts=[] trailing=e@8:28 type=String ref=__try_0_catch_0.e[kind=local]
 expr e@7:5 try body=e@7:9 catches=[e@8:26] finally=_ type=String
 expr e@11:11 string(ok) type=String
 expr e@11:9 blockExpr stmts=[] trailing=e@11:11 type=String
 expr e@12:43 string(arg) type=String
-expr e@12:41 blockExpr stmts=[] trailing=e@12:43 type=String ref=__try_1_catch_0.e
+expr e@12:41 blockExpr stmts=[] trailing=e@12:43 type=String ref=__try_1_catch_0.e[kind=local]
 expr e@13:28 string(other) type=String
-expr e@13:26 blockExpr stmts=[] trailing=e@13:28 type=String ref=__try_1_catch_1.e
+expr e@13:26 blockExpr stmts=[] trailing=e@13:28 type=String ref=__try_1_catch_1.e[kind=local]
 expr e@11:5 try body=e@11:9 catches=[e@12:41,e@13:26] finally=_ type=String
 expr e@16:11 string(result) type=String
 expr e@16:9 blockExpr stmts=[] trailing=e@16:11 type=String
@@ -64,59 +63,59 @@ expr e@16:5 try body=e@16:9 catches=[] finally=e@17:13 type=String
 expr e@20:11 string(ok) type=String
 expr e@20:9 blockExpr stmts=[] trailing=e@20:11 type=String
 expr e@21:28 string(err) type=String
-expr e@21:26 blockExpr stmts=[] trailing=e@21:28 type=String ref=__try_2_catch_0.e
+expr e@21:26 blockExpr stmts=[] trailing=e@21:28 type=String ref=__try_2_catch_0.e[kind=local]
 expr e@22:13 blockExpr stmts=[] trailing=_ type=Unit
 expr e@20:5 try body=e@20:9 catches=[e@21:26] finally=e@22:13 type=String
 expr e@25:27 string(ok) type=String
 expr e@25:25 blockExpr stmts=[] trailing=e@25:27 type=String
 expr e@25:57 string(err) type=String
-expr e@25:55 blockExpr stmts=[] trailing=e@25:57 type=String ref=__try_3_catch_0.e
+expr e@25:55 blockExpr stmts=[] trailing=e@25:57 type=String ref=__try_3_catch_0.e[kind=local]
 expr e@25:21 try body=e@25:25 catches=[e@25:55] finally=_ type=String
-expr e@25:5 localDecl x mutable=0 type=String init=e@25:21 type=Unit ref=__local_0.x
-expr e@26:12 name(x) type=String ref=__local_0.x
+expr e@25:5 localDecl x mutable=0 type=String init=e@25:21 type=Unit ref=__local_0.x[kind=local]
+expr e@26:12 name(x) type=String ref=__local_0.x[kind=local]
 expr e@26:5 return value=e@26:12 type=Nothing
 expr e@30:11 string(ok) type=String
 expr e@30:9 blockExpr stmts=[] trailing=e@30:11 type=String
 expr e@31:15 int(123) type=Int
 expr e@31:13 blockExpr stmts=[] trailing=e@31:15 type=Int
 expr e@30:5 try body=e@30:9 catches=[] finally=e@31:13 type=String
-expr e@35:13 name(flag) type=Int ref=golden.sema.tryMultiCatchJoin.$1.flag
+expr e@35:13 name(flag) type=Int ref=golden.sema.tryMultiCatchJoin.$1.flag[kind=vparam]
 expr e@35:21 int(0) type=Int
 expr e@35:13#1 binary(equal) lhs=e@35:13 rhs=e@35:21 type=Boolean
 expr e@35:24 string(ok) type=String
-expr e@35:38 name(flag) type=Int ref=golden.sema.tryMultiCatchJoin.$1.flag
+expr e@35:38 name(flag) type=Int ref=golden.sema.tryMultiCatchJoin.$1.flag[kind=vparam]
 expr e@35:46 int(1) type=Int
 expr e@35:38#1 binary(equal) lhs=e@35:38 rhs=e@35:46 type=Boolean
-expr e@35:55 call callee=e@35:55#1 args=[] type=golden.sema.Handled call=golden.sema.Handled.<init>
+expr e@35:55 call callee=e@35:55#1 args=[] type=golden.sema.Handled call=golden.sema.Handled.<init>[kind=ctor;recv=golden.sema.Handled;params=]
 expr e@35:49 throw value=e@35:55 type=Nothing
-expr e@35:76 call callee=e@35:76#1 args=[] type=golden.sema.Unhandled call=golden.sema.Unhandled.<init>
+expr e@35:76 call callee=e@35:76#1 args=[] type=golden.sema.Unhandled call=golden.sema.Unhandled.<init>[kind=ctor;recv=golden.sema.Unhandled;params=]
 expr e@35:70 throw value=e@35:76 type=Nothing
 expr e@35:34 if cond=e@35:38#1 then=e@35:49 else=e@35:70 type=Nothing
 expr e@35:9 if cond=e@35:13#1 then=e@35:24 else=e@35:34 type=String
 expr e@34:9 blockExpr stmts=[] trailing=e@35:9 type=String
 expr e@37:9 string(handled) type=String
-expr e@36:26 blockExpr stmts=[] trailing=e@37:9 type=String ref=__try_4_catch_0.e
+expr e@36:26 blockExpr stmts=[] trailing=e@37:9 type=String ref=__try_4_catch_0.e[kind=local]
 expr e@39:9 int(7) type=Int
-expr e@38:28 blockExpr stmts=[] trailing=e@39:9 type=Int ref=__try_4_catch_1.e
+expr e@38:28 blockExpr stmts=[] trailing=e@39:9 type=Int ref=__try_4_catch_1.e[kind=local]
 expr e@34:5 try body=e@34:9 catches=[e@36:26,e@38:28] finally=_ type=Any
-expr e@43:5 localDecl x mutable=1 type=Int init=_ type=Unit ref=__local_1.x
-expr e@45:13 name(flag) type=Boolean ref=golden.sema.tryPartialCatchRethrow.$2.flag
-expr e@45:25 call callee=e@45:25#1 args=[] type=golden.sema.Handled call=golden.sema.Handled.<init>
+expr e@43:5 localDecl x mutable=1 type=Int init=_ type=Unit ref=__local_1.x[kind=local]
+expr e@45:13 name(flag) type=Boolean ref=golden.sema.tryPartialCatchRethrow.$2.flag[kind=vparam]
+expr e@45:25 call callee=e@45:25#1 args=[] type=golden.sema.Handled call=golden.sema.Handled.<init>[kind=ctor;recv=golden.sema.Handled;params=]
 expr e@45:19 throw value=e@45:25 type=Nothing
-expr e@45:46 call callee=e@45:46#1 args=[] type=golden.sema.Unhandled call=golden.sema.Unhandled.<init>
+expr e@45:46 call callee=e@45:46#1 args=[] type=golden.sema.Unhandled call=golden.sema.Unhandled.<init>[kind=ctor;recv=golden.sema.Unhandled;params=]
 expr e@45:40 throw value=e@45:46 type=Nothing
 expr e@45:9 if cond=e@45:13 then=e@45:19 else=e@45:40 type=Nothing
 expr e@44:9 blockExpr stmts=[] trailing=e@45:9 type=Nothing
 expr e@47:13 int(7) type=Int
-expr e@47:9 localAssign x value=e@47:13 type=Unit ref=__local_1.x
-expr e@46:26 blockExpr stmts=[e@47:9] trailing=_ type=Unit ref=__try_5_catch_0.e
+expr e@47:9 localAssign x value=e@47:13 type=Unit ref=__local_1.x[kind=local]
+expr e@46:26 blockExpr stmts=[e@47:9] trailing=_ type=Unit ref=__try_5_catch_0.e[kind=local]
 expr e@44:5 try body=e@44:9 catches=[e@46:26] finally=_ type=Unit
-expr e@49:12 name(x) type=Int ref=__local_1.x
+expr e@49:12 name(x) type=Int ref=__local_1.x[kind=local]
 expr e@49:5 return value=e@49:12 type=Nothing
 expr e@53:11 string(ok) type=String
 expr e@53:9 blockExpr stmts=[] trailing=e@53:11 type=String
 expr e@54:28 string(err) type=String
-expr e@54:26 blockExpr stmts=[] trailing=e@54:28 type=String ref=__try_6_catch_0.e
+expr e@54:26 blockExpr stmts=[] trailing=e@54:28 type=String ref=__try_6_catch_0.e[kind=local]
 expr e@53:5 try body=e@53:9 catches=[e@54:26] finally=_ type=String
 expr e@57:11 string(result) type=String
 expr e@57:9 blockExpr stmts=[] trailing=e@57:11 type=String

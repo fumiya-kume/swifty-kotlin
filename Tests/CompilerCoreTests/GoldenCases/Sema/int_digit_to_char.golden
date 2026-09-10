@@ -1,13 +1,13 @@
-symbol fq=__local_0.a kind=local vis=private flags=_ type=Char
-symbol fq=__local_1.b kind=local vis=private flags=_ type=Char
-symbol fq=testDigitConversion kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Unit
-symbol fq=testDigitConversion.$0.n kind=valueParameter vis=private flags=_
+symbol fq=__local_0.a[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_1.b[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=testDigitConversion.$0.n[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=testDigitConversion[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Unit
 file fint_digit_to_char package=_
-  decl testDigitConversion fun testDigitConversion sym=testDigitConversion
-expr e@2:13 name(n) type=Int ref=testDigitConversion.$0.n
-expr e@2:13#1 memberCall recv=e@2:13 callee=digitToChar args=[] type=Char call=kotlin.text.digitToChar#0
-expr e@2:5 localDecl a mutable=0 type=_ init=e@2:13#1 type=Unit ref=__local_0.a
-expr e@3:13 name(n) type=Int ref=testDigitConversion.$0.n
+  decl testDigitConversion[kind=fun;params=Int] fun testDigitConversion sym=testDigitConversion[kind=fun;params=Int]
+expr e@2:13 name(n) type=Int ref=testDigitConversion.$0.n[kind=vparam]
+expr e@2:13#1 memberCall recv=e@2:13 callee=digitToChar args=[] type=Char call=kotlin.text.digitToChar[kind=fun;recv=Int;params=]
+expr e@2:5 localDecl a mutable=0 type=_ init=e@2:13#1 type=Unit ref=__local_0.a[kind=local]
+expr e@3:13 name(n) type=Int ref=testDigitConversion.$0.n[kind=vparam]
 expr e@3:35 int(16) type=Int
-expr e@3:13#1 memberCall recv=e@3:13 callee=digitToChar args=[radix:e@3:35] type=Char call=kotlin.text.digitToChar#1
-expr e@3:5 localDecl b mutable=0 type=_ init=e@3:13#1 type=Unit ref=__local_1.b
+expr e@3:13#1 memberCall recv=e@3:13 callee=digitToChar args=[radix:e@3:35] type=Char call=kotlin.text.digitToChar[kind=fun;recv=Int;params=Int]
+expr e@3:5 localDecl b mutable=0 type=_ init=e@3:13#1 type=Unit ref=__local_1.b[kind=local]

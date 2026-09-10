@@ -1,19 +1,13 @@
-symbol fq=__local_0.entry kind=local vis=private flags=_ type=kotlin.collections.MutableMap.MutableEntry<String, Int>
-symbol fq=golden.sema.updateMutableEntry kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int>] ret=Int
-symbol fq=golden.sema.updateMutableEntry.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Iterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.next kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
-symbol fq=kotlin.collections.MutableIterator kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap.MutableEntry kind=interface vis=public flags=synthetic
+symbol fq=__local_0.entry[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap.MutableEntry<String, Int>
+symbol fq=golden.sema.updateMutableEntry.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.updateMutableEntry[kind=fun;params=kotlin.collections.MutableMap<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int>] ret=Int
 file fstdlib_kotlin_collections_MutableMap_MutableEntry_MutableEntry_n package=golden.sema
-  decl golden.sema.updateMutableEntry fun updateMutableEntry sym=golden.sema.updateMutableEntry
-expr e@4:17 name(values) type=kotlin.collections.MutableMap<String, Int> ref=golden.sema.updateMutableEntry.$0.values
-expr e@4:17#1 memberCall recv=e@4:17 callee=iterator args=[] type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int>> call=kotlin.collections.iterator#1 targs=[String,Int]
-expr e@4:17#2 memberCall recv=e@4:17#1 callee=next args=[] type=kotlin.collections.MutableMap.MutableEntry<String, Int> call=kotlin.collections.Iterator.next targs=[kotlin.collections.MutableMap.MutableEntry<String, Int>]
-expr e@4:5 localDecl entry mutable=0 type=_ init=e@4:17#2 type=Unit ref=__local_0.entry
-expr e@5:12 name(entry) type=kotlin.collections.MutableMap.MutableEntry<String, Int> ref=__local_0.entry
+  decl golden.sema.updateMutableEntry[kind=fun;params=kotlin.collections.MutableMap<String,Int>] fun updateMutableEntry sym=golden.sema.updateMutableEntry[kind=fun;params=kotlin.collections.MutableMap<String,Int>]
+expr e@4:17 name(values) type=kotlin.collections.MutableMap<String, Int> ref=golden.sema.updateMutableEntry.$0.values[kind=vparam]
+expr e@4:17#1 memberCall recv=e@4:17 callee=iterator args=[] type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int>> call=kotlin.collections.iterator[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=;gen=2] targs=[String,Int]
+expr e@4:17#2 memberCall recv=e@4:17#1 callee=next args=[] type=kotlin.collections.MutableMap.MutableEntry<String, Int> call=kotlin.collections.Iterator.next[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] targs=[kotlin.collections.MutableMap.MutableEntry<String, Int>]
+expr e@4:5 localDecl entry mutable=0 type=_ init=e@4:17#2 type=Unit ref=__local_0.entry[kind=local]
+expr e@5:12 name(entry) type=kotlin.collections.MutableMap.MutableEntry<String, Int> ref=__local_0.entry[kind=local]
 expr e@5:27 int(42) type=Int
-expr e@5:12#1 memberCall recv=e@5:12 callee=setValue args=[_:e@5:27] type=Int call=kotlin.collections.setValue#0 targs=[String,Int]
+expr e@5:12#1 memberCall recv=e@5:12 callee=setValue args=[_:e@5:27] type=Int call=kotlin.collections.setValue[kind=fun;recv=kotlin.collections.MutableMap.MutableEntry<T0,T1>;params=T1;gen=2] targs=[String,Int]
 expr e@5:5 return value=e@5:12#1 type=Nothing

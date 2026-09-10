@@ -1,204 +1,203 @@
-symbol fq=golden.sema.maxOfByte2 kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte] ret=Byte
-symbol fq=golden.sema.maxOfByte2.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfByte2.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfByte3 kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte,Byte] ret=Byte
-symbol fq=golden.sema.maxOfByte3.$1.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfByte3.$1.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfByte3.$1.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfByteVararg kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte,Byte,Byte] ret=Byte
-symbol fq=golden.sema.maxOfByteVararg.$2.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfByteVararg.$2.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfByteVararg.$2.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfByteVararg.$2.d kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparable2 kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=String
-symbol fq=golden.sema.maxOfComparable2.$3.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparable2.$3.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparable3 kind=function vis=public flags=_ sig=recv=_ params=[String,String,String] ret=String
-symbol fq=golden.sema.maxOfComparable3.$4.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparable3.$4.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparable3.$4.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparableVararg kind=function vis=public flags=_ sig=recv=_ params=[String,String,String,String] ret=String
-symbol fq=golden.sema.maxOfComparableVararg.$5.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparableVararg.$5.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparableVararg.$5.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparableVararg.$5.d kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparator2 kind=function vis=public flags=_ sig=recv=_ params=[String,String,kotlin.Comparator<Any>] ret=String
-symbol fq=golden.sema.maxOfComparator2.$6.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparator2.$6.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparator2.$6.comparator kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparator3 kind=function vis=public flags=_ sig=recv=_ params=[String,String,String,kotlin.Comparator<Any>] ret=String
-symbol fq=golden.sema.maxOfComparator3.$7.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparator3.$7.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparator3.$7.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparator3.$7.comparator kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparatorVararg kind=function vis=public flags=_ sig=recv=_ params=[String,String,String,String,kotlin.Comparator<Any>] ret=String
-symbol fq=golden.sema.maxOfComparatorVararg.$8.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparatorVararg.$8.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparatorVararg.$8.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparatorVararg.$8.comparator kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfComparatorVararg.$8.d kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfDoubleVararg kind=function vis=public flags=_ sig=recv=_ params=[Double,Double,Double,Double] ret=Double
-symbol fq=golden.sema.maxOfDoubleVararg.$9.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfDoubleVararg.$9.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfDoubleVararg.$9.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfDoubleVararg.$9.d kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfFloatVararg kind=function vis=public flags=_ sig=recv=_ params=[Float,Float,Float,Float] ret=Float
-symbol fq=golden.sema.maxOfFloatVararg.$10.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfFloatVararg.$10.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfFloatVararg.$10.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfFloatVararg.$10.d kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfIntVararg kind=function vis=public flags=_ sig=recv=_ params=[Int,Int,Int,Int] ret=Int
-symbol fq=golden.sema.maxOfIntVararg.$11.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfIntVararg.$11.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfIntVararg.$11.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfIntVararg.$11.d kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfLongVararg kind=function vis=public flags=_ sig=recv=_ params=[Long,Long,Long,Long] ret=Long
-symbol fq=golden.sema.maxOfLongVararg.$12.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfLongVararg.$12.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfLongVararg.$12.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfLongVararg.$12.d kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfShort2 kind=function vis=public flags=_ sig=recv=_ params=[Short,Short] ret=Short
-symbol fq=golden.sema.maxOfShort2.$13.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfShort2.$13.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfShort3 kind=function vis=public flags=_ sig=recv=_ params=[Short,Short,Short] ret=Short
-symbol fq=golden.sema.maxOfShort3.$14.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfShort3.$14.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfShort3.$14.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfShortVararg kind=function vis=public flags=_ sig=recv=_ params=[Short,Short,Short,Short] ret=Short
-symbol fq=golden.sema.maxOfShortVararg.$15.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfShortVararg.$15.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfShortVararg.$15.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfShortVararg.$15.d kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUByteVararg kind=function vis=public flags=_ sig=recv=_ params=[UByte,UByte,UByte,UByte] ret=UByte
-symbol fq=golden.sema.maxOfUByteVararg.$16.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUByteVararg.$16.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUByteVararg.$16.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUByteVararg.$16.d kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUIntVararg kind=function vis=public flags=_ sig=recv=_ params=[UInt,UInt,UInt,UInt] ret=UInt
-symbol fq=golden.sema.maxOfUIntVararg.$17.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUIntVararg.$17.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUIntVararg.$17.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUIntVararg.$17.d kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfULongVararg kind=function vis=public flags=_ sig=recv=_ params=[ULong,ULong,ULong,ULong] ret=ULong
-symbol fq=golden.sema.maxOfULongVararg.$18.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfULongVararg.$18.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfULongVararg.$18.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfULongVararg.$18.d kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUShortVararg kind=function vis=public flags=_ sig=recv=_ params=[UShort,UShort,UShort,UShort] ret=UShort
-symbol fq=golden.sema.maxOfUShortVararg.$19.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUShortVararg.$19.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUShortVararg.$19.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfUShortVararg.$19.d kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
+symbol fq=golden.sema.maxOfByte2.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfByte2.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfByte2[kind=fun;params=Byte,Byte] kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte] ret=Byte
+symbol fq=golden.sema.maxOfByte3.$1.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfByte3.$1.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfByte3.$1.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfByte3[kind=fun;params=Byte,Byte,Byte] kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte,Byte] ret=Byte
+symbol fq=golden.sema.maxOfByteVararg.$2.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfByteVararg.$2.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfByteVararg.$2.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfByteVararg.$2.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfByteVararg[kind=fun;params=Byte,Byte,Byte,Byte] kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte,Byte,Byte] ret=Byte
+symbol fq=golden.sema.maxOfComparable2.$3.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparable2.$3.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparable2[kind=fun;params=String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=String
+symbol fq=golden.sema.maxOfComparable3.$4.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparable3.$4.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparable3.$4.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparable3[kind=fun;params=String,String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String,String] ret=String
+symbol fq=golden.sema.maxOfComparableVararg.$5.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparableVararg.$5.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparableVararg.$5.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparableVararg.$5.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparableVararg[kind=fun;params=String,String,String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String,String,String] ret=String
+symbol fq=golden.sema.maxOfComparator2.$6.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparator2.$6.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparator2.$6.comparator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparator2[kind=fun;params=String,String,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[String,String,kotlin.Comparator<Any>] ret=String
+symbol fq=golden.sema.maxOfComparator3.$7.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparator3.$7.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparator3.$7.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparator3.$7.comparator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparator3[kind=fun;params=String,String,String,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[String,String,String,kotlin.Comparator<Any>] ret=String
+symbol fq=golden.sema.maxOfComparatorVararg.$8.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparatorVararg.$8.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparatorVararg.$8.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparatorVararg.$8.comparator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparatorVararg.$8.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfComparatorVararg[kind=fun;params=String,String,String,String,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[String,String,String,String,kotlin.Comparator<Any>] ret=String
+symbol fq=golden.sema.maxOfDoubleVararg.$9.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfDoubleVararg.$9.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfDoubleVararg.$9.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfDoubleVararg.$9.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfDoubleVararg[kind=fun;params=Double,Double,Double,Double] kind=function vis=public flags=_ sig=recv=_ params=[Double,Double,Double,Double] ret=Double
+symbol fq=golden.sema.maxOfFloatVararg.$10.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfFloatVararg.$10.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfFloatVararg.$10.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfFloatVararg.$10.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfFloatVararg[kind=fun;params=Float,Float,Float,Float] kind=function vis=public flags=_ sig=recv=_ params=[Float,Float,Float,Float] ret=Float
+symbol fq=golden.sema.maxOfIntVararg.$11.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfIntVararg.$11.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfIntVararg.$11.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfIntVararg.$11.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfIntVararg[kind=fun;params=Int,Int,Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int,Int,Int] ret=Int
+symbol fq=golden.sema.maxOfLongVararg.$12.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfLongVararg.$12.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfLongVararg.$12.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfLongVararg.$12.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfLongVararg[kind=fun;params=Long,Long,Long,Long] kind=function vis=public flags=_ sig=recv=_ params=[Long,Long,Long,Long] ret=Long
+symbol fq=golden.sema.maxOfShort2.$13.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfShort2.$13.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfShort2[kind=fun;params=Short,Short] kind=function vis=public flags=_ sig=recv=_ params=[Short,Short] ret=Short
+symbol fq=golden.sema.maxOfShort3.$14.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfShort3.$14.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfShort3.$14.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfShort3[kind=fun;params=Short,Short,Short] kind=function vis=public flags=_ sig=recv=_ params=[Short,Short,Short] ret=Short
+symbol fq=golden.sema.maxOfShortVararg.$15.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfShortVararg.$15.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfShortVararg.$15.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfShortVararg.$15.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfShortVararg[kind=fun;params=Short,Short,Short,Short] kind=function vis=public flags=_ sig=recv=_ params=[Short,Short,Short,Short] ret=Short
+symbol fq=golden.sema.maxOfUByteVararg.$16.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUByteVararg.$16.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUByteVararg.$16.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUByteVararg.$16.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUByteVararg[kind=fun;params=UByte,UByte,UByte,UByte] kind=function vis=public flags=_ sig=recv=_ params=[UByte,UByte,UByte,UByte] ret=UByte
+symbol fq=golden.sema.maxOfUIntVararg.$17.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUIntVararg.$17.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUIntVararg.$17.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUIntVararg.$17.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUIntVararg[kind=fun;params=UInt,UInt,UInt,UInt] kind=function vis=public flags=_ sig=recv=_ params=[UInt,UInt,UInt,UInt] ret=UInt
+symbol fq=golden.sema.maxOfULongVararg.$18.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfULongVararg.$18.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfULongVararg.$18.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfULongVararg.$18.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfULongVararg[kind=fun;params=ULong,ULong,ULong,ULong] kind=function vis=public flags=_ sig=recv=_ params=[ULong,ULong,ULong,ULong] ret=ULong
+symbol fq=golden.sema.maxOfUShortVararg.$19.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUShortVararg.$19.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUShortVararg.$19.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUShortVararg.$19.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOfUShortVararg[kind=fun;params=UShort,UShort,UShort,UShort] kind=function vis=public flags=_ sig=recv=_ params=[UShort,UShort,UShort,UShort] ret=UShort
 file fstdlib_kotlin_comparisons_n_max package=golden.sema
-  decl golden.sema.maxOfComparable2 fun maxOfComparable2 sym=golden.sema.maxOfComparable2
-  decl golden.sema.maxOfComparableVararg fun maxOfComparableVararg sym=golden.sema.maxOfComparableVararg
-  decl golden.sema.maxOfByteVararg fun maxOfByteVararg sym=golden.sema.maxOfByteVararg
-  decl golden.sema.maxOfDoubleVararg fun maxOfDoubleVararg sym=golden.sema.maxOfDoubleVararg
-  decl golden.sema.maxOfFloatVararg fun maxOfFloatVararg sym=golden.sema.maxOfFloatVararg
-  decl golden.sema.maxOfIntVararg fun maxOfIntVararg sym=golden.sema.maxOfIntVararg
-  decl golden.sema.maxOfLongVararg fun maxOfLongVararg sym=golden.sema.maxOfLongVararg
-  decl golden.sema.maxOfShortVararg fun maxOfShortVararg sym=golden.sema.maxOfShortVararg
-  decl golden.sema.maxOfUByteVararg fun maxOfUByteVararg sym=golden.sema.maxOfUByteVararg
-  decl golden.sema.maxOfUIntVararg fun maxOfUIntVararg sym=golden.sema.maxOfUIntVararg
-  decl golden.sema.maxOfULongVararg fun maxOfULongVararg sym=golden.sema.maxOfULongVararg
-  decl golden.sema.maxOfUShortVararg fun maxOfUShortVararg sym=golden.sema.maxOfUShortVararg
-  decl golden.sema.maxOfByte2 fun maxOfByte2 sym=golden.sema.maxOfByte2
-  decl golden.sema.maxOfShort2 fun maxOfShort2 sym=golden.sema.maxOfShort2
-  decl golden.sema.maxOfComparator2 fun maxOfComparator2 sym=golden.sema.maxOfComparator2
-  decl golden.sema.maxOfComparatorVararg fun maxOfComparatorVararg sym=golden.sema.maxOfComparatorVararg
-  decl golden.sema.maxOfComparable3 fun maxOfComparable3 sym=golden.sema.maxOfComparable3
-  decl golden.sema.maxOfByte3 fun maxOfByte3 sym=golden.sema.maxOfByte3
-  decl golden.sema.maxOfShort3 fun maxOfShort3 sym=golden.sema.maxOfShort3
-  decl golden.sema.maxOfComparator3 fun maxOfComparator3 sym=golden.sema.maxOfComparator3
-expr e@3:60 name(a) type=String ref=golden.sema.maxOfComparable2.$3.a
-expr e@3:63 name(b) type=String ref=golden.sema.maxOfComparable2.$3.b
-expr e@3:54 call callee=e@3:54#1 args=[_:e@3:60,_:e@3:63] type=String call=kotlin.comparisons.maxOf#30 targs=[String]
-expr e@4:87 name(a) type=String ref=golden.sema.maxOfComparableVararg.$5.a
-expr e@4:90 name(b) type=String ref=golden.sema.maxOfComparableVararg.$5.b
-expr e@4:93 name(c) type=String ref=golden.sema.maxOfComparableVararg.$5.c
-expr e@4:96 name(d) type=String ref=golden.sema.maxOfComparableVararg.$5.d
-expr e@4:81 call callee=e@4:81#1 args=[_:e@4:87,_:e@4:90,_:e@4:93,_:e@4:96] type=String call=kotlin.comparisons.maxOf#32 targs=[String]
-expr e@5:71 name(a) type=Byte ref=golden.sema.maxOfByteVararg.$2.a
-expr e@5:74 name(b) type=Byte ref=golden.sema.maxOfByteVararg.$2.b
-expr e@5:77 name(c) type=Byte ref=golden.sema.maxOfByteVararg.$2.c
-expr e@5:80 name(d) type=Byte ref=golden.sema.maxOfByteVararg.$2.d
-expr e@5:65 call callee=e@5:65#1 args=[_:e@5:71,_:e@5:74,_:e@5:77,_:e@5:80] type=Byte call=kotlin.comparisons.maxOf#1
-expr e@6:83 name(a) type=Double ref=golden.sema.maxOfDoubleVararg.$9.a
-expr e@6:86 name(b) type=Double ref=golden.sema.maxOfDoubleVararg.$9.b
-expr e@6:89 name(c) type=Double ref=golden.sema.maxOfDoubleVararg.$9.c
-expr e@6:92 name(d) type=Double ref=golden.sema.maxOfDoubleVararg.$9.d
-expr e@6:77 call callee=e@6:77#1 args=[_:e@6:83,_:e@6:86,_:e@6:89,_:e@6:92] type=Double call=kotlin.comparisons.maxOf#4
-expr e@7:77 name(a) type=Float ref=golden.sema.maxOfFloatVararg.$10.a
-expr e@7:80 name(b) type=Float ref=golden.sema.maxOfFloatVararg.$10.b
-expr e@7:83 name(c) type=Float ref=golden.sema.maxOfFloatVararg.$10.c
-expr e@7:86 name(d) type=Float ref=golden.sema.maxOfFloatVararg.$10.d
-expr e@7:71 call callee=e@7:71#1 args=[_:e@7:77,_:e@7:80,_:e@7:83,_:e@7:86] type=Float call=kotlin.comparisons.maxOf#7
-expr e@8:65 name(a) type=Int ref=golden.sema.maxOfIntVararg.$11.a
-expr e@8:68 name(b) type=Int ref=golden.sema.maxOfIntVararg.$11.b
-expr e@8:71 name(c) type=Int ref=golden.sema.maxOfIntVararg.$11.c
-expr e@8:74 name(d) type=Int ref=golden.sema.maxOfIntVararg.$11.d
-expr e@8:59 call callee=e@8:59#1 args=[_:e@8:65,_:e@8:68,_:e@8:71,_:e@8:74] type=Int call=kotlin.comparisons.maxOf#10
-expr e@9:71 name(a) type=Long ref=golden.sema.maxOfLongVararg.$12.a
-expr e@9:74 name(b) type=Long ref=golden.sema.maxOfLongVararg.$12.b
-expr e@9:77 name(c) type=Long ref=golden.sema.maxOfLongVararg.$12.c
-expr e@9:80 name(d) type=Long ref=golden.sema.maxOfLongVararg.$12.d
-expr e@9:65 call callee=e@9:65#1 args=[_:e@9:71,_:e@9:74,_:e@9:77,_:e@9:80] type=Long call=kotlin.comparisons.maxOf#13
-expr e@10:77 name(a) type=Short ref=golden.sema.maxOfShortVararg.$15.a
-expr e@10:80 name(b) type=Short ref=golden.sema.maxOfShortVararg.$15.b
-expr e@10:83 name(c) type=Short ref=golden.sema.maxOfShortVararg.$15.c
-expr e@10:86 name(d) type=Short ref=golden.sema.maxOfShortVararg.$15.d
-expr e@10:71 call callee=e@10:71#1 args=[_:e@10:77,_:e@10:80,_:e@10:83,_:e@10:86] type=Short call=kotlin.comparisons.maxOf#16
-expr e@11:77 name(a) type=UByte ref=golden.sema.maxOfUByteVararg.$16.a
-expr e@11:80 name(b) type=UByte ref=golden.sema.maxOfUByteVararg.$16.b
-expr e@11:83 name(c) type=UByte ref=golden.sema.maxOfUByteVararg.$16.c
-expr e@11:86 name(d) type=UByte ref=golden.sema.maxOfUByteVararg.$16.d
-expr e@11:71 call callee=e@11:71#1 args=[_:e@11:77,_:e@11:80,_:e@11:83,_:e@11:86] type=UByte call=kotlin.comparisons.maxOf#19
-expr e@12:71 name(a) type=UInt ref=golden.sema.maxOfUIntVararg.$17.a
-expr e@12:74 name(b) type=UInt ref=golden.sema.maxOfUIntVararg.$17.b
-expr e@12:77 name(c) type=UInt ref=golden.sema.maxOfUIntVararg.$17.c
-expr e@12:80 name(d) type=UInt ref=golden.sema.maxOfUIntVararg.$17.d
-expr e@12:65 call callee=e@12:65#1 args=[_:e@12:71,_:e@12:74,_:e@12:77,_:e@12:80] type=UInt call=kotlin.comparisons.maxOf#22
-expr e@13:77 name(a) type=ULong ref=golden.sema.maxOfULongVararg.$18.a
-expr e@13:80 name(b) type=ULong ref=golden.sema.maxOfULongVararg.$18.b
-expr e@13:83 name(c) type=ULong ref=golden.sema.maxOfULongVararg.$18.c
-expr e@13:86 name(d) type=ULong ref=golden.sema.maxOfULongVararg.$18.d
-expr e@13:71 call callee=e@13:71#1 args=[_:e@13:77,_:e@13:80,_:e@13:83,_:e@13:86] type=ULong call=kotlin.comparisons.maxOf#25
-expr e@14:83 name(a) type=UShort ref=golden.sema.maxOfUShortVararg.$19.a
-expr e@14:86 name(b) type=UShort ref=golden.sema.maxOfUShortVararg.$19.b
-expr e@14:89 name(c) type=UShort ref=golden.sema.maxOfUShortVararg.$19.c
-expr e@14:92 name(d) type=UShort ref=golden.sema.maxOfUShortVararg.$19.d
-expr e@14:77 call callee=e@14:77#1 args=[_:e@14:83,_:e@14:86,_:e@14:89,_:e@14:92] type=UShort call=kotlin.comparisons.maxOf#28
-expr e@15:48 name(a) type=Byte ref=golden.sema.maxOfByte2.$0.a
-expr e@15:51 name(b) type=Byte ref=golden.sema.maxOfByte2.$0.b
-expr e@15:42 call callee=e@15:42#1 args=[_:e@15:48,_:e@15:51] type=Byte call=kotlin.comparisons.maxOf#0
-expr e@16:52 name(a) type=Short ref=golden.sema.maxOfShort2.$13.a
-expr e@16:55 name(b) type=Short ref=golden.sema.maxOfShort2.$13.b
-expr e@16:46 call callee=e@16:46#1 args=[_:e@16:52,_:e@16:55] type=Short call=kotlin.comparisons.maxOf#15
-expr e@17:89 name(a) type=String ref=golden.sema.maxOfComparator2.$6.a
-expr e@17:92 name(b) type=String ref=golden.sema.maxOfComparator2.$6.b
-expr e@17:95 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.maxOfComparator2.$6.comparator
-expr e@17:83 call callee=e@17:83#1 args=[_:e@17:89,_:e@17:92,_:e@17:95] type=String call=kotlin.comparisons.maxOf#33 targs=[String]
-expr e@18:116 name(a) type=String ref=golden.sema.maxOfComparatorVararg.$8.a
-expr e@18:119 name(b) type=String ref=golden.sema.maxOfComparatorVararg.$8.b
-expr e@18:122 name(c) type=String ref=golden.sema.maxOfComparatorVararg.$8.c
-expr e@18:125 name(d) type=String ref=golden.sema.maxOfComparatorVararg.$8.d
-expr e@18:141 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.maxOfComparatorVararg.$8.comparator
-expr e@18:110 call callee=e@18:110#1 args=[_:e@18:116,_:e@18:119,_:e@18:122,_:e@18:125,comparator:e@18:141] type=String call=kotlin.comparisons.maxOf#35 targs=[String]
-expr e@19:71 name(a) type=String ref=golden.sema.maxOfComparable3.$4.a
-expr e@19:74 name(b) type=String ref=golden.sema.maxOfComparable3.$4.b
-expr e@19:77 name(c) type=String ref=golden.sema.maxOfComparable3.$4.c
-expr e@19:65 call callee=e@19:65#1 args=[_:e@19:71,_:e@19:74,_:e@19:77] type=String call=kotlin.comparisons.maxOf#31 targs=[String]
-expr e@20:57 name(a) type=Byte ref=golden.sema.maxOfByte3.$1.a
-expr e@20:60 name(b) type=Byte ref=golden.sema.maxOfByte3.$1.b
-expr e@20:63 name(c) type=Byte ref=golden.sema.maxOfByte3.$1.c
-expr e@20:51 call callee=e@20:51#1 args=[_:e@20:57,_:e@20:60,_:e@20:63] type=Byte call=kotlin.comparisons.maxOf#2
-expr e@21:62 name(a) type=Short ref=golden.sema.maxOfShort3.$14.a
-expr e@21:65 name(b) type=Short ref=golden.sema.maxOfShort3.$14.b
-expr e@21:68 name(c) type=Short ref=golden.sema.maxOfShort3.$14.c
-expr e@21:56 call callee=e@21:56#1 args=[_:e@21:62,_:e@21:65,_:e@21:68] type=Short call=kotlin.comparisons.maxOf#17
-expr e@22:100 name(a) type=String ref=golden.sema.maxOfComparator3.$7.a
-expr e@22:103 name(b) type=String ref=golden.sema.maxOfComparator3.$7.b
-expr e@22:106 name(c) type=String ref=golden.sema.maxOfComparator3.$7.c
-expr e@22:109 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.maxOfComparator3.$7.comparator
-expr e@22:94 call callee=e@22:94#1 args=[_:e@22:100,_:e@22:103,_:e@22:106,_:e@22:109] type=String call=kotlin.comparisons.maxOf#34 targs=[String]
+  decl golden.sema.maxOfComparable2[kind=fun;params=String,String] fun maxOfComparable2 sym=golden.sema.maxOfComparable2[kind=fun;params=String,String]
+  decl golden.sema.maxOfComparableVararg[kind=fun;params=String,String,String,String] fun maxOfComparableVararg sym=golden.sema.maxOfComparableVararg[kind=fun;params=String,String,String,String]
+  decl golden.sema.maxOfByteVararg[kind=fun;params=Byte,Byte,Byte,Byte] fun maxOfByteVararg sym=golden.sema.maxOfByteVararg[kind=fun;params=Byte,Byte,Byte,Byte]
+  decl golden.sema.maxOfDoubleVararg[kind=fun;params=Double,Double,Double,Double] fun maxOfDoubleVararg sym=golden.sema.maxOfDoubleVararg[kind=fun;params=Double,Double,Double,Double]
+  decl golden.sema.maxOfFloatVararg[kind=fun;params=Float,Float,Float,Float] fun maxOfFloatVararg sym=golden.sema.maxOfFloatVararg[kind=fun;params=Float,Float,Float,Float]
+  decl golden.sema.maxOfIntVararg[kind=fun;params=Int,Int,Int,Int] fun maxOfIntVararg sym=golden.sema.maxOfIntVararg[kind=fun;params=Int,Int,Int,Int]
+  decl golden.sema.maxOfLongVararg[kind=fun;params=Long,Long,Long,Long] fun maxOfLongVararg sym=golden.sema.maxOfLongVararg[kind=fun;params=Long,Long,Long,Long]
+  decl golden.sema.maxOfShortVararg[kind=fun;params=Short,Short,Short,Short] fun maxOfShortVararg sym=golden.sema.maxOfShortVararg[kind=fun;params=Short,Short,Short,Short]
+  decl golden.sema.maxOfUByteVararg[kind=fun;params=UByte,UByte,UByte,UByte] fun maxOfUByteVararg sym=golden.sema.maxOfUByteVararg[kind=fun;params=UByte,UByte,UByte,UByte]
+  decl golden.sema.maxOfUIntVararg[kind=fun;params=UInt,UInt,UInt,UInt] fun maxOfUIntVararg sym=golden.sema.maxOfUIntVararg[kind=fun;params=UInt,UInt,UInt,UInt]
+  decl golden.sema.maxOfULongVararg[kind=fun;params=ULong,ULong,ULong,ULong] fun maxOfULongVararg sym=golden.sema.maxOfULongVararg[kind=fun;params=ULong,ULong,ULong,ULong]
+  decl golden.sema.maxOfUShortVararg[kind=fun;params=UShort,UShort,UShort,UShort] fun maxOfUShortVararg sym=golden.sema.maxOfUShortVararg[kind=fun;params=UShort,UShort,UShort,UShort]
+  decl golden.sema.maxOfByte2[kind=fun;params=Byte,Byte] fun maxOfByte2 sym=golden.sema.maxOfByte2[kind=fun;params=Byte,Byte]
+  decl golden.sema.maxOfShort2[kind=fun;params=Short,Short] fun maxOfShort2 sym=golden.sema.maxOfShort2[kind=fun;params=Short,Short]
+  decl golden.sema.maxOfComparator2[kind=fun;params=String,String,kotlin.Comparator<Any>] fun maxOfComparator2 sym=golden.sema.maxOfComparator2[kind=fun;params=String,String,kotlin.Comparator<Any>]
+  decl golden.sema.maxOfComparatorVararg[kind=fun;params=String,String,String,String,kotlin.Comparator<Any>] fun maxOfComparatorVararg sym=golden.sema.maxOfComparatorVararg[kind=fun;params=String,String,String,String,kotlin.Comparator<Any>]
+  decl golden.sema.maxOfComparable3[kind=fun;params=String,String,String] fun maxOfComparable3 sym=golden.sema.maxOfComparable3[kind=fun;params=String,String,String]
+  decl golden.sema.maxOfByte3[kind=fun;params=Byte,Byte,Byte] fun maxOfByte3 sym=golden.sema.maxOfByte3[kind=fun;params=Byte,Byte,Byte]
+  decl golden.sema.maxOfShort3[kind=fun;params=Short,Short,Short] fun maxOfShort3 sym=golden.sema.maxOfShort3[kind=fun;params=Short,Short,Short]
+  decl golden.sema.maxOfComparator3[kind=fun;params=String,String,String,kotlin.Comparator<Any>] fun maxOfComparator3 sym=golden.sema.maxOfComparator3[kind=fun;params=String,String,String,kotlin.Comparator<Any>]
+expr e@3:60 name(a) type=String ref=golden.sema.maxOfComparable2.$3.a[kind=vparam]
+expr e@3:63 name(b) type=String ref=golden.sema.maxOfComparable2.$3.b[kind=vparam]
+expr e@3:54 call callee=e@3:54#1 args=[_:e@3:60,_:e@3:63] type=String call=kotlin.comparisons.maxOf[kind=fun;params=T0,T0;gen=1] targs=[String]
+expr e@4:87 name(a) type=String ref=golden.sema.maxOfComparableVararg.$5.a[kind=vparam]
+expr e@4:90 name(b) type=String ref=golden.sema.maxOfComparableVararg.$5.b[kind=vparam]
+expr e@4:93 name(c) type=String ref=golden.sema.maxOfComparableVararg.$5.c[kind=vparam]
+expr e@4:96 name(d) type=String ref=golden.sema.maxOfComparableVararg.$5.d[kind=vparam]
+expr e@4:81 call callee=e@4:81#1 args=[_:e@4:87,_:e@4:90,_:e@4:93,_:e@4:96] type=String call=kotlin.comparisons.maxOf[kind=fun;params=T0,*T0;gen=1] targs=[String]
+expr e@5:71 name(a) type=Byte ref=golden.sema.maxOfByteVararg.$2.a[kind=vparam]
+expr e@5:74 name(b) type=Byte ref=golden.sema.maxOfByteVararg.$2.b[kind=vparam]
+expr e@5:77 name(c) type=Byte ref=golden.sema.maxOfByteVararg.$2.c[kind=vparam]
+expr e@5:80 name(d) type=Byte ref=golden.sema.maxOfByteVararg.$2.d[kind=vparam]
+expr e@5:65 call callee=e@5:65#1 args=[_:e@5:71,_:e@5:74,_:e@5:77,_:e@5:80] type=Byte call=kotlin.comparisons.maxOf[kind=fun;params=Byte,*Byte]
+expr e@6:83 name(a) type=Double ref=golden.sema.maxOfDoubleVararg.$9.a[kind=vparam]
+expr e@6:86 name(b) type=Double ref=golden.sema.maxOfDoubleVararg.$9.b[kind=vparam]
+expr e@6:89 name(c) type=Double ref=golden.sema.maxOfDoubleVararg.$9.c[kind=vparam]
+expr e@6:92 name(d) type=Double ref=golden.sema.maxOfDoubleVararg.$9.d[kind=vparam]
+expr e@6:77 call callee=e@6:77#1 args=[_:e@6:83,_:e@6:86,_:e@6:89,_:e@6:92] type=Double call=kotlin.comparisons.maxOf[kind=fun;params=Double,*Double]
+expr e@7:77 name(a) type=Float ref=golden.sema.maxOfFloatVararg.$10.a[kind=vparam]
+expr e@7:80 name(b) type=Float ref=golden.sema.maxOfFloatVararg.$10.b[kind=vparam]
+expr e@7:83 name(c) type=Float ref=golden.sema.maxOfFloatVararg.$10.c[kind=vparam]
+expr e@7:86 name(d) type=Float ref=golden.sema.maxOfFloatVararg.$10.d[kind=vparam]
+expr e@7:71 call callee=e@7:71#1 args=[_:e@7:77,_:e@7:80,_:e@7:83,_:e@7:86] type=Float call=kotlin.comparisons.maxOf[kind=fun;params=Float,*Float]
+expr e@8:65 name(a) type=Int ref=golden.sema.maxOfIntVararg.$11.a[kind=vparam]
+expr e@8:68 name(b) type=Int ref=golden.sema.maxOfIntVararg.$11.b[kind=vparam]
+expr e@8:71 name(c) type=Int ref=golden.sema.maxOfIntVararg.$11.c[kind=vparam]
+expr e@8:74 name(d) type=Int ref=golden.sema.maxOfIntVararg.$11.d[kind=vparam]
+expr e@8:59 call callee=e@8:59#1 args=[_:e@8:65,_:e@8:68,_:e@8:71,_:e@8:74] type=Int call=kotlin.comparisons.maxOf[kind=fun;params=Int,*Int]
+expr e@9:71 name(a) type=Long ref=golden.sema.maxOfLongVararg.$12.a[kind=vparam]
+expr e@9:74 name(b) type=Long ref=golden.sema.maxOfLongVararg.$12.b[kind=vparam]
+expr e@9:77 name(c) type=Long ref=golden.sema.maxOfLongVararg.$12.c[kind=vparam]
+expr e@9:80 name(d) type=Long ref=golden.sema.maxOfLongVararg.$12.d[kind=vparam]
+expr e@9:65 call callee=e@9:65#1 args=[_:e@9:71,_:e@9:74,_:e@9:77,_:e@9:80] type=Long call=kotlin.comparisons.maxOf[kind=fun;params=Long,*Long]
+expr e@10:77 name(a) type=Short ref=golden.sema.maxOfShortVararg.$15.a[kind=vparam]
+expr e@10:80 name(b) type=Short ref=golden.sema.maxOfShortVararg.$15.b[kind=vparam]
+expr e@10:83 name(c) type=Short ref=golden.sema.maxOfShortVararg.$15.c[kind=vparam]
+expr e@10:86 name(d) type=Short ref=golden.sema.maxOfShortVararg.$15.d[kind=vparam]
+expr e@10:71 call callee=e@10:71#1 args=[_:e@10:77,_:e@10:80,_:e@10:83,_:e@10:86] type=Short call=kotlin.comparisons.maxOf[kind=fun;params=Short,*Short]
+expr e@11:77 name(a) type=UByte ref=golden.sema.maxOfUByteVararg.$16.a[kind=vparam]
+expr e@11:80 name(b) type=UByte ref=golden.sema.maxOfUByteVararg.$16.b[kind=vparam]
+expr e@11:83 name(c) type=UByte ref=golden.sema.maxOfUByteVararg.$16.c[kind=vparam]
+expr e@11:86 name(d) type=UByte ref=golden.sema.maxOfUByteVararg.$16.d[kind=vparam]
+expr e@11:71 call callee=e@11:71#1 args=[_:e@11:77,_:e@11:80,_:e@11:83,_:e@11:86] type=UByte call=kotlin.comparisons.maxOf[kind=fun;params=UByte,*UByte]
+expr e@12:71 name(a) type=UInt ref=golden.sema.maxOfUIntVararg.$17.a[kind=vparam]
+expr e@12:74 name(b) type=UInt ref=golden.sema.maxOfUIntVararg.$17.b[kind=vparam]
+expr e@12:77 name(c) type=UInt ref=golden.sema.maxOfUIntVararg.$17.c[kind=vparam]
+expr e@12:80 name(d) type=UInt ref=golden.sema.maxOfUIntVararg.$17.d[kind=vparam]
+expr e@12:65 call callee=e@12:65#1 args=[_:e@12:71,_:e@12:74,_:e@12:77,_:e@12:80] type=UInt call=kotlin.comparisons.maxOf[kind=fun;params=UInt,*UInt]
+expr e@13:77 name(a) type=ULong ref=golden.sema.maxOfULongVararg.$18.a[kind=vparam]
+expr e@13:80 name(b) type=ULong ref=golden.sema.maxOfULongVararg.$18.b[kind=vparam]
+expr e@13:83 name(c) type=ULong ref=golden.sema.maxOfULongVararg.$18.c[kind=vparam]
+expr e@13:86 name(d) type=ULong ref=golden.sema.maxOfULongVararg.$18.d[kind=vparam]
+expr e@13:71 call callee=e@13:71#1 args=[_:e@13:77,_:e@13:80,_:e@13:83,_:e@13:86] type=ULong call=kotlin.comparisons.maxOf[kind=fun;params=ULong,*ULong]
+expr e@14:83 name(a) type=UShort ref=golden.sema.maxOfUShortVararg.$19.a[kind=vparam]
+expr e@14:86 name(b) type=UShort ref=golden.sema.maxOfUShortVararg.$19.b[kind=vparam]
+expr e@14:89 name(c) type=UShort ref=golden.sema.maxOfUShortVararg.$19.c[kind=vparam]
+expr e@14:92 name(d) type=UShort ref=golden.sema.maxOfUShortVararg.$19.d[kind=vparam]
+expr e@14:77 call callee=e@14:77#1 args=[_:e@14:83,_:e@14:86,_:e@14:89,_:e@14:92] type=UShort call=kotlin.comparisons.maxOf[kind=fun;params=UShort,*UShort]
+expr e@15:48 name(a) type=Byte ref=golden.sema.maxOfByte2.$0.a[kind=vparam]
+expr e@15:51 name(b) type=Byte ref=golden.sema.maxOfByte2.$0.b[kind=vparam]
+expr e@15:42 call callee=e@15:42#1 args=[_:e@15:48,_:e@15:51] type=Byte call=kotlin.comparisons.maxOf[kind=fun;params=Byte,Byte]
+expr e@16:52 name(a) type=Short ref=golden.sema.maxOfShort2.$13.a[kind=vparam]
+expr e@16:55 name(b) type=Short ref=golden.sema.maxOfShort2.$13.b[kind=vparam]
+expr e@16:46 call callee=e@16:46#1 args=[_:e@16:52,_:e@16:55] type=Short call=kotlin.comparisons.maxOf[kind=fun;params=Short,Short]
+expr e@17:89 name(a) type=String ref=golden.sema.maxOfComparator2.$6.a[kind=vparam]
+expr e@17:92 name(b) type=String ref=golden.sema.maxOfComparator2.$6.b[kind=vparam]
+expr e@17:95 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.maxOfComparator2.$6.comparator[kind=vparam]
+expr e@17:83 call callee=e@17:83#1 args=[_:e@17:89,_:e@17:92,_:e@17:95] type=String call=kotlin.comparisons.maxOf[kind=fun;params=T0,T0,kotlin.Comparator<in T0>;gen=1] targs=[String]
+expr e@18:116 name(a) type=String ref=golden.sema.maxOfComparatorVararg.$8.a[kind=vparam]
+expr e@18:119 name(b) type=String ref=golden.sema.maxOfComparatorVararg.$8.b[kind=vparam]
+expr e@18:122 name(c) type=String ref=golden.sema.maxOfComparatorVararg.$8.c[kind=vparam]
+expr e@18:125 name(d) type=String ref=golden.sema.maxOfComparatorVararg.$8.d[kind=vparam]
+expr e@18:141 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.maxOfComparatorVararg.$8.comparator[kind=vparam]
+expr e@18:110 call callee=e@18:110#1 args=[_:e@18:116,_:e@18:119,_:e@18:122,_:e@18:125,comparator:e@18:141] type=String call=kotlin.comparisons.maxOf[kind=fun;params=T0,*T0,kotlin.Comparator<in T0>;gen=1] targs=[String]
+expr e@19:71 name(a) type=String ref=golden.sema.maxOfComparable3.$4.a[kind=vparam]
+expr e@19:74 name(b) type=String ref=golden.sema.maxOfComparable3.$4.b[kind=vparam]
+expr e@19:77 name(c) type=String ref=golden.sema.maxOfComparable3.$4.c[kind=vparam]
+expr e@19:65 call callee=e@19:65#1 args=[_:e@19:71,_:e@19:74,_:e@19:77] type=String call=kotlin.comparisons.maxOf[kind=fun;params=T0,T0,T0;gen=1] targs=[String]
+expr e@20:57 name(a) type=Byte ref=golden.sema.maxOfByte3.$1.a[kind=vparam]
+expr e@20:60 name(b) type=Byte ref=golden.sema.maxOfByte3.$1.b[kind=vparam]
+expr e@20:63 name(c) type=Byte ref=golden.sema.maxOfByte3.$1.c[kind=vparam]
+expr e@20:51 call callee=e@20:51#1 args=[_:e@20:57,_:e@20:60,_:e@20:63] type=Byte call=kotlin.comparisons.maxOf[kind=fun;params=Byte,Byte,Byte]
+expr e@21:62 name(a) type=Short ref=golden.sema.maxOfShort3.$14.a[kind=vparam]
+expr e@21:65 name(b) type=Short ref=golden.sema.maxOfShort3.$14.b[kind=vparam]
+expr e@21:68 name(c) type=Short ref=golden.sema.maxOfShort3.$14.c[kind=vparam]
+expr e@21:56 call callee=e@21:56#1 args=[_:e@21:62,_:e@21:65,_:e@21:68] type=Short call=kotlin.comparisons.maxOf[kind=fun;params=Short,Short,Short]
+expr e@22:100 name(a) type=String ref=golden.sema.maxOfComparator3.$7.a[kind=vparam]
+expr e@22:103 name(b) type=String ref=golden.sema.maxOfComparator3.$7.b[kind=vparam]
+expr e@22:106 name(c) type=String ref=golden.sema.maxOfComparator3.$7.c[kind=vparam]
+expr e@22:109 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.maxOfComparator3.$7.comparator[kind=vparam]
+expr e@22:94 call callee=e@22:94#1 args=[_:e@22:100,_:e@22:103,_:e@22:106,_:e@22:109] type=String call=kotlin.comparisons.maxOf[kind=fun;params=T0,T0,T0,kotlin.Comparator<in T0>;gen=1] targs=[String]

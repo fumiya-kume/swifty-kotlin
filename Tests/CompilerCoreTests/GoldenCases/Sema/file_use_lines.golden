@@ -1,22 +1,19 @@
-symbol fq=golden.sema.collectLines kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=kotlin.collections.List<String>
-symbol fq=golden.sema.collectLines.$0.file kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.countLines kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=Int
-symbol fq=golden.sema.countLines.$1.file kind=valueParameter vis=private flags=_
-symbol fq=java.io.File kind=class vis=public flags=synthetic type=java.io.File
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=golden.sema.collectLines.$0.file[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectLines[kind=fun;params=java.io.File] kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=kotlin.collections.List<String>
+symbol fq=golden.sema.countLines.$1.file[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.countLines[kind=fun;params=java.io.File] kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=Int
 file ffile_use_lines package=golden.sema
-  decl golden.sema.collectLines fun collectLines sym=golden.sema.collectLines
-  decl golden.sema.countLines fun countLines sym=golden.sema.countLines
-expr e@10:12 name(file) type=java.io.File ref=golden.sema.collectLines.$0.file
+  decl golden.sema.collectLines[kind=fun;params=java.io.File] fun collectLines sym=golden.sema.collectLines[kind=fun;params=java.io.File]
+  decl golden.sema.countLines[kind=fun;params=java.io.File] fun countLines sym=golden.sema.countLines[kind=fun;params=java.io.File]
+expr e@10:12 name(file) type=java.io.File ref=golden.sema.collectLines.$0.file[kind=vparam]
 expr e@11:9 name(lines) type=kotlin.collections.List<out String> ref=s-0
-expr e@11:9#1 memberCall recv=e@11:9 callee=toList args=[] type=kotlin.collections.List<String> call=kotlin.collections.toList#13 targs=[String]
+expr e@11:9#1 memberCall recv=e@11:9 callee=toList args=[] type=kotlin.collections.List<String> call=kotlin.collections.toList[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[String]
 expr e@10:26 lambda params=[lines] body=e@11:9#1 label=useLines type=(kotlin.collections.List<out String>) -> kotlin.collections.List<String>
-expr e@10:12#1 memberCall recv=e@10:12 callee=useLines args=[_:e@10:26] type=kotlin.collections.List<String> call=kotlin.io.useLines targs=[kotlin.collections.List<String>]
+expr e@10:12#1 memberCall recv=e@10:12 callee=useLines args=[_:e@10:26] type=kotlin.collections.List<String> call=kotlin.io.useLines[kind=fun;recv=java.io.File;params=fn{p=kotlin.collections.List<String>;ret=T0};gen=1] targs=[kotlin.collections.List<String>]
 expr e@10:5 return value=e@10:12#1 type=Nothing
-expr e@16:12 name(file) type=java.io.File ref=golden.sema.countLines.$1.file
+expr e@16:12 name(file) type=java.io.File ref=golden.sema.countLines.$1.file[kind=vparam]
 expr e@17:9 name(lines) type=kotlin.collections.List<out String> ref=s-1
 expr e@17:9#1 memberCall recv=e@17:9 callee=count args=[] type=Int
 expr e@16:26 lambda params=[lines] body=e@17:9#1 label=useLines type=(kotlin.collections.List<out String>) -> Int
-expr e@16:12#1 memberCall recv=e@16:12 callee=useLines args=[_:e@16:26] type=Int call=kotlin.io.useLines targs=[Int]
+expr e@16:12#1 memberCall recv=e@16:12 callee=useLines args=[_:e@16:26] type=Int call=kotlin.io.useLines[kind=fun;recv=java.io.File;params=fn{p=kotlin.collections.List<String>;ret=T0};gen=1] targs=[Int]
 expr e@16:5 return value=e@16:12#1 type=Nothing

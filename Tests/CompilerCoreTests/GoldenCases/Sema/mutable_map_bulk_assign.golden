@@ -1,56 +1,49 @@
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=minusAssignOverloads kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>,String,kotlin.collections.List<String>,kotlin.sequences.Sequence<String>,kotlin.Array<String>] ret=Unit
-symbol fq=minusAssignOverloads.$0.array kind=valueParameter vis=private flags=_
-symbol fq=minusAssignOverloads.$0.key kind=valueParameter vis=private flags=_
-symbol fq=minusAssignOverloads.$0.keys kind=valueParameter vis=private flags=_
-symbol fq=minusAssignOverloads.$0.map kind=valueParameter vis=private flags=_
-symbol fq=minusAssignOverloads.$0.sequence kind=valueParameter vis=private flags=_
-symbol fq=plusAssignOverloads kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>,kotlin.Pair<String, Int?>,kotlin.collections.List<kotlin.Pair<String, Int?>>,kotlin.sequences.Sequence<kotlin.Pair<String, Int?>>,kotlin.Array<kotlin.Pair<String, Int?>>,kotlin.collections.Map<String, Int?>] ret=Unit
-symbol fq=plusAssignOverloads.$1.array kind=valueParameter vis=private flags=_
-symbol fq=plusAssignOverloads.$1.map kind=valueParameter vis=private flags=_
-symbol fq=plusAssignOverloads.$1.other kind=valueParameter vis=private flags=_
-symbol fq=plusAssignOverloads.$1.pair kind=valueParameter vis=private flags=_
-symbol fq=plusAssignOverloads.$1.pairs kind=valueParameter vis=private flags=_
-symbol fq=plusAssignOverloads.$1.sequence kind=valueParameter vis=private flags=_
-symbol fq=putAllOverloads kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>,kotlin.collections.List<kotlin.Pair<String, Int?>>,kotlin.sequences.Sequence<kotlin.Pair<String, Int?>>,kotlin.Array<kotlin.Pair<String, Int?>>] ret=Unit
-symbol fq=putAllOverloads.$2.array kind=valueParameter vis=private flags=_
-symbol fq=putAllOverloads.$2.map kind=valueParameter vis=private flags=_
-symbol fq=putAllOverloads.$2.pairs kind=valueParameter vis=private flags=_
-symbol fq=putAllOverloads.$2.sequence kind=valueParameter vis=private flags=_
+symbol fq=minusAssignOverloads.$0.array[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=minusAssignOverloads.$0.key[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=minusAssignOverloads.$0.keys[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=minusAssignOverloads.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=minusAssignOverloads.$0.sequence[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=minusAssignOverloads[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,String,kotlin.collections.List<String>,kotlin.sequences.Sequence<String>,kotlin.Array<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>,String,kotlin.collections.List<String>,kotlin.sequences.Sequence<String>,kotlin.Array<String>] ret=Unit
+symbol fq=plusAssignOverloads.$1.array[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusAssignOverloads.$1.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusAssignOverloads.$1.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusAssignOverloads.$1.pair[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusAssignOverloads.$1.pairs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusAssignOverloads.$1.sequence[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusAssignOverloads[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,kotlin.Pair<String,Int?>,kotlin.collections.List<kotlin.Pair<String,Int?>>,kotlin.sequences.Sequence<kotlin.Pair<String,Int?>>,kotlin.Array<kotlin.Pair<String,Int?>>,kotlin.collections.Map<String,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>,kotlin.Pair<String, Int?>,kotlin.collections.List<kotlin.Pair<String, Int?>>,kotlin.sequences.Sequence<kotlin.Pair<String, Int?>>,kotlin.Array<kotlin.Pair<String, Int?>>,kotlin.collections.Map<String, Int?>] ret=Unit
+symbol fq=putAllOverloads.$2.array[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=putAllOverloads.$2.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=putAllOverloads.$2.pairs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=putAllOverloads.$2.sequence[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=putAllOverloads[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,kotlin.collections.List<kotlin.Pair<String,Int?>>,kotlin.sequences.Sequence<kotlin.Pair<String,Int?>>,kotlin.Array<kotlin.Pair<String,Int?>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>,kotlin.collections.List<kotlin.Pair<String, Int?>>,kotlin.sequences.Sequence<kotlin.Pair<String, Int?>>,kotlin.Array<kotlin.Pair<String, Int?>>] ret=Unit
 file fmutable_map_bulk_assign package=_
-  decl plusAssignOverloads fun plusAssignOverloads sym=plusAssignOverloads
-  decl minusAssignOverloads fun minusAssignOverloads sym=minusAssignOverloads
-  decl putAllOverloads fun putAllOverloads sym=putAllOverloads
-expr e@11:12 name(pair) type=kotlin.Pair<String, Int?> ref=plusAssignOverloads.$1.pair
-expr e@11:5 compoundAssign(plusAssign) name=map value=e@11:12 type=Unit ref=plusAssignOverloads.$1.map call=kotlin.collections.plusAssign#4 targs=[String,Int?]
-expr e@12:12 name(pairs) type=kotlin.collections.List<kotlin.Pair<String, Int?>> ref=plusAssignOverloads.$1.pairs
-expr e@12:5 compoundAssign(plusAssign) name=map value=e@12:12 type=Unit ref=plusAssignOverloads.$1.map call=kotlin.collections.plusAssign#5 targs=[String,Int?]
-expr e@13:12 name(sequence) type=kotlin.sequences.Sequence<kotlin.Pair<String, Int?>> ref=plusAssignOverloads.$1.sequence
-expr e@13:5 compoundAssign(plusAssign) name=map value=e@13:12 type=Unit ref=plusAssignOverloads.$1.map call=kotlin.collections.plusAssign#6 targs=[String,Int?]
-expr e@14:12 name(array) type=kotlin.Array<kotlin.Pair<String, Int?>> ref=plusAssignOverloads.$1.array
-expr e@14:5 compoundAssign(plusAssign) name=map value=e@14:12 type=Unit ref=plusAssignOverloads.$1.map call=kotlin.collections.plusAssign#7 targs=[String,Int?]
-expr e@15:12 name(other) type=kotlin.collections.Map<String, Int?> ref=plusAssignOverloads.$1.other
-expr e@15:5 compoundAssign(plusAssign) name=map value=e@15:12 type=Unit ref=plusAssignOverloads.$1.map call=kotlin.collections.plusAssign#8 targs=[String,Int?]
-expr e@25:12 name(key) type=String ref=minusAssignOverloads.$0.key
-expr e@25:5 compoundAssign(minusAssign) name=map value=e@25:12 type=Unit ref=minusAssignOverloads.$0.map call=kotlin.collections.minusAssign#4 targs=[String,Int?]
-expr e@26:12 name(keys) type=kotlin.collections.List<String> ref=minusAssignOverloads.$0.keys
-expr e@26:5 compoundAssign(minusAssign) name=map value=e@26:12 type=Unit ref=minusAssignOverloads.$0.map call=kotlin.collections.minusAssign#5 targs=[String,Int?]
-expr e@27:12 name(sequence) type=kotlin.sequences.Sequence<String> ref=minusAssignOverloads.$0.sequence
-expr e@27:5 compoundAssign(minusAssign) name=map value=e@27:12 type=Unit ref=minusAssignOverloads.$0.map call=kotlin.collections.minusAssign#6 targs=[String,Int?]
-expr e@28:12 name(array) type=kotlin.Array<String> ref=minusAssignOverloads.$0.array
-expr e@28:5 compoundAssign(minusAssign) name=map value=e@28:12 type=Unit ref=minusAssignOverloads.$0.map call=kotlin.collections.minusAssign#7 targs=[String,Int?]
-expr e@37:5 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=putAllOverloads.$2.map
-expr e@37:16 name(pairs) type=kotlin.collections.List<kotlin.Pair<String, Int?>> ref=putAllOverloads.$2.pairs
-expr e@37:5#1 memberCall recv=e@37:5 callee=putAll args=[_:e@37:16] type=Unit call=kotlin.collections.putAll#0 targs=[String,Int?]
-expr e@38:5 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=putAllOverloads.$2.map
-expr e@38:16 name(sequence) type=kotlin.sequences.Sequence<kotlin.Pair<String, Int?>> ref=putAllOverloads.$2.sequence
-expr e@38:5#1 memberCall recv=e@38:5 callee=putAll args=[_:e@38:16] type=Unit call=kotlin.collections.putAll#1 targs=[String,Int?]
-expr e@39:5 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=putAllOverloads.$2.map
-expr e@39:16 name(array) type=kotlin.Array<kotlin.Pair<String, Int?>> ref=putAllOverloads.$2.array
-expr e@39:5#1 memberCall recv=e@39:5 callee=putAll args=[_:e@39:16] type=Unit call=kotlin.collections.putAll#2 targs=[String,Int?]
+  decl plusAssignOverloads[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,kotlin.Pair<String,Int?>,kotlin.collections.List<kotlin.Pair<String,Int?>>,kotlin.sequences.Sequence<kotlin.Pair<String,Int?>>,kotlin.Array<kotlin.Pair<String,Int?>>,kotlin.collections.Map<String,Int?>] fun plusAssignOverloads sym=plusAssignOverloads[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,kotlin.Pair<String,Int?>,kotlin.collections.List<kotlin.Pair<String,Int?>>,kotlin.sequences.Sequence<kotlin.Pair<String,Int?>>,kotlin.Array<kotlin.Pair<String,Int?>>,kotlin.collections.Map<String,Int?>]
+  decl minusAssignOverloads[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,String,kotlin.collections.List<String>,kotlin.sequences.Sequence<String>,kotlin.Array<String>] fun minusAssignOverloads sym=minusAssignOverloads[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,String,kotlin.collections.List<String>,kotlin.sequences.Sequence<String>,kotlin.Array<String>]
+  decl putAllOverloads[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,kotlin.collections.List<kotlin.Pair<String,Int?>>,kotlin.sequences.Sequence<kotlin.Pair<String,Int?>>,kotlin.Array<kotlin.Pair<String,Int?>>] fun putAllOverloads sym=putAllOverloads[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,kotlin.collections.List<kotlin.Pair<String,Int?>>,kotlin.sequences.Sequence<kotlin.Pair<String,Int?>>,kotlin.Array<kotlin.Pair<String,Int?>>]
+expr e@11:12 name(pair) type=kotlin.Pair<String, Int?> ref=plusAssignOverloads.$1.pair[kind=vparam]
+expr e@11:5 compoundAssign(plusAssign) name=map value=e@11:12 type=Unit ref=plusAssignOverloads.$1.map[kind=vparam] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableMap<in T0,in T1>;params=kotlin.Pair<T0,T1>;gen=2] targs=[String,Int?]
+expr e@12:12 name(pairs) type=kotlin.collections.List<kotlin.Pair<String, Int?>> ref=plusAssignOverloads.$1.pairs[kind=vparam]
+expr e@12:5 compoundAssign(plusAssign) name=map value=e@12:12 type=Unit ref=plusAssignOverloads.$1.map[kind=vparam] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableMap<in T0,in T1>;params=kotlin.collections.Iterable<kotlin.Pair<T0,T1>>;gen=2] targs=[String,Int?]
+expr e@13:12 name(sequence) type=kotlin.sequences.Sequence<kotlin.Pair<String, Int?>> ref=plusAssignOverloads.$1.sequence[kind=vparam]
+expr e@13:5 compoundAssign(plusAssign) name=map value=e@13:12 type=Unit ref=plusAssignOverloads.$1.map[kind=vparam] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableMap<in T0,in T1>;params=kotlin.sequences.Sequence<kotlin.Pair<T0,T1>>;gen=2] targs=[String,Int?]
+expr e@14:12 name(array) type=kotlin.Array<kotlin.Pair<String, Int?>> ref=plusAssignOverloads.$1.array[kind=vparam]
+expr e@14:5 compoundAssign(plusAssign) name=map value=e@14:12 type=Unit ref=plusAssignOverloads.$1.map[kind=vparam] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableMap<in T0,in T1>;params=kotlin.Array<out kotlin.Pair<T0,T1>>;gen=2] targs=[String,Int?]
+expr e@15:12 name(other) type=kotlin.collections.Map<String, Int?> ref=plusAssignOverloads.$1.other[kind=vparam]
+expr e@15:5 compoundAssign(plusAssign) name=map value=e@15:12 type=Unit ref=plusAssignOverloads.$1.map[kind=vparam] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableMap<in T0,in T1>;params=kotlin.collections.Map<T0,T1>;gen=2] targs=[String,Int?]
+expr e@25:12 name(key) type=String ref=minusAssignOverloads.$0.key[kind=vparam]
+expr e@25:5 compoundAssign(minusAssign) name=map value=e@25:12 type=Unit ref=minusAssignOverloads.$0.map[kind=vparam] call=kotlin.collections.minusAssign[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=T0;gen=2] targs=[String,Int?]
+expr e@26:12 name(keys) type=kotlin.collections.List<String> ref=minusAssignOverloads.$0.keys[kind=vparam]
+expr e@26:5 compoundAssign(minusAssign) name=map value=e@26:12 type=Unit ref=minusAssignOverloads.$0.map[kind=vparam] call=kotlin.collections.minusAssign[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=kotlin.collections.Iterable<T0>;gen=2] targs=[String,Int?]
+expr e@27:12 name(sequence) type=kotlin.sequences.Sequence<String> ref=minusAssignOverloads.$0.sequence[kind=vparam]
+expr e@27:5 compoundAssign(minusAssign) name=map value=e@27:12 type=Unit ref=minusAssignOverloads.$0.map[kind=vparam] call=kotlin.collections.minusAssign[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=kotlin.sequences.Sequence<T0>;gen=2] targs=[String,Int?]
+expr e@28:12 name(array) type=kotlin.Array<String> ref=minusAssignOverloads.$0.array[kind=vparam]
+expr e@28:5 compoundAssign(minusAssign) name=map value=e@28:12 type=Unit ref=minusAssignOverloads.$0.map[kind=vparam] call=kotlin.collections.minusAssign[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=kotlin.Array<out T0>;gen=2] targs=[String,Int?]
+expr e@37:5 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=putAllOverloads.$2.map[kind=vparam]
+expr e@37:16 name(pairs) type=kotlin.collections.List<kotlin.Pair<String, Int?>> ref=putAllOverloads.$2.pairs[kind=vparam]
+expr e@37:5#1 memberCall recv=e@37:5 callee=putAll args=[_:e@37:16] type=Unit call=kotlin.collections.putAll[kind=fun;recv=kotlin.collections.MutableMap<in T0,in T1>;params=kotlin.collections.Iterable<kotlin.Pair<T0,T1>>;gen=2] targs=[String,Int?]
+expr e@38:5 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=putAllOverloads.$2.map[kind=vparam]
+expr e@38:16 name(sequence) type=kotlin.sequences.Sequence<kotlin.Pair<String, Int?>> ref=putAllOverloads.$2.sequence[kind=vparam]
+expr e@38:5#1 memberCall recv=e@38:5 callee=putAll args=[_:e@38:16] type=Unit call=kotlin.collections.putAll[kind=fun;recv=kotlin.collections.MutableMap<in T0,in T1>;params=kotlin.sequences.Sequence<kotlin.Pair<T0,T1>>;gen=2] targs=[String,Int?]
+expr e@39:5 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=putAllOverloads.$2.map[kind=vparam]
+expr e@39:16 name(array) type=kotlin.Array<kotlin.Pair<String, Int?>> ref=putAllOverloads.$2.array[kind=vparam]
+expr e@39:5#1 memberCall recv=e@39:5 callee=putAll args=[_:e@39:16] type=Unit call=kotlin.collections.putAll[kind=fun;recv=kotlin.collections.MutableMap<in T0,in T1>;params=kotlin.Array<out kotlin.Pair<T0,T1>>;gen=2] targs=[String,Int?]

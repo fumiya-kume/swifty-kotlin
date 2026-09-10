@@ -1,16 +1,16 @@
-symbol fq=nullGuard kind=function vis=public flags=_ sig=recv=_ params=[Int?,Int?] ret=Int
-symbol fq=nullGuard.$0.x kind=valueParameter vis=private flags=_
-symbol fq=nullGuard.$0.y kind=valueParameter vis=private flags=_
+symbol fq=nullGuard.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=nullGuard.$0.y[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=nullGuard[kind=fun;params=Int?,Int?] kind=function vis=public flags=_ sig=recv=_ params=[Int?,Int?] ret=Int
 file fsubject_less_when_smart_cast package=_
-  decl nullGuard fun nullGuard sym=nullGuard
-expr e@3:9 name(x) type=Int? ref=nullGuard.$0.x
+  decl nullGuard[kind=fun;params=Int?,Int?] fun nullGuard sym=nullGuard[kind=fun;params=Int?,Int?]
+expr e@3:9 name(x) type=Int? ref=nullGuard.$0.x[kind=vparam]
 expr e@3:14 name(null) type=Nothing?
 expr e@3:9#1 binary(notEqual) lhs=e@3:9 rhs=e@3:14 type=Boolean
-expr e@3:22 name(x) type=Int ref=nullGuard.$0.x
-expr e@4:9 name(y) type=Int? ref=nullGuard.$0.y
+expr e@3:22 name(x) type=Int ref=nullGuard.$0.x[kind=vparam]
+expr e@4:9 name(y) type=Int? ref=nullGuard.$0.y[kind=vparam]
 expr e@4:14 name(null) type=Nothing?
 expr e@4:9#1 binary(notEqual) lhs=e@4:9 rhs=e@4:14 type=Boolean
-expr e@4:22 name(y) type=Int ref=nullGuard.$0.y
+expr e@4:22 name(y) type=Int ref=nullGuard.$0.y[kind=vparam]
 expr e@5:17 int(0) type=Int
 expr e@2:12 when subject=_ branches=[e@3:9#1->e@3:22,e@4:9#1->e@4:22] else=e@5:17 type=Int
 expr e@2:5 return value=e@2:12 type=Nothing

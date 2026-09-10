@@ -1,6 +1,6 @@
-symbol fq=golden.sema.OldName kind=class vis=public flags=_
-symbol fq=golden.sema.useReplaceWithType kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.ReplaceWith?
+symbol fq=golden.sema.OldName[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.useReplaceWithType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.ReplaceWith?
 file fstdlib_kotlin_n_ReplaceWith package=golden.sema
-  decl golden.sema.OldName class OldName sym=golden.sema.OldName
-  decl golden.sema.useReplaceWithType fun useReplaceWithType sym=golden.sema.useReplaceWithType
+  decl golden.sema.OldName[kind=class] class OldName sym=golden.sema.OldName[kind=class]
+  decl golden.sema.useReplaceWithType[kind=fun;params=] fun useReplaceWithType sym=golden.sema.useReplaceWithType[kind=fun;params=]
 expr e@6:49 name(null) type=Nothing?

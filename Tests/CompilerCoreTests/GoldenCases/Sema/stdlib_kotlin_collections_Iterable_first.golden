@@ -1,32 +1,31 @@
-symbol fq=firstMatching kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
-symbol fq=firstMatching.$0.values kind=valueParameter vis=private flags=_
-symbol fq=firstMatchingOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
-symbol fq=firstMatchingOrNull.$1.values kind=valueParameter vis=private flags=_
-symbol fq=firstNotNullValue kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=String
-symbol fq=firstNotNullValue.$2.values kind=valueParameter vis=private flags=_
-symbol fq=firstNotNullValueOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=String?
-symbol fq=firstNotNullValueOrNull.$3.values kind=valueParameter vis=private flags=_
-symbol fq=firstValue kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
-symbol fq=firstValue.$4.values kind=valueParameter vis=private flags=_
-symbol fq=firstValueOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
-symbol fq=firstValueOrNull.$5.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=firstMatching.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=firstMatchingOrNull.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=firstMatchingOrNull[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
+symbol fq=firstMatching[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
+symbol fq=firstNotNullValue.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=firstNotNullValueOrNull.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=firstNotNullValueOrNull[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=String?
+symbol fq=firstNotNullValue[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=String
+symbol fq=firstValue.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=firstValueOrNull.$5.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=firstValueOrNull[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
+symbol fq=firstValue[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
 file fstdlib_kotlin_collections_Iterable_first package=_
-  decl firstValue fun firstValue sym=firstValue
-  decl firstMatching fun firstMatching sym=firstMatching
-  decl firstNotNullValue fun firstNotNullValue sym=firstNotNullValue
-  decl firstNotNullValueOrNull fun firstNotNullValueOrNull sym=firstNotNullValueOrNull
-  decl firstValueOrNull fun firstValueOrNull sym=firstValueOrNull
-  decl firstMatchingOrNull fun firstMatchingOrNull sym=firstMatchingOrNull
-expr e@1:46 name(values) type=kotlin.collections.Iterable<Int> ref=firstValue.$4.values
-expr e@1:46#1 memberCall recv=e@1:46 callee=first args=[] type=Int call=kotlin.collections.first#26 targs=[Int]
-expr e@3:49 name(values) type=kotlin.collections.Iterable<Int> ref=firstMatching.$0.values
+  decl firstValue[kind=fun;params=kotlin.collections.Iterable<Int>] fun firstValue sym=firstValue[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl firstMatching[kind=fun;params=kotlin.collections.Iterable<Int>] fun firstMatching sym=firstMatching[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl firstNotNullValue[kind=fun;params=kotlin.collections.Iterable<Int>] fun firstNotNullValue sym=firstNotNullValue[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl firstNotNullValueOrNull[kind=fun;params=kotlin.collections.Iterable<Int>] fun firstNotNullValueOrNull sym=firstNotNullValueOrNull[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl firstValueOrNull[kind=fun;params=kotlin.collections.Iterable<Int>] fun firstValueOrNull sym=firstValueOrNull[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl firstMatchingOrNull[kind=fun;params=kotlin.collections.Iterable<Int>] fun firstMatchingOrNull sym=firstMatchingOrNull[kind=fun;params=kotlin.collections.Iterable<Int>]
+expr e@1:46 name(values) type=kotlin.collections.Iterable<Int> ref=firstValue.$4.values[kind=vparam]
+expr e@1:46#1 memberCall recv=e@1:46 callee=first args=[] type=Int call=kotlin.collections.first[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
+expr e@3:49 name(values) type=kotlin.collections.Iterable<Int> ref=firstMatching.$0.values[kind=vparam]
 expr e@3:64 name(it) type=Int ref=s-0
 expr e@3:69 int(1) type=Int
 expr e@3:64#1 binary(greaterThan) lhs=e@3:64 rhs=e@3:69 type=Boolean
 expr e@3:62 lambda params=[] body=e@3:64#1 label=first type=(Int) -> Boolean
-expr e@3:49#1 memberCall recv=e@3:49 callee=first args=[_:e@3:62] type=Int call=kotlin.collections.first#27 targs=[Int]
-expr e@6:5 name(values) type=kotlin.collections.Iterable<Int> ref=firstNotNullValue.$2.values
+expr e@3:49#1 memberCall recv=e@3:49 callee=first args=[_:e@3:62] type=Int call=kotlin.collections.first[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
+expr e@6:5 name(values) type=kotlin.collections.Iterable<Int> ref=firstNotNullValue.$2.values[kind=vparam]
 expr e@6:33 name(it) type=Int ref=s-1
 expr e@6:38 int(1) type=Int
 expr e@6:33#1 binary(greaterThan) lhs=e@6:33 rhs=e@6:38 type=Boolean
@@ -34,8 +33,8 @@ expr e@6:41 string(hit) type=String
 expr e@6:52 name(null) type=Nothing?
 expr e@6:29 if cond=e@6:33#1 then=e@6:41 else=e@6:52 type=String?
 expr e@6:27 lambda params=[] body=e@6:29 label=firstNotNullOf type=(Int) -> Any?
-expr e@6:5#1 memberCall recv=e@6:5 callee=firstNotNullOf args=[_:e@6:27] type=String call=kotlin.collections.firstNotNullOf#0
-expr e@9:5 name(values) type=kotlin.collections.Iterable<Int> ref=firstNotNullValueOrNull.$3.values
+expr e@6:5#1 memberCall recv=e@6:5 callee=firstNotNullOf args=[_:e@6:27] type=String call=kotlin.collections.firstNotNullOf[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1?};gen=2]
+expr e@9:5 name(values) type=kotlin.collections.Iterable<Int> ref=firstNotNullValueOrNull.$3.values[kind=vparam]
 expr e@9:39 name(it) type=Int ref=s-2
 expr e@9:44 int(1) type=Int
 expr e@9:39#1 binary(greaterThan) lhs=e@9:39 rhs=e@9:44 type=Boolean
@@ -43,12 +42,12 @@ expr e@9:47 string(hit) type=String
 expr e@9:58 name(null) type=Nothing?
 expr e@9:35 if cond=e@9:39#1 then=e@9:47 else=e@9:58 type=String?
 expr e@9:33 lambda params=[] body=e@9:35 label=firstNotNullOfOrNull type=(Int) -> Any?
-expr e@9:5#1 memberCall recv=e@9:5 callee=firstNotNullOfOrNull args=[_:e@9:33] type=String? call=kotlin.collections.firstNotNullOfOrNull#0
-expr e@11:53 name(values) type=kotlin.collections.Iterable<Int> ref=firstValueOrNull.$5.values
-expr e@11:53#1 memberCall recv=e@11:53 callee=firstOrNull args=[] type=Int? call=kotlin.collections.firstOrNull#26 targs=[Int]
-expr e@13:56 name(values) type=kotlin.collections.Iterable<Int> ref=firstMatchingOrNull.$1.values
+expr e@9:5#1 memberCall recv=e@9:5 callee=firstNotNullOfOrNull args=[_:e@9:33] type=String? call=kotlin.collections.firstNotNullOfOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1?};gen=2]
+expr e@11:53 name(values) type=kotlin.collections.Iterable<Int> ref=firstValueOrNull.$5.values[kind=vparam]
+expr e@11:53#1 memberCall recv=e@11:53 callee=firstOrNull args=[] type=Int? call=kotlin.collections.firstOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
+expr e@13:56 name(values) type=kotlin.collections.Iterable<Int> ref=firstMatchingOrNull.$1.values[kind=vparam]
 expr e@13:77 name(it) type=Int ref=s-3
 expr e@13:82 int(1) type=Int
 expr e@13:77#1 binary(greaterThan) lhs=e@13:77 rhs=e@13:82 type=Boolean
 expr e@13:75 lambda params=[] body=e@13:77#1 label=firstOrNull type=(Int) -> Boolean
-expr e@13:56#1 memberCall recv=e@13:56 callee=firstOrNull args=[_:e@13:75] type=Int? call=kotlin.collections.firstOrNull#27 targs=[Int]
+expr e@13:56#1 memberCall recv=e@13:56 callee=firstOrNull args=[_:e@13:75] type=Int? call=kotlin.collections.firstOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]

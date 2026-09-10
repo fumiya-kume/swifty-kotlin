@@ -1,13 +1,11 @@
-symbol fq=__local_0.mutable kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
-symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=mapToMutableMap kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
-symbol fq=mapToMutableMap.$0.map kind=valueParameter vis=private flags=_
+symbol fq=__local_0.mutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
+symbol fq=mapToMutableMap.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=mapToMutableMap[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
 file fmap_to_mutable_map package=_
-  decl mapToMutableMap fun mapToMutableMap sym=mapToMutableMap
-expr e@4:19 name(map) type=kotlin.collections.Map<String, Int> ref=mapToMutableMap.$0.map
-expr e@4:19#1 memberCall recv=e@4:19 callee=toMutableMap args=[] type=kotlin.collections.MutableMap<String, Int> call=kotlin.collections.toMutableMap targs=[String,Int]
-expr e@4:5 localDecl mutable mutable=0 type=_ init=e@4:19#1 type=Unit ref=__local_0.mutable
-expr e@5:44 name(mutable) type=kotlin.collections.MutableMap<String, Int> ref=__local_0.mutable
-expr e@5:5 localDecl checked mutable=0 type=MutableMap<String,Int> init=e@5:44 type=Unit ref=__local_1.checked
+  decl mapToMutableMap[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapToMutableMap sym=mapToMutableMap[kind=fun;params=kotlin.collections.Map<String,Int>]
+expr e@4:19 name(map) type=kotlin.collections.Map<String, Int> ref=mapToMutableMap.$0.map[kind=vparam]
+expr e@4:19#1 memberCall recv=e@4:19 callee=toMutableMap args=[] type=kotlin.collections.MutableMap<String, Int> call=kotlin.collections.toMutableMap[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=;gen=2] targs=[String,Int]
+expr e@4:5 localDecl mutable mutable=0 type=_ init=e@4:19#1 type=Unit ref=__local_0.mutable[kind=local]
+expr e@5:44 name(mutable) type=kotlin.collections.MutableMap<String, Int> ref=__local_0.mutable[kind=local]
+expr e@5:5 localDecl checked mutable=0 type=MutableMap<String,Int> init=e@5:44 type=Unit ref=__local_1.checked[kind=local]

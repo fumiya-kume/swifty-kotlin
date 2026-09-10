@@ -1,32 +1,32 @@
-symbol fq=golden.sema.useSubstring1 kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useSubstring2 kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useSubstringAfter kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useSubstringAfterLast kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useSubstringBefore kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useSubstringBeforeLast kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSubstring1[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSubstring2[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSubstringAfterLast[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSubstringAfter[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSubstringBeforeLast[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSubstringBefore[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstring_substring package=golden.sema
-  decl golden.sema.useSubstring1 fun useSubstring1 sym=golden.sema.useSubstring1
-  decl golden.sema.useSubstring2 fun useSubstring2 sym=golden.sema.useSubstring2
-  decl golden.sema.useSubstringBefore fun useSubstringBefore sym=golden.sema.useSubstringBefore
-  decl golden.sema.useSubstringAfter fun useSubstringAfter sym=golden.sema.useSubstringAfter
-  decl golden.sema.useSubstringBeforeLast fun useSubstringBeforeLast sym=golden.sema.useSubstringBeforeLast
-  decl golden.sema.useSubstringAfterLast fun useSubstringAfterLast sym=golden.sema.useSubstringAfterLast
+  decl golden.sema.useSubstring1[kind=fun;params=] fun useSubstring1 sym=golden.sema.useSubstring1[kind=fun;params=]
+  decl golden.sema.useSubstring2[kind=fun;params=] fun useSubstring2 sym=golden.sema.useSubstring2[kind=fun;params=]
+  decl golden.sema.useSubstringBefore[kind=fun;params=] fun useSubstringBefore sym=golden.sema.useSubstringBefore[kind=fun;params=]
+  decl golden.sema.useSubstringAfter[kind=fun;params=] fun useSubstringAfter sym=golden.sema.useSubstringAfter[kind=fun;params=]
+  decl golden.sema.useSubstringBeforeLast[kind=fun;params=] fun useSubstringBeforeLast sym=golden.sema.useSubstringBeforeLast[kind=fun;params=]
+  decl golden.sema.useSubstringAfterLast[kind=fun;params=] fun useSubstringAfterLast sym=golden.sema.useSubstringAfterLast[kind=fun;params=]
 expr e@4:31 string(hello) type=String
 expr e@4:49 int(1) type=Int
-expr e@4:31#1 memberCall recv=e@4:31 callee=substring args=[_:e@4:49] type=String call=kotlin.text.substring#0
+expr e@4:31#1 memberCall recv=e@4:31 callee=substring args=[_:e@4:49] type=String call=kotlin.text.substring[kind=fun;recv=String;params=Int]
 expr e@6:31 string(hello) type=String
 expr e@6:49 int(1) type=Int
 expr e@6:52 int(3) type=Int
-expr e@6:31#1 memberCall recv=e@6:31 callee=substring args=[_:e@6:49,_:e@6:52] type=String call=kotlin.text.substring#1
+expr e@6:31#1 memberCall recv=e@6:31 callee=substring args=[_:e@6:49,_:e@6:52] type=String call=kotlin.text.substring[kind=fun;recv=String;params=Int,Int]
 expr e@8:36 string(hello.world.kt) type=String
 expr e@8:69 string(.) type=String
-expr e@8:36#1 memberCall recv=e@8:36 callee=substringBefore args=[_:e@8:69] type=String call=kotlin.text.substringBefore#1
+expr e@8:36#1 memberCall recv=e@8:36 callee=substringBefore args=[_:e@8:69] type=String call=kotlin.text.substringBefore[kind=fun;recv=String;params=String,String]
 expr e@10:35 string(hello.world.kt) type=String
 expr e@10:67 string(.) type=String
-expr e@10:35#1 memberCall recv=e@10:35 callee=substringAfter args=[_:e@10:67] type=String call=kotlin.text.substringAfter#1
+expr e@10:35#1 memberCall recv=e@10:35 callee=substringAfter args=[_:e@10:67] type=String call=kotlin.text.substringAfter[kind=fun;recv=String;params=String,String]
 expr e@12:40 string(hello.world.kt) type=String
 expr e@12:77 string(.) type=String
-expr e@12:40#1 memberCall recv=e@12:40 callee=substringBeforeLast args=[_:e@12:77] type=String call=kotlin.text.substringBeforeLast#1
+expr e@12:40#1 memberCall recv=e@12:40 callee=substringBeforeLast args=[_:e@12:77] type=String call=kotlin.text.substringBeforeLast[kind=fun;recv=String;params=String,String]
 expr e@14:39 string(hello.world.kt) type=String
 expr e@14:75 string(.) type=String
-expr e@14:39#1 memberCall recv=e@14:39 callee=substringAfterLast args=[_:e@14:75] type=String call=kotlin.text.substringAfterLast#1
+expr e@14:39#1 memberCall recv=e@14:39 callee=substringAfterLast args=[_:e@14:75] type=String call=kotlin.text.substringAfterLast[kind=fun;recv=String;params=String,String]

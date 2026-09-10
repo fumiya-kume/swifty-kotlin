@@ -1,9 +1,9 @@
-symbol fq=test.BoolContainer kind=class vis=public flags=_
-symbol fq=test.Container kind=interface vis=public flags=_
-symbol fq=test.IntContainer kind=class vis=public flags=_
-symbol fq=test.StringContainer kind=class vis=public flags=_
+symbol fq=test.BoolContainer[kind=class] kind=class vis=public flags=_
+symbol fq=test.Container[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=test.IntContainer[kind=class] kind=class vis=public flags=_
+symbol fq=test.StringContainer[kind=class] kind=class vis=public flags=_
 file finheritance_generic_primitive package=test
-  decl test.Container interface Container sym=test.Container
-  decl test.IntContainer class IntContainer sym=test.IntContainer
-  decl test.StringContainer class StringContainer sym=test.StringContainer
-  decl test.BoolContainer class BoolContainer sym=test.BoolContainer
+  decl test.Container[kind=iface;gen=1] interface Container sym=test.Container[kind=iface;gen=1]
+  decl test.IntContainer[kind=class] class IntContainer sym=test.IntContainer[kind=class]
+  decl test.StringContainer[kind=class] class StringContainer sym=test.StringContainer[kind=class]
+  decl test.BoolContainer[kind=class] class BoolContainer sym=test.BoolContainer[kind=class]

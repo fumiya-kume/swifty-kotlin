@@ -1,80 +1,78 @@
-symbol fq=TagContainer kind=class vis=public flags=_
-symbol fq=TagContainer.<init> kind=constructor vis=public flags=_ sig=recv=TagContainer params=[] ret=TagContainer
-symbol fq=TagContainer.ids kind=property vis=public flags=_ type=kotlin.collections.HashSet<Int>
-symbol fq=TagContainer.tags kind=property vis=public flags=_ type=kotlin.collections.HashSet<String>
-symbol fq=__local_0.explicit kind=local vis=private flags=_ type=kotlin.collections.HashSet<String>
-symbol fq=__local_1.explicitAsMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
-symbol fq=__local_2.fromNominal kind=local vis=private flags=_ type=kotlin.collections.HashSet<Double>
-symbol fq=__local_3.fromMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Boolean>
-symbol fq=__local_4.asReadOnly kind=local vis=private flags=_ type=kotlin.collections.Set<String>
-symbol fq=__local_5.created kind=local vis=private flags=_ type=kotlin.collections.HashSet<Int>
-symbol fq=__local_6.createdAsMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
-symbol fq=__local_7.holder kind=local vis=private flags=_ type=TagContainer
-symbol fq=__local_8.tags kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
-symbol fq=__local_9.ids kind=local vis=private flags=_ type=kotlin.collections.HashSet<Int>
-symbol fq=__local_10.nested kind=local vis=private flags=_ type=kotlin.collections.HashSet<kotlin.collections.HashSet<String>>
-symbol fq=__local_11.nestedAsMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<kotlin.collections.HashSet<String>>
-symbol fq=__local_12.constrained kind=local vis=private flags=_ type=kotlin.collections.HashSet<String>
-symbol fq=__local_13.constrainedAsMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
-symbol fq=__local_14.extended kind=local vis=private flags=_ type=String
-symbol fq=constrain kind=function vis=public flags=_ sig=recv=_ params=[constrain.$0.T] ret=constrain.$0.T bounds=[kotlin.collections.HashSet<String>]
-symbol fq=constrain.$0.T kind=typeParameter vis=private flags=_
-symbol fq=constrain.$0.set kind=valueParameter vis=private flags=_
-symbol fq=createSet kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.HashSet<Int>
-symbol fq=customExtension kind=function vis=public flags=_ sig=recv=kotlin.collections.HashSet<String> params=[] ret=String
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=processSet kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.HashSet<String>] ret=Unit
-symbol fq=processSet.$1.set kind=valueParameter vis=private flags=_
+symbol fq=TagContainer.<init>[kind=ctor;recv=TagContainer;params=] kind=constructor vis=public flags=_ sig=recv=TagContainer params=[] ret=TagContainer
+symbol fq=TagContainer.ids[kind=prop] kind=property vis=public flags=_ type=kotlin.collections.HashSet<Int>
+symbol fq=TagContainer.tags[kind=prop] kind=property vis=public flags=_ type=kotlin.collections.HashSet<String>
+symbol fq=TagContainer[kind=class] kind=class vis=public flags=_
+symbol fq=__local_0.explicit[kind=local] kind=local vis=private flags=_ type=kotlin.collections.HashSet<String>
+symbol fq=__local_1.explicitAsMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
+symbol fq=__local_2.fromNominal[kind=local] kind=local vis=private flags=_ type=kotlin.collections.HashSet<Double>
+symbol fq=__local_3.fromMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Boolean>
+symbol fq=__local_4.asReadOnly[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Set<String>
+symbol fq=__local_5.created[kind=local] kind=local vis=private flags=_ type=kotlin.collections.HashSet<Int>
+symbol fq=__local_6.createdAsMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
+symbol fq=__local_7.holder[kind=local] kind=local vis=private flags=_ type=TagContainer
+symbol fq=__local_8.tags[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
+symbol fq=__local_9.ids[kind=local] kind=local vis=private flags=_ type=kotlin.collections.HashSet<Int>
+symbol fq=__local_10.nested[kind=local] kind=local vis=private flags=_ type=kotlin.collections.HashSet<kotlin.collections.HashSet<String>>
+symbol fq=__local_11.nestedAsMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<kotlin.collections.HashSet<String>>
+symbol fq=__local_12.constrained[kind=local] kind=local vis=private flags=_ type=kotlin.collections.HashSet<String>
+symbol fq=__local_13.constrainedAsMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
+symbol fq=__local_14.extended[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=constrain.$0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=constrain.$0.set[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=constrain[kind=fun;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[constrain.$0.T] ret=constrain.$0.T bounds=[kotlin.collections.HashSet<String>]
+symbol fq=createSet[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.HashSet<Int>
+symbol fq=customExtension[kind=fun;recv=kotlin.collections.HashSet<String>;params=] kind=function vis=public flags=_ sig=recv=kotlin.collections.HashSet<String> params=[] ret=String
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=processSet.$1.set[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=processSet[kind=fun;params=kotlin.collections.HashSet<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.HashSet<String>] ret=Unit
 file fhashset_alias package=_
-  decl processSet fun processSet sym=processSet
-  decl createSet fun createSet sym=createSet
-  decl TagContainer class TagContainer sym=TagContainer
-  decl constrain fun constrain sym=constrain
-  decl customExtension fun customExtension sym=customExtension
-  decl main fun main sym=main
-expr e@14:12 call callee=e@14:12#1 args=[] type=kotlin.collections.HashSet<Int> call=kotlin.collections.hashSetOf#0 targs=[Int]
+  decl processSet[kind=fun;params=kotlin.collections.HashSet<String>] fun processSet sym=processSet[kind=fun;params=kotlin.collections.HashSet<String>]
+  decl createSet[kind=fun;params=] fun createSet sym=createSet[kind=fun;params=]
+  decl TagContainer[kind=class] class TagContainer sym=TagContainer[kind=class]
+  decl constrain[kind=fun;params=T0;gen=1] fun constrain sym=constrain[kind=fun;params=T0;gen=1]
+  decl customExtension[kind=fun;recv=kotlin.collections.HashSet<String>;params=] fun customExtension sym=customExtension[kind=fun;recv=kotlin.collections.HashSet<String>;params=]
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+expr e@14:12 call callee=e@14:12#1 args=[] type=kotlin.collections.HashSet<Int> call=kotlin.collections.hashSetOf[kind=fun;params=;gen=1] targs=[Int]
 expr e@14:5 return value=e@14:12 type=Nothing
-expr e@18:33 call callee=e@18:33#1 args=[] type=kotlin.collections.HashSet<String> call=kotlin.collections.hashSetOf#0 targs=[String]
-expr e@19:29 call callee=e@19:29#1 args=[] type=kotlin.collections.HashSet<Int> call=kotlin.collections.hashSetOf#0 targs=[Int]
-expr e@23:12 name(set) type=constrain.$0.T ref=constrain.$0.set
+expr e@18:33 call callee=e@18:33#1 args=[] type=kotlin.collections.HashSet<String> call=kotlin.collections.hashSetOf[kind=fun;params=;gen=1] targs=[String]
+expr e@19:29 call callee=e@19:29#1 args=[] type=kotlin.collections.HashSet<Int> call=kotlin.collections.hashSetOf[kind=fun;params=;gen=1] targs=[Int]
+expr e@23:12 name(set) type=constrain.$0.T ref=constrain.$0.set[kind=vparam]
 expr e@23:5 return value=e@23:12 type=Nothing
 expr e@27:12 string(extended) type=String
 expr e@27:5 return value=e@27:12 type=Nothing
-expr e@33:20 call callee=e@33:20#1 args=[] type=kotlin.collections.HashSet<String> call=kotlin.collections.hashSetOf#0 targs=[String]
-expr e@33:5 localDecl explicit mutable=0 type=_ init=e@33:20 type=Unit ref=__local_0.explicit
-expr e@34:49 name(explicit) type=kotlin.collections.HashSet<String> ref=__local_0.explicit
-expr e@34:5 localDecl explicitAsMutable mutable=0 type=MutableSet<String> init=e@34:49 type=Unit ref=__local_1.explicitAsMutable
-expr e@35:16 name(explicit) type=kotlin.collections.HashSet<String> ref=__local_0.explicit
-expr e@35:5 call callee=e@35:5#1 args=[_:e@35:16] type=Unit call=processSet
-expr e@38:40 call callee=e@38:40#1 args=[] type=kotlin.collections.HashSet<Double> call=kotlin.collections.hashSetOf#0 targs=[Double]
-expr e@38:5 localDecl fromNominal mutable=0 type=HashSet<Double> init=e@38:40 type=Unit ref=__local_2.fromNominal
-expr e@39:44 call callee=e@39:44#1 args=[] type=kotlin.collections.MutableSet<Boolean> call=kotlin.collections.hashSetOf#0 targs=[Boolean]
-expr e@39:5 localDecl fromMutable mutable=0 type=MutableSet<Boolean> init=e@39:44 type=Unit ref=__local_3.fromMutable
-expr e@42:35 call callee=e@42:35#1 args=[] type=kotlin.collections.Set<String> call=kotlin.collections.hashSetOf#0 targs=[String]
-expr e@42:5 localDecl asReadOnly mutable=0 type=Set<String> init=e@42:35 type=Unit ref=__local_4.asReadOnly
-expr e@45:19 call callee=e@45:19#1 args=[] type=kotlin.collections.HashSet<Int> call=createSet
-expr e@45:5 localDecl created mutable=0 type=_ init=e@45:19 type=Unit ref=__local_5.created
-expr e@46:45 name(created) type=kotlin.collections.HashSet<Int> ref=__local_5.created
-expr e@46:5 localDecl createdAsMutable mutable=0 type=MutableSet<Int> init=e@46:45 type=Unit ref=__local_6.createdAsMutable
-expr e@49:18 call callee=e@49:18#1 args=[] type=TagContainer call=TagContainer.<init>
-expr e@49:5 localDecl holder mutable=0 type=_ init=e@49:18 type=Unit ref=__local_7.holder
-expr e@50:36 name(holder) type=TagContainer ref=__local_7.holder
-expr e@50:36#1 memberCall recv=e@50:36 callee=tags args=[] type=kotlin.collections.HashSet<String> ref=TagContainer.tags
-expr e@50:5 localDecl tags mutable=0 type=MutableSet<String> init=e@50:36#1 type=Unit ref=__local_8.tags
-expr e@51:29 name(holder) type=TagContainer ref=__local_7.holder
-expr e@51:29#1 memberCall recv=e@51:29 callee=ids args=[] type=kotlin.collections.HashSet<Int> ref=TagContainer.ids
-expr e@51:5 localDecl ids mutable=0 type=HashSet<Int> init=e@51:29#1 type=Unit ref=__local_9.ids
-expr e@54:44 call callee=e@54:44#1 args=[] type=kotlin.collections.HashSet<kotlin.collections.HashSet<String>> call=kotlin.collections.hashSetOf#0 targs=[kotlin.collections.HashSet<String>]
-expr e@54:5 localDecl nested mutable=0 type=HashSet<HashSet<String>> init=e@54:44 type=Unit ref=__local_10.nested
-expr e@55:56 name(nested) type=kotlin.collections.HashSet<kotlin.collections.HashSet<String>> ref=__local_10.nested
-expr e@55:5 localDecl nestedAsMutable mutable=0 type=MutableSet<HashSet<String>> init=e@55:56 type=Unit ref=__local_11.nestedAsMutable
-expr e@58:33 name(explicit) type=kotlin.collections.HashSet<String> ref=__local_0.explicit
-expr e@58:23 call callee=e@58:23#1 args=[_:e@58:33] type=kotlin.collections.HashSet<String> call=constrain targs=[kotlin.collections.HashSet<String>]
-expr e@58:5 localDecl constrained mutable=0 type=_ init=e@58:23 type=Unit ref=__local_12.constrained
-expr e@59:52 name(constrained) type=kotlin.collections.HashSet<String> ref=__local_12.constrained
-expr e@59:5 localDecl constrainedAsMutable mutable=0 type=MutableSet<String> init=e@59:52 type=Unit ref=__local_13.constrainedAsMutable
-expr e@62:28 name(explicit) type=kotlin.collections.HashSet<String> ref=__local_0.explicit
-expr e@62:28#1 memberCall recv=e@62:28 callee=customExtension args=[] type=String call=customExtension
-expr e@62:5 localDecl extended mutable=0 type=String init=e@62:28#1 type=Unit ref=__local_14.extended
+expr e@33:20 call callee=e@33:20#1 args=[] type=kotlin.collections.HashSet<String> call=kotlin.collections.hashSetOf[kind=fun;params=;gen=1] targs=[String]
+expr e@33:5 localDecl explicit mutable=0 type=_ init=e@33:20 type=Unit ref=__local_0.explicit[kind=local]
+expr e@34:49 name(explicit) type=kotlin.collections.HashSet<String> ref=__local_0.explicit[kind=local]
+expr e@34:5 localDecl explicitAsMutable mutable=0 type=MutableSet<String> init=e@34:49 type=Unit ref=__local_1.explicitAsMutable[kind=local]
+expr e@35:16 name(explicit) type=kotlin.collections.HashSet<String> ref=__local_0.explicit[kind=local]
+expr e@35:5 call callee=e@35:5#1 args=[_:e@35:16] type=Unit call=processSet[kind=fun;params=kotlin.collections.HashSet<String>]
+expr e@38:40 call callee=e@38:40#1 args=[] type=kotlin.collections.HashSet<Double> call=kotlin.collections.hashSetOf[kind=fun;params=;gen=1] targs=[Double]
+expr e@38:5 localDecl fromNominal mutable=0 type=HashSet<Double> init=e@38:40 type=Unit ref=__local_2.fromNominal[kind=local]
+expr e@39:44 call callee=e@39:44#1 args=[] type=kotlin.collections.MutableSet<Boolean> call=kotlin.collections.hashSetOf[kind=fun;params=;gen=1] targs=[Boolean]
+expr e@39:5 localDecl fromMutable mutable=0 type=MutableSet<Boolean> init=e@39:44 type=Unit ref=__local_3.fromMutable[kind=local]
+expr e@42:35 call callee=e@42:35#1 args=[] type=kotlin.collections.Set<String> call=kotlin.collections.hashSetOf[kind=fun;params=;gen=1] targs=[String]
+expr e@42:5 localDecl asReadOnly mutable=0 type=Set<String> init=e@42:35 type=Unit ref=__local_4.asReadOnly[kind=local]
+expr e@45:19 call callee=e@45:19#1 args=[] type=kotlin.collections.HashSet<Int> call=createSet[kind=fun;params=]
+expr e@45:5 localDecl created mutable=0 type=_ init=e@45:19 type=Unit ref=__local_5.created[kind=local]
+expr e@46:45 name(created) type=kotlin.collections.HashSet<Int> ref=__local_5.created[kind=local]
+expr e@46:5 localDecl createdAsMutable mutable=0 type=MutableSet<Int> init=e@46:45 type=Unit ref=__local_6.createdAsMutable[kind=local]
+expr e@49:18 call callee=e@49:18#1 args=[] type=TagContainer call=TagContainer.<init>[kind=ctor;recv=TagContainer;params=]
+expr e@49:5 localDecl holder mutable=0 type=_ init=e@49:18 type=Unit ref=__local_7.holder[kind=local]
+expr e@50:36 name(holder) type=TagContainer ref=__local_7.holder[kind=local]
+expr e@50:36#1 memberCall recv=e@50:36 callee=tags args=[] type=kotlin.collections.HashSet<String> ref=TagContainer.tags[kind=prop]
+expr e@50:5 localDecl tags mutable=0 type=MutableSet<String> init=e@50:36#1 type=Unit ref=__local_8.tags[kind=local]
+expr e@51:29 name(holder) type=TagContainer ref=__local_7.holder[kind=local]
+expr e@51:29#1 memberCall recv=e@51:29 callee=ids args=[] type=kotlin.collections.HashSet<Int> ref=TagContainer.ids[kind=prop]
+expr e@51:5 localDecl ids mutable=0 type=HashSet<Int> init=e@51:29#1 type=Unit ref=__local_9.ids[kind=local]
+expr e@54:44 call callee=e@54:44#1 args=[] type=kotlin.collections.HashSet<kotlin.collections.HashSet<String>> call=kotlin.collections.hashSetOf[kind=fun;params=;gen=1] targs=[kotlin.collections.HashSet<String>]
+expr e@54:5 localDecl nested mutable=0 type=HashSet<HashSet<String>> init=e@54:44 type=Unit ref=__local_10.nested[kind=local]
+expr e@55:56 name(nested) type=kotlin.collections.HashSet<kotlin.collections.HashSet<String>> ref=__local_10.nested[kind=local]
+expr e@55:5 localDecl nestedAsMutable mutable=0 type=MutableSet<HashSet<String>> init=e@55:56 type=Unit ref=__local_11.nestedAsMutable[kind=local]
+expr e@58:33 name(explicit) type=kotlin.collections.HashSet<String> ref=__local_0.explicit[kind=local]
+expr e@58:23 call callee=e@58:23#1 args=[_:e@58:33] type=kotlin.collections.HashSet<String> call=constrain[kind=fun;params=T0;gen=1] targs=[kotlin.collections.HashSet<String>]
+expr e@58:5 localDecl constrained mutable=0 type=_ init=e@58:23 type=Unit ref=__local_12.constrained[kind=local]
+expr e@59:52 name(constrained) type=kotlin.collections.HashSet<String> ref=__local_12.constrained[kind=local]
+expr e@59:5 localDecl constrainedAsMutable mutable=0 type=MutableSet<String> init=e@59:52 type=Unit ref=__local_13.constrainedAsMutable[kind=local]
+expr e@62:28 name(explicit) type=kotlin.collections.HashSet<String> ref=__local_0.explicit[kind=local]
+expr e@62:28#1 memberCall recv=e@62:28 callee=customExtension args=[] type=String call=customExtension[kind=fun;recv=kotlin.collections.HashSet<String>;params=]
+expr e@62:5 localDecl extended mutable=0 type=String init=e@62:28#1 type=Unit ref=__local_14.extended[kind=local]

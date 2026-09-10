@@ -1,12 +1,11 @@
-symbol fq=__local_0.flattened kind=local vis=private flags=_ type=kotlin.sequences.Sequence<out Int>
-symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
-symbol fq=flattenSequences kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>>] ret=Unit
-symbol fq=flattenSequences.$0.seqs kind=valueParameter vis=private flags=_
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+symbol fq=__local_0.flattened[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<out Int>
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
+symbol fq=flattenSequences.$0.seqs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=flattenSequences[kind=fun;params=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>>] ret=Unit
 file fflatten_sequence_sequence package=_
-  decl flattenSequences fun flattenSequences sym=flattenSequences
-expr e@5:21 name(seqs) type=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>> ref=flattenSequences.$0.seqs
-expr e@5:21#1 memberCall recv=e@5:21 callee=flatten args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.flatten targs=[Int]
-expr e@5:5 localDecl flattened mutable=0 type=_ init=e@5:21#1 type=Unit ref=__local_0.flattened
-expr e@6:34 name(flattened) type=kotlin.sequences.Sequence<out Int> ref=__local_0.flattened
-expr e@6:5 localDecl checked mutable=0 type=Sequence<Int> init=e@6:34 type=Unit ref=__local_1.checked
+  decl flattenSequences[kind=fun;params=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>>] fun flattenSequences sym=flattenSequences[kind=fun;params=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>>]
+expr e@5:21 name(seqs) type=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>> ref=flattenSequences.$0.seqs[kind=vparam]
+expr e@5:21#1 memberCall recv=e@5:21 callee=flatten args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.flatten[kind=fun;recv=kotlin.sequences.Sequence<kotlin.sequences.Sequence<T0>>;params=;gen=1] targs=[Int]
+expr e@5:5 localDecl flattened mutable=0 type=_ init=e@5:21#1 type=Unit ref=__local_0.flattened[kind=local]
+expr e@6:34 name(flattened) type=kotlin.sequences.Sequence<out Int> ref=__local_0.flattened[kind=local]
+expr e@6:5 localDecl checked mutable=0 type=Sequence<Int> init=e@6:34 type=Unit ref=__local_1.checked[kind=local]

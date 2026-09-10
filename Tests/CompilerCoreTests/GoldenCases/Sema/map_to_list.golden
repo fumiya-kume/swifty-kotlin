@@ -1,14 +1,11 @@
-symbol fq=__local_0.pairs kind=local vis=private flags=_ type=kotlin.collections.List<kotlin.Pair<String, Int>>
-symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.collections.List<kotlin.Pair<String, Int>>
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=toListOfPairs kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
-symbol fq=toListOfPairs.$0.values kind=valueParameter vis=private flags=_
+symbol fq=__local_0.pairs[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<kotlin.Pair<String, Int>>
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<kotlin.Pair<String, Int>>
+symbol fq=toListOfPairs.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=toListOfPairs[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
 file fmap_to_list package=_
-  decl toListOfPairs fun toListOfPairs sym=toListOfPairs
-expr e@4:17 name(values) type=kotlin.collections.Map<String, Int> ref=toListOfPairs.$0.values
-expr e@4:17#1 memberCall recv=e@4:17 callee=toList args=[] type=kotlin.collections.List<kotlin.Pair<String, Int>> call=kotlin.collections.toList#14 targs=[String,Int]
-expr e@4:5 localDecl pairs mutable=0 type=_ init=e@4:17#1 type=Unit ref=__local_0.pairs
-expr e@5:44 name(pairs) type=kotlin.collections.List<kotlin.Pair<String, Int>> ref=__local_0.pairs
-expr e@5:5 localDecl checked mutable=0 type=List<Pair<String,Int>> init=e@5:44 type=Unit ref=__local_1.checked
+  decl toListOfPairs[kind=fun;params=kotlin.collections.Map<String,Int>] fun toListOfPairs sym=toListOfPairs[kind=fun;params=kotlin.collections.Map<String,Int>]
+expr e@4:17 name(values) type=kotlin.collections.Map<String, Int> ref=toListOfPairs.$0.values[kind=vparam]
+expr e@4:17#1 memberCall recv=e@4:17 callee=toList args=[] type=kotlin.collections.List<kotlin.Pair<String, Int>> call=kotlin.collections.toList[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=;gen=2] targs=[String,Int]
+expr e@4:5 localDecl pairs mutable=0 type=_ init=e@4:17#1 type=Unit ref=__local_0.pairs[kind=local]
+expr e@5:44 name(pairs) type=kotlin.collections.List<kotlin.Pair<String, Int>> ref=__local_0.pairs[kind=local]
+expr e@5:5 localDecl checked mutable=0 type=List<Pair<String,Int>> init=e@5:44 type=Unit ref=__local_1.checked[kind=local]

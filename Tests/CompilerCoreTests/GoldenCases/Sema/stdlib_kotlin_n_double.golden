@@ -1,31 +1,30 @@
-symbol fq=golden.sema.convertDoubleToUInt kind=function vis=public flags=_ sig=recv=_ params=[Double] ret=UInt
-symbol fq=golden.sema.convertDoubleToUInt.$0.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.convertDoubleToULong kind=function vis=public flags=_ sig=recv=_ params=[Double] ret=ULong
-symbol fq=golden.sema.convertDoubleToULong.$1.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.makeDoubleArray kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.DoubleArray
-symbol fq=golden.sema.makeDoubleArrayFromSpread kind=function vis=public flags=_ sig=recv=_ params=[kotlin.DoubleArray] ret=kotlin.DoubleArray
-symbol fq=golden.sema.makeDoubleArrayFromSpread.$2.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.DoubleArray kind=class vis=public flags=synthetic
+symbol fq=golden.sema.convertDoubleToUInt.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.convertDoubleToUInt[kind=fun;params=Double] kind=function vis=public flags=_ sig=recv=_ params=[Double] ret=UInt
+symbol fq=golden.sema.convertDoubleToULong.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.convertDoubleToULong[kind=fun;params=Double] kind=function vis=public flags=_ sig=recv=_ params=[Double] ret=ULong
+symbol fq=golden.sema.makeDoubleArrayFromSpread.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeDoubleArrayFromSpread[kind=fun;params=kotlin.DoubleArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.DoubleArray] ret=kotlin.DoubleArray
+symbol fq=golden.sema.makeDoubleArray[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.DoubleArray
 file fstdlib_kotlin_n_double package=golden.sema
-  decl golden.sema.makeDoubleArray fun makeDoubleArray sym=golden.sema.makeDoubleArray
-  decl golden.sema.makeDoubleArrayFromSpread fun makeDoubleArrayFromSpread sym=golden.sema.makeDoubleArrayFromSpread
-  decl golden.sema.convertDoubleToUInt fun convertDoubleToUInt sym=golden.sema.convertDoubleToUInt
-  decl golden.sema.convertDoubleToULong fun convertDoubleToULong sym=golden.sema.convertDoubleToULong
+  decl golden.sema.makeDoubleArray[kind=fun;params=] fun makeDoubleArray sym=golden.sema.makeDoubleArray[kind=fun;params=]
+  decl golden.sema.makeDoubleArrayFromSpread[kind=fun;params=kotlin.DoubleArray] fun makeDoubleArrayFromSpread sym=golden.sema.makeDoubleArrayFromSpread[kind=fun;params=kotlin.DoubleArray]
+  decl golden.sema.convertDoubleToUInt[kind=fun;params=Double] fun convertDoubleToUInt sym=golden.sema.convertDoubleToUInt[kind=fun;params=Double]
+  decl golden.sema.convertDoubleToULong[kind=fun;params=Double] fun convertDoubleToULong sym=golden.sema.convertDoubleToULong[kind=fun;params=Double]
 expr e@4:26 double(1.5) type=Double
 expr e@4:32 double(2.0) type=Double
 expr e@4:31 unary(unaryMinus) operand=e@4:32 type=Double
 expr e@4:37 double(3.25) type=Double
-expr e@4:12 call callee=e@4:12#1 args=[_:e@4:26,_:e@4:31,_:e@4:37] type=kotlin.DoubleArray call=kotlin.doubleArrayOf
+expr e@4:12 call callee=e@4:12#1 args=[_:e@4:26,_:e@4:31,_:e@4:37] type=kotlin.DoubleArray call=kotlin.doubleArrayOf[kind=fun;params=*Double]
 expr e@4:5 return value=e@4:12 type=Nothing
 expr e@8:27 double(1.0) type=Double
 expr e@8:26 unary(unaryMinus) operand=e@8:27 type=Double
-expr e@8:33 name(values) type=kotlin.DoubleArray ref=golden.sema.makeDoubleArrayFromSpread.$2.values
+expr e@8:33 name(values) type=kotlin.DoubleArray ref=golden.sema.makeDoubleArrayFromSpread.$2.values[kind=vparam]
 expr e@8:41 double(6.0) type=Double
-expr e@8:12 call callee=e@8:12#1 args=[_:e@8:26,_:e@8:33,_:e@8:41] type=kotlin.DoubleArray call=kotlin.doubleArrayOf
+expr e@8:12 call callee=e@8:12#1 args=[_:e@8:26,_:e@8:33,_:e@8:41] type=kotlin.DoubleArray call=kotlin.doubleArrayOf[kind=fun;params=*Double]
 expr e@8:5 return value=e@8:12 type=Nothing
-expr e@12:12 name(value) type=Double ref=golden.sema.convertDoubleToUInt.$0.value
-expr e@12:12#1 memberCall recv=e@12:12 callee=toUInt args=[] type=UInt call=kotlin.toUInt#0
+expr e@12:12 name(value) type=Double ref=golden.sema.convertDoubleToUInt.$0.value[kind=vparam]
+expr e@12:12#1 memberCall recv=e@12:12 callee=toUInt args=[] type=UInt call=kotlin.toUInt[kind=fun;recv=Double;params=]
 expr e@12:5 return value=e@12:12#1 type=Nothing
-expr e@16:12 name(value) type=Double ref=golden.sema.convertDoubleToULong.$1.value
-expr e@16:12#1 memberCall recv=e@16:12 callee=toULong args=[] type=ULong call=kotlin.toULong#0
+expr e@16:12 name(value) type=Double ref=golden.sema.convertDoubleToULong.$1.value[kind=vparam]
+expr e@16:12#1 memberCall recv=e@16:12 callee=toULong args=[] type=ULong call=kotlin.toULong[kind=fun;recv=Double;params=]
 expr e@16:5 return value=e@16:12#1 type=Nothing

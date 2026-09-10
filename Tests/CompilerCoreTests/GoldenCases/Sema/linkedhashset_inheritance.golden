@@ -1,32 +1,30 @@
-symbol fq=MySet kind=class vis=public flags=_
-symbol fq=MySet.<init> kind=constructor vis=public flags=_ sig=recv=MySet params=[] ret=MySet
-symbol fq=MySet.customOp kind=function vis=public flags=_ sig=recv=MySet params=[] ret=String
-symbol fq=__local_0.mySet kind=local vis=private flags=_ type=MySet
-symbol fq=__local_1.asLinked kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<String>
-symbol fq=__local_2.asMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
-symbol fq=__local_3.asReadOnly kind=local vis=private flags=_ type=kotlin.collections.Set<String>
-symbol fq=__local_4.op kind=local vis=private flags=_ type=String
-symbol fq=acceptLinked kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.LinkedHashSet<String>] ret=Unit
-symbol fq=acceptLinked.$0.set kind=valueParameter vis=private flags=_
-symbol fq=inheritanceChecks kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
+symbol fq=MySet.<init>[kind=ctor;recv=MySet;params=] kind=constructor vis=public flags=_ sig=recv=MySet params=[] ret=MySet
+symbol fq=MySet.customOp[kind=fun;recv=MySet;params=] kind=function vis=public flags=_ sig=recv=MySet params=[] ret=String
+symbol fq=MySet[kind=class] kind=class vis=public flags=_
+symbol fq=__local_0.mySet[kind=local] kind=local vis=private flags=_ type=MySet
+symbol fq=__local_1.asLinked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<String>
+symbol fq=__local_2.asMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
+symbol fq=__local_3.asReadOnly[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Set<String>
+symbol fq=__local_4.op[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=acceptLinked.$0.set[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=acceptLinked[kind=fun;params=kotlin.collections.LinkedHashSet<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.LinkedHashSet<String>] ret=Unit
+symbol fq=inheritanceChecks[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file flinkedhashset_inheritance package=_
-  decl MySet class MySet sym=MySet
-  decl acceptLinked fun acceptLinked sym=acceptLinked
-  decl inheritanceChecks fun inheritanceChecks sym=inheritanceChecks
+  decl MySet[kind=class] class MySet sym=MySet[kind=class]
+  decl acceptLinked[kind=fun;params=kotlin.collections.LinkedHashSet<String>] fun acceptLinked sym=acceptLinked[kind=fun;params=kotlin.collections.LinkedHashSet<String>]
+  decl inheritanceChecks[kind=fun;params=] fun inheritanceChecks sym=inheritanceChecks[kind=fun;params=]
 expr e@6:16 string(custom) type=String
 expr e@6:9 return value=e@6:16 type=Nothing
-expr e@13:17 call callee=e@13:17#1 args=[] type=MySet call=MySet.<init>
-expr e@13:5 localDecl mySet mutable=0 type=_ init=e@13:17 type=Unit ref=__local_0.mySet
-expr e@16:43 name(mySet) type=MySet ref=__local_0.mySet
-expr e@16:5 localDecl asLinked mutable=0 type=LinkedHashSet<String> init=e@16:43 type=Unit ref=__local_1.asLinked
-expr e@17:41 name(mySet) type=MySet ref=__local_0.mySet
-expr e@17:5 localDecl asMutable mutable=0 type=MutableSet<String> init=e@17:41 type=Unit ref=__local_2.asMutable
-expr e@18:35 name(mySet) type=MySet ref=__local_0.mySet
-expr e@18:5 localDecl asReadOnly mutable=0 type=Set<String> init=e@18:35 type=Unit ref=__local_3.asReadOnly
-expr e@19:18 name(mySet) type=MySet ref=__local_0.mySet
-expr e@19:5 call callee=e@19:5#1 args=[_:e@19:18] type=Unit call=acceptLinked
-expr e@22:22 name(mySet) type=MySet ref=__local_0.mySet
-expr e@22:22#1 memberCall recv=e@22:22 callee=customOp args=[] type=String call=MySet.customOp
-expr e@22:5 localDecl op mutable=0 type=String init=e@22:22#1 type=Unit ref=__local_4.op
+expr e@13:17 call callee=e@13:17#1 args=[] type=MySet call=MySet.<init>[kind=ctor;recv=MySet;params=]
+expr e@13:5 localDecl mySet mutable=0 type=_ init=e@13:17 type=Unit ref=__local_0.mySet[kind=local]
+expr e@16:43 name(mySet) type=MySet ref=__local_0.mySet[kind=local]
+expr e@16:5 localDecl asLinked mutable=0 type=LinkedHashSet<String> init=e@16:43 type=Unit ref=__local_1.asLinked[kind=local]
+expr e@17:41 name(mySet) type=MySet ref=__local_0.mySet[kind=local]
+expr e@17:5 localDecl asMutable mutable=0 type=MutableSet<String> init=e@17:41 type=Unit ref=__local_2.asMutable[kind=local]
+expr e@18:35 name(mySet) type=MySet ref=__local_0.mySet[kind=local]
+expr e@18:5 localDecl asReadOnly mutable=0 type=Set<String> init=e@18:35 type=Unit ref=__local_3.asReadOnly[kind=local]
+expr e@19:18 name(mySet) type=MySet ref=__local_0.mySet[kind=local]
+expr e@19:5 call callee=e@19:5#1 args=[_:e@19:18] type=Unit call=acceptLinked[kind=fun;params=kotlin.collections.LinkedHashSet<String>]
+expr e@22:22 name(mySet) type=MySet ref=__local_0.mySet[kind=local]
+expr e@22:22#1 memberCall recv=e@22:22 callee=customOp args=[] type=String call=MySet.customOp[kind=fun;recv=MySet;params=]
+expr e@22:5 localDecl op mutable=0 type=String init=e@22:22#1 type=Unit ref=__local_4.op[kind=local]

@@ -560,6 +560,7 @@ struct CoroutineSyntheticStubTests {
         }
     }
 
+    @Test
     func testCoroutineContextNestedTypeContract() throws {
         let source = """
         package sample

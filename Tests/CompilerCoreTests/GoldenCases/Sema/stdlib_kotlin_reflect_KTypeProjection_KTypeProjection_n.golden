@@ -1,44 +1,43 @@
-symbol fq=golden.sema.projectionComponent1 kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KVariance?
-symbol fq=golden.sema.projectionComponent1.$0.projection kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.projectionComponent2 kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KType?
-symbol fq=golden.sema.projectionComponent2.$1.projection kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.projectionCopy kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KTypeProjection
-symbol fq=golden.sema.projectionCopy.$2.projection kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.projectionEquals kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection,Any?] ret=Boolean
-symbol fq=golden.sema.projectionEquals.$3.other kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.projectionEquals.$3.projection kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.projectionHashCode kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=Int
-symbol fq=golden.sema.projectionHashCode.$4.projection kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.projectionToString kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=String
-symbol fq=golden.sema.projectionToString.$5.projection kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.projectionType kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KType?
-symbol fq=golden.sema.projectionType.$6.projection kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.projectionVariance kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KVariance?
-symbol fq=golden.sema.projectionVariance.$7.projection kind=valueParameter vis=private flags=_
-symbol fq=kotlin.reflect.KType kind=interface vis=public flags=_
+symbol fq=golden.sema.projectionComponent1.$0.projection[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.projectionComponent1[kind=fun;params=kotlin.reflect.KTypeProjection] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KVariance?
+symbol fq=golden.sema.projectionComponent2.$1.projection[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.projectionComponent2[kind=fun;params=kotlin.reflect.KTypeProjection] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KType?
+symbol fq=golden.sema.projectionCopy.$2.projection[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.projectionCopy[kind=fun;params=kotlin.reflect.KTypeProjection] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KTypeProjection
+symbol fq=golden.sema.projectionEquals.$3.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.projectionEquals.$3.projection[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.projectionEquals[kind=fun;params=kotlin.reflect.KTypeProjection,Any?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection,Any?] ret=Boolean
+symbol fq=golden.sema.projectionHashCode.$4.projection[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.projectionHashCode[kind=fun;params=kotlin.reflect.KTypeProjection] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=Int
+symbol fq=golden.sema.projectionToString.$5.projection[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.projectionToString[kind=fun;params=kotlin.reflect.KTypeProjection] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=String
+symbol fq=golden.sema.projectionType.$6.projection[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.projectionType[kind=fun;params=kotlin.reflect.KTypeProjection] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KType?
+symbol fq=golden.sema.projectionVariance.$7.projection[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.projectionVariance[kind=fun;params=kotlin.reflect.KTypeProjection] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KVariance?
 file fstdlib_kotlin_reflect_KTypeProjection_KTypeProjection_n package=golden.sema
-  decl golden.sema.projectionVariance fun projectionVariance sym=golden.sema.projectionVariance
-  decl golden.sema.projectionType fun projectionType sym=golden.sema.projectionType
-  decl golden.sema.projectionComponent1 fun projectionComponent1 sym=golden.sema.projectionComponent1
-  decl golden.sema.projectionComponent2 fun projectionComponent2 sym=golden.sema.projectionComponent2
-  decl golden.sema.projectionCopy fun projectionCopy sym=golden.sema.projectionCopy
-  decl golden.sema.projectionEquals fun projectionEquals sym=golden.sema.projectionEquals
-  decl golden.sema.projectionHashCode fun projectionHashCode sym=golden.sema.projectionHashCode
-  decl golden.sema.projectionToString fun projectionToString sym=golden.sema.projectionToString
-expr e@7:67 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionVariance.$7.projection
-expr e@7:67#1 memberCall recv=e@7:67 callee=variance args=[] type=kotlin.reflect.KVariance? ref=kotlin.reflect.KTypeProjection.variance
-expr e@9:59 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionType.$6.projection
-expr e@9:59#1 memberCall recv=e@9:59 callee=type args=[] type=kotlin.reflect.KType? ref=kotlin.reflect.KTypeProjection.type
-expr e@11:69 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionComponent1.$0.projection
-expr e@11:69#1 memberCall recv=e@11:69 callee=component1 args=[] type=kotlin.reflect.KVariance? call=kotlin.reflect.KTypeProjection.component1
-expr e@13:65 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionComponent2.$1.projection
-expr e@13:65#1 memberCall recv=e@13:65 callee=component2 args=[] type=kotlin.reflect.KType? call=kotlin.reflect.KTypeProjection.component2
-expr e@15:68 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionCopy.$2.projection
-expr e@15:68#1 memberCall recv=e@15:68 callee=copy args=[] type=kotlin.reflect.KTypeProjection call=kotlin.reflect.KTypeProjection.copy
-expr e@17:75 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionEquals.$3.projection
-expr e@17:93 name(other) type=Any? ref=golden.sema.projectionEquals.$3.other
-expr e@17:75#1 memberCall recv=e@17:75 callee=equals args=[_:e@17:93] type=Boolean call=kotlin.reflect.KTypeProjection.equals
-expr e@19:60 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionHashCode.$4.projection
-expr e@19:60#1 memberCall recv=e@19:60 callee=hashCode args=[] type=Int call=kotlin.reflect.KTypeProjection.hashCode
-expr e@21:63 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionToString.$5.projection
-expr e@21:63#1 memberCall recv=e@21:63 callee=toString args=[] type=String call=kotlin.reflect.KTypeProjection.toString
+  decl golden.sema.projectionVariance[kind=fun;params=kotlin.reflect.KTypeProjection] fun projectionVariance sym=golden.sema.projectionVariance[kind=fun;params=kotlin.reflect.KTypeProjection]
+  decl golden.sema.projectionType[kind=fun;params=kotlin.reflect.KTypeProjection] fun projectionType sym=golden.sema.projectionType[kind=fun;params=kotlin.reflect.KTypeProjection]
+  decl golden.sema.projectionComponent1[kind=fun;params=kotlin.reflect.KTypeProjection] fun projectionComponent1 sym=golden.sema.projectionComponent1[kind=fun;params=kotlin.reflect.KTypeProjection]
+  decl golden.sema.projectionComponent2[kind=fun;params=kotlin.reflect.KTypeProjection] fun projectionComponent2 sym=golden.sema.projectionComponent2[kind=fun;params=kotlin.reflect.KTypeProjection]
+  decl golden.sema.projectionCopy[kind=fun;params=kotlin.reflect.KTypeProjection] fun projectionCopy sym=golden.sema.projectionCopy[kind=fun;params=kotlin.reflect.KTypeProjection]
+  decl golden.sema.projectionEquals[kind=fun;params=kotlin.reflect.KTypeProjection,Any?] fun projectionEquals sym=golden.sema.projectionEquals[kind=fun;params=kotlin.reflect.KTypeProjection,Any?]
+  decl golden.sema.projectionHashCode[kind=fun;params=kotlin.reflect.KTypeProjection] fun projectionHashCode sym=golden.sema.projectionHashCode[kind=fun;params=kotlin.reflect.KTypeProjection]
+  decl golden.sema.projectionToString[kind=fun;params=kotlin.reflect.KTypeProjection] fun projectionToString sym=golden.sema.projectionToString[kind=fun;params=kotlin.reflect.KTypeProjection]
+expr e@7:67 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionVariance.$7.projection[kind=vparam]
+expr e@7:67#1 memberCall recv=e@7:67 callee=variance args=[] type=kotlin.reflect.KVariance? ref=kotlin.reflect.KTypeProjection.variance[kind=prop]
+expr e@9:59 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionType.$6.projection[kind=vparam]
+expr e@9:59#1 memberCall recv=e@9:59 callee=type args=[] type=kotlin.reflect.KType? ref=kotlin.reflect.KTypeProjection.type[kind=prop]
+expr e@11:69 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionComponent1.$0.projection[kind=vparam]
+expr e@11:69#1 memberCall recv=e@11:69 callee=component1 args=[] type=kotlin.reflect.KVariance? call=kotlin.reflect.KTypeProjection.component1[kind=fun;recv=kotlin.reflect.KTypeProjection;params=]
+expr e@13:65 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionComponent2.$1.projection[kind=vparam]
+expr e@13:65#1 memberCall recv=e@13:65 callee=component2 args=[] type=kotlin.reflect.KType? call=kotlin.reflect.KTypeProjection.component2[kind=fun;recv=kotlin.reflect.KTypeProjection;params=]
+expr e@15:68 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionCopy.$2.projection[kind=vparam]
+expr e@15:68#1 memberCall recv=e@15:68 callee=copy args=[] type=kotlin.reflect.KTypeProjection call=kotlin.reflect.KTypeProjection.copy[kind=fun;recv=kotlin.reflect.KTypeProjection;params=kotlin.reflect.KVariance?,kotlin.reflect.KType?]
+expr e@17:75 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionEquals.$3.projection[kind=vparam]
+expr e@17:93 name(other) type=Any? ref=golden.sema.projectionEquals.$3.other[kind=vparam]
+expr e@17:75#1 memberCall recv=e@17:75 callee=equals args=[_:e@17:93] type=Boolean call=kotlin.reflect.KTypeProjection.equals[kind=fun;recv=kotlin.reflect.KTypeProjection;params=Any?]
+expr e@19:60 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionHashCode.$4.projection[kind=vparam]
+expr e@19:60#1 memberCall recv=e@19:60 callee=hashCode args=[] type=Int call=kotlin.reflect.KTypeProjection.hashCode[kind=fun;recv=kotlin.reflect.KTypeProjection;params=]
+expr e@21:63 name(projection) type=kotlin.reflect.KTypeProjection ref=golden.sema.projectionToString.$5.projection[kind=vparam]
+expr e@21:63#1 memberCall recv=e@21:63 callee=toString args=[] type=String call=kotlin.reflect.KTypeProjection.toString[kind=fun;recv=kotlin.reflect.KTypeProjection;params=]

@@ -1,16 +1,15 @@
-symbol fq=kotlin.time.TimeSource kind=interface vis=public flags=_
-symbol fq=measureTimeReceiver kind=function vis=public flags=_ sig=recv=_ params=[kotlin.time.TimeSource] ret=kotlin.time.Duration
-symbol fq=measureTimeReceiver.$0.source kind=valueParameter vis=private flags=_
-symbol fq=measureTimedValueReceiver kind=function vis=public flags=_ sig=recv=_ params=[kotlin.time.TimeSource] ret=kotlin.time.TimedValue<String>
-symbol fq=measureTimedValueReceiver.$1.source kind=valueParameter vis=private flags=_
+symbol fq=measureTimeReceiver.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=measureTimeReceiver[kind=fun;params=kotlin.time.TimeSource] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.time.TimeSource] ret=kotlin.time.Duration
+symbol fq=measureTimedValueReceiver.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=measureTimedValueReceiver[kind=fun;params=kotlin.time.TimeSource] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.time.TimeSource] ret=kotlin.time.TimedValue<String>
 file fstdlib_kotlin_time_TimeSource_n package=_
-  decl measureTimeReceiver fun measureTimeReceiver sym=measureTimeReceiver
-  decl measureTimedValueReceiver fun measureTimedValueReceiver sym=measureTimedValueReceiver
-expr e@10:5 name(source) type=kotlin.time.TimeSource ref=measureTimeReceiver.$0.source
+  decl measureTimeReceiver[kind=fun;params=kotlin.time.TimeSource] fun measureTimeReceiver sym=measureTimeReceiver[kind=fun;params=kotlin.time.TimeSource]
+  decl measureTimedValueReceiver[kind=fun;params=kotlin.time.TimeSource] fun measureTimedValueReceiver sym=measureTimedValueReceiver[kind=fun;params=kotlin.time.TimeSource]
+expr e@10:5 name(source) type=kotlin.time.TimeSource ref=measureTimeReceiver.$0.source[kind=vparam]
 expr e@10:25 blockExpr stmts=[] trailing=_ type=Unit
 expr e@10:24 lambda params=[] body=e@10:25 label=measureTime type=() -> Unit
-expr e@10:5#1 memberCall recv=e@10:5 callee=measureTime args=[_:e@10:24] type=kotlin.time.Duration call=kotlin.time.measureTime#1
-expr e@14:5 name(source) type=kotlin.time.TimeSource ref=measureTimedValueReceiver.$1.source
+expr e@10:5#1 memberCall recv=e@10:5 callee=measureTime args=[_:e@10:24] type=kotlin.time.Duration call=kotlin.time.measureTime[kind=fun;recv=kotlin.time.TimeSource;params=fn{p=;ret=Unit}]
+expr e@14:5 name(source) type=kotlin.time.TimeSource ref=measureTimedValueReceiver.$1.source[kind=vparam]
 expr e@14:32 string(value) type=String
 expr e@14:30 lambda params=[] body=e@14:32 label=measureTimedValue type=() -> String
-expr e@14:5#1 memberCall recv=e@14:5 callee=measureTimedValue args=[_:e@14:30] type=kotlin.time.TimedValue<String> call=kotlin.time.measureTimedValue#1 targs=[String]
+expr e@14:5#1 memberCall recv=e@14:5 callee=measureTimedValue args=[_:e@14:30] type=kotlin.time.TimedValue<String> call=kotlin.time.measureTimedValue[kind=fun;recv=kotlin.time.TimeSource;params=fn{p=;ret=T0};gen=1] targs=[String]

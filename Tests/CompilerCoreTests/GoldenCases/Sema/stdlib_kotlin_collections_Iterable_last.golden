@@ -1,26 +1,25 @@
-symbol fq=iterableLastFamily kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>,String?] ret=String?
-symbol fq=iterableLastFamily.$0.probe kind=valueParameter vis=private flags=_
-symbol fq=iterableLastFamily.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=iterableLastFamily.$0.probe[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=iterableLastFamily.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=iterableLastFamily[kind=fun;params=kotlin.collections.Iterable<String?>,String?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>,String?] ret=String?
 file fstdlib_kotlin_collections_Iterable_last package=_
-  decl iterableLastFamily fun iterableLastFamily sym=iterableLastFamily
-expr e@2:5 name(values) type=kotlin.collections.Iterable<String?> ref=iterableLastFamily.$0.values
-expr e@2:5#1 memberCall recv=e@2:5 callee=last args=[] type=String? call=kotlin.collections.last#26 targs=[String?]
-expr e@3:5 name(values) type=kotlin.collections.Iterable<String?> ref=iterableLastFamily.$0.values
+  decl iterableLastFamily[kind=fun;params=kotlin.collections.Iterable<String?>,String?] fun iterableLastFamily sym=iterableLastFamily[kind=fun;params=kotlin.collections.Iterable<String?>,String?]
+expr e@2:5 name(values) type=kotlin.collections.Iterable<String?> ref=iterableLastFamily.$0.values[kind=vparam]
+expr e@2:5#1 memberCall recv=e@2:5 callee=last args=[] type=String? call=kotlin.collections.last[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[String?]
+expr e@3:5 name(values) type=kotlin.collections.Iterable<String?> ref=iterableLastFamily.$0.values[kind=vparam]
 expr e@3:19 name(it) type=String? ref=s-0
-expr e@3:25 name(probe) type=String? ref=iterableLastFamily.$0.probe
+expr e@3:25 name(probe) type=String? ref=iterableLastFamily.$0.probe[kind=vparam]
 expr e@3:19#1 binary(equal) lhs=e@3:19 rhs=e@3:25 type=Boolean
 expr e@3:17 lambda params=[] body=e@3:19#1 label=last type=(String?) -> Boolean
-expr e@3:5#1 memberCall recv=e@3:5 callee=last args=[_:e@3:17] type=String? call=kotlin.collections.last#27 targs=[String?]
-expr e@4:5 name(values) type=kotlin.collections.Iterable<String?> ref=iterableLastFamily.$0.values
-expr e@4:24 name(probe) type=String? ref=iterableLastFamily.$0.probe
-expr e@4:5#1 memberCall recv=e@4:5 callee=lastIndexOf args=[_:e@4:24] type=Int call=kotlin.collections.lastIndexOf#1 targs=[String?]
-expr e@5:5 name(values) type=kotlin.collections.Iterable<String?> ref=iterableLastFamily.$0.values
-expr e@5:5#1 memberCall recv=e@5:5 callee=lastOrNull args=[] type=String? call=kotlin.collections.lastOrNull#26 targs=[String?]
-expr e@6:12 name(values) type=kotlin.collections.Iterable<String?> ref=iterableLastFamily.$0.values
+expr e@3:5#1 memberCall recv=e@3:5 callee=last args=[_:e@3:17] type=String? call=kotlin.collections.last[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[String?]
+expr e@4:5 name(values) type=kotlin.collections.Iterable<String?> ref=iterableLastFamily.$0.values[kind=vparam]
+expr e@4:24 name(probe) type=String? ref=iterableLastFamily.$0.probe[kind=vparam]
+expr e@4:5#1 memberCall recv=e@4:5 callee=lastIndexOf args=[_:e@4:24] type=Int call=kotlin.collections.lastIndexOf[kind=fun;recv=kotlin.collections.Iterable<T0>;params=T0;gen=1] targs=[String?]
+expr e@5:5 name(values) type=kotlin.collections.Iterable<String?> ref=iterableLastFamily.$0.values[kind=vparam]
+expr e@5:5#1 memberCall recv=e@5:5 callee=lastOrNull args=[] type=String? call=kotlin.collections.lastOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[String?]
+expr e@6:12 name(values) type=kotlin.collections.Iterable<String?> ref=iterableLastFamily.$0.values[kind=vparam]
 expr e@6:32 name(it) type=String? ref=s-1
-expr e@6:38 name(probe) type=String? ref=iterableLastFamily.$0.probe
+expr e@6:38 name(probe) type=String? ref=iterableLastFamily.$0.probe[kind=vparam]
 expr e@6:32#1 binary(equal) lhs=e@6:32 rhs=e@6:38 type=Boolean
 expr e@6:30 lambda params=[] body=e@6:32#1 label=lastOrNull type=(String?) -> Boolean
-expr e@6:12#1 memberCall recv=e@6:12 callee=lastOrNull args=[_:e@6:30] type=String? call=kotlin.collections.lastOrNull#27 targs=[String?]
+expr e@6:12#1 memberCall recv=e@6:12 callee=lastOrNull args=[_:e@6:30] type=String? call=kotlin.collections.lastOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[String?]
 expr e@6:5 return value=e@6:12#1 type=Nothing
