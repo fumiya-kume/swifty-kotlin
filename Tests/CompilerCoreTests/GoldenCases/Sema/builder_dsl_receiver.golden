@@ -1,25 +1,25 @@
-symbol fq=golden.sema.useBuildListReceiverThis kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
-symbol fq=golden.sema.useBuildStringReceiverThis kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableList.add#1 kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[kotlin.collections.MutableList.E] ret=Boolean
+symbol fq=golden.sema.useBuildListReceiverThis[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
+symbol fq=golden.sema.useBuildStringReceiverThis[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableList.E[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableList.add[kind=fun;recv=kotlin.collections.MutableList<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[kotlin.collections.MutableList.E] ret=Boolean
+symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fbuilder_dsl_receiver package=golden.sema
-  decl golden.sema.useBuildStringReceiverThis fun useBuildStringReceiverThis sym=golden.sema.useBuildStringReceiverThis
-  decl golden.sema.useBuildListReceiverThis fun useBuildListReceiverThis sym=golden.sema.useBuildListReceiverThis
+  decl golden.sema.useBuildStringReceiverThis[kind=fun;params=] fun useBuildStringReceiverThis sym=golden.sema.useBuildStringReceiverThis[kind=fun;params=]
+  decl golden.sema.useBuildListReceiverThis[kind=fun;params=] fun useBuildListReceiverThis sym=golden.sema.useBuildListReceiverThis[kind=fun;params=]
 expr e@4:5 this type=kotlin.text.StringBuilder
 expr e@4:17 string(a) type=String
-expr e@4:5#1 memberCall recv=e@4:5 callee=append args=[_:e@4:17] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#10
+expr e@4:5#1 memberCall recv=e@4:5 callee=append args=[_:e@4:17] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=String?]
 expr e@5:12 string(b) type=String
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:12] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#10
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:12] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=String?]
 expr e@4:5#2 blockExpr stmts=[e@4:5#1] trailing=e@5:5 type=kotlin.text.StringBuilder
 expr e@3:56 lambda params=[] body=e@4:5#2 label=buildString type=kotlin.text.StringBuilder.() -> Unit
-expr e@3:44 call callee=e@3:44#1 args=[_:e@3:56] type=String call=kotlin.text.buildString#1
+expr e@3:44 call callee=e@3:44#1 args=[_:e@3:56] type=String call=kotlin.text.buildString[kind=fun;params=fn{r=kotlin.text.StringBuilder;p=;ret=Unit}]
 expr e@9:5 this type=kotlin.collections.MutableList<Int>
 expr e@9:14 int(1) type=Int
-expr e@9:5#1 memberCall recv=e@9:5 callee=add args=[_:e@9:14] type=Boolean call=kotlin.collections.MutableList.add#1
+expr e@9:5#1 memberCall recv=e@9:5 callee=add args=[_:e@9:14] type=Boolean call=kotlin.collections.MutableList.add[kind=fun;recv=kotlin.collections.MutableList<T0>;params=T0;gen=1]
 expr e@10:9 int(2) type=Int
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:9] type=Boolean call=kotlin.collections.MutableList.add#1 targs=[Int]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:9] type=Boolean call=kotlin.collections.MutableList.add[kind=fun;recv=kotlin.collections.MutableList<T0>;params=T0;gen=1] targs=[Int]
 expr e@9:5#2 blockExpr stmts=[e@9:5#1] trailing=e@10:5 type=Boolean
 expr e@8:49 lambda params=[] body=e@9:5#2 label=buildList type=kotlin.collections.MutableList<Int>.() -> Unit
-expr e@8:39 call callee=e@8:39#1 args=[_:e@8:49] type=kotlin.collections.List<out Int> call=kotlin.collections.buildList#1 targs=[Int]
+expr e@8:39 call callee=e@8:39#1 args=[_:e@8:49] type=kotlin.collections.List<out Int> call=kotlin.collections.buildList[kind=fun;params=fn{r=kotlin.collections.MutableList<T0>;p=;ret=Unit};gen=1] targs=[Int]

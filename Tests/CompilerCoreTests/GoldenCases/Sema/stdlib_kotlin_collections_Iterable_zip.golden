@@ -1,44 +1,44 @@
-symbol fq=__local_0.values kind=local vis=private flags=_ type=kotlin.collections.Iterable<Int>
-symbol fq=__local_1.nullable kind=local vis=private flags=_ type=kotlin.Array<String?>
-symbol fq=__local_2.pairs kind=local vis=private flags=_ type=kotlin.collections.List<kotlin.Pair<Int, String?>>
-symbol fq=__local_3.transformed kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=__local_4.iterableOverload kind=local vis=private flags=_ type=kotlin.collections.List<kotlin.Pair<Int, String>>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.values[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Iterable<Int>
+symbol fq=__local_1.nullable[kind=local] kind=local vis=private flags=_ type=kotlin.Array<String?>
+symbol fq=__local_2.pairs[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<kotlin.Pair<Int, String?>>
+symbol fq=__local_3.transformed[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_4.iterableOverload[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<kotlin.Pair<Int, String>>
+symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
+symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_Iterable_zip package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:40 int(1) type=Int
 expr e@2:43 int(2) type=Int
 expr e@2:46 int(3) type=Int
-expr e@2:33 call callee=e@2:33#1 args=[_:e@2:40,_:e@2:43,_:e@2:46] type=kotlin.collections.Iterable<Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@2:5 localDecl values mutable=0 type=Iterable<Int> init=e@2:33 type=Unit ref=__local_0.values
+expr e@2:33 call callee=e@2:33#1 args=[_:e@2:40,_:e@2:43,_:e@2:46] type=kotlin.collections.Iterable<Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@2:5 localDecl values mutable=0 type=Iterable<Int> init=e@2:33 type=Unit ref=__local_0.values[kind=local]
 expr e@3:44 string(a) type=String
 expr e@3:49 name(null) type=Nothing?
-expr e@3:36 call callee=e@3:36#1 args=[_:e@3:44,_:e@3:49] type=kotlin.Array<String?> call=kotlin.arrayOf targs=[String?]
-expr e@3:5 localDecl nullable mutable=0 type=Array<String?> init=e@3:36 type=Unit ref=__local_1.nullable
-expr e@5:17 name(values) type=kotlin.collections.Iterable<Int> ref=__local_0.values
-expr e@5:28 name(nullable) type=kotlin.Array<String?> ref=__local_1.nullable
-expr e@5:17#1 memberCall recv=e@5:17 callee=zip args=[_:e@5:28] type=kotlin.collections.List<kotlin.Pair<Int, String?>> call=kotlin.collections.zip#0 targs=[Int,String?]
-expr e@5:5 localDecl pairs mutable=0 type=_ init=e@5:17#1 type=Unit ref=__local_2.pairs
-expr e@6:23 name(values) type=kotlin.collections.Iterable<Int> ref=__local_0.values
-expr e@6:34 name(nullable) type=kotlin.Array<String?> ref=__local_1.nullable
+expr e@3:36 call callee=e@3:36#1 args=[_:e@3:44,_:e@3:49] type=kotlin.Array<String?> call=kotlin.arrayOf[kind=fun;params=*T0;gen=1] targs=[String?]
+expr e@3:5 localDecl nullable mutable=0 type=Array<String?> init=e@3:36 type=Unit ref=__local_1.nullable[kind=local]
+expr e@5:17 name(values) type=kotlin.collections.Iterable<Int> ref=__local_0.values[kind=local]
+expr e@5:28 name(nullable) type=kotlin.Array<String?> ref=__local_1.nullable[kind=local]
+expr e@5:17#1 memberCall recv=e@5:17 callee=zip args=[_:e@5:28] type=kotlin.collections.List<kotlin.Pair<Int, String?>> call=kotlin.collections.zip[kind=fun;recv=kotlin.collections.Iterable<T0>;params=kotlin.collections.Iterable<T1>;gen=2] targs=[Int,String?]
+expr e@5:5 localDecl pairs mutable=0 type=_ init=e@5:17#1 type=Unit ref=__local_2.pairs[kind=local]
+expr e@6:23 name(values) type=kotlin.collections.Iterable<Int> ref=__local_0.values[kind=local]
+expr e@6:34 name(nullable) type=kotlin.Array<String?> ref=__local_1.nullable[kind=local]
 expr e@6:63 name(left) type=Int ref=s-0
 expr e@6:69 name(right) type=String? ref=s-1
 expr e@6:61 stringTemplate[expr(e@6:63),lit(:),expr(e@6:69)] type=String
 expr e@6:44 lambda params=[left,right] body=e@6:61 label=zip type=(Int, String?) -> Any
-expr e@6:23#1 memberCall recv=e@6:23 callee=zip args=[_:e@6:34,_:e@6:44] type=kotlin.collections.List<String> call=kotlin.collections.zip#1 targs=[Int,String?,String]
-expr e@6:5 localDecl transformed mutable=0 type=_ init=e@6:23#1 type=Unit ref=__local_3.transformed
-expr e@7:28 name(values) type=kotlin.collections.Iterable<Int> ref=__local_0.values
+expr e@6:23#1 memberCall recv=e@6:23 callee=zip args=[_:e@6:34,_:e@6:44] type=kotlin.collections.List<String> call=kotlin.collections.zip[kind=fun;recv=kotlin.collections.Iterable<T0>;params=kotlin.collections.Iterable<T1>,fn{p=T0,T1;ret=T2};gen=3] targs=[Int,String?,String]
+expr e@6:5 localDecl transformed mutable=0 type=_ init=e@6:23#1 type=Unit ref=__local_3.transformed[kind=local]
+expr e@7:28 name(values) type=kotlin.collections.Iterable<Int> ref=__local_0.values[kind=local]
 expr e@7:46 string(x) type=String
-expr e@7:39 call callee=e@7:39#1 args=[_:e@7:46] type=kotlin.collections.List<out String> call=kotlin.collections.listOf#1 targs=[String]
-expr e@7:28#1 memberCall recv=e@7:28 callee=zip args=[_:e@7:39] type=kotlin.collections.List<kotlin.Pair<Int, String>> call=kotlin.collections.zip#0 targs=[Int,String]
-expr e@7:5 localDecl iterableOverload mutable=0 type=_ init=e@7:28#1 type=Unit ref=__local_4.iterableOverload
-expr e@9:13 name(pairs) type=kotlin.collections.List<kotlin.Pair<Int, String?>> ref=__local_2.pairs
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println#1
-expr e@10:13 name(transformed) type=kotlin.collections.List<String> ref=__local_3.transformed
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println#1
-expr e@11:13 name(iterableOverload) type=kotlin.collections.List<kotlin.Pair<Int, String>> ref=__local_4.iterableOverload
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13] type=Unit call=kotlin.io.println#1
+expr e@7:39 call callee=e@7:39#1 args=[_:e@7:46] type=kotlin.collections.List<out String> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[String]
+expr e@7:28#1 memberCall recv=e@7:28 callee=zip args=[_:e@7:39] type=kotlin.collections.List<kotlin.Pair<Int, String>> call=kotlin.collections.zip[kind=fun;recv=kotlin.collections.Iterable<T0>;params=kotlin.collections.Iterable<T1>;gen=2] targs=[Int,String]
+expr e@7:5 localDecl iterableOverload mutable=0 type=_ init=e@7:28#1 type=Unit ref=__local_4.iterableOverload[kind=local]
+expr e@9:13 name(pairs) type=kotlin.collections.List<kotlin.Pair<Int, String?>> ref=__local_2.pairs[kind=local]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@10:13 name(transformed) type=kotlin.collections.List<String> ref=__local_3.transformed[kind=local]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@11:13 name(iterableOverload) type=kotlin.collections.List<kotlin.Pair<Int, String>> ref=__local_4.iterableOverload[kind=local]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

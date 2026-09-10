@@ -1,18 +1,18 @@
-symbol fq=golden.sema.caller kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.newFun kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.oldFunError kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.oldFunWarning kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.caller[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.newFun[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.oldFunError[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.oldFunWarning[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fdeprecated_annotation package=golden.sema
-  decl golden.sema.oldFunError fun oldFunError sym=golden.sema.oldFunError
-  decl golden.sema.oldFunWarning fun oldFunWarning sym=golden.sema.oldFunWarning
-  decl golden.sema.newFun fun newFun sym=golden.sema.newFun
-  decl golden.sema.caller fun caller sym=golden.sema.caller
+  decl golden.sema.oldFunError[kind=fun;params=] fun oldFunError sym=golden.sema.oldFunError[kind=fun;params=]
+  decl golden.sema.oldFunWarning[kind=fun;params=] fun oldFunWarning sym=golden.sema.oldFunWarning[kind=fun;params=]
+  decl golden.sema.newFun[kind=fun;params=] fun newFun sym=golden.sema.newFun[kind=fun;params=]
+  decl golden.sema.caller[kind=fun;params=] fun caller sym=golden.sema.caller[kind=fun;params=]
 expr e@4:26 int(1) type=Int
 expr e@7:28 int(2) type=Int
 expr e@9:21 int(3) type=Int
-expr e@11:21 call callee=e@11:21#1 args=[] type=Int call=golden.sema.oldFunError
-expr e@11:37 call callee=e@11:37#1 args=[] type=Int call=golden.sema.oldFunWarning
+expr e@11:21 call callee=e@11:21#1 args=[] type=Int call=golden.sema.oldFunError[kind=fun;params=]
+expr e@11:37 call callee=e@11:37#1 args=[] type=Int call=golden.sema.oldFunWarning[kind=fun;params=]
 expr e@11:21#2 binary(add) lhs=e@11:21 rhs=e@11:37 type=Int
-expr e@11:55 call callee=e@11:55#1 args=[] type=Int call=golden.sema.newFun
+expr e@11:55 call callee=e@11:55#1 args=[] type=Int call=golden.sema.newFun[kind=fun;params=]
 expr e@11:21#3 binary(add) lhs=e@11:21#2 rhs=e@11:55 type=Int
 diagnostic severity=error code=KSWIFTK-SEMA-DEPRECATED at=11:21 msg='golden.sema.oldFunError' is deprecated. Use newFun instead

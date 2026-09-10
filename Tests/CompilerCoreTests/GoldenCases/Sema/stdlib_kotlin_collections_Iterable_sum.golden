@@ -1,101 +1,101 @@
-symbol fq=byteSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Byte>] ret=Int
-symbol fq=byteSum.$0.values kind=valueParameter vis=private flags=_
-symbol fq=doubleSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Double>] ret=Double
-symbol fq=doubleSum.$1.values kind=valueParameter vis=private flags=_
-symbol fq=floatSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Float>] ret=Float
-symbol fq=floatSum.$2.values kind=valueParameter vis=private flags=_
-symbol fq=intSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
-symbol fq=intSum.$3.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=longSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Long>] ret=Long
-symbol fq=longSum.$4.values kind=valueParameter vis=private flags=_
-symbol fq=shortSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Short>] ret=Int
-symbol fq=shortSum.$5.values kind=valueParameter vis=private flags=_
-symbol fq=sumOfDouble kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=Double
-symbol fq=sumOfDouble.$6.values kind=valueParameter vis=private flags=_
-symbol fq=sumOfInt kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=Int
-symbol fq=sumOfInt.$7.values kind=valueParameter vis=private flags=_
-symbol fq=sumOfLong kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=Long
-symbol fq=sumOfLong.$8.values kind=valueParameter vis=private flags=_
-symbol fq=sumOfUInt kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=UInt
-symbol fq=sumOfUInt.$9.values kind=valueParameter vis=private flags=_
-symbol fq=sumOfULong kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=ULong
-symbol fq=sumOfULong.$10.values kind=valueParameter vis=private flags=_
-symbol fq=test kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=ubyteSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<UByte>] ret=UInt
-symbol fq=ubyteSum.$11.values kind=valueParameter vis=private flags=_
-symbol fq=uintSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<UInt>] ret=UInt
-symbol fq=uintSum.$12.values kind=valueParameter vis=private flags=_
-symbol fq=ulongSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<ULong>] ret=ULong
-symbol fq=ulongSum.$13.values kind=valueParameter vis=private flags=_
-symbol fq=ushortSum kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<UShort>] ret=UInt
-symbol fq=ushortSum.$14.values kind=valueParameter vis=private flags=_
+symbol fq=byteSum.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=byteSum[kind=fun;params=kotlin.collections.Iterable<Byte>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Byte>] ret=Int
+symbol fq=doubleSum.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=doubleSum[kind=fun;params=kotlin.collections.Iterable<Double>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Double>] ret=Double
+symbol fq=floatSum.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=floatSum[kind=fun;params=kotlin.collections.Iterable<Float>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Float>] ret=Float
+symbol fq=intSum.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=intSum[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=longSum.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=longSum[kind=fun;params=kotlin.collections.Iterable<Long>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Long>] ret=Long
+symbol fq=shortSum.$5.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=shortSum[kind=fun;params=kotlin.collections.Iterable<Short>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Short>] ret=Int
+symbol fq=sumOfDouble.$6.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=sumOfDouble[kind=fun;params=kotlin.collections.Iterable<String>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=Double
+symbol fq=sumOfInt.$7.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=sumOfInt[kind=fun;params=kotlin.collections.Iterable<String>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=Int
+symbol fq=sumOfLong.$8.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=sumOfLong[kind=fun;params=kotlin.collections.Iterable<String>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=Long
+symbol fq=sumOfUInt.$9.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=sumOfUInt[kind=fun;params=kotlin.collections.Iterable<String>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=UInt
+symbol fq=sumOfULong.$10.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=sumOfULong[kind=fun;params=kotlin.collections.Iterable<String>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=ULong
+symbol fq=test[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=ubyteSum.$11.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=ubyteSum[kind=fun;params=kotlin.collections.Iterable<UByte>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<UByte>] ret=UInt
+symbol fq=uintSum.$12.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=uintSum[kind=fun;params=kotlin.collections.Iterable<UInt>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<UInt>] ret=UInt
+symbol fq=ulongSum.$13.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=ulongSum[kind=fun;params=kotlin.collections.Iterable<ULong>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<ULong>] ret=ULong
+symbol fq=ushortSum.$14.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=ushortSum[kind=fun;params=kotlin.collections.Iterable<UShort>] kind=function vis=private flags=_ sig=recv=_ params=[kotlin.collections.Iterable<UShort>] ret=UInt
 file fstdlib_kotlin_collections_Iterable_sum package=_
-  decl byteSum fun byteSum sym=byteSum
-  decl shortSum fun shortSum sym=shortSum
-  decl intSum fun intSum sym=intSum
-  decl longSum fun longSum sym=longSum
-  decl floatSum fun floatSum sym=floatSum
-  decl doubleSum fun doubleSum sym=doubleSum
-  decl ubyteSum fun ubyteSum sym=ubyteSum
-  decl ushortSum fun ushortSum sym=ushortSum
-  decl uintSum fun uintSum sym=uintSum
-  decl ulongSum fun ulongSum sym=ulongSum
-  decl sumOfDouble fun sumOfDouble sym=sumOfDouble
-  decl sumOfInt fun sumOfInt sym=sumOfInt
-  decl sumOfLong fun sumOfLong sym=sumOfLong
-  decl sumOfUInt fun sumOfUInt sym=sumOfUInt
-  decl sumOfULong fun sumOfULong sym=sumOfULong
-  decl test fun test sym=test
-expr e@1:52 name(values) type=kotlin.collections.Iterable<Byte> ref=byteSum.$0.values
-expr e@1:52#1 memberCall recv=e@1:52 callee=sum args=[] type=Int call=kotlin.collections.sum#0
-expr e@2:54 name(values) type=kotlin.collections.Iterable<Short> ref=shortSum.$5.values
-expr e@2:54#1 memberCall recv=e@2:54 callee=sum args=[] type=Int call=kotlin.collections.sum#5
-expr e@3:50 name(values) type=kotlin.collections.Iterable<Int> ref=intSum.$3.values
-expr e@3:50#1 memberCall recv=e@3:50 callee=sum args=[] type=Int call=kotlin.collections.sum#3
-expr e@4:53 name(values) type=kotlin.collections.Iterable<Long> ref=longSum.$4.values
-expr e@4:53#1 memberCall recv=e@4:53 callee=sum args=[] type=Long call=kotlin.collections.sum#4
-expr e@5:56 name(values) type=kotlin.collections.Iterable<Float> ref=floatSum.$2.values
-expr e@5:56#1 memberCall recv=e@5:56 callee=sum args=[] type=Float call=kotlin.collections.sum#2
-expr e@6:59 name(values) type=kotlin.collections.Iterable<Double> ref=doubleSum.$1.values
-expr e@6:59#1 memberCall recv=e@6:59 callee=sum args=[] type=Double call=kotlin.collections.sum#1
-expr e@7:55 name(values) type=kotlin.collections.Iterable<UByte> ref=ubyteSum.$11.values
-expr e@7:55#1 memberCall recv=e@7:55 callee=sum args=[] type=UInt call=kotlin.collections.sum#6
-expr e@8:57 name(values) type=kotlin.collections.Iterable<UShort> ref=ushortSum.$14.values
-expr e@8:57#1 memberCall recv=e@8:57 callee=sum args=[] type=UInt call=kotlin.collections.sum#9
-expr e@9:53 name(values) type=kotlin.collections.Iterable<UInt> ref=uintSum.$12.values
-expr e@9:53#1 memberCall recv=e@9:53 callee=sum args=[] type=UInt call=kotlin.collections.sum#7
-expr e@10:56 name(values) type=kotlin.collections.Iterable<ULong> ref=ulongSum.$13.values
-expr e@10:56#1 memberCall recv=e@10:56 callee=sum args=[] type=ULong call=kotlin.collections.sum#8
-expr e@12:61 name(values) type=kotlin.collections.Iterable<String> ref=sumOfDouble.$6.values
+  decl byteSum[kind=fun;params=kotlin.collections.Iterable<Byte>] fun byteSum sym=byteSum[kind=fun;params=kotlin.collections.Iterable<Byte>]
+  decl shortSum[kind=fun;params=kotlin.collections.Iterable<Short>] fun shortSum sym=shortSum[kind=fun;params=kotlin.collections.Iterable<Short>]
+  decl intSum[kind=fun;params=kotlin.collections.Iterable<Int>] fun intSum sym=intSum[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl longSum[kind=fun;params=kotlin.collections.Iterable<Long>] fun longSum sym=longSum[kind=fun;params=kotlin.collections.Iterable<Long>]
+  decl floatSum[kind=fun;params=kotlin.collections.Iterable<Float>] fun floatSum sym=floatSum[kind=fun;params=kotlin.collections.Iterable<Float>]
+  decl doubleSum[kind=fun;params=kotlin.collections.Iterable<Double>] fun doubleSum sym=doubleSum[kind=fun;params=kotlin.collections.Iterable<Double>]
+  decl ubyteSum[kind=fun;params=kotlin.collections.Iterable<UByte>] fun ubyteSum sym=ubyteSum[kind=fun;params=kotlin.collections.Iterable<UByte>]
+  decl ushortSum[kind=fun;params=kotlin.collections.Iterable<UShort>] fun ushortSum sym=ushortSum[kind=fun;params=kotlin.collections.Iterable<UShort>]
+  decl uintSum[kind=fun;params=kotlin.collections.Iterable<UInt>] fun uintSum sym=uintSum[kind=fun;params=kotlin.collections.Iterable<UInt>]
+  decl ulongSum[kind=fun;params=kotlin.collections.Iterable<ULong>] fun ulongSum sym=ulongSum[kind=fun;params=kotlin.collections.Iterable<ULong>]
+  decl sumOfDouble[kind=fun;params=kotlin.collections.Iterable<String>] fun sumOfDouble sym=sumOfDouble[kind=fun;params=kotlin.collections.Iterable<String>]
+  decl sumOfInt[kind=fun;params=kotlin.collections.Iterable<String>] fun sumOfInt sym=sumOfInt[kind=fun;params=kotlin.collections.Iterable<String>]
+  decl sumOfLong[kind=fun;params=kotlin.collections.Iterable<String>] fun sumOfLong sym=sumOfLong[kind=fun;params=kotlin.collections.Iterable<String>]
+  decl sumOfUInt[kind=fun;params=kotlin.collections.Iterable<String>] fun sumOfUInt sym=sumOfUInt[kind=fun;params=kotlin.collections.Iterable<String>]
+  decl sumOfULong[kind=fun;params=kotlin.collections.Iterable<String>] fun sumOfULong sym=sumOfULong[kind=fun;params=kotlin.collections.Iterable<String>]
+  decl test[kind=fun;params=] fun test sym=test[kind=fun;params=]
+expr e@1:52 name(values) type=kotlin.collections.Iterable<Byte> ref=byteSum.$0.values[kind=vparam]
+expr e@1:52#1 memberCall recv=e@1:52 callee=sum args=[] type=Int call=kotlin.collections.sum[kind=fun;recv=kotlin.collections.Iterable<Byte>;params=]
+expr e@2:54 name(values) type=kotlin.collections.Iterable<Short> ref=shortSum.$5.values[kind=vparam]
+expr e@2:54#1 memberCall recv=e@2:54 callee=sum args=[] type=Int call=kotlin.collections.sum[kind=fun;recv=kotlin.collections.Iterable<Short>;params=]
+expr e@3:50 name(values) type=kotlin.collections.Iterable<Int> ref=intSum.$3.values[kind=vparam]
+expr e@3:50#1 memberCall recv=e@3:50 callee=sum args=[] type=Int call=kotlin.collections.sum[kind=fun;recv=kotlin.collections.Iterable<Int>;params=]
+expr e@4:53 name(values) type=kotlin.collections.Iterable<Long> ref=longSum.$4.values[kind=vparam]
+expr e@4:53#1 memberCall recv=e@4:53 callee=sum args=[] type=Long call=kotlin.collections.sum[kind=fun;recv=kotlin.collections.Iterable<Long>;params=]
+expr e@5:56 name(values) type=kotlin.collections.Iterable<Float> ref=floatSum.$2.values[kind=vparam]
+expr e@5:56#1 memberCall recv=e@5:56 callee=sum args=[] type=Float call=kotlin.collections.sum[kind=fun;recv=kotlin.collections.Iterable<Float>;params=]
+expr e@6:59 name(values) type=kotlin.collections.Iterable<Double> ref=doubleSum.$1.values[kind=vparam]
+expr e@6:59#1 memberCall recv=e@6:59 callee=sum args=[] type=Double call=kotlin.collections.sum[kind=fun;recv=kotlin.collections.Iterable<Double>;params=]
+expr e@7:55 name(values) type=kotlin.collections.Iterable<UByte> ref=ubyteSum.$11.values[kind=vparam]
+expr e@7:55#1 memberCall recv=e@7:55 callee=sum args=[] type=UInt call=kotlin.collections.sum[kind=fun;recv=kotlin.collections.Iterable<UByte>;params=]
+expr e@8:57 name(values) type=kotlin.collections.Iterable<UShort> ref=ushortSum.$14.values[kind=vparam]
+expr e@8:57#1 memberCall recv=e@8:57 callee=sum args=[] type=UInt call=kotlin.collections.sum[kind=fun;recv=kotlin.collections.Iterable<UShort>;params=]
+expr e@9:53 name(values) type=kotlin.collections.Iterable<UInt> ref=uintSum.$12.values[kind=vparam]
+expr e@9:53#1 memberCall recv=e@9:53 callee=sum args=[] type=UInt call=kotlin.collections.sum[kind=fun;recv=kotlin.collections.Iterable<UInt>;params=]
+expr e@10:56 name(values) type=kotlin.collections.Iterable<ULong> ref=ulongSum.$13.values[kind=vparam]
+expr e@10:56#1 memberCall recv=e@10:56 callee=sum args=[] type=ULong call=kotlin.collections.sum[kind=fun;recv=kotlin.collections.Iterable<ULong>;params=]
+expr e@12:61 name(values) type=kotlin.collections.Iterable<String> ref=sumOfDouble.$6.values[kind=vparam]
 expr e@12:76 name(it) type=String ref=s-0
-expr e@12:76#1 memberCall recv=e@12:76 callee=length args=[] type=Int call=kotlin.length.$get
-expr e@12:76#2 memberCall recv=e@12:76#1 callee=toDouble args=[] type=Double call=kotlin.toDouble#1
+expr e@12:76#1 memberCall recv=e@12:76 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
+expr e@12:76#2 memberCall recv=e@12:76#1 callee=toDouble args=[] type=Double call=kotlin.toDouble[kind=fun;recv=Int;params=]
 expr e@12:74 lambda params=[] body=e@12:76#2 label=sumOf type=(String) -> Any
-expr e@12:61#1 memberCall recv=e@12:61 callee=sumOf args=[_:e@12:74] type=Double call=kotlin.collections.sumOf#0 targs=[String]
-expr e@13:55 name(values) type=kotlin.collections.Iterable<String> ref=sumOfInt.$7.values
+expr e@12:61#1 memberCall recv=e@12:61 callee=sumOf args=[_:e@12:74] type=Double call=kotlin.collections.sumOf[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Double};gen=1] targs=[String]
+expr e@13:55 name(values) type=kotlin.collections.Iterable<String> ref=sumOfInt.$7.values[kind=vparam]
 expr e@13:70 name(it) type=String ref=s-1
-expr e@13:70#1 memberCall recv=e@13:70 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@13:70#1 memberCall recv=e@13:70 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@13:68 lambda params=[] body=e@13:70#1 label=sumOf type=(String) -> Any
-expr e@13:55#1 memberCall recv=e@13:55 callee=sumOf args=[_:e@13:68] type=Int call=kotlin.collections.sumOf#1 targs=[String]
-expr e@14:57 name(values) type=kotlin.collections.Iterable<String> ref=sumOfLong.$8.values
+expr e@13:55#1 memberCall recv=e@13:55 callee=sumOf args=[_:e@13:68] type=Int call=kotlin.collections.sumOf[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Int};gen=1] targs=[String]
+expr e@14:57 name(values) type=kotlin.collections.Iterable<String> ref=sumOfLong.$8.values[kind=vparam]
 expr e@14:72 name(it) type=String ref=s-2
-expr e@14:72#1 memberCall recv=e@14:72 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@14:72#1 memberCall recv=e@14:72 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@14:72#2 memberCall recv=e@14:72#1 callee=toLong args=[] type=Long
 expr e@14:70 lambda params=[] body=e@14:72#2 label=sumOf type=(String) -> Any
-expr e@14:57#1 memberCall recv=e@14:57 callee=sumOf args=[_:e@14:70] type=Long call=kotlin.collections.sumOf#2 targs=[String]
-expr e@15:57 name(values) type=kotlin.collections.Iterable<String> ref=sumOfUInt.$9.values
+expr e@14:57#1 memberCall recv=e@14:57 callee=sumOf args=[_:e@14:70] type=Long call=kotlin.collections.sumOf[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Long};gen=1] targs=[String]
+expr e@15:57 name(values) type=kotlin.collections.Iterable<String> ref=sumOfUInt.$9.values[kind=vparam]
 expr e@15:72 name(it) type=String ref=s-3
-expr e@15:72#1 memberCall recv=e@15:72 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@15:72#1 memberCall recv=e@15:72 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@15:72#2 memberCall recv=e@15:72#1 callee=toUInt args=[] type=UInt
 expr e@15:70 lambda params=[] body=e@15:72#2 label=sumOf type=(String) -> Any
-expr e@15:57#1 memberCall recv=e@15:57 callee=sumOf args=[_:e@15:70] type=UInt call=kotlin.collections.sumOf#3 targs=[String]
-expr e@16:59 name(values) type=kotlin.collections.Iterable<String> ref=sumOfULong.$10.values
+expr e@15:57#1 memberCall recv=e@15:57 callee=sumOf args=[_:e@15:70] type=UInt call=kotlin.collections.sumOf[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=UInt};gen=1] targs=[String]
+expr e@16:59 name(values) type=kotlin.collections.Iterable<String> ref=sumOfULong.$10.values[kind=vparam]
 expr e@16:74 name(it) type=String ref=s-4
-expr e@16:74#1 memberCall recv=e@16:74 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@16:74#1 memberCall recv=e@16:74 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@16:74#2 memberCall recv=e@16:74#1 callee=toULong args=[] type=ULong
 expr e@16:72 lambda params=[] body=e@16:74#2 label=sumOf type=(String) -> Any
-expr e@16:59#1 memberCall recv=e@16:59 callee=sumOf args=[_:e@16:72] type=ULong call=kotlin.collections.sumOf#4 targs=[String]
-expr e@18:26 call callee=e@18:26#1 args=[] type=kotlin.collections.List<out Nothing> call=kotlin.collections.emptyList targs=[Nothing]
-expr e@18:19 call callee=e@18:19#1 args=[_:e@18:26] type=Int call=intSum
+expr e@16:59#1 memberCall recv=e@16:59 callee=sumOf args=[_:e@16:72] type=ULong call=kotlin.collections.sumOf[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=ULong};gen=1] targs=[String]
+expr e@18:26 call callee=e@18:26#1 args=[] type=kotlin.collections.List<out Nothing> call=kotlin.collections.emptyList[kind=fun;params=;gen=1] targs=[Nothing]
+expr e@18:19 call callee=e@18:19#1 args=[_:e@18:26] type=Int call=intSum[kind=fun;params=kotlin.collections.Iterable<Int>]

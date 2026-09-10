@@ -2,6 +2,63 @@
 
 /// Name-based fallback resolution for unresolved synthetic and collection members.
 extension CallLowerer {
+    /// Returns true only for the source-backed HashSet declaration. Other set
+    /// types may provide their own source implementation and must retain the
+    /// resolved symbol for ABI return-type handling.
+    func isSourceBackedHashSetType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard let (_, symbol) = resolveClassTypeSymbol(
+            sema.types.makeNonNullable(receiverType), sema: sema
+        ) else {
+            return false
+        }
+        return symbol.fqName == knownNames.kotlinCollectionsHashSetFQName
+    }
+
+    /// HashSet is source-backed for its nominal API, but its instances are
+    /// RuntimeSetBox values without a Kotlin vtable. Keep the mutating and
+    /// membership operations on their runtime ABI entry points.
+    func runtimeBackedSetMemberCallee(
+        memberName: String,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> InternedString? {
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        if isSourceBackedHashSetType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "equals":
+                return interner.intern("kk_any_member_equals")
+            case "hashCode":
+                return interner.intern("kk_any_member_hashCode")
+            default:
+                break
+            }
+        }
+        if memberName == "contains",
+           isSetLikeType(nonNullReceiverType, sema: sema, interner: interner)
+        {
+            return interner.intern("__kk_set_contains")
+        }
+        if isMutableSetLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "add":
+                return interner.intern("__kk_mutable_set_add")
+            case "remove":
+                return interner.intern("__kk_mutable_set_remove")
+            case "clear":
+                return interner.intern("__kk_mutable_set_clear")
+            default:
+                break
+            }
+        }
+        return nil
+    }
+
     // swiftlint:disable cyclomatic_complexity
     func unresolvedSyntheticMemberCallee(
         memberName: String,
@@ -19,6 +76,15 @@ extension CallLowerer {
         // count lambda args only) are matched correctly.
         let hofArity = sourceArgumentCount ?? argumentCount
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        // OpenEndRange's generic contains member is still a compiler residual
+        // (KSP-652). Keep its source-backed cross-type overloads executable by
+        // lowering the residual call to the existing range bridge.
+        if memberName == "contains",
+           let (_, receiverSymbol) = resolveClassTypeSymbol(nonNullReceiverType, sema: sema),
+           interner.resolve(receiverSymbol.name) == "OpenEndRange"
+        {
+            return interner.intern("__kk_range_contains")
+        }
         if let rangeKind = MemberRuntimeDispatch.rangeReceiverKind(
             receiverExpr: receiverExpr,
             receiverType: receiverType,
@@ -269,7 +335,6 @@ extension CallLowerer {
             let mapName = interner.intern("map")
             let filterName = interner.intern("filter")
             let toListName = interner.intern("toList")
-            let forEachName = interner.intern("forEach")
             let flatMapName = interner.intern("flatMap")
             let flatMapIndexedName = interner.intern("flatMapIndexed")
             let takeLastWhileName = interner.intern("takeLastWhile")
@@ -294,8 +359,6 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_to_list")
             case interner.intern("constrainOnce"):
                 return interner.intern("kk_sequence_constrainOnce")
-            case forEachName:
-                return interner.intern("kk_sequence_forEach")
             case flatMapName:
                 return interner.intern("kk_sequence_flatMap")
             case flatMapIndexedName:
@@ -424,8 +487,6 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_min")
             case interner.intern("unzip"):
                 return interner.intern("kk_sequence_unzip")
-            case interner.intern("foldIndexed"):
-                return interner.intern("kk_sequence_foldIndexed")
             case interner.intern("runningFold"):
                 return interner.intern("kk_sequence_runningFold")
             case interner.intern("scan"):

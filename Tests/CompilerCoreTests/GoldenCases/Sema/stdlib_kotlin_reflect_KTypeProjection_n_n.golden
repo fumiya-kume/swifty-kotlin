@@ -1,14 +1,13 @@
-symbol fq=golden.sema.constructProjection kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KVariance?,kotlin.reflect.KType?] ret=kotlin.reflect.KTypeProjection
-symbol fq=golden.sema.constructProjection.$0.type kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.constructProjection.$0.variance kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.projectionCompanion kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.reflect.KTypeProjection.Companion
-symbol fq=kotlin.reflect.KType kind=interface vis=public flags=synthetic
-symbol fq=kotlin.reflect.KVariance kind=enumClass vis=public flags=synthetic
+symbol fq=golden.sema.constructProjection.$0.type[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.constructProjection.$0.variance[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.constructProjection[kind=fun;params=kotlin.reflect.KVariance?,kotlin.reflect.KType?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KVariance?,kotlin.reflect.KType?] ret=kotlin.reflect.KTypeProjection
+symbol fq=golden.sema.projectionCompanion[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.reflect.KTypeProjection.Companion
+symbol fq=kotlin.reflect.KType[kind=iface] kind=interface vis=public flags=_
 file fstdlib_kotlin_reflect_KTypeProjection_n_n package=golden.sema
-  decl golden.sema.constructProjection fun constructProjection sym=golden.sema.constructProjection
-  decl golden.sema.projectionCompanion fun projectionCompanion sym=golden.sema.projectionCompanion
-expr e@8:21 name(variance) type=kotlin.reflect.KVariance? ref=golden.sema.constructProjection.$0.variance
-expr e@8:31 name(type) type=kotlin.reflect.KType? ref=golden.sema.constructProjection.$0.type
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:21,_:e@8:31] type=kotlin.reflect.KTypeProjection call=kotlin.reflect.KTypeProjection.<init>
-expr e@10:56 name(KTypeProjection) type=kotlin.reflect.KTypeProjection ref=kotlin.reflect.KTypeProjection
-expr e@10:56#1 memberCall recv=e@10:56 callee=Companion args=[] type=kotlin.reflect.KTypeProjection.Companion ref=kotlin.reflect.KTypeProjection.Companion
+  decl golden.sema.constructProjection[kind=fun;params=kotlin.reflect.KVariance?,kotlin.reflect.KType?] fun constructProjection sym=golden.sema.constructProjection[kind=fun;params=kotlin.reflect.KVariance?,kotlin.reflect.KType?]
+  decl golden.sema.projectionCompanion[kind=fun;params=] fun projectionCompanion sym=golden.sema.projectionCompanion[kind=fun;params=]
+expr e@8:21 name(variance) type=kotlin.reflect.KVariance? ref=golden.sema.constructProjection.$0.variance[kind=vparam]
+expr e@8:31 name(type) type=kotlin.reflect.KType? ref=golden.sema.constructProjection.$0.type[kind=vparam]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:21,_:e@8:31] type=kotlin.reflect.KTypeProjection call=kotlin.reflect.KTypeProjection.<init>[kind=ctor;recv=kotlin.reflect.KTypeProjection;params=kotlin.reflect.KVariance?,kotlin.reflect.KType?]
+expr e@10:56 name(KTypeProjection) type=kotlin.reflect.KTypeProjection ref=kotlin.reflect.KTypeProjection[kind=class]
+expr e@10:56#1 memberCall recv=e@10:56 callee=Companion args=[] type=kotlin.reflect.KTypeProjection.Companion ref=kotlin.reflect.KTypeProjection.Companion[kind=obj]

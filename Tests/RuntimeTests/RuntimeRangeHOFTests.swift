@@ -82,31 +82,31 @@ struct RuntimeRangeHOFTests {
 
     @Test
     func testUIntRangeTakeAndDropNegativeCountThrows() {
-        let range = kk_uint_rangeTo(1, 5)
+        let range = __kk_uint_rangeTo(1, 5)
         var takeThrown: Int = 0
-        let taken = kk_uint_range_take(range, -1, &takeThrown)
+        let taken = __kk_uint_range_take(range, -1, &takeThrown)
         #expect(kk_list_size(taken) == 0)
         #expect(takeThrown != 0)
 
         var dropThrown: Int = 0
-        let dropped = kk_uint_range_drop(range, -1, &dropThrown)
+        let dropped = __kk_uint_range_drop(range, -1, &dropThrown)
         #expect(kk_list_size(dropped) == 0)
         #expect(dropThrown != 0)
     }
 
     @Test
     func testUIntRangeChunkedAndWindowedNonPositiveArgumentsThrow() {
-        let range = kk_uint_rangeTo(1, 5)
+        let range = __kk_uint_rangeTo(1, 5)
         var chunkedThrown: Int = 0
-        _ = kk_uint_range_chunked(range, 0, &chunkedThrown)
+        _ = __kk_uint_range_chunked(range, 0, &chunkedThrown)
         #expect(chunkedThrown != 0)
 
         var windowedSizeThrown: Int = 0
-        _ = kk_uint_range_windowed(range, 0, 1, 0, &windowedSizeThrown)
+        _ = __kk_uint_range_windowed(range, 0, 1, 0, &windowedSizeThrown)
         #expect(windowedSizeThrown != 0)
 
         var windowedStepThrown: Int = 0
-        _ = kk_uint_range_windowed(range, 2, 0, 0, &windowedStepThrown)
+        _ = __kk_uint_range_windowed(range, 2, 0, 0, &windowedStepThrown)
         #expect(windowedStepThrown != 0)
     }
 

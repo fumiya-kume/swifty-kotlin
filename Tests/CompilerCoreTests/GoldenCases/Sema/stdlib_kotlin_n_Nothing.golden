@@ -1,7 +1,7 @@
-symbol fq=golden.sema.nothingClassSimpleName kind=function vis=public flags=_ sig=recv=_ params=[] ret=String?
-symbol fq=kotlin.reflect.KClass kind=interface vis=public flags=synthetic
+symbol fq=golden.sema.nothingClassSimpleName[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String?
+symbol fq=kotlin.reflect.KClass[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_n_Nothing package=golden.sema
-  decl golden.sema.nothingClassSimpleName fun nothingClassSimpleName sym=golden.sema.nothingClassSimpleName
-expr e@3:41 name(Nothing) type=Any ref=kotlin.Nothing
+  decl golden.sema.nothingClassSimpleName[kind=fun;params=] fun nothingClassSimpleName sym=golden.sema.nothingClassSimpleName[kind=fun;params=]
+expr e@3:41 name(Nothing) type=Any ref=kotlin.Nothing[kind=class]
 expr e@3:41#1 callableRef recv=e@3:41 member=class type=KClass<kotlin.Nothing>
-expr e@3:41#2 memberCall recv=e@3:41#1 callee=simpleName args=[] type=String? call=kotlin.reflect.simpleName.$get
+expr e@3:41#2 memberCall recv=e@3:41#1 callee=simpleName args=[] type=String? call=kotlin.reflect.simpleName.$get[kind=fun;recv=kotlin.reflect.KClass<*>;params=]

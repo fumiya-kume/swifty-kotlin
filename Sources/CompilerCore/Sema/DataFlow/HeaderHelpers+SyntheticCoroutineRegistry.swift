@@ -389,6 +389,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cancellationIsSourceBacked = !(symbols.symbol(cancellationSymbol)?.flags.contains(.synthetic) ?? true)
+        let illegalStateExceptionSymbol: SymbolID?
+        if cancellationIsSourceBacked {
+            illegalStateExceptionSymbol = nil
+        } else {
+            illegalStateExceptionSymbol = ensureClassSymbol(
+                named: "IllegalStateException",
+                in: kotlinPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
         let rootCancellationSymbol: SymbolID = if let existing = symbols.lookup(fqName: [interner.intern("CancellationException")]) {
             existing
         } else {
@@ -640,7 +652,10 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(continuationType, for: continuationSymbol)
         symbols.setPropertyType(continuationInterceptorType, for: continuationInterceptorSymbol)
         symbols.setPropertyType(rootCancellationType, for: rootCancellationSymbol)
-        symbols.setDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
+        if !cancellationIsSourceBacked, let illegalStateExceptionSymbol {
+            symbols.setDirectSupertypes([illegalStateExceptionSymbol], for: cancellationSymbol)
+            types.setNominalDirectSupertypes([illegalStateExceptionSymbol], for: cancellationSymbol)
+        }
         symbols.setDirectSupertypes([exceptionSymbol], for: rootCancellationSymbol)
         symbols.setDirectSupertypes([continuationInterceptorSymbol], for: dispatcherSymbol)
         types.setNominalTypeParameterSymbols([continuationTypeParameterSymbol], for: continuationSymbol)
@@ -706,7 +721,12 @@ extension DataFlowSemaPhase {
 
         let suspendIntrinsicName = interner.intern("suspendCoroutineUninterceptedOrReturn")
         let suspendIntrinsicFQName = kotlinCoroutinesIntrinsicsPkg + [suspendIntrinsicName]
-        if symbols.lookup(fqName: suspendIntrinsicFQName) == nil {
+        let hasBundledSuspendIntrinsic = BundledSyntheticStubRegistration.bundledIndex.contains(
+            ownerFQName: kotlinCoroutinesIntrinsicsPkg,
+            name: suspendIntrinsicName,
+            arity: 1
+        )
+        if !hasBundledSuspendIntrinsic, symbols.lookup(fqName: suspendIntrinsicFQName) == nil {
             let suspendIntrinsicSymbol = symbols.define(
                 kind: .function,
                 name: suspendIntrinsicName,
@@ -767,28 +787,33 @@ extension DataFlowSemaPhase {
             )
         }
 
-        registerSyntheticPlatformExceptionConstructors(
-            ownerSymbol: cancellationSymbol,
-            ownerType: cancellationType,
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            includeMessageOverload: true,
-            throwableSymbol: throwableSymbol
-        )
-        let nullableThrowableType = types.make(.classType(ClassType(
-            classSymbol: throwableSymbol,
-            args: [],
-            nullability: .nullable
-        )))
-        registerSyntheticPlatformExceptionConstructor(
-            ownerSymbol: cancellationSymbol,
-            ownerType: cancellationType,
-            parameters: [("cause", nullableThrowableType)],
-            externalLinkName: "kk_throwable_new_cause",
-            symbols: symbols,
-            interner: interner
-        )
+        if !cancellationIsSourceBacked {
+            registerSyntheticPlatformExceptionConstructors(
+                ownerSymbol: cancellationSymbol,
+                ownerType: cancellationType,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                includeMessageOverload: true,
+                throwableSymbol: throwableSymbol,
+                noArgLinkName: "__kk_cancellation_exception_new",
+                messageLinkName: "__kk_cancellation_exception_new_message",
+                messageCauseLinkName: "__kk_cancellation_exception_new_message_cause"
+            )
+            let nullableThrowableType = types.make(.classType(ClassType(
+                classSymbol: throwableSymbol,
+                args: [],
+                nullability: .nullable
+            )))
+            registerSyntheticPlatformExceptionConstructor(
+                ownerSymbol: cancellationSymbol,
+                ownerType: cancellationType,
+                parameters: [("cause", nullableThrowableType)],
+                externalLinkName: "__kk_cancellation_exception_new_cause",
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         if symbols.lookup(fqName: coroutinesPkg + [cancellationName]) == nil {
             let kotlinxCancellationSymbol = symbols.define(
@@ -1869,17 +1894,25 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        registerSyntheticCoroutineTopLevelProperty(
-            named: "COROUTINE_SUSPENDED",
-            packageFQName: kotlinCoroutinesIntrinsicsPkg,
-            returnType: coroutineSuspendedType,
-            externalLinkName: "kk_coroutine_suspended",
-            symbols: symbols,
-            interner: interner
+        let coroutineSuspendedName = interner.intern("COROUTINE_SUSPENDED")
+        let hasBundledCoroutineSuspended = BundledSyntheticStubRegistration.bundledIndex.contains(
+            ownerFQName: kotlinCoroutinesIntrinsicsPkg,
+            name: coroutineSuspendedName,
+            arity: 0
         )
+        if !hasBundledCoroutineSuspended {
+            registerSyntheticCoroutineTopLevelProperty(
+                named: "COROUTINE_SUSPENDED",
+                packageFQName: kotlinCoroutinesIntrinsicsPkg,
+                returnType: coroutineSuspendedType,
+                externalLinkName: "kk_coroutine_suspended",
+                symbols: symbols,
+                interner: interner
+            )
+        }
         let suspendCoroutineName = interner.intern("suspendCoroutineUninterceptedOrReturn")
         let suspendCoroutineFQName = kotlinCoroutinesIntrinsicsPkg + [suspendCoroutineName]
-        if symbols.lookup(fqName: suspendCoroutineFQName) == nil {
+        if !hasBundledSuspendIntrinsic, symbols.lookup(fqName: suspendCoroutineFQName) == nil {
             let suspendCoroutineTypeParamName = interner.intern("T")
             let suspendCoroutineTypeParamFQName = suspendCoroutineFQName + [suspendCoroutineTypeParamName]
             let suspendCoroutineTypeParamSymbol = symbols.define(
@@ -3041,14 +3074,22 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        registerSyntheticCoroutineTopLevelProperty(
-            named: "COROUTINE_SUSPENDED",
-            packageFQName: intrinsicsPkg,
-            returnType: types.nullableAnyType,
-            externalLinkName: "kk_coroutine_suspended",
-            symbols: symbols,
-            interner: interner
+        let coroutineSuspendedName = interner.intern("COROUTINE_SUSPENDED")
+        let hasBundledCoroutineSuspended = BundledSyntheticStubRegistration.bundledIndex.contains(
+            ownerFQName: intrinsicsPkg,
+            name: coroutineSuspendedName,
+            arity: 0
         )
+        if !hasBundledCoroutineSuspended {
+            registerSyntheticCoroutineTopLevelProperty(
+                named: "COROUTINE_SUSPENDED",
+                packageFQName: intrinsicsPkg,
+                returnType: types.nullableAnyType,
+                externalLinkName: "kk_coroutine_suspended",
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 
     func attachRestrictsSuspensionAnnotationMetadata(

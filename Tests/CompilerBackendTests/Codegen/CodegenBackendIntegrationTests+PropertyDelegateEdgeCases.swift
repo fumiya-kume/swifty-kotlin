@@ -867,5 +867,39 @@ struct CodegenBackendPropertyDelegateEdgeCasesTests {
                 """ + "\n"
         )
     }
+
+    // KSP-681: observable/vetoable/notNull must be executed through their
+    // Kotlin source implementations. In particular, the factory call keeps
+    // its trailing callback as an ordinary call argument, and notNull keeps
+    // its source-backed getValue/setValue behavior.
+    @Test
+    func testCodegenSourceBackedStdlibDelegatesUseNormalExpressionLowering() throws {
+        let source = """
+        import kotlin.properties.Delegates
+
+        var observed: Int by Delegates.observable(1) { _, old, new -> println("observed:$old->$new") }
+        var accepted: Int by Delegates.vetoable(0) { _, _, new -> new >= 0 }
+        var late: Int by Delegates.notNull()
+
+        fun main() {
+            observed = 2
+            accepted = -1
+            println(accepted)
+            late = 3
+            println(late)
+        }
+        """
+
+        try assertKotlinOutput(
+            source,
+            moduleName: "KSP681SourceBackedStdlibDelegates",
+            expected:
+                """
+                observed:1->2
+                0
+                3
+                """ + "\n"
+        )
+    }
 }
 #endif

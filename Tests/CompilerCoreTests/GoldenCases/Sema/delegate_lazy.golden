@@ -1,10 +1,10 @@
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.message kind=property vis=public flags=_ type=String
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.message[kind=prop] kind=property vis=public flags=_ type=String
 file fdelegate_lazy package=golden.sema
-  decl golden.sema.message property message var=0 sym=golden.sema.message
-  decl golden.sema.main fun main sym=golden.sema.main
+  decl golden.sema.message[kind=prop] property message var=0 sym=golden.sema.message[kind=prop]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:5 string(hello) type=String
 expr e@3:29 lambda params=[] body=e@4:5 label=lazy type=() -> String
-expr e@3:24 call callee=e@3:24#1 args=[_:e@3:29] type=kotlin.Lazy<String> call=kotlin.lazy#0 targs=[String]
-expr e@8:13 name(message) type=String ref=golden.sema.message
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println#2
+expr e@3:24 call callee=e@3:24#1 args=[_:e@3:29] type=kotlin.Lazy<String> call=kotlin.lazy[kind=fun;params=fn{p=;ret=T0};gen=1] targs=[String]
+expr e@8:13 name(message) type=String ref=golden.sema.message[kind=prop]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println[kind=fun;params=String]

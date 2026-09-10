@@ -1,0 +1,19 @@
+symbol fq=__local_0.holder[kind=local] kind=local vis=private flags=_ type=golden.sema.VolatileHolder
+symbol fq=golden.sema.VolatileHolder.<init>[kind=ctor;recv=golden.sema.VolatileHolder;params=] kind=constructor vis=public flags=_ sig=recv=golden.sema.VolatileHolder params=[] ret=golden.sema.VolatileHolder
+symbol fq=golden.sema.VolatileHolder.value[kind=prop] kind=property vis=public flags=mutable type=Int
+symbol fq=golden.sema.VolatileHolder[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.readVolatile.$0.holder[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.readVolatile[kind=fun;params=golden.sema.VolatileHolder] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.VolatileHolder] ret=Int
+file fstdlib_kotlin_concurrent_Volatile_n_n package=golden.sema
+  decl golden.sema.VolatileHolder[kind=class] class VolatileHolder sym=golden.sema.VolatileHolder[kind=class]
+  decl golden.sema.readVolatile[kind=fun;params=golden.sema.VolatileHolder] fun readVolatile sym=golden.sema.readVolatile[kind=fun;params=golden.sema.VolatileHolder]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@7:22 int(0) type=Int
+expr e@10:49 name(holder) type=golden.sema.VolatileHolder ref=golden.sema.readVolatile.$0.holder[kind=vparam]
+expr e@10:49#1 memberCall recv=e@10:49 callee=value args=[] type=Int ref=golden.sema.VolatileHolder.value[kind=prop]
+expr e@13:18 call callee=e@13:18#1 args=[] type=golden.sema.VolatileHolder call=golden.sema.VolatileHolder.<init>[kind=ctor;recv=golden.sema.VolatileHolder;params=]
+expr e@13:5 localDecl holder mutable=0 type=_ init=e@13:18 type=Unit ref=__local_0.holder[kind=local]
+expr e@14:26 name(holder) type=golden.sema.VolatileHolder ref=__local_0.holder[kind=local]
+expr e@14:13 call callee=e@14:13#1 args=[_:e@14:26] type=Int call=golden.sema.readVolatile[kind=fun;params=golden.sema.VolatileHolder]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

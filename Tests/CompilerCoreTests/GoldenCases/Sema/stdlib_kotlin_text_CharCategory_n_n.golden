@@ -1,7 +1,5 @@
-symbol fq=golden.sema.charCategoryCompanion kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.CharCategory.Companion
-symbol fq=kotlin.text.CharCategory kind=enumClass vis=public flags=synthetic
-symbol fq=kotlin.text.CharCategory.Companion kind=object vis=public flags=synthetic|static
+symbol fq=golden.sema.charCategoryCompanion[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.CharCategory.Companion
 file fstdlib_kotlin_text_CharCategory_n_n package=golden.sema
-  decl golden.sema.charCategoryCompanion fun charCategoryCompanion sym=golden.sema.charCategoryCompanion
-expr e@5:55 name(CharCategory) type=kotlin.text.CharCategory ref=kotlin.text.CharCategory
-expr e@5:55#1 memberCall recv=e@5:55 callee=Companion args=[] type=kotlin.text.CharCategory.Companion ref=kotlin.text.CharCategory.Companion
+  decl golden.sema.charCategoryCompanion[kind=fun;params=] fun charCategoryCompanion sym=golden.sema.charCategoryCompanion[kind=fun;params=]
+expr e@5:55 name(CharCategory) type=kotlin.text.CharCategory ref=kotlin.text.CharCategory[kind=enum]
+expr e@5:55#1 memberCall recv=e@5:55 callee=Companion args=[] type=kotlin.text.CharCategory.Companion ref=kotlin.text.CharCategory.Companion[kind=obj]

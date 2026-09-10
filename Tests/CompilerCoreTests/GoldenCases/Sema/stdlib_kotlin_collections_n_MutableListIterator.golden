@@ -1,55 +1,49 @@
-symbol fq=golden.sema.CustomMutableListIterator kind=class vis=public flags=_
-symbol fq=golden.sema.acceptListIterator kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.ListIterator<Int>] ret=Unit
-symbol fq=golden.sema.acceptListIterator.$0.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.acceptMutableIterator kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableIterator<Int>] ret=Unit
-symbol fq=golden.sema.acceptMutableIterator.$1.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.acceptMutableListIterator kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableListIterator<Int>] ret=Unit
-symbol fq=golden.sema.acceptMutableListIterator.$2.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.probe kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableListIterator<Int>] ret=Unit
-symbol fq=golden.sema.probe.$3.iterator kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.ListIterator kind=interface vis=public flags=_
-symbol fq=kotlin.collections.ListIterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.ListIterator.hasNext kind=function vis=public flags=synthetic sig=recv=kotlin.collections.ListIterator<out kotlin.collections.ListIterator.T> params=[] ret=Boolean type=() -> Boolean
-symbol fq=kotlin.collections.ListIterator.next kind=function vis=public flags=synthetic sig=recv=kotlin.collections.ListIterator<out kotlin.collections.ListIterator.T> params=[] ret=kotlin.collections.ListIterator.T type=() -> kotlin.collections.ListIterator.T
-symbol fq=kotlin.collections.MutableIterator kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableListIterator kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableListIterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableListIterator.add kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableListIterator<kotlin.collections.MutableListIterator.T> params=[kotlin.collections.MutableListIterator.T] ret=Unit
-symbol fq=kotlin.collections.MutableListIterator.add.element kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.MutableListIterator.remove kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableListIterator<kotlin.collections.MutableListIterator.T> params=[] ret=Unit
-symbol fq=kotlin.collections.MutableListIterator.set kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableListIterator<kotlin.collections.MutableListIterator.T> params=[kotlin.collections.MutableListIterator.T] ret=Unit
-symbol fq=kotlin.collections.MutableListIterator.set.element kind=valueParameter vis=private flags=synthetic
+symbol fq=golden.sema.CustomMutableListIterator[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.acceptListIterator.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptListIterator[kind=fun;params=kotlin.collections.ListIterator<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.ListIterator<Int>] ret=Unit
+symbol fq=golden.sema.acceptMutableIterator.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptMutableIterator[kind=fun;params=kotlin.collections.MutableIterator<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableIterator<Int>] ret=Unit
+symbol fq=golden.sema.acceptMutableListIterator.$2.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptMutableListIterator[kind=fun;params=kotlin.collections.MutableListIterator<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableListIterator<Int>] ret=Unit
+symbol fq=golden.sema.probe.$3.iterator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.probe[kind=fun;params=kotlin.collections.MutableListIterator<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableListIterator<Int>] ret=Unit
+symbol fq=kotlin.collections.ListIterator.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.ListIterator[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableIterator.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableIterator[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableListIterator.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableListIterator[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_n_MutableListIterator package=golden.sema
-  decl golden.sema.CustomMutableListIterator class CustomMutableListIterator sym=golden.sema.CustomMutableListIterator
-  decl golden.sema.acceptListIterator fun acceptListIterator sym=golden.sema.acceptListIterator
-  decl golden.sema.acceptMutableIterator fun acceptMutableIterator sym=golden.sema.acceptMutableIterator
-  decl golden.sema.acceptMutableListIterator fun acceptMutableListIterator sym=golden.sema.acceptMutableListIterator
-  decl golden.sema.probe fun probe sym=golden.sema.probe
+  decl golden.sema.CustomMutableListIterator[kind=class] class CustomMutableListIterator sym=golden.sema.CustomMutableListIterator[kind=class]
+  decl golden.sema.acceptListIterator[kind=fun;params=kotlin.collections.ListIterator<Int>] fun acceptListIterator sym=golden.sema.acceptListIterator[kind=fun;params=kotlin.collections.ListIterator<Int>]
+  decl golden.sema.acceptMutableIterator[kind=fun;params=kotlin.collections.MutableIterator<Int>] fun acceptMutableIterator sym=golden.sema.acceptMutableIterator[kind=fun;params=kotlin.collections.MutableIterator<Int>]
+  decl golden.sema.acceptMutableListIterator[kind=fun;params=kotlin.collections.MutableListIterator<Int>] fun acceptMutableListIterator sym=golden.sema.acceptMutableListIterator[kind=fun;params=kotlin.collections.MutableListIterator<Int>]
+  decl golden.sema.probe[kind=fun;params=kotlin.collections.MutableListIterator<Int>] fun probe sym=golden.sema.probe[kind=fun;params=kotlin.collections.MutableListIterator<Int>]
 expr e@4:39 bool(false) type=Boolean
 expr e@5:32 int(0) type=Int
 expr e@6:43 bool(false) type=Boolean
 expr e@7:36 int(0) type=Int
-expr e@18:24 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@18:5 call callee=e@18:5#1 args=[_:e@18:24] type=Unit call=golden.sema.acceptListIterator
-expr e@19:27 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@19:5 call callee=e@19:5#1 args=[_:e@19:27] type=Unit call=golden.sema.acceptMutableIterator
-expr e@20:31 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@20:5 call callee=e@20:5#1 args=[_:e@20:31] type=Unit call=golden.sema.acceptMutableListIterator
-expr e@21:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@21:18 int(1) type=Int
-expr e@21:5#1 memberCall recv=e@21:5 callee=add args=[_:e@21:18] type=Unit call=kotlin.collections.MutableListIterator.add targs=[Int]
-expr e@22:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@22:18 int(2) type=Int
-expr e@22:5#1 memberCall recv=e@22:5 callee=set args=[_:e@22:18] type=Unit call=kotlin.collections.MutableListIterator.set targs=[Int]
-expr e@23:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@23:5#1 memberCall recv=e@23:5 callee=remove args=[] type=Unit call=kotlin.collections.MutableListIterator.remove targs=[Int]
-expr e@24:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@24:5#1 memberCall recv=e@24:5 callee=hasNext args=[] type=Boolean call=kotlin.collections.ListIterator.hasNext targs=[Int]
-expr e@25:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@25:5#1 memberCall recv=e@25:5 callee=next args=[] type=Int call=kotlin.collections.ListIterator.next targs=[Int]
-expr e@26:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@26:5#1 memberCall recv=e@26:5 callee=hasPrevious args=[] type=Boolean call=kotlin.collections.ListIterator.hasPrevious targs=[Int]
-expr e@27:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@27:5#1 memberCall recv=e@27:5 callee=previous args=[] type=Int call=kotlin.collections.ListIterator.previous targs=[Int]
-diagnostic severity=error code=KSWIFTK-SEMA-ABSTRACT at=3:1 msg=Class 'golden.sema.CustomMutableListIterator' must override abstract member 'nextIndex' or be declared abstract.
-diagnostic severity=error code=KSWIFTK-SEMA-ABSTRACT at=3:1 msg=Class 'golden.sema.CustomMutableListIterator' must override abstract member 'previousIndex' or be declared abstract.
+expr e@8:37 int(0) type=Int
+expr e@9:41 int(0) type=Int
+expr e@20:24 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator[kind=vparam]
+expr e@20:5 call callee=e@20:5#1 args=[_:e@20:24] type=Unit call=golden.sema.acceptListIterator[kind=fun;params=kotlin.collections.ListIterator<Int>]
+expr e@21:27 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator[kind=vparam]
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:27] type=Unit call=golden.sema.acceptMutableIterator[kind=fun;params=kotlin.collections.MutableIterator<Int>]
+expr e@22:31 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator[kind=vparam]
+expr e@22:5 call callee=e@22:5#1 args=[_:e@22:31] type=Unit call=golden.sema.acceptMutableListIterator[kind=fun;params=kotlin.collections.MutableListIterator<Int>]
+expr e@23:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator[kind=vparam]
+expr e@23:18 int(1) type=Int
+expr e@23:5#1 memberCall recv=e@23:5 callee=add args=[_:e@23:18] type=Unit call=kotlin.collections.MutableListIterator.add[kind=fun;recv=kotlin.collections.MutableListIterator<T0>;params=T0;gen=1] targs=[Int]
+expr e@24:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator[kind=vparam]
+expr e@24:18 int(2) type=Int
+expr e@24:5#1 memberCall recv=e@24:5 callee=set args=[_:e@24:18] type=Unit call=kotlin.collections.MutableListIterator.set[kind=fun;recv=kotlin.collections.MutableListIterator<T0>;params=T0;gen=1] targs=[Int]
+expr e@25:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator[kind=vparam]
+expr e@25:5#1 memberCall recv=e@25:5 callee=remove args=[] type=Unit call=kotlin.collections.MutableIterator.remove[kind=fun;recv=kotlin.collections.MutableIterator<T0>;params=;gen=1] targs=[Int]
+expr e@26:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator[kind=vparam]
+expr e@26:5#1 memberCall recv=e@26:5 callee=hasNext args=[] type=Boolean call=kotlin.collections.ListIterator.hasNext[kind=fun;recv=kotlin.collections.ListIterator<T0>;params=;gen=1] targs=[Int]
+expr e@27:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator[kind=vparam]
+expr e@27:5#1 memberCall recv=e@27:5 callee=next args=[] type=Int call=kotlin.collections.ListIterator.next[kind=fun;recv=kotlin.collections.ListIterator<T0>;params=;gen=1] targs=[Int]
+expr e@28:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator[kind=vparam]
+expr e@28:5#1 memberCall recv=e@28:5 callee=hasPrevious args=[] type=Boolean call=kotlin.collections.ListIterator.hasPrevious[kind=fun;recv=kotlin.collections.ListIterator<T0>;params=;gen=1] targs=[Int]
+expr e@29:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator[kind=vparam]
+expr e@29:5#1 memberCall recv=e@29:5 callee=previous args=[] type=Int call=kotlin.collections.ListIterator.previous[kind=fun;recv=kotlin.collections.ListIterator<T0>;params=;gen=1] targs=[Int]

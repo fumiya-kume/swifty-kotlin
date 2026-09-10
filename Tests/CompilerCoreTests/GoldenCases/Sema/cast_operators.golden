@@ -1,16 +1,16 @@
-symbol fq=golden.sema.safeCastNull kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Int?
-symbol fq=golden.sema.safeCastNull.$0.v kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.safeCastSuccess kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=String?
-symbol fq=golden.sema.safeCastSuccess.$1.v kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.unsafeCastSuccess kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=String
-symbol fq=golden.sema.unsafeCastSuccess.$2.v kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.safeCastNull.$0.v[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.safeCastNull[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Int?
+symbol fq=golden.sema.safeCastSuccess.$1.v[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.safeCastSuccess[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=String?
+symbol fq=golden.sema.unsafeCastSuccess.$2.v[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unsafeCastSuccess[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=String
 file fcast_operators package=golden.sema
-  decl golden.sema.unsafeCastSuccess fun unsafeCastSuccess sym=golden.sema.unsafeCastSuccess
-  decl golden.sema.safeCastSuccess fun safeCastSuccess sym=golden.sema.safeCastSuccess
-  decl golden.sema.safeCastNull fun safeCastNull sym=golden.sema.safeCastNull
-expr e@3:41 name(v) type=Any ref=golden.sema.unsafeCastSuccess.$2.v
+  decl golden.sema.unsafeCastSuccess[kind=fun;params=Any] fun unsafeCastSuccess sym=golden.sema.unsafeCastSuccess[kind=fun;params=Any]
+  decl golden.sema.safeCastSuccess[kind=fun;params=Any] fun safeCastSuccess sym=golden.sema.safeCastSuccess[kind=fun;params=Any]
+  decl golden.sema.safeCastNull[kind=fun;params=Any] fun safeCastNull sym=golden.sema.safeCastNull[kind=fun;params=Any]
+expr e@3:41 name(v) type=Any ref=golden.sema.unsafeCastSuccess.$2.v[kind=vparam]
 expr e@3:41#1 asCast expr=e@3:41 type=String type=String
-expr e@5:40 name(v) type=Any ref=golden.sema.safeCastSuccess.$1.v
+expr e@5:40 name(v) type=Any ref=golden.sema.safeCastSuccess.$1.v[kind=vparam]
 expr e@5:40#1 asCast? expr=e@5:40 type=String type=String?
-expr e@7:34 name(v) type=Any ref=golden.sema.safeCastNull.$0.v
+expr e@7:34 name(v) type=Any ref=golden.sema.safeCastNull.$0.v[kind=vparam]
 expr e@7:34#1 asCast? expr=e@7:34 type=Int type=Int?

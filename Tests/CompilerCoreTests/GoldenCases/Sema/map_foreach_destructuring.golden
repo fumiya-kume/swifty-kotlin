@@ -1,0 +1,21 @@
+symbol fq=__destructuring_0.key[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__destructuring_0.value[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_0.checkedKey[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_1.checkedValue[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=forEachDestructured.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=forEachDestructured[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
+symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+file fmap_foreach_destructuring package=_
+  decl forEachDestructured[kind=fun;params=kotlin.collections.Map<String,Int>] fun forEachDestructured sym=forEachDestructured[kind=fun;params=kotlin.collections.Map<String,Int>]
+expr e@4:5 name(values) type=kotlin.collections.Map<String, Int> ref=forEachDestructured.$0.values[kind=vparam]
+expr e@5:34 name(key) type=String ref=__destructuring_0.key[kind=local]
+expr e@5:9 localDecl checkedKey mutable=0 type=String init=e@5:34 type=Unit ref=__local_0.checkedKey[kind=local]
+expr e@6:33 name(value) type=Int ref=__destructuring_0.value[kind=local]
+expr e@6:9 localDecl checkedValue mutable=0 type=Int init=e@6:33 type=Unit ref=__local_1.checkedValue[kind=local]
+expr e@5:9#1 blockExpr stmts=[e@5:9,e@6:9] trailing=_ type=Unit
+expr e@4:20 name(__destructured_0) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-0
+expr e@4:20#1 destructuringDecl names=[key,value] mutable=0 init=e@4:20 type=Unit
+expr e@4:20#2 blockExpr stmts=[e@4:20#1] trailing=e@5:9#1 type=Unit
+expr e@4:20#3 lambda params=[__destructured_0] body=e@4:20#2 label=forEach type=(kotlin.collections.Map.Entry<out String, out Int>) -> Unit
+expr e@4:5#1 memberCall recv=e@4:5 callee=forEach args=[_:e@4:20#3] type=Unit call=kotlin.collections.forEach[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=Unit};gen=2] targs=[String,Int]

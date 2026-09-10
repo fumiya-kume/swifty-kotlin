@@ -1,60 +1,60 @@
-symbol fq=__local_0.iterable kind=local vis=private flags=_ type=kotlin.collections.Iterable<kotlin.Pair<Int, String>>
-symbol fq=golden.sema.unzipEmpty kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
-symbol fq=golden.sema.unzipGeneric kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<kotlin.Pair<golden.sema.unzipGeneric.$0.T, golden.sema.unzipGeneric.$0.R>>] ret=kotlin.Pair<kotlin.collections.List<golden.sema.unzipGeneric.$0.T>, kotlin.collections.List<golden.sema.unzipGeneric.$0.R>>
-symbol fq=golden.sema.unzipGeneric.$0.R kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.unzipGeneric.$0.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.unzipGeneric.$0.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.unzipIterableUpcast kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<kotlin.Pair<Int, String>>] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
-symbol fq=golden.sema.unzipIterableUpcast.$1.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.unzipListSpecific kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<kotlin.Pair<Int, String>>] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
-symbol fq=golden.sema.unzipListSpecific.$2.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.unzipMultipleWithDuplicates kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
-symbol fq=golden.sema.unzipNullable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<kotlin.Pair<Int?, String?>>] ret=kotlin.Pair<kotlin.collections.List<Int?>, kotlin.collections.List<String?>>
-symbol fq=golden.sema.unzipNullable.$3.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.unzipSequenceSpecific kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<kotlin.Pair<Int, String>>] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
-symbol fq=golden.sema.unzipSequenceSpecific.$4.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.unzipSingle kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+symbol fq=__local_0.iterable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Iterable<kotlin.Pair<Int, String>>
+symbol fq=golden.sema.unzipEmpty[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
+symbol fq=golden.sema.unzipGeneric.$0.R[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.unzipGeneric.$0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.unzipGeneric.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unzipGeneric[kind=fun;params=kotlin.collections.Iterable<kotlin.Pair<T0,T1>>;gen=2] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<kotlin.Pair<golden.sema.unzipGeneric.$0.T, golden.sema.unzipGeneric.$0.R>>] ret=kotlin.Pair<kotlin.collections.List<golden.sema.unzipGeneric.$0.T>, kotlin.collections.List<golden.sema.unzipGeneric.$0.R>>
+symbol fq=golden.sema.unzipIterableUpcast.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unzipIterableUpcast[kind=fun;params=kotlin.collections.List<kotlin.Pair<Int,String>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<kotlin.Pair<Int, String>>] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
+symbol fq=golden.sema.unzipListSpecific.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unzipListSpecific[kind=fun;params=kotlin.collections.List<kotlin.Pair<Int,String>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<kotlin.Pair<Int, String>>] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
+symbol fq=golden.sema.unzipMultipleWithDuplicates[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
+symbol fq=golden.sema.unzipNullable.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unzipNullable[kind=fun;params=kotlin.collections.Iterable<kotlin.Pair<Int?,String?>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<kotlin.Pair<Int?, String?>>] ret=kotlin.Pair<kotlin.collections.List<Int?>, kotlin.collections.List<String?>>
+symbol fq=golden.sema.unzipSequenceSpecific.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unzipSequenceSpecific[kind=fun;params=kotlin.sequences.Sequence<kotlin.Pair<Int,String>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<kotlin.Pair<Int, String>>] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
+symbol fq=golden.sema.unzipSingle[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
+symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_unzip package=golden.sema
-  decl golden.sema.unzipEmpty fun unzipEmpty sym=golden.sema.unzipEmpty
-  decl golden.sema.unzipSingle fun unzipSingle sym=golden.sema.unzipSingle
-  decl golden.sema.unzipMultipleWithDuplicates fun unzipMultipleWithDuplicates sym=golden.sema.unzipMultipleWithDuplicates
-  decl golden.sema.unzipNullable fun unzipNullable sym=golden.sema.unzipNullable
-  decl golden.sema.unzipGeneric fun unzipGeneric sym=golden.sema.unzipGeneric
-  decl golden.sema.unzipListSpecific fun unzipListSpecific sym=golden.sema.unzipListSpecific
-  decl golden.sema.unzipSequenceSpecific fun unzipSequenceSpecific sym=golden.sema.unzipSequenceSpecific
-  decl golden.sema.unzipIterableUpcast fun unzipIterableUpcast sym=golden.sema.unzipIterableUpcast
-expr e@4:5 call callee=e@4:5#1 args=[] type=kotlin.collections.List<out kotlin.Pair<Int, String>> call=kotlin.collections.emptyList targs=[kotlin.Pair<Int, String>]
-expr e@4:5#2 memberCall recv=e@4:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.collections.unzip#1 targs=[Int,String]
+  decl golden.sema.unzipEmpty[kind=fun;params=] fun unzipEmpty sym=golden.sema.unzipEmpty[kind=fun;params=]
+  decl golden.sema.unzipSingle[kind=fun;params=] fun unzipSingle sym=golden.sema.unzipSingle[kind=fun;params=]
+  decl golden.sema.unzipMultipleWithDuplicates[kind=fun;params=] fun unzipMultipleWithDuplicates sym=golden.sema.unzipMultipleWithDuplicates[kind=fun;params=]
+  decl golden.sema.unzipNullable[kind=fun;params=kotlin.collections.Iterable<kotlin.Pair<Int?,String?>>] fun unzipNullable sym=golden.sema.unzipNullable[kind=fun;params=kotlin.collections.Iterable<kotlin.Pair<Int?,String?>>]
+  decl golden.sema.unzipGeneric[kind=fun;params=kotlin.collections.Iterable<kotlin.Pair<T0,T1>>;gen=2] fun unzipGeneric sym=golden.sema.unzipGeneric[kind=fun;params=kotlin.collections.Iterable<kotlin.Pair<T0,T1>>;gen=2]
+  decl golden.sema.unzipListSpecific[kind=fun;params=kotlin.collections.List<kotlin.Pair<Int,String>>] fun unzipListSpecific sym=golden.sema.unzipListSpecific[kind=fun;params=kotlin.collections.List<kotlin.Pair<Int,String>>]
+  decl golden.sema.unzipSequenceSpecific[kind=fun;params=kotlin.sequences.Sequence<kotlin.Pair<Int,String>>] fun unzipSequenceSpecific sym=golden.sema.unzipSequenceSpecific[kind=fun;params=kotlin.sequences.Sequence<kotlin.Pair<Int,String>>]
+  decl golden.sema.unzipIterableUpcast[kind=fun;params=kotlin.collections.List<kotlin.Pair<Int,String>>] fun unzipIterableUpcast sym=golden.sema.unzipIterableUpcast[kind=fun;params=kotlin.collections.List<kotlin.Pair<Int,String>>]
+expr e@4:5 call callee=e@4:5#1 args=[] type=kotlin.collections.List<out kotlin.Pair<Int, String>> call=kotlin.collections.emptyList[kind=fun;params=;gen=1] targs=[kotlin.Pair<Int, String>]
+expr e@4:5#2 memberCall recv=e@4:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.collections.unzip[kind=fun;recv=kotlin.collections.List<kotlin.Pair<T0,T1>>;params=;gen=2] targs=[Int,String]
 expr e@7:17 int(7) type=Int
 expr e@7:20 string(single) type=String
-expr e@7:12 call callee=e@7:12#1 args=[_:e@7:17,_:e@7:20] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init> targs=[Int,String]
-expr e@7:5 call callee=e@7:5#1 args=[_:e@7:12] type=kotlin.collections.List<out kotlin.Pair<Int, String>> call=kotlin.collections.listOf#1 targs=[kotlin.Pair<Int, String>]
-expr e@7:5#2 memberCall recv=e@7:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.collections.unzip#1 targs=[Int,String]
+expr e@7:12 call callee=e@7:12#1 args=[_:e@7:17,_:e@7:20] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init>[kind=ctor;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[Int,String]
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:12] type=kotlin.collections.List<out kotlin.Pair<Int, String>> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[kotlin.Pair<Int, String>]
+expr e@7:5#2 memberCall recv=e@7:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.collections.unzip[kind=fun;recv=kotlin.collections.List<kotlin.Pair<T0,T1>>;params=;gen=2] targs=[Int,String]
 expr e@10:17 int(2) type=Int
 expr e@10:20 string(x) type=String
-expr e@10:12 call callee=e@10:12#1 args=[_:e@10:17,_:e@10:20] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init> targs=[Int,String]
+expr e@10:12 call callee=e@10:12#1 args=[_:e@10:17,_:e@10:20] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init>[kind=ctor;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[Int,String]
 expr e@10:31 int(2) type=Int
 expr e@10:34 string(x) type=String
-expr e@10:26 call callee=e@10:26#1 args=[_:e@10:31,_:e@10:34] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init> targs=[Int,String]
+expr e@10:26 call callee=e@10:26#1 args=[_:e@10:31,_:e@10:34] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init>[kind=ctor;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[Int,String]
 expr e@10:45 int(1) type=Int
 expr e@10:48 string(y) type=String
-expr e@10:40 call callee=e@10:40#1 args=[_:e@10:45,_:e@10:48] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init> targs=[Int,String]
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:12,_:e@10:26,_:e@10:40] type=kotlin.collections.List<out kotlin.Pair<Int, String>> call=kotlin.collections.listOf#1 targs=[kotlin.Pair<Int, String>]
-expr e@10:5#2 memberCall recv=e@10:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.collections.unzip#1 targs=[Int,String]
-expr e@13:5 name(values) type=kotlin.collections.Iterable<kotlin.Pair<Int?, String?>> ref=golden.sema.unzipNullable.$3.values
-expr e@13:5#1 memberCall recv=e@13:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int?>, kotlin.collections.List<String?>> call=kotlin.collections.unzip#0 targs=[Int?,String?]
-expr e@16:5 name(values) type=kotlin.collections.Iterable<kotlin.Pair<golden.sema.unzipGeneric.$0.T, golden.sema.unzipGeneric.$0.R>> ref=golden.sema.unzipGeneric.$0.values
-expr e@16:5#1 memberCall recv=e@16:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<golden.sema.unzipGeneric.$0.T>, kotlin.collections.List<golden.sema.unzipGeneric.$0.R>> call=kotlin.collections.unzip#0 targs=[golden.sema.unzipGeneric.$0.T,golden.sema.unzipGeneric.$0.R]
-expr e@19:5 name(values) type=kotlin.collections.List<kotlin.Pair<Int, String>> ref=golden.sema.unzipListSpecific.$2.values
-expr e@19:5#1 memberCall recv=e@19:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.collections.unzip#1 targs=[Int,String]
-expr e@22:5 name(values) type=kotlin.sequences.Sequence<kotlin.Pair<Int, String>> ref=golden.sema.unzipSequenceSpecific.$4.values
-expr e@22:5#1 memberCall recv=e@22:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.sequences.unzip targs=[Int,String]
-expr e@25:49 name(values) type=kotlin.collections.List<kotlin.Pair<Int, String>> ref=golden.sema.unzipIterableUpcast.$1.values
-expr e@25:5 localDecl iterable mutable=0 type=Iterable<Pair<Int,String>> init=e@25:49 type=Unit ref=__local_0.iterable
-expr e@26:12 name(iterable) type=kotlin.collections.Iterable<kotlin.Pair<Int, String>> ref=__local_0.iterable
-expr e@26:12#1 memberCall recv=e@26:12 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.collections.unzip#0 targs=[Int,String]
+expr e@10:40 call callee=e@10:40#1 args=[_:e@10:45,_:e@10:48] type=kotlin.Pair<Int, String> call=kotlin.Pair.<init>[kind=ctor;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[Int,String]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:12,_:e@10:26,_:e@10:40] type=kotlin.collections.List<out kotlin.Pair<Int, String>> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[kotlin.Pair<Int, String>]
+expr e@10:5#2 memberCall recv=e@10:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.collections.unzip[kind=fun;recv=kotlin.collections.List<kotlin.Pair<T0,T1>>;params=;gen=2] targs=[Int,String]
+expr e@13:5 name(values) type=kotlin.collections.Iterable<kotlin.Pair<Int?, String?>> ref=golden.sema.unzipNullable.$3.values[kind=vparam]
+expr e@13:5#1 memberCall recv=e@13:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int?>, kotlin.collections.List<String?>> call=kotlin.collections.unzip[kind=fun;recv=kotlin.collections.Iterable<kotlin.Pair<T0,T1>>;params=;gen=2] targs=[Int?,String?]
+expr e@16:5 name(values) type=kotlin.collections.Iterable<kotlin.Pair<golden.sema.unzipGeneric.$0.T, golden.sema.unzipGeneric.$0.R>> ref=golden.sema.unzipGeneric.$0.values[kind=vparam]
+expr e@16:5#1 memberCall recv=e@16:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<golden.sema.unzipGeneric.$0.T>, kotlin.collections.List<golden.sema.unzipGeneric.$0.R>> call=kotlin.collections.unzip[kind=fun;recv=kotlin.collections.Iterable<kotlin.Pair<T0,T1>>;params=;gen=2] targs=[golden.sema.unzipGeneric.$0.T,golden.sema.unzipGeneric.$0.R]
+expr e@19:5 name(values) type=kotlin.collections.List<kotlin.Pair<Int, String>> ref=golden.sema.unzipListSpecific.$2.values[kind=vparam]
+expr e@19:5#1 memberCall recv=e@19:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.collections.unzip[kind=fun;recv=kotlin.collections.List<kotlin.Pair<T0,T1>>;params=;gen=2] targs=[Int,String]
+expr e@22:5 name(values) type=kotlin.sequences.Sequence<kotlin.Pair<Int, String>> ref=golden.sema.unzipSequenceSpecific.$4.values[kind=vparam]
+expr e@22:5#1 memberCall recv=e@22:5 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.sequences.unzip[kind=fun;recv=kotlin.sequences.Sequence<kotlin.Pair<T0,T1>>;params=;gen=2] targs=[Int,String]
+expr e@25:49 name(values) type=kotlin.collections.List<kotlin.Pair<Int, String>> ref=golden.sema.unzipIterableUpcast.$1.values[kind=vparam]
+expr e@25:5 localDecl iterable mutable=0 type=Iterable<Pair<Int,String>> init=e@25:49 type=Unit ref=__local_0.iterable[kind=local]
+expr e@26:12 name(iterable) type=kotlin.collections.Iterable<kotlin.Pair<Int, String>> ref=__local_0.iterable[kind=local]
+expr e@26:12#1 memberCall recv=e@26:12 callee=unzip args=[] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>> call=kotlin.collections.unzip[kind=fun;recv=kotlin.collections.Iterable<kotlin.Pair<T0,T1>>;params=;gen=2] targs=[Int,String]
 expr e@26:5 return value=e@26:12#1 type=Nothing

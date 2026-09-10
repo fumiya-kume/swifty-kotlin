@@ -41,6 +41,33 @@ extension CallTypeChecker {
         return !hasRealCandidate
     }
 
+    /// Returns true only for the bundled source-backed producer-flow builders.
+    /// A same-named user declaration must keep the regular callable ABI.
+    func isSourceBackedProducerFlowBuilder(
+        _ symbolID: SymbolID,
+        ctx: TypeInferenceContext
+    ) -> Bool {
+        guard let symbol = ctx.sema.symbols.symbol(symbolID),
+              symbol.kind == .function,
+              ctx.sema.symbols.isSourceBackedSymbol(symbolID)
+        else {
+            return false
+        }
+        let interner = ctx.interner
+        let channelFlow = interner.intern("channelFlow")
+        let callbackFlow = interner.intern("callbackFlow")
+        guard symbol.name == channelFlow || symbol.name == callbackFlow else {
+            return false
+        }
+        let flowPackage = [
+            interner.intern("kotlinx"),
+            interner.intern("coroutines"),
+            interner.intern("flow"),
+        ]
+        let matches = symbol.fqName == flowPackage + [symbol.name]
+        return matches
+    }
+
     /// Returns true when `name` is shadowed by a non-synthetic (user-defined) symbol,
     /// either as a local variable binding or as a scope-visible declaration.
     /// Used to guard stdlib special-call paths (measureTimeMillis, measureNanoTime, etc.)
@@ -48,11 +75,21 @@ extension CallTypeChecker {
     func isShadowedByNonSyntheticSymbol(
         _ name: InternedString,
         locals: LocalBindings,
-        ctx: TypeInferenceContext
+        ctx: TypeInferenceContext,
+        argumentCount: Int? = nil
     ) -> Bool {
         if locals[name] != nil { return true }
         return ctx.cachedScopeLookup(name).contains { candidate in
             guard let sym = ctx.cachedSymbol(candidate) else { return false }
+            if let argumentCount {
+                guard sym.kind == .function,
+                      let signature = ctx.sema.symbols.functionSignature(for: candidate),
+                      signature.receiverType == nil,
+                      signature.parameterTypes.count == argumentCount
+                else {
+                    return false
+                }
+            }
             return !sym.flags.contains(.synthetic)
         }
     }

@@ -1,67 +1,65 @@
-symbol fq=__local_0.singleton kind=local vis=private flags=_ type=kotlin.collections.Set<Int>
-symbol fq=__local_1.nullableSingleton kind=local vis=private flags=_ type=kotlin.collections.Set<String?>
-symbol fq=__local_2.nonNullSingleton kind=local vis=private flags=_ type=kotlin.collections.Set<String>
-symbol fq=__local_3.empty kind=local vis=private flags=_ type=kotlin.collections.Set<String>
-symbol fq=__local_4.allNull kind=local vis=private flags=_ type=kotlin.collections.Set<String>
-symbol fq=__local_5.mixed kind=local vis=private flags=_ type=kotlin.collections.Set<String>
-symbol fq=__local_6.source kind=local vis=private flags=_ type=kotlin.Array<String?>
-symbol fq=__local_7.spread kind=local vis=private flags=_ type=kotlin.collections.Set<String>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Set.contains kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Set<out kotlin.collections.Set.E> params=[kotlin.collections.Set.E] ret=Boolean
-symbol fq=kotlin.collections.Set.isEmpty kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Set<out kotlin.collections.Set.E> params=[] ret=Boolean
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.singleton[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Set<Int>
+symbol fq=__local_1.nullableSingleton[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Set<String?>
+symbol fq=__local_2.nonNullSingleton[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Set<String>
+symbol fq=__local_3.empty[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Set<String>
+symbol fq=__local_4.allNull[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Set<String>
+symbol fq=__local_5.mixed[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Set<String>
+symbol fq=__local_6.source[kind=local] kind=local vis=private flags=_ type=kotlin.Array<String?>
+symbol fq=__local_7.spread[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Set<String>
+symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
+symbol fq=kotlin.collections.Set.E[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_n_set package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:37 int(1) type=Int
-expr e@2:31 call callee=e@2:31#1 args=[_:e@2:37] type=kotlin.collections.Set<Int> call=kotlin.collections.setOf#1 targs=[Int]
-expr e@2:5 localDecl singleton mutable=0 type=Set<Int> init=e@2:31 type=Unit ref=__local_0.singleton
+expr e@2:31 call callee=e@2:31#1 args=[_:e@2:37] type=kotlin.collections.Set<Int> call=kotlin.collections.setOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@2:5 localDecl singleton mutable=0 type=Set<Int> init=e@2:31 type=Unit ref=__local_0.singleton[kind=local]
 expr e@3:49 name(null) type=Nothing?
 expr e@3:49#1 asCast expr=e@3:49 type=String? type=String?
-expr e@3:43 call callee=e@3:43#1 args=[_:e@3:49#1] type=kotlin.collections.Set<String?> call=kotlin.collections.setOf#1 targs=[String?]
-expr e@3:5 localDecl nullableSingleton mutable=0 type=Set<String?> init=e@3:43 type=Unit ref=__local_1.nullableSingleton
+expr e@3:43 call callee=e@3:43#1 args=[_:e@3:49#1] type=kotlin.collections.Set<String?> call=kotlin.collections.setOf[kind=fun;params=T0;gen=1] targs=[String?]
+expr e@3:5 localDecl nullableSingleton mutable=0 type=Set<String?> init=e@3:43 type=Unit ref=__local_1.nullableSingleton[kind=local]
 expr e@4:54 string(a) type=String
-expr e@4:41 call callee=e@4:41#1 args=[_:e@4:54] type=kotlin.collections.Set<String> call=kotlin.collections.setOfNotNull#0 targs=[String]
-expr e@4:5 localDecl nonNullSingleton mutable=0 type=Set<String> init=e@4:41 type=Unit ref=__local_2.nonNullSingleton
-expr e@5:30 call callee=e@5:30#1 args=[] type=kotlin.collections.Set<String> call=kotlin.collections.setOfNotNull#0 targs=[String]
-expr e@5:5 localDecl empty mutable=0 type=Set<String> init=e@5:30 type=Unit ref=__local_3.empty
+expr e@4:41 call callee=e@4:41#1 args=[_:e@4:54] type=kotlin.collections.Set<String> call=kotlin.collections.setOfNotNull[kind=fun;params=T0?;gen=1] targs=[String]
+expr e@4:5 localDecl nonNullSingleton mutable=0 type=Set<String> init=e@4:41 type=Unit ref=__local_2.nonNullSingleton[kind=local]
+expr e@5:30 call callee=e@5:30#1 args=[] type=kotlin.collections.Set<String> call=kotlin.collections.setOfNotNull[kind=fun;params=T0?;gen=1] targs=[String]
+expr e@5:5 localDecl empty mutable=0 type=Set<String> init=e@5:30 type=Unit ref=__local_3.empty[kind=local]
 expr e@6:53 name(null) type=Nothing?
 expr e@6:59 name(null) type=Nothing?
-expr e@6:32 call callee=e@6:32#1 args=[_:e@6:53,_:e@6:59] type=kotlin.collections.Set<String> call=kotlin.collections.setOfNotNull#0 targs=[String]
-expr e@6:5 localDecl allNull mutable=0 type=Set<String> init=e@6:32 type=Unit ref=__local_4.allNull
+expr e@6:32 call callee=e@6:32#1 args=[_:e@6:53,_:e@6:59] type=kotlin.collections.Set<String> call=kotlin.collections.setOfNotNull[kind=fun;params=T0?;gen=1] targs=[String]
+expr e@6:5 localDecl allNull mutable=0 type=Set<String> init=e@6:32 type=Unit ref=__local_4.allNull[kind=local]
 expr e@7:43 string(a) type=String
 expr e@7:48 name(null) type=Nothing?
 expr e@7:54 string(b) type=String
 expr e@7:59 string(a) type=String
-expr e@7:30 call callee=e@7:30#1 args=[_:e@7:43,_:e@7:48,_:e@7:54,_:e@7:59] type=kotlin.collections.Set<String> call=kotlin.collections.setOfNotNull#0 targs=[String]
-expr e@7:5 localDecl mixed mutable=0 type=Set<String> init=e@7:30 type=Unit ref=__local_5.mixed
+expr e@7:30 call callee=e@7:30#1 args=[_:e@7:43,_:e@7:48,_:e@7:54,_:e@7:59] type=kotlin.collections.Set<String> call=kotlin.collections.setOfNotNull[kind=fun;params=T0?;gen=1] targs=[String]
+expr e@7:5 localDecl mixed mutable=0 type=Set<String> init=e@7:30 type=Unit ref=__local_5.mixed[kind=local]
 expr e@8:42 string(x) type=String
 expr e@8:47 name(null) type=Nothing?
 expr e@8:53 string(y) type=String
 expr e@8:58 string(x) type=String
-expr e@8:34 call callee=e@8:34#1 args=[_:e@8:42,_:e@8:47,_:e@8:53,_:e@8:58] type=kotlin.Array<String?> call=kotlin.arrayOf targs=[String?]
-expr e@8:5 localDecl source mutable=0 type=Array<String?> init=e@8:34 type=Unit ref=__local_6.source
-expr e@9:45 name(source) type=kotlin.Array<String?> ref=__local_6.source
-expr e@9:31 call callee=e@9:31#1 args=[_:e@9:45] type=kotlin.collections.Set<String> call=kotlin.collections.setOfNotNull#0 targs=[String]
-expr e@9:5 localDecl spread mutable=0 type=Set<String> init=e@9:31 type=Unit ref=__local_7.spread
-expr e@11:13 name(singleton) type=kotlin.collections.Set<Int> ref=__local_0.singleton
+expr e@8:34 call callee=e@8:34#1 args=[_:e@8:42,_:e@8:47,_:e@8:53,_:e@8:58] type=kotlin.Array<String?> call=kotlin.arrayOf[kind=fun;params=*T0;gen=1] targs=[String?]
+expr e@8:5 localDecl source mutable=0 type=Array<String?> init=e@8:34 type=Unit ref=__local_6.source[kind=local]
+expr e@9:45 name(source) type=kotlin.Array<String?> ref=__local_6.source[kind=local]
+expr e@9:31 call callee=e@9:31#1 args=[_:e@9:45] type=kotlin.collections.Set<String> call=kotlin.collections.setOfNotNull[kind=fun;params=T0?;gen=1] targs=[String]
+expr e@9:5 localDecl spread mutable=0 type=Set<String> init=e@9:31 type=Unit ref=__local_7.spread[kind=local]
+expr e@11:13 name(singleton) type=kotlin.collections.Set<Int> ref=__local_0.singleton[kind=local]
 expr e@11:32 int(1) type=Int
-expr e@11:13#1 memberCall recv=e@11:13 callee=contains args=[_:e@11:32] type=Boolean call=kotlin.collections.Set.contains
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#1
-expr e@12:13 name(nullableSingleton) type=kotlin.collections.Set<String?> ref=__local_1.nullableSingleton
+expr e@11:13#1 memberCall recv=e@11:13 callee=contains args=[_:e@11:32] type=Boolean call=kotlin.collections.Set.contains[kind=fun;recv=kotlin.collections.Set<T0>;params=T0;gen=1]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@12:13 name(nullableSingleton) type=kotlin.collections.Set<String?> ref=__local_1.nullableSingleton[kind=local]
 expr e@12:40 name(null) type=Nothing?
-expr e@12:13#1 memberCall recv=e@12:13 callee=contains args=[_:e@12:40] type=Boolean call=kotlin.collections.Set.contains
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
-expr e@13:13 name(nonNullSingleton) type=kotlin.collections.Set<String> ref=__local_2.nonNullSingleton
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13] type=Unit call=kotlin.io.println#1
-expr e@14:13 name(empty) type=kotlin.collections.Set<String> ref=__local_3.empty
-expr e@14:13#1 memberCall recv=e@14:13 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Set.isEmpty
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println#1
-expr e@15:13 name(allNull) type=kotlin.collections.Set<String> ref=__local_4.allNull
-expr e@15:13#1 memberCall recv=e@15:13 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Set.isEmpty
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println#1
-expr e@16:13 name(mixed) type=kotlin.collections.Set<String> ref=__local_5.mixed
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13] type=Unit call=kotlin.io.println#1
-expr e@17:13 name(spread) type=kotlin.collections.Set<String> ref=__local_7.spread
-expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13] type=Unit call=kotlin.io.println#1
+expr e@12:13#1 memberCall recv=e@12:13 callee=contains args=[_:e@12:40] type=Boolean call=kotlin.collections.Set.contains[kind=fun;recv=kotlin.collections.Set<T0>;params=T0;gen=1]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@13:13 name(nonNullSingleton) type=kotlin.collections.Set<String> ref=__local_2.nonNullSingleton[kind=local]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@14:13 name(empty) type=kotlin.collections.Set<String> ref=__local_3.empty[kind=local]
+expr e@14:13#1 memberCall recv=e@14:13 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Set.isEmpty[kind=fun;recv=kotlin.collections.Set<T0>;params=;gen=1]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@15:13 name(allNull) type=kotlin.collections.Set<String> ref=__local_4.allNull[kind=local]
+expr e@15:13#1 memberCall recv=e@15:13 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Set.isEmpty[kind=fun;recv=kotlin.collections.Set<T0>;params=;gen=1]
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@16:13 name(mixed) type=kotlin.collections.Set<String> ref=__local_5.mixed[kind=local]
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@17:13 name(spread) type=kotlin.collections.Set<String> ref=__local_7.spread[kind=local]
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

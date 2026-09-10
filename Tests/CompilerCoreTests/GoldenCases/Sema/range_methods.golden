@@ -1,20 +1,19 @@
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
-symbol fq=kotlin.ranges.IntRange.contains kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.ranges.IntRange params=[Int] ret=Boolean
-symbol fq=rangeContains kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean
-symbol fq=rangeContains.$0.x kind=valueParameter vis=private flags=_
-symbol fq=rangeCount kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=rangeFirst kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=rangeLast kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=rangeReversed kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
-symbol fq=rangeToList kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
+symbol fq=rangeContains.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=rangeContains[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean
+symbol fq=rangeCount[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=rangeFirst[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=rangeLast[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=rangeReversed[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
+symbol fq=rangeToList[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
 file frange_methods package=_
-  decl rangeFirst fun rangeFirst sym=rangeFirst
-  decl rangeLast fun rangeLast sym=rangeLast
-  decl rangeCount fun rangeCount sym=rangeCount
-  decl rangeContains fun rangeContains sym=rangeContains
-  decl rangeToList fun rangeToList sym=rangeToList
-  decl rangeReversed fun rangeReversed sym=rangeReversed
+  decl rangeFirst[kind=fun;params=] fun rangeFirst sym=rangeFirst[kind=fun;params=]
+  decl rangeLast[kind=fun;params=] fun rangeLast sym=rangeLast[kind=fun;params=]
+  decl rangeCount[kind=fun;params=] fun rangeCount sym=rangeCount[kind=fun;params=]
+  decl rangeContains[kind=fun;params=Int] fun rangeContains sym=rangeContains[kind=fun;params=Int]
+  decl rangeToList[kind=fun;params=] fun rangeToList sym=rangeToList[kind=fun;params=]
+  decl rangeReversed[kind=fun;params=] fun rangeReversed sym=rangeReversed[kind=fun;params=]
 expr e@1:26 int(1) type=Int
 expr e@1:29 int(5) type=Int
 expr e@1:26#1 binary(rangeTo) lhs=e@1:26 rhs=e@1:29 type=Int
@@ -30,14 +29,14 @@ expr e@3:26#2 memberCall recv=e@3:26#1 callee=count args=[] type=Int
 expr e@4:39 int(1) type=Int
 expr e@4:42 int(10) type=Int
 expr e@4:39#1 binary(rangeTo) lhs=e@4:39 rhs=e@4:42 type=Int
-expr e@4:55 name(x) type=Int ref=rangeContains.$0.x
-expr e@4:39#2 memberCall recv=e@4:39#1 callee=contains args=[_:e@4:55] type=Boolean call=kotlin.ranges.IntRange.contains
+expr e@4:55 name(x) type=Int ref=rangeContains.$0.x[kind=vparam]
+expr e@4:39#2 memberCall recv=e@4:39#1 callee=contains args=[_:e@4:55] type=Boolean call=kotlin.ranges.contains[kind=fun;recv=kotlin.ranges.IntRange;params=Int]
 expr e@5:27 int(1) type=Int
 expr e@5:30 int(5) type=Int
 expr e@5:27#1 binary(rangeTo) lhs=e@5:27 rhs=e@5:30 type=Int
-expr e@5:27#2 memberCall recv=e@5:27#1 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.ranges.toList#3
+expr e@5:27#2 memberCall recv=e@5:27#1 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.ranges.toList[kind=fun;recv=kotlin.ranges.IntRange;params=]
 expr e@6:29 int(1) type=Int
 expr e@6:32 int(5) type=Int
 expr e@6:29#1 binary(rangeTo) lhs=e@6:29 rhs=e@6:32 type=Int
 expr e@6:29#2 memberCall recv=e@6:29#1 callee=reversed args=[] type=kotlin.ranges.IntRange
-expr e@6:29#3 memberCall recv=e@6:29#2 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.ranges.toList#3
+expr e@6:29#3 memberCall recv=e@6:29#2 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.ranges.toList[kind=fun;recv=kotlin.ranges.IntRange;params=]
