@@ -217,9 +217,10 @@ extension DataFlowSemaPhase {
         var resolvedFieldOffsets: [SymbolID: Int] = [:]
         for entry in record.fieldOffsets {
             guard let fieldSymbol = resolveImportedFieldSymbol(entry.fqName, symbols: symbols) else {
+                let fq = entry.fqName.map { interner.resolve($0) }.joined(separator: ".")
                 diagnostics.warning(
                     "KSWIFTK-LIB-0004",
-                    "Unknown metadata field symbol in \(metadataPath): \(entry.fqName)",
+                    "Unknown metadata field symbol in \(metadataPath): \(fq)",
                     range: nil
                 )
                 continue
