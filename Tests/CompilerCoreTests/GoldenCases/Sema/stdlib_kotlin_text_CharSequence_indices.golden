@@ -1,0 +1,16 @@
+symbol fq=golden.sema.charSequenceIndices kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.ranges.IntRange
+symbol fq=golden.sema.charSequenceIndices.$0.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.emptyStringIndices kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.ranges.IntRange
+symbol fq=golden.sema.stringIndices kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.ranges.IntRange
+symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
+file fstdlib_kotlin_text_CharSequence_indices package=golden.sema
+  decl golden.sema.charSequenceIndices fun charSequenceIndices sym=golden.sema.charSequenceIndices
+  decl golden.sema.stringIndices fun stringIndices sym=golden.sema.stringIndices
+  decl golden.sema.emptyStringIndices fun emptyStringIndices sym=golden.sema.emptyStringIndices
+expr e@3:58 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceIndices.$0.value
+expr e@3:58#1 memberCall recv=e@3:58 callee=indices args=[] type=kotlin.ranges.IntRange call=kotlin.text.indices.$get
+expr e@5:33 string(abc) type=String
+expr e@5:33#1 memberCall recv=e@5:33 callee=indices args=[] type=kotlin.ranges.IntRange call=kotlin.text.indices.$get
+expr e@7:38 string() type=String
+expr e@7:38#1 memberCall recv=e@7:38 callee=indices args=[] type=kotlin.ranges.IntRange call=kotlin.text.indices.$get

@@ -4561,7 +4561,7 @@
   - 未実装シンボル一覧:
     - `kotlin.text.hasSurrogatePairAt` — fun CharSequence.hasSurrogatePairAt(Int): Boolean  -- `final fun (kotlin/CharSequence).kotlin.text/hasSurrogatePairAt(kotlin/Int): kotlin/Boolean`
 
-- [ ] KSP-1382: kotlin.text.CharSequence.indices-family の未実装 stdlib API を実装する（1 件）
+- [~] KSP-1382: kotlin.text.CharSequence.indices-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `indices`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -4570,6 +4570,7 @@
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.text.indices` — val CharSequence.indices  -- `final val kotlin.text/indices`
+  - 実装・focused確認済み（2026-09-08）：`StringHOF.kt` に Kotlin 2.3.10 と同じ source-backed getter を追加。Sema worker で `kotlin.text.indices.$get` / `IntRange` を確認し、String・StringBuilder・空文字列・UTF-16 surrogate・length getter が一度だけ呼ばれる custom CharSequence の Native 実行を kotlinc と比較した。専用 evidence は `/tmp/swifty-todo50-01a07dee/evidence/ksp1382`。全体 Swift/Golden/diff G は未実行のため完了化しない。
 
 - [ ] KSP-1383: kotlin.text.CharSequence.iterator-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `iterator`
