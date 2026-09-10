@@ -378,6 +378,26 @@ extension ExprTypeChecker {
             }
         }
 
+        // BUG-239: an object literal that implements an interface directly
+        // (no superclass to inherit itable slots from — e.g. `object :
+        // MutableIterator<Int> { ... }`) previously kept `inheritedItableSlots`
+        // verbatim, which is empty in that case. `appendObjectItableMethodRegistrations`
+        // then fell back to slot 0 for every interface it registers, so two
+        // interfaces (e.g. `Iterator` and `MutableIterator`) collided into the
+        // same itable slot and the later registration silently overwrote the
+        // earlier interface's method table. Mirror the named-class path
+        // (`LayoutSynthesis.synthesizeLayoutForNominal`) by walking this
+        // literal's own transitive interface supertypes and assigning each one
+        // not already covered by inheritance a fresh slot.
+        var itableSlots = inheritedItableSlots
+        var nextItableSlot = max(inheritedItableSize ?? 0, (itableSlots.values.max() ?? -1) + 1)
+        for interfaceID in kirTransitiveInterfaceSupertypes(of: objectSymbol, sema: sema)
+            where itableSlots[interfaceID] == nil
+        {
+            itableSlots[interfaceID] = nextItableSlot
+            nextItableSlot += 1
+        }
+
         sema.symbols.setNominalLayout(
             NominalLayout(
                 objectHeaderWords: objectHeaderWords,
@@ -385,9 +405,9 @@ extension ExprTypeChecker {
                 instanceSizeWords: instanceSizeWords,
                 fieldOffsets: fieldOffsets,
                 vtableSlots: vtableSlots,
-                itableSlots: inheritedItableSlots,
+                itableSlots: itableSlots,
                 vtableSize: inheritedVtableSize,
-                itableSize: inheritedItableSize,
+                itableSize: nextItableSlot,
                 superClass: superClass
             ),
             for: objectSymbol
