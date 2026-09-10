@@ -58,14 +58,9 @@ public final class LoweringPhase: CompilerPhase {
             interner: ctx.interner,
             sema: ctx.sema
         )
-        if let sema = ctx.sema {
-            ImportedInlineKIRMaterializer.materialize(
-                importedFunctions: &sema.importedInlineFunctions,
-                arena: module.arena,
-                types: sema.types,
-                interner: ctx.interner
-            )
-        }
+        // BUG-240: ImportedInlineKIRMaterializer.materialize() corrupts
+        // unrelated imported-inline KIR at runtime; disabled until fixed.
+        // Re-enabling condition and regression scope: TODO.md BUG-240.
         module.scanFeatures()
         // Parallel lowering is disabled: appendExpr assigns IDs under lock
         // in non-deterministic order, breaking KIR determinism tests.
