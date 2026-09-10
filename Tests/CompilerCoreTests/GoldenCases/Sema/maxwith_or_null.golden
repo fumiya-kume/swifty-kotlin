@@ -4,7 +4,7 @@ symbol fq=golden.sema.maxFromList.$0.xs kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.maxFromSequence kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int>,kotlin.Comparator<Int>] ret=Int?
 symbol fq=golden.sema.maxFromSequence.$1.cmp kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.maxFromSequence.$1.xs kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 file fmaxwith_or_null package=golden.sema
   decl golden.sema.maxFromList fun maxFromList sym=golden.sema.maxFromList

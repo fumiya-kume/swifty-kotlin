@@ -7,7 +7,7 @@ symbol fq=flattenIterableParams.$0.lists kind=valueParameter vis=private flags=_
 symbol fq=flattenIterables kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<kotlin.collections.List<Int>>] ret=Unit
 symbol fq=flattenIterables.$1.lists kind=valueParameter vis=private flags=_
 symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 file fflatten_sequence_iterable package=_
   decl flattenIterables fun flattenIterables sym=flattenIterables

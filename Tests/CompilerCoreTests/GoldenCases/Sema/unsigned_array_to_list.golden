@@ -23,7 +23,7 @@ symbol fq=kotlin.UByteArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.UIntArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.ULongArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.UShortArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 file funsigned_array_to_list package=golden.sema
   decl golden.sema.unsignedArrayCopies fun unsignedArrayCopies sym=golden.sema.unsignedArrayCopies
 expr e@10:21 name(ubytes) type=kotlin.UByteArray ref=golden.sema.unsignedArrayCopies.$0.ubytes

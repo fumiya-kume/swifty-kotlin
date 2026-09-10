@@ -1163,16 +1163,17 @@
   - 未実装シンボル一覧:
     - `kotlin.collections.Iterator` — interface kotlin.collections.Iterator  -- `abstract interface <#A: out kotlin/Any?> kotlin.collections/Iterator {`
 
-- [ ] KSP-939: kotlin.collections.List-family の未実装 stdlib API を実装する（2 件）
+- [x] KSP-939: kotlin.collections.List-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.collections` / top-level / family `List`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/ListAccessHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
-  - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_n_List.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
-  - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_n_List.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_n_List.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
+  - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_n_List_interface.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認（既存の小文字 `..._n_list.kt` との case-insensitive filesystem 衝突を回避）。
+  - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_n_List_interface.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_n_List_interface.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.collections.List` — interface kotlin.collections.List  -- `abstract interface <#A: out kotlin/Any?> kotlin.collections/List : kotlin.collections/Collection<#A> {`
     - `kotlin.collections.List` — fun List(Int, Function1): List  -- `final inline fun <#A: kotlin/Any?> kotlin.collections/List(kotlin/Int, kotlin/Function1<kotlin/Int, #A>): kotlin.collections/List<#A>`
+  - 補足（master マージ時に判明）: interface 宣言は本タスク着手後に KSP-697（#5904、`List.kt`）が並行して先行実装済みだった。`ListAccessHOF.kt` 側の重複 interface 宣言はマージ時に削除し、本タスクが実装したのは `List(size, init)` factory のみ。`kotlin.collections.List` の nominal 所有者は `List.kt` を参照すること。
 
 - [ ] KSP-941: kotlin.collections.Map-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections` / top-level / family `Map`
@@ -3520,7 +3521,7 @@
     - `kotlin.ranges.first` — fun IntProgression.first(): Int  -- `final fun (kotlin.ranges/IntProgression).kotlin.ranges/first(): kotlin/Int`
     - `kotlin.ranges.last` — fun IntProgression.last(): Int  -- `final fun (kotlin.ranges/IntProgression).kotlin.ranges/last(): kotlin/Int`
 
-- [ ] KSP-1285: kotlin.ranges.IntRange の未実装 stdlib API を実装する（3 件）
+- [x] KSP-1285: kotlin.ranges.IntRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `IntRange`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3531,6 +3532,7 @@
     - `kotlin.ranges.contains` — fun IntRange.contains(Byte): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Byte): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun IntRange.contains(Long): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Long): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun IntRange.contains(Short): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Short): kotlin/Boolean`
+  - 完了根拠: `RangeHOF.kt` に Byte/Long/Short の exact overload と Long の Int 範囲外 guard を追加。Sema の source-backed contains routing は exact 引数型・`value` ラベルを照合し、direct/`in` と nullable/wrong-label 回帰を追加した。既存 `stdlib_kotlin_ranges_OpenEndRange_n.golden` の contains overload 番号更新（+3）を反映し、全 Golden テストが green。
 
 - [ ] KSP-1286: kotlin.ranges.LongProgression の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.ranges` / receiver `LongProgression`
@@ -3595,7 +3597,7 @@
     - `kotlin.ranges.last` — fun ULongProgression.last(): ULong  -- `final fun (kotlin.ranges/ULongProgression).kotlin.ranges/last(): kotlin/ULong`
     - `kotlin.ranges.lastOrNull` — fun ULongProgression.lastOrNull(): ULong  -- `final fun (kotlin.ranges/ULongProgression).kotlin.ranges/lastOrNull(): kotlin/ULong?`
 
-- [ ] KSP-1292: kotlin.ranges.ULongRange の未実装 stdlib API を実装する（3 件）
+- [~] KSP-1292: kotlin.ranges.ULongRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `ULongRange`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3606,6 +3608,8 @@
     - `kotlin.ranges.contains` — fun ULongRange.contains(UByte): Boolean  -- `final fun (kotlin.ranges/ULongRange).kotlin.ranges/contains(kotlin/UByte): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun ULongRange.contains(UInt): Boolean  -- `final fun (kotlin.ranges/ULongRange).kotlin.ranges/contains(kotlin/UInt): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun ULongRange.contains(UShort): Boolean  -- `final fun (kotlin.ranges/ULongRange).kotlin.ranges/contains(kotlin/UShort): kotlin/Boolean`
+
+  - focused根拠: Kotlin 2.3.10 `_URanges.kt` と同じ `@SinceKotlin("1.5")` source extension を `RangeHOF.kt` に追加し、各 unsigned 値を `toULong()` で既存の `ULongRange.contains(ULong)` へ widening する。専用 Sema/Golden fixture は named argument、`in`、直接 `contains`、通常の `ULong` overload、full/narrow/empty range と unsigned 境界を固定する。全 Swift/Golden/diff の変更 head G は未実行のため完了は保留する。
 
 - [ ] KSP-1293: kotlin.ranges.CharProgression top-level の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.ranges.CharProgression` / top-level

@@ -3,7 +3,7 @@ symbol fq=Animal.weight kind=property vis=public flags=_ type=Int
 symbol fq=Cat kind=class vis=public flags=_
 symbol fq=Cat.<init>.$0.weight kind=valueParameter vis=private flags=_
 symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
 symbol fq=testGroupingAggregateTo kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>,kotlin.collections.MutableMap<Any?, String>] ret=kotlin.collections.MutableMap<Any?, String>
 symbol fq=testGroupingAggregateTo.$1.destination kind=valueParameter vis=private flags=_

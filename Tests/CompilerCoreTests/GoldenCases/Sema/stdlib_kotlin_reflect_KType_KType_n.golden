@@ -4,7 +4,7 @@ symbol fq=golden.sema.classifier kind=function vis=public flags=_ sig=recv=_ par
 symbol fq=golden.sema.classifier.$1.type kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.markedNullable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KType] ret=Boolean
 symbol fq=golden.sema.markedNullable.$2.type kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=kotlin.reflect.KClassifier kind=interface vis=public flags=synthetic
 symbol fq=kotlin.reflect.KType kind=interface vis=public flags=_
 file fstdlib_kotlin_reflect_KType_KType_n package=golden.sema

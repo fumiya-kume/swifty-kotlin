@@ -14,7 +14,7 @@ symbol fq=kotlin.collections.AbstractCollection.E kind=typeParameter vis=private
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=subtypeResolution kind=function vis=public flags=_ sig=recv=_ params=[CustomCollection,CustomMap] ret=Unit
 symbol fq=subtypeResolution.$1.collection kind=valueParameter vis=private flags=_

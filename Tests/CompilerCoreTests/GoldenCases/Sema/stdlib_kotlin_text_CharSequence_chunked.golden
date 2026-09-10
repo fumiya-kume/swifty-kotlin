@@ -6,7 +6,7 @@ symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[]
 symbol fq=kotlin.Any kind=class vis=public flags=synthetic
 symbol fq=kotlin.Any.toString kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=String
 symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 file fstdlib_kotlin_text_CharSequence_chunked package=golden.sema
   decl golden.sema.chunkedLengths fun chunkedLengths sym=golden.sema.chunkedLengths
   decl golden.sema.chunkedStrings fun chunkedStrings sym=golden.sema.chunkedStrings

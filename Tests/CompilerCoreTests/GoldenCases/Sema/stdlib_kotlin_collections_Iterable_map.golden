@@ -10,7 +10,7 @@ symbol fq=__local_8.destination kind=local vis=private flags=_ type=kotlin.colle
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.List.isEmpty kind=function vis=public flags=synthetic sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[] ret=Boolean
 symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
