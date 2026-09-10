@@ -73,6 +73,55 @@ public fun String.lastOrNull(predicate: (Char) -> Boolean): Char? {
     return null
 }
 
+// KSP-1399: keep the CharSequence single-family implementation on direct
+// length/indexed-get dispatch so custom receivers retain Kotlin UTF-16 behavior.
+public fun CharSequence.single(): Char {
+    return when (length) {
+        0 -> throw NoSuchElementException("Char sequence is empty.")
+        1 -> this[0]
+        else -> throw IllegalArgumentException("Char sequence has more than one element.")
+    }
+}
+
+public inline fun CharSequence.single(predicate: (Char) -> Boolean): Char {
+    var single: Char? = null
+    var found = false
+    var index = 0
+    while (index < length) {
+        val element = this[index]
+        if (predicate(element)) {
+            if (found) throw IllegalArgumentException("Char sequence contains more than one matching element.")
+            single = element
+            found = true
+        }
+        index++
+    }
+    if (!found) throw NoSuchElementException("Char sequence contains no character matching the predicate.")
+    @Suppress("UNCHECKED_CAST")
+    return single as Char
+}
+
+public fun CharSequence.singleOrNull(): Char? {
+    return if (length == 1) this[0] else null
+}
+
+public inline fun CharSequence.singleOrNull(predicate: (Char) -> Boolean): Char? {
+    var single: Char? = null
+    var found = false
+    var index = 0
+    while (index < length) {
+        val element = this[index]
+        if (predicate(element)) {
+            if (found) return null
+            single = element
+            found = true
+        }
+        index++
+    }
+    if (!found) return null
+    return single
+}
+
 public fun String.single(): Char {
     return this.__kk_string_single()
 }

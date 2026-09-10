@@ -170,6 +170,12 @@ extension DataFlowSemaPhase {
             if let linkName = binding.record.externalLinkName, !linkName.isEmpty {
                 externalLinkNameToSymbol[linkName] = binding.symbol
             }
+            // Inline bodies can call a default stub whose signature is restored
+            // below. Resolve it to that symbol so ABI lowering retains the
+            // parameter and return types, including the flat String ABI.
+            if let linkName = binding.record.defaultStubExternalLinkName, !linkName.isEmpty {
+                externalLinkNameToSymbol[linkName] = SyntheticSymbolScheme.defaultStubSymbol(for: binding.symbol)
+            }
             let fQName = binding.record.fqName
                 .map { interner.resolve($0) }
                 .joined(separator: ".")
