@@ -28,7 +28,7 @@ struct SuspendFunctionSyntheticStubTests {
             "Expected kotlin.coroutines.SuspendFunction to be registered"
         )
         #expect(sema.symbols.symbol(symbol)?.kind == .interface)
-        #expect(sema.symbols.symbol(symbol)?.flags.contains(.synthetic) == true)
+        #expect(sema.symbols.symbol(symbol)?.flags.contains(.synthetic) == false)
 
         let typeParameters = sema.types.nominalTypeParameterSymbols(for: symbol)
         #expect(typeParameters.count == 1)

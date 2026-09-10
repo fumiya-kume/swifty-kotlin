@@ -1,0 +1,62 @@
+symbol fq=golden.sema.RestrictedScope kind=class vis=public flags=_
+symbol fq=golden.sema.abstractElement kind=function vis=public flags=_ sig=recv=_ params=[kotlin.coroutines.AbstractCoroutineContextElement] ret=kotlin.coroutines.CoroutineContext.Element
+symbol fq=golden.sema.abstractElement.$0.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.abstractKey kind=function vis=public flags=_ sig=recv=_ params=[kotlin.coroutines.AbstractCoroutineContextKey<kotlin.coroutines.CoroutineContext.Element, kotlin.coroutines.CoroutineContext.Element>] ret=kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.CoroutineContext.Element>
+symbol fq=golden.sema.abstractKey.$1.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.continuationContext kind=function vis=public flags=_ sig=recv=_ params=[kotlin.coroutines.Continuation<Int>] ret=kotlin.coroutines.CoroutineContext
+symbol fq=golden.sema.continuationContext.$2.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.continuationFactory kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.coroutines.Continuation<Int>
+symbol fq=golden.sema.currentContext kind=function vis=public flags=suspendFunction sig=recv=_ params=[] ret=kotlin.coroutines.CoroutineContext suspend=1
+symbol fq=golden.sema.emptyContext kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.coroutines.CoroutineContext
+symbol fq=golden.sema.interceptorContext kind=function vis=public flags=_ sig=recv=_ params=[kotlin.coroutines.ContinuationInterceptor] ret=kotlin.coroutines.CoroutineContext
+symbol fq=golden.sema.interceptorContext.$3.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.resumedValue kind=function vis=public flags=suspendFunction sig=recv=_ params=[] ret=Int suspend=1
+symbol fq=kotlin.Result kind=class vis=public flags=_ type=kotlin.Result<kotlin.Result.T>
+symbol fq=kotlin.Result.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.coroutines.Continuation#0 kind=interface vis=public flags=_ type=kotlin.coroutines.Continuation<kotlin.coroutines.Continuation.T>
+symbol fq=kotlin.coroutines.Continuation#1 kind=function vis=public flags=synthetic sig=recv=_ params=[kotlin.coroutines.CoroutineContext,(kotlin.Result<kotlin.coroutines.Continuation.$factory.T>) -> Unit] ret=kotlin.coroutines.Continuation<kotlin.coroutines.Continuation.$factory.T>
+symbol fq=kotlin.coroutines.Continuation.$factory.T kind=typeParameter vis=private flags=synthetic
+symbol fq=kotlin.coroutines.Continuation.$factoryContext kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.coroutines.Continuation.$factoryResumeWith kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.coroutines.Continuation.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.coroutines.Continuation.context kind=property vis=public flags=synthetic type=kotlin.coroutines.CoroutineContext
+symbol fq=kotlin.coroutines.Continuation.resumeWith kind=function vis=public flags=synthetic sig=recv=kotlin.coroutines.Continuation<kotlin.coroutines.Continuation.T> params=[kotlin.Result<kotlin.coroutines.Continuation.T>] ret=Unit
+symbol fq=kotlin.coroutines.Continuation.resumeWith.result kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.coroutines.ContinuationInterceptor kind=interface vis=public flags=_ type=kotlin.coroutines.ContinuationInterceptor
+symbol fq=kotlin.coroutines.CoroutineContext kind=interface vis=public flags=_ type=kotlin.coroutines.CoroutineContext
+symbol fq=kotlin.coroutines.CoroutineContext.Element kind=interface vis=internal flags=synthetic type=kotlin.coroutines.CoroutineContext.Element
+symbol fq=kotlin.coroutines.CoroutineContext.Key kind=interface vis=internal flags=synthetic type=kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.CoroutineContext.Key.$synthetic.E>
+symbol fq=kotlin.coroutines.CoroutineContext.Key.$synthetic.E kind=typeParameter vis=private flags=synthetic
+symbol fq=kotlin.coroutines.EmptyCoroutineContext kind=object vis=public flags=synthetic type=kotlin.coroutines.EmptyCoroutineContext
+symbol fq=kotlin.coroutines.coroutineContext kind=property vis=public flags=synthetic type=kotlin.coroutines.CoroutineContext
+symbol fq=kotlin.coroutines.suspendCoroutine kind=function vis=public flags=inlineFunction|synthetic sig=recv=_ params=[(kotlin.coroutines.Continuation<kotlin.coroutines.suspendCoroutine.T>) -> Unit] ret=kotlin.coroutines.suspendCoroutine.T suspend=1
+symbol fq=kotlin.coroutines.suspendCoroutine.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.coroutines.suspendCoroutine.block kind=valueParameter vis=private flags=synthetic
+file fstdlib_kotlin_coroutines_n_n package=golden.sema
+  decl golden.sema.abstractElement fun abstractElement sym=golden.sema.abstractElement
+  decl golden.sema.abstractKey fun abstractKey sym=golden.sema.abstractKey
+  decl golden.sema.continuationContext fun continuationContext sym=golden.sema.continuationContext
+  decl golden.sema.interceptorContext fun interceptorContext sym=golden.sema.interceptorContext
+  decl golden.sema.emptyContext fun emptyContext sym=golden.sema.emptyContext
+  decl golden.sema.currentContext fun currentContext suspend=1 sym=golden.sema.currentContext
+  decl golden.sema.continuationFactory fun continuationFactory sym=golden.sema.continuationFactory
+  decl golden.sema.RestrictedScope class RestrictedScope sym=golden.sema.RestrictedScope
+  decl golden.sema.resumedValue fun resumedValue suspend=1 sym=golden.sema.resumedValue
+expr e@14:89 name(value) type=kotlin.coroutines.AbstractCoroutineContextElement ref=golden.sema.abstractElement.$0.value
+expr e@17:155 name(value) type=kotlin.coroutines.AbstractCoroutineContextKey<kotlin.coroutines.CoroutineContext.Element, kotlin.coroutines.CoroutineContext.Element> ref=golden.sema.abstractKey.$1.value
+expr e@19:71 name(value) type=kotlin.coroutines.Continuation<Int> ref=golden.sema.continuationContext.$2.value
+expr e@19:71#1 memberCall recv=e@19:71 callee=context args=[] type=kotlin.coroutines.CoroutineContext ref=kotlin.coroutines.Continuation.context
+expr e@21:76 name(value) type=kotlin.coroutines.ContinuationInterceptor ref=golden.sema.interceptorContext.$3.value
+expr e@23:40 name(EmptyCoroutineContext) type=kotlin.coroutines.EmptyCoroutineContext ref=kotlin.coroutines.EmptyCoroutineContext
+expr e@25:50 name(coroutineContext) type=kotlin.coroutines.CoroutineContext ref=kotlin.coroutines.coroutineContext
+expr e@27:66 name(EmptyCoroutineContext) type=kotlin.coroutines.EmptyCoroutineContext ref=kotlin.coroutines.EmptyCoroutineContext
+expr e@27:90 blockExpr stmts=[] trailing=_ type=Unit
+expr e@27:89 lambda params=[_] body=e@27:90 label=Continuation type=(kotlin.Result<Int>) -> Unit
+expr e@27:48 call callee=e@27:48#1 args=[_:e@27:66,_:e@27:89] type=kotlin.coroutines.Continuation<Int> call=kotlin.coroutines.Continuation#1 targs=[Int]
+expr e@33:5 name(continuation) type=kotlin.coroutines.Continuation<Int> ref=s-0
+expr e@33:29 name(Result) type=kotlin.Result.Companion ref=kotlin.Result
+expr e@33:44 int(42) type=Int
+expr e@33:29#1 memberCall recv=e@33:29 callee=success args=[_:e@33:44] type=kotlin.Result<Int> call=kotlin.success targs=[Int]
+expr e@33:5#1 memberCall recv=e@33:5 callee=resumeWith args=[_:e@33:29#1] type=Unit ref=kotlin.coroutines.Continuation.resumeWith call=kotlin.coroutines.Continuation.resumeWith
+expr e@32:52 lambda params=[continuation] body=e@33:5#1 label=suspendCoroutine type=(kotlin.coroutines.Continuation<Int>) -> Unit
+expr e@32:35 call callee=e@32:35#1 args=[_:e@32:52] type=Int call=kotlin.coroutines.suspendCoroutine targs=[Int]

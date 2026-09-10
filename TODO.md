@@ -2570,13 +2570,15 @@
     - `kotlin.concurrent.atomics.AtomicReference.toString` — fun AtomicReference.toString(): String  -- `final fun toString(): kotlin/String`
     - `kotlin.concurrent.atomics.AtomicReference.value` — val AtomicReference.value: #A  -- `final var value`
 
-- [ ] KSP-1131: kotlin.coroutines top-level の未実装 stdlib API を実装する（12 件）
+- [x] KSP-1131: kotlin.coroutines top-level の未実装 stdlib API を実装する（12 件）
   - 対象: `kotlin.coroutines` / top-level
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/coroutines/Stdlib.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_coroutines_n_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_coroutines_n_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_coroutines_n_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠: Kotlin 2.3.10 の common source・metadata と照合し、`Stdlib.kt` に `Continuation<in T>`、`ContinuationInterceptor : CoroutineContext.Element`、`CoroutineContext`、`SuspendFunction<out R>`、`AbstractCoroutineContextElement`、`AbstractCoroutineContextKey` の source-backed nominal 宣言を追加した。既存の `suspendCoroutine`、`Continuation` factory、`coroutineContext`、`Continuation` receiver の runtime bridge は residual ABI として保持し、`Continuation` の declaration-site `in` variance を source collection 後も維持する。`EmptyCoroutineContext`、`RestrictsSuspension`、`SafeContinuation` の constructor/member 実装は、それぞれ既存実装または専用 TODO の所有範囲を変更していない。
+  - 検証根拠: 対象 Sema Golden を direct worker と比較して一致、`CoroutineSyntheticStubTests` 1件、`CoroutineIntrinsicsSyntheticStubTests` 6件、Kotlin 2.3.10 対象 diff、`check_todo_ids.sh`、`validate_runtime_abi_links.sh` が pass。diff は初回のみ共有環境の暖機で 120 秒を超えたが、同じ標準 120 秒制限で再実行し pass。
   - 未実装シンボル一覧:
     - `kotlin.coroutines.AbstractCoroutineContextElement` — class kotlin.coroutines.AbstractCoroutineContextElement  -- `abstract class kotlin.coroutines/AbstractCoroutineContextElement : kotlin.coroutines/CoroutineContext.Element {`
     - `kotlin.coroutines.AbstractCoroutineContextKey` — class kotlin.coroutines.AbstractCoroutineContextKey  -- `abstract class <#A: kotlin.coroutines/CoroutineContext.Element, #B: #A> kotlin.coroutines/AbstractCoroutineContextKey : kotlin.coroutines/CoroutineContext.Key<#B> {`

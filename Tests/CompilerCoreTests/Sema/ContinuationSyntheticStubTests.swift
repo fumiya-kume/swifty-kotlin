@@ -32,11 +32,11 @@ struct ContinuationSyntheticStubTests {
             "Expected kotlin.coroutines.Continuation to be registered"
         )
         #expect(sema.symbols.symbol(continuationSymbol)?.kind == .interface)
-        #expect(sema.symbols.symbol(continuationSymbol)?.flags.contains(.synthetic) == true)
+        #expect(sema.symbols.symbol(continuationSymbol)?.flags.contains(.synthetic) == false)
 
         let continuationTypeParameterSymbols = sema.types.nominalTypeParameterSymbols(for: continuationSymbol)
         #expect(continuationTypeParameterSymbols.count == 1)
-        #expect(sema.types.nominalTypeParameterVariances(for: continuationSymbol) == [.invariant])
+        #expect(sema.types.nominalTypeParameterVariances(for: continuationSymbol) == [.in])
 
         let continuationTParamSymbol = try #require(continuationTypeParameterSymbols.first)
         let continuationTType = sema.types.make(.typeParam(TypeParamType(
@@ -55,7 +55,7 @@ struct ContinuationSyntheticStubTests {
             "Expected kotlin.coroutines.CoroutineContext to be registered"
         )
         #expect(sema.symbols.symbol(coroutineContextSymbol)?.kind == .interface)
-        #expect(sema.symbols.symbol(coroutineContextSymbol)?.flags.contains(.synthetic) == true)
+        #expect(sema.symbols.symbol(coroutineContextSymbol)?.flags.contains(.synthetic) == false)
         let coroutineContextType = sema.types.make(.classType(ClassType(
             classSymbol: coroutineContextSymbol,
             args: [],

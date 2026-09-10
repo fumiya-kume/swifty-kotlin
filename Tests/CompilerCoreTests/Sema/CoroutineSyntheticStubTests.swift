@@ -279,7 +279,7 @@ struct CoroutineSyntheticStubTests {
 
                 let continuationTypeParams = sema.types.nominalTypeParameterSymbols(for: continuationSymbol)
                 #expect(continuationTypeParams.count == 1)
-                #expect(sema.types.nominalTypeParameterVariances(for: continuationSymbol) == [.invariant])
+                #expect(sema.types.nominalTypeParameterVariances(for: continuationSymbol) == [.in])
 
                 _ = try #require(sema.symbols.propertyType(for: continuationSymbol))
 
