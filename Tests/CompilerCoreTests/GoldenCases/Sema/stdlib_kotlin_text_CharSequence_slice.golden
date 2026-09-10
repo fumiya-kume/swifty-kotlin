@@ -1,0 +1,19 @@
+symbol fq=golden.sema.charSequenceSliceIterable.$0.indices[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceSliceIterable.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceSliceIterable[kind=fun;params=kotlin.CharSequence,kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.collections.Iterable<Int>] ret=kotlin.CharSequence
+symbol fq=golden.sema.charSequenceSliceRange.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceSliceRange[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.CharSequence
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
+file fstdlib_kotlin_text_CharSequence_slice package=golden.sema
+  decl golden.sema.charSequenceSliceRange[kind=fun;params=kotlin.CharSequence] fun charSequenceSliceRange sym=golden.sema.charSequenceSliceRange[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.charSequenceSliceIterable[kind=fun;params=kotlin.CharSequence,kotlin.collections.Iterable<Int>] fun charSequenceSliceIterable sym=golden.sema.charSequenceSliceIterable[kind=fun;params=kotlin.CharSequence,kotlin.collections.Iterable<Int>]
+expr e@4:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceSliceRange.$1.source[kind=vparam]
+expr e@4:18 int(1) type=Int
+expr e@4:21 int(3) type=Int
+expr e@4:18#1 binary(rangeTo) lhs=e@4:18 rhs=e@4:21 type=Int
+expr e@4:5#1 memberCall recv=e@4:5 callee=slice args=[_:e@4:18#1] type=kotlin.CharSequence call=kotlin.text.slice[kind=fun;recv=kotlin.CharSequence;params=kotlin.ranges.IntRange]
+expr e@9:19 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceSliceIterable.$0.source[kind=vparam]
+expr e@9:32 name(indices) type=kotlin.collections.Iterable<Int> ref=golden.sema.charSequenceSliceIterable.$0.indices[kind=vparam]
+expr e@9:19#1 memberCall recv=e@9:19 callee=slice args=[_:e@9:32] type=kotlin.CharSequence call=kotlin.text.slice[kind=fun;recv=kotlin.CharSequence;params=kotlin.collections.Iterable<Int>]
