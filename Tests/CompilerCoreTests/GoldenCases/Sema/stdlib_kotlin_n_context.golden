@@ -1,24 +1,24 @@
-symbol fq=golden.sema.ContextTag kind=class vis=public flags=_
-symbol fq=golden.sema.ContextTag.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.ContextTag params=[String] ret=golden.sema.ContextTag
-symbol fq=golden.sema.ContextTag.<init>.$0.label kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.ContextTag.label kind=property vis=public flags=_ type=String
-symbol fq=golden.sema.useContextHelpers kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.ContextTag.<init>.$0.label[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.ContextTag.<init>[kind=ctor;recv=golden.sema.ContextTag;params=String] kind=constructor vis=public flags=_ sig=recv=golden.sema.ContextTag params=[String] ret=golden.sema.ContextTag
+symbol fq=golden.sema.ContextTag.label[kind=prop] kind=property vis=public flags=_ type=String
+symbol fq=golden.sema.ContextTag[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.useContextHelpers[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstdlib_kotlin_n_context package=golden.sema
-  decl golden.sema.ContextTag class ContextTag sym=golden.sema.ContextTag
-  decl golden.sema.useContextHelpers fun useContextHelpers sym=golden.sema.useContextHelpers
+  decl golden.sema.ContextTag[kind=class] class ContextTag sym=golden.sema.ContextTag[kind=class]
+  decl golden.sema.useContextHelpers[kind=fun;params=] fun useContextHelpers sym=golden.sema.useContextHelpers[kind=fun;params=]
 expr e@9:13 string(one) type=String
-expr e@9:22 call callee=e@9:22#1 args=[] type=String call=kotlin.contextOf targs=[String]
+expr e@9:22 call callee=e@9:22#1 args=[] type=String call=kotlin.contextOf[kind=fun;params=;gen=1] targs=[String]
 expr e@9:20 lambda params=[] body=e@9:22 label=context type=context(String) () -> Any
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13,_:e@9:20] type=String call=kotlin.context#0 targs=[String,String]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13,_:e@9:20] type=String call=kotlin.context[kind=fun;params=T0,fn{ctx=T0;p=;ret=T1};gen=2] targs=[String,String]
 expr e@10:17 int(1) type=Int
 expr e@10:20 int(2) type=Int
 expr e@10:23 int(3) type=Int
 expr e@10:26 int(4) type=Int
 expr e@10:29 int(5) type=Int
 expr e@10:43 string(six) type=String
-expr e@10:32 call callee=e@10:32#1 args=[_:e@10:43] type=golden.sema.ContextTag call=golden.sema.ContextTag.<init>
-expr e@10:53 call callee=e@10:53#1 args=[] type=golden.sema.ContextTag call=kotlin.contextOf targs=[golden.sema.ContextTag]
-expr e@10:53#2 memberCall recv=e@10:53 callee=label args=[] type=String ref=golden.sema.ContextTag.label
+expr e@10:32 call callee=e@10:32#1 args=[_:e@10:43] type=golden.sema.ContextTag call=golden.sema.ContextTag.<init>[kind=ctor;recv=golden.sema.ContextTag;params=String]
+expr e@10:53 call callee=e@10:53#1 args=[] type=golden.sema.ContextTag call=kotlin.contextOf[kind=fun;params=;gen=1] targs=[golden.sema.ContextTag]
+expr e@10:53#2 memberCall recv=e@10:53 callee=label args=[] type=String ref=golden.sema.ContextTag.label[kind=prop]
 expr e@10:51 lambda params=[] body=e@10:53#2 label=context type=context(Int, Int, Int, Int, Int, golden.sema.ContextTag) () -> Any
-expr e@10:9 call callee=e@10:9#1 args=[_:e@10:17,_:e@10:20,_:e@10:23,_:e@10:26,_:e@10:29,_:e@10:32,_:e@10:51] type=String call=kotlin.context#5 targs=[Int,Int,Int,Int,Int,golden.sema.ContextTag,String]
+expr e@10:9 call callee=e@10:9#1 args=[_:e@10:17,_:e@10:20,_:e@10:23,_:e@10:26,_:e@10:29,_:e@10:32,_:e@10:51] type=String call=kotlin.context[kind=fun;params=T0,T1,T2,T3,T4,T5,fn{ctx=T0,T1,T2,T3,T4,T5;p=;ret=T6};gen=7] targs=[Int,Int,Int,Int,Int,golden.sema.ContextTag,String]
 expr e@9:5#2 binary(add) lhs=e@9:5 rhs=e@10:9 type=String

@@ -1,0 +1,17 @@
+symbol fq=__local_0.statistics[kind=local] kind=local vis=private flags=_ type=kotlin.native.runtime.SweepStatistics
+symbol fq=golden.sema.sweepStatisticsProperties[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
+file fstdlib_kotlin_native_runtime_SweepStatistics_properties_n package=golden.sema
+  decl golden.sema.sweepStatisticsProperties[kind=fun;params=] fun sweepStatisticsProperties sym=golden.sema.sweepStatisticsProperties[kind=fun;params=]
+expr e@7:39 long(9223372036854775807) type=Long
+expr e@7:38 unary(unaryMinus) operand=e@7:39 type=Long
+expr e@7:62 long(1) type=Long
+expr e@7:38#1 binary(subtract) lhs=e@7:38 rhs=e@7:62 type=Long
+expr e@7:66 long(9223372036854775807) type=Long
+expr e@7:22 call callee=e@7:22#1 args=[_:e@7:38#1,_:e@7:66] type=kotlin.native.runtime.SweepStatistics call=kotlin.native.runtime.SweepStatistics.<init>[kind=ctor;recv=kotlin.native.runtime.SweepStatistics;params=Long,Long]
+expr e@7:5 localDecl statistics mutable=0 type=_ init=e@7:22 type=Unit ref=__local_0.statistics[kind=local]
+expr e@8:12 name(statistics) type=kotlin.native.runtime.SweepStatistics ref=__local_0.statistics[kind=local]
+expr e@8:12#1 memberCall recv=e@8:12 callee=sweptCount args=[] type=Long ref=kotlin.native.runtime.SweepStatistics.sweptCount[kind=prop]
+expr e@8:36 name(statistics) type=kotlin.native.runtime.SweepStatistics ref=__local_0.statistics[kind=local]
+expr e@8:36#1 memberCall recv=e@8:36 callee=keptCount args=[] type=Long ref=kotlin.native.runtime.SweepStatistics.keptCount[kind=prop]
+expr e@8:12#2 binary(add) lhs=e@8:12#1 rhs=e@8:36#1 type=Long
+expr e@8:5 return value=e@8:12#2 type=Nothing

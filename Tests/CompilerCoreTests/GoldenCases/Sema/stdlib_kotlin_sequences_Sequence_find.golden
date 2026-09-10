@@ -1,35 +1,34 @@
-symbol fq=__local_0.values kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int?>
-symbol fq=__local_1.first kind=local vis=private flags=_ type=Int?
-symbol fq=__local_2.last kind=local vis=private flags=_ type=Int?
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.values[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int?>
+symbol fq=__local_1.first[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_2.last[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_sequences_Sequence_find package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:45 name(null) type=Nothing?
 expr e@2:51 int(1) type=Int
 expr e@2:54 int(2) type=Int
 expr e@2:57 name(null) type=Nothing?
-expr e@2:34 call callee=e@2:34#1 args=[_:e@2:45,_:e@2:51,_:e@2:54,_:e@2:57] type=kotlin.sequences.Sequence<Int?> call=kotlin.sequences.sequenceOf targs=[Int?]
-expr e@2:5 localDecl values mutable=0 type=Sequence<Int?> init=e@2:34 type=Unit ref=__local_0.values
-expr e@3:23 name(values) type=kotlin.sequences.Sequence<Int?> ref=__local_0.values
+expr e@2:34 call callee=e@2:34#1 args=[_:e@2:45,_:e@2:51,_:e@2:54,_:e@2:57] type=kotlin.sequences.Sequence<Int?> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int?]
+expr e@2:5 localDecl values mutable=0 type=Sequence<Int?> init=e@2:34 type=Unit ref=__local_0.values[kind=local]
+expr e@3:23 name(values) type=kotlin.sequences.Sequence<Int?> ref=__local_0.values[kind=local]
 expr e@3:37 name(it) type=Int? ref=s-0
 expr e@3:43 name(null) type=Nothing?
 expr e@3:37#1 binary(equal) lhs=e@3:37 rhs=e@3:43 type=Boolean
 expr e@3:35 lambda params=[] body=e@3:37#1 label=find type=(Int?) -> Boolean
-expr e@3:23#1 memberCall recv=e@3:23 callee=find args=[_:e@3:35] type=Int? call=kotlin.sequences.find targs=[Int?]
-expr e@3:5 localDecl first mutable=0 type=Int? init=e@3:23#1 type=Unit ref=__local_1.first
-expr e@4:22 name(values) type=kotlin.sequences.Sequence<Int?> ref=__local_0.values
+expr e@3:23#1 memberCall recv=e@3:23 callee=find args=[_:e@3:35] type=Int? call=kotlin.sequences.find[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int?]
+expr e@3:5 localDecl first mutable=0 type=Int? init=e@3:23#1 type=Unit ref=__local_1.first[kind=local]
+expr e@4:22 name(values) type=kotlin.sequences.Sequence<Int?> ref=__local_0.values[kind=local]
 expr e@4:40 name(it) type=Int? ref=s-1
 expr e@4:46 name(null) type=Nothing?
 expr e@4:40#1 binary(equal) lhs=e@4:40 rhs=e@4:46 type=Boolean
 expr e@4:38 lambda params=[] body=e@4:40#1 label=findLast type=(Int?) -> Boolean
-expr e@4:22#1 memberCall recv=e@4:22 callee=findLast args=[_:e@4:38] type=Int? call=kotlin.sequences.findLast targs=[Int?]
-expr e@4:5 localDecl last mutable=0 type=Int? init=e@4:22#1 type=Unit ref=__local_2.last
-expr e@5:13 name(first) type=Int? ref=__local_1.first
+expr e@4:22#1 memberCall recv=e@4:22 callee=findLast args=[_:e@4:38] type=Int? call=kotlin.sequences.findLast[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int?]
+expr e@4:5 localDecl last mutable=0 type=Int? init=e@4:22#1 type=Unit ref=__local_2.last[kind=local]
+expr e@5:13 name(first) type=Int? ref=__local_1.first[kind=local]
 expr e@5:22 name(null) type=Nothing?
 expr e@5:13#1 binary(equal) lhs=e@5:13 rhs=e@5:22 type=Boolean
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println#1
-expr e@6:13 name(last) type=Int? ref=__local_2.last
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@6:13 name(last) type=Int? ref=__local_2.last[kind=local]
 expr e@6:21 name(null) type=Nothing?
 expr e@6:13#1 binary(equal) lhs=e@6:13 rhs=e@6:21 type=Boolean
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println#1
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

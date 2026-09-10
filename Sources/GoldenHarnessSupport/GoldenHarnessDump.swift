@@ -72,9 +72,15 @@ enum GoldenHarnessDump {
 
     static func dumpSema(
         sourcePath: String,
-        preInjectedFiles: [(path: String, contents: Data)] = []
+        preInjectedFiles: [(path: String, contents: Data)] = [],
+        stdlibLibraryPath: String? = nil
     ) throws -> String {
-        let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenSema", emit: .kirDump)
+        let ctx = makeCompilationContext(
+            inputs: [sourcePath],
+            moduleName: "GoldenSema",
+            emit: .kirDump,
+            stdlibLibraryPath: stdlibLibraryPath
+        )
         for (path, contents) in preInjectedFiles {
             _ = ctx.sourceManager.addFile(path: path, contents: contents, origin: .bundledStdlib)
         }
@@ -90,7 +96,6 @@ enum GoldenHarnessDump {
         guard let sourceFileID = ctx.sourceManager.fileID(forPath: sourcePath) else {
             throw GoldenHarnessDumpError.missingSourceFile
         }
-        let excludedFileIDs = bundledStdlibFileIDs(in: ctx.sourceManager)
 
         return renderSemaOutput(
             ast: ast,
@@ -98,7 +103,6 @@ enum GoldenHarnessDump {
             interner: ctx.interner,
             sourceManager: ctx.sourceManager,
             sourceFileID: sourceFileID,
-            excludedFileIDs: excludedFileIDs,
             diagnostics: ctx.diagnostics
         )
     }
@@ -111,7 +115,6 @@ enum GoldenHarnessDump {
         interner: StringInterner,
         sourceManager: SourceManager,
         sourceFileID: FileID,
-        excludedFileIDs: Set<Int32> = [],
         diagnostics: DiagnosticEngine
     ) -> String {
         let ctx = StableRenderContext(sema: sema, interner: interner, ast: ast, sourceManager: sourceManager)
@@ -148,8 +151,18 @@ enum GoldenHarnessDump {
         // a numeric-aware comparison so embedded ordinals sort by value.
         let requiredSymbols = sema.symbols.allSymbols()
             .filter { ctx.requiredSymbols.contains($0.id.rawValue) }
-            .filter { !isExcludedBundledSymbol($0, excludedFileIDs: excludedFileIDs) }
-            .sorted { ctx.stableKey(for: $0.id).compare(ctx.stableKey(for: $1.id), options: .numeric) == .orderedAscending }
+            .filter { !isExcludedLibrarySymbol($0, sourceFileID: sourceFileID) }
+            .sorted { lhs, rhs in
+                let lhsKey = ctx.stableKey(for: lhs.id)
+                let rhsKey = ctx.stableKey(for: rhs.id)
+                if lhsKey != rhsKey {
+                    return lhsKey.compare(rhsKey, options: .numeric) == .orderedAscending
+                }
+                // Meaning-identical declarations can still collide (e.g. a
+                // source declaration and its synthetic stub twin); order them
+                // by the rendered line so the dump stays deterministic.
+                return renderSymbol(lhs, ctx: ctx).compare(renderSymbol(rhs, ctx: ctx), options: .numeric) == .orderedAscending
+            }
 
         var symbolLines: [String] = []
         for symbol in requiredSymbols {
@@ -194,15 +207,16 @@ enum GoldenHarnessDump {
     }
 
 
-    private static func bundledStdlibFileIDs(in sourceManager: SourceManager) -> Set<Int32> {
-        Set(sourceManager.fileIDs()
-            .filter { sourceManager.origin(of: $0)?.isBundledStdlib == true }
-            .map(\.rawValue))
-    }
-
-    private static func isExcludedBundledSymbol(_ symbol: SemanticSymbol, excludedFileIDs: Set<Int32>) -> Bool {
-        guard let declSite = symbol.declSite else { return false }
-        return excludedFileIDs.contains(declSite.start.file.rawValue)
+    /// `symbol` lines list only declarations authored inside the golden case
+    /// file itself. Library-owned symbols — bundled-stdlib decls, imported
+    /// `.kklib` decls, and synthetic stdlib stubs or compiler-internal
+    /// helpers (all of which have no case-file `declSite`) — are internal
+    /// topology that differs between the bundled-source and artifact loading
+    /// paths; the expr-level `ref=`/`call=`/`type=` output already pins how
+    /// they were resolved, so listing them here only adds noise.
+    private static func isExcludedLibrarySymbol(_ symbol: SemanticSymbol, sourceFileID: FileID) -> Bool {
+        guard let declSite = symbol.declSite else { return true }
+        return declSite.start.file != sourceFileID
     }
 
     private static func renderSymbol(_ symbol: SemanticSymbol, ctx: StableRenderContext) -> String {
@@ -261,11 +275,20 @@ enum GoldenHarnessDump {
         }
 
         if let refSymbol = ctx.sema.bindings.identifierSymbols[id] {
-            if refSymbol.rawValue >= 0 {
-                ctx.requireSymbol(refSymbol)
-                line += " ref=\(ctx.stableKey(for: refSymbol))"
-            } else {
-                line += " ref=s\(refSymbol.rawValue)"
+            // Imported-library property reads bind both the property reference
+            // and its accessor call, while the bundled-source path binds only
+            // the accessor call. The ref is redundant there — drop it when the
+            // call target is exactly the referenced property's accessor.
+            let isAccessorPair = ctx.sema.bindings.callBindings[id].map {
+                ctx.sema.symbols.accessorOwnerProperty(for: $0.chosenCallee) == refSymbol
+            } ?? false
+            if !isAccessorPair {
+                if refSymbol.rawValue >= 0 {
+                    ctx.requireSymbol(refSymbol)
+                    line += " ref=\(ctx.stableKey(for: refSymbol))"
+                } else {
+                    line += " ref=s\(refSymbol.rawValue)"
+                }
             }
         }
 
@@ -281,8 +304,13 @@ enum GoldenHarnessDump {
         return line
     }
 
-    static func dumpDiagnostics(sourcePath: String) throws -> String {
-        let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenDiag", emit: .kirDump)
+    static func dumpDiagnostics(sourcePath: String, stdlibLibraryPath: String? = nil) throws -> String {
+        let ctx = makeCompilationContext(
+            inputs: [sourcePath],
+            moduleName: "GoldenDiag",
+            emit: .kirDump,
+            stdlibLibraryPath: stdlibLibraryPath
+        )
         do {
             try runFrontend(ctx)
             try SemaPhase().run(ctx)

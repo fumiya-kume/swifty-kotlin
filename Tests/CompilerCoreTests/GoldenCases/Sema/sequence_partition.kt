@@ -1,29 +1,11 @@
-fun main() {
-    // Basic partition on sequenceOf
-    val seq = sequenceOf(1, 2, 3, 4, 5)
-    val (evens, odds) = seq.partition { it % 2 == 0 }
-    println(evens)   // [2, 4]
-    println(odds)    // [1, 3, 5]
+// RF-FIXTURE-012: Sequence<T>.partition — the predicate receives T, the
+// result is Pair<List<T>, List<T>>, and both sides destructure as List<T>.
+// Execution (basic, empty, asSequence, all-match, none-match) is covered by
+// Scripts/diff_cases/sequence_partition.kt and
+// CodegenBackendIntegrationTests+SequenceEdgeCases.testCodegenSequencePartitionSplitsElements.
 
-    // Partition on empty sequence
-    val emptySeq = emptySequence<Int>()
-    val (matchEmpty, noMatchEmpty) = emptySeq.partition { it > 0 }
-    println(matchEmpty)    // []
-    println(noMatchEmpty)  // []
-
-    // Partition on asSequence()
-    val list = listOf(10, 20, 30, 40, 50)
-    val (big, small) = list.asSequence().partition { it >= 30 }
-    println(big)    // [30, 40, 50]
-    println(small)  // [10, 20]
-
-    // All match
-    val allMatch = sequenceOf(2, 4, 6).partition { it % 2 == 0 }
-    println(allMatch.first)   // [2, 4, 6]
-    println(allMatch.second)  // []
-
-    // None match
-    val noneMatch = sequenceOf(1, 3, 5).partition { it % 2 == 0 }
-    println(noneMatch.first)   // []
-    println(noneMatch.second)  // [1, 3, 5]
+fun partitionSequence(values: Sequence<Int>) {
+    val (matching, rest) = values.partition { it % 2 == 0 }
+    val checkedMatching: List<Int> = matching
+    val checkedRest: List<Int> = rest
 }

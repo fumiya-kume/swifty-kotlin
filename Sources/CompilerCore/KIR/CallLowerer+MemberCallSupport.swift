@@ -43,6 +43,40 @@ func computeAnyFallbackTag(for type: TypeID, sema: SemaModule) -> Int64 {
     }
 }
 
+/// Boxes a statically non-null Long, ULong, or Double before generic hash
+/// dispatch. Their raw 64-bit representations can equal the runtime null
+/// sentinel, so passing them directly to `kk_any_hashCode` would turn a
+/// legitimate value into the null hash. `boxValueForAnySlot` selects the
+/// `_nonnull` callee variants for these types while leaving nullable sources
+/// on their existing sentinel-preserving path.
+func boxSentinelProneHashCodeReceiver(
+    _ value: KIRExprID,
+    sourceType: TypeID,
+    sema: SemaModule,
+    interner: StringInterner,
+    arena: KIRArena,
+    into instructions: inout [KIRInstruction]
+) -> KIRExprID {
+    switch sema.types.kind(of: sourceType) {
+    case .primitive(.long, .nonNull),
+         .primitive(.ulong, .nonNull),
+         .primitive(.double, .nonNull):
+        return boxValueForAnySlot(
+            value,
+            sourceType: sourceType,
+            types: sema.types,
+            symbols: sema.symbols,
+            interner: interner,
+            arena: arena,
+            resultType: sema.types.anyType,
+            requireNonNull: true,
+            into: &instructions
+        )
+    default:
+        return value
+    }
+}
+
 /// The `$enumOrdinalToName$<encodedFqName>(ordinal): String` helper for `type`,
 /// when `type` is a non-null enum class that has one.
 ///
@@ -77,9 +111,53 @@ func resolveEnumOrdinalToNameCallee(
     return (helperName, helperSymbol)
 }
 
-/// Resolves `type`'s own `toString()` symbol — user-defined, or synthesized by
-/// `DataEnumSealedSynthesisPass` for a data class — when one exists and is not
-/// the `kotlin.Any.toString()` placeholder every class inherits by default.
+/// Resolves the nearest class-declared `toString()` symbol — user-defined, or
+/// synthesized by `DataEnumSealedSynthesisPass` for a data class — while
+/// walking the class inheritance chain. The synthetic `kotlin.Any.toString()`
+/// placeholder every class inherits by default is excluded.
+func resolveClassToStringSymbol(
+    for classSymbolID: SymbolID,
+    sema: SemaModule,
+    interner: StringInterner
+) -> SymbolID? {
+    let toStringName = interner.intern("toString")
+    var currentSymbolID = classSymbolID
+    var visited: Set<SymbolID> = []
+
+    while visited.insert(currentSymbolID).inserted {
+        guard let classSymbol = sema.symbols.symbol(currentSymbolID) else {
+            break
+        }
+        let candidate = sema.symbols.lookupAll(
+            fqName: classSymbol.fqName + [toStringName]
+        ).first { id in
+            guard let symbol = sema.symbols.symbol(id), symbol.kind == .function else {
+                return false
+            }
+            return sema.symbols.functionSignature(for: id)?.parameterTypes.isEmpty ?? true
+        }
+        if let candidate,
+           let symbol = sema.symbols.symbol(candidate),
+           !isSyntheticAnyToStringSymbol(symbol, interner: interner)
+        {
+            return candidate
+        }
+
+        guard let superclass = sema.symbols.directSupertypes(for: currentSymbolID).first(where: { id in
+            sema.symbols.symbol(id)?.kind == .class
+        }) else {
+            break
+        }
+        currentSymbolID = superclass
+    }
+    return nil
+}
+
+/// Resolves `type`'s class-declared `toString()` symbol — user-defined, or
+/// synthesized by `DataEnumSealedSynthesisPass` for a data class — when one
+/// exists and is not the `kotlin.Any.toString()` placeholder every class
+/// inherits by default. The class hierarchy is searched from the static class
+/// type toward its direct superclass.
 /// `type` may be nullable: the class symbol is resolved from its non-null
 /// form, but callers passing a nullable `type` are responsible for
 /// null-guarding the receiver before invoking the returned callee (calling a
@@ -102,7 +180,7 @@ func resolveClassOwnToStringCallee(
     interner: StringInterner
 ) -> (callee: InternedString, symbol: SymbolID)? {
     let toStringName = interner.intern("toString")
-    let toStringFQName: [InternedString]
+    let toStringSymbolID: SymbolID?
     if case .unit = sema.types.kind(of: sema.types.makeNonNullable(type)) {
         // Unit has the builtin value representation, so it has no classType
         // symbol to resolve. Its source-backed object member is still the
@@ -112,17 +190,22 @@ func resolveClassOwnToStringCallee(
         else {
             return nil
         }
-        toStringFQName = unitSymbol.fqName + [toStringName]
+        let toStringFQName = unitSymbol.fqName + [toStringName]
+        toStringSymbolID = sema.symbols.lookupAll(fqName: toStringFQName).first { id in
+            guard let symbol = sema.symbols.symbol(id), symbol.kind == .function else {
+                return false
+            }
+            return sema.symbols.functionSignature(for: id)?.parameterTypes.isEmpty ?? true
+        }
     } else {
         guard let (_, classSymbol) = resolveClassTypeSymbol(type, sema: sema) else {
             return nil
         }
-        toStringFQName = classSymbol.fqName + [toStringName]
-    }
-    let toStringSymbolID: SymbolID? = sema.symbols.lookupAll(fqName: toStringFQName).first { id in
-        guard let sym = sema.symbols.symbol(id), sym.kind == .function else { return false }
-        let sig = sema.symbols.functionSignature(for: id)
-        return sig?.parameterTypes.isEmpty ?? true
+        toStringSymbolID = resolveClassToStringSymbol(
+            for: classSymbol.id,
+            sema: sema,
+            interner: interner
+        )
     }
     guard let toStringSymbolID,
           let toStringSymbol = sema.symbols.symbol(toStringSymbolID),
@@ -139,7 +222,7 @@ func resolveClassOwnToStringCallee(
     return (callee, toStringSymbolID)
 }
 
-private func isSyntheticAnyToStringSymbol(_ sym: SemanticSymbol, interner: StringInterner) -> Bool {
+func isSyntheticAnyToStringSymbol(_ sym: SemanticSymbol, interner: StringInterner) -> Bool {
     guard sym.flags.contains(.synthetic) else { return false }
     let anyToStringFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Any"), interner.intern("toString")]
     return sym.fqName == anyToStringFQName

@@ -756,6 +756,60 @@ struct ArraySyntheticMemberLinkTests {
     }
 
     @Test
+    func testUIntTopLevelFamilyBindsBundledKotlinSource() throws {
+        let ctx = makeContextFromSource(
+            """
+            fun sample() {
+                val values = uintArrayOf(1u, 2u)
+                println(values.size)
+            }
+            """
+        )
+        try runSema(ctx)
+
+        let sema = try #require(ctx.sema)
+        let kotlin = ctx.interner.intern("kotlin")
+        let expectedFunctions: [(name: String, parameters: [TypeID], returnType: TypeID?)] = [
+            ("uintRemainder", [sema.types.uintType, sema.types.uintType], sema.types.uintType),
+            ("uintDivide", [sema.types.uintType, sema.types.uintType], sema.types.uintType),
+            ("uintCompare", [sema.types.intType, sema.types.intType], sema.types.intType),
+            ("uintToULong", [sema.types.intType], sema.types.ulongType),
+            ("uintToLong", [sema.types.intType], sema.types.longType),
+            ("uintToFloat", [sema.types.intType], sema.types.floatType),
+            ("uintToDouble", [sema.types.intType], sema.types.doubleType),
+            ("uintArrayOf", [sema.types.uintType], nil),
+        ]
+
+        for entry in expectedFunctions {
+            let name = ctx.interner.intern(entry.name)
+            let candidates = sema.symbols.lookupAll(fqName: [kotlin, name])
+            #expect(candidates.count == 1, "Expected one kotlin.\(entry.name) symbol, got: \(candidates)")
+            let symbolID = try #require(candidates.first, "Expected kotlin.\(entry.name) to be registered")
+            let symbol = try #require(sema.symbols.symbol(symbolID))
+            #expect(sema.symbols.isSourceBackedSymbol(symbolID), "Expected kotlin.\(entry.name) to be source-backed")
+            #expect(!symbol.flags.contains(.synthetic), "Expected kotlin.\(entry.name) not to be synthetic")
+            #expect(sema.symbols.externalLinkName(for: symbolID) == nil, "Expected kotlin.\(entry.name) to have no runtime link")
+            let signature = try #require(sema.symbols.functionSignature(for: symbolID))
+            #expect(signature.parameterTypes == entry.parameters, "Unexpected kotlin.\(entry.name) parameter types")
+            if let returnType = entry.returnType {
+                #expect(signature.returnType == returnType)
+            }
+            if entry.name == "uintArrayOf" {
+                #expect(signature.valueParameterIsVararg == [true])
+                guard case let .classType(returnClass) = sema.types.kind(of: signature.returnType),
+                      let returnSymbol = sema.symbols.symbol(returnClass.classSymbol)
+                else {
+                    Issue.record("Expected kotlin.uintArrayOf to return UIntArray")
+                    continue
+                }
+                #expect(ctx.interner.resolve(returnSymbol.name) == "UIntArray")
+            } else {
+                #expect(signature.valueParameterIsVararg == Array(repeating: false, count: signature.parameterTypes.count))
+            }
+        }
+    }
+
+    @Test
     func testPrimitiveArrayJoinToStringTransformBindsBundledKotlinSource() throws {
         let sources: [(arrayName: String, expression: String)] = [
             ("IntArray", "intArrayOf(1)"),

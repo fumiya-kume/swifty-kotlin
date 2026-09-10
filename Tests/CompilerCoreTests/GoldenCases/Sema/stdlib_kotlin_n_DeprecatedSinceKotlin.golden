@@ -1,10 +1,10 @@
-symbol fq=golden.sema.OldAnnotation kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.OldClass kind=class vis=public flags=_
-symbol fq=golden.sema.oldFun kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.oldProperty kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.OldAnnotation[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.OldClass[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.oldFun[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.oldProperty[kind=prop] kind=property vis=public flags=_ type=Int
 file fstdlib_kotlin_n_DeprecatedSinceKotlin package=golden.sema
-  decl golden.sema.OldClass class OldClass sym=golden.sema.OldClass
-  decl golden.sema.oldFun fun oldFun sym=golden.sema.oldFun
-  decl golden.sema.oldProperty property oldProperty var=0 sym=golden.sema.oldProperty
-  decl golden.sema.OldAnnotation class OldAnnotation sym=golden.sema.OldAnnotation
+  decl golden.sema.OldClass[kind=class] class OldClass sym=golden.sema.OldClass[kind=class]
+  decl golden.sema.oldFun[kind=fun;params=] fun oldFun sym=golden.sema.oldFun[kind=fun;params=]
+  decl golden.sema.oldProperty[kind=prop] property oldProperty var=0 sym=golden.sema.oldProperty[kind=prop]
+  decl golden.sema.OldAnnotation[kind=anno] class OldAnnotation sym=golden.sema.OldAnnotation[kind=anno]
 expr e@10:24 int(1) type=Int

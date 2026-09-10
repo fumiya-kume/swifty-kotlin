@@ -1,10 +1,9 @@
-symbol fq=golden.sema.testFQNPairConstructor kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<Int, Int>
-symbol fq=golden.sema.testFQNStringBuilderConstructor kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.StringBuilder
-symbol fq=kotlin.Pair kind=class vis=public flags=_
+symbol fq=golden.sema.testFQNPairConstructor[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<Int, Int>
+symbol fq=golden.sema.testFQNStringBuilderConstructor[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.StringBuilder
 file ffqn_constructor_call package=golden.sema
-  decl golden.sema.testFQNStringBuilderConstructor fun testFQNStringBuilderConstructor sym=golden.sema.testFQNStringBuilderConstructor
-  decl golden.sema.testFQNPairConstructor fun testFQNPairConstructor sym=golden.sema.testFQNPairConstructor
-expr e@3:41 memberCall recv=e@3:41#1 callee=StringBuilder args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#0
+  decl golden.sema.testFQNStringBuilderConstructor[kind=fun;params=] fun testFQNStringBuilderConstructor sym=golden.sema.testFQNStringBuilderConstructor[kind=fun;params=]
+  decl golden.sema.testFQNPairConstructor[kind=fun;params=] fun testFQNPairConstructor sym=golden.sema.testFQNPairConstructor[kind=fun;params=]
+expr e@3:41 memberCall recv=e@3:41#1 callee=StringBuilder args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=]
 expr e@4:44 int(1) type=Int
 expr e@4:47 int(2) type=Int
-expr e@4:32 memberCall recv=e@4:32#1 callee=Pair args=[_:e@4:44,_:e@4:47] type=kotlin.Pair<Int, Int> call=kotlin.Pair.<init> targs=[Int,Int]
+expr e@4:32 memberCall recv=e@4:32#1 callee=Pair args=[_:e@4:44,_:e@4:47] type=kotlin.Pair<Int, Int> call=kotlin.Pair.<init>[kind=ctor;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2] targs=[Int,Int]

@@ -1,7 +1,7 @@
-symbol fq=golden.sema.useFunctionBaseBare kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Function<Int>?
-symbol fq=golden.sema.useFunctionBaseQualified kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Function<String>?
+symbol fq=golden.sema.useFunctionBaseBare[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Function<Int>?
+symbol fq=golden.sema.useFunctionBaseQualified[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Function<String>?
 file fstdlib_kotlin_n_Function package=golden.sema
-  decl golden.sema.useFunctionBaseBare fun useFunctionBaseBare sym=golden.sema.useFunctionBaseBare
-  decl golden.sema.useFunctionBaseQualified fun useFunctionBaseQualified sym=golden.sema.useFunctionBaseQualified
+  decl golden.sema.useFunctionBaseBare[kind=fun;params=] fun useFunctionBaseBare sym=golden.sema.useFunctionBaseBare[kind=fun;params=]
+  decl golden.sema.useFunctionBaseQualified[kind=fun;params=] fun useFunctionBaseQualified sym=golden.sema.useFunctionBaseQualified[kind=fun;params=]
 expr e@3:45 name(null) type=Nothing?
 expr e@5:60 name(null) type=Nothing?

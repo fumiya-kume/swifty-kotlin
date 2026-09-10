@@ -2885,7 +2885,7 @@ public func kk_sequence_unzip(_ seqRaw: Int) -> Int {
     )
 }
 
-// MARK: - Sequence Terminal Operations: any/all/none/fold/reduce (STDLIB-274)
+// MARK: - Sequence Terminal Operations: any/all/none/reduce (STDLIB-274)
 
 @_cdecl("kk_sequence_any")
 public func kk_sequence_any(
@@ -3016,33 +3016,6 @@ public func kk_sequence_none(
         return kk_box_bool(1)
     }
     return kk_box_bool(foundMatch ? 0 : 1)
-}
-
-@_cdecl("kk_sequence_fold")
-public func kk_sequence_fold(
-    _ seqRaw: Int,
-    _ initial: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    var acc = initial
-    if let seq = runtimeSequenceBox(from: seqRaw) {
-        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
-            let step = runtimeApplyFoldStep(accumulator: acc, element: elem, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
-            if step.thrown != 0 { return false }
-            acc = step.accumulator
-            return true
-        }
-    } else {
-        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
-            let step = runtimeApplyFoldStep(accumulator: acc, element: elem, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
-            if step.thrown != 0 { return initial }
-            acc = step.accumulator
-        }
-    }
-    if let outThrown, outThrown.pointee != 0 { return initial }
-    return acc
 }
 
 @_cdecl("kk_sequence_reduce")

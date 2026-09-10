@@ -1,8 +1,7 @@
-symbol fq=__local_0.values kind=local vis=private flags=_ type=kotlin.ShortArray
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.ShortArray#0 kind=class vis=public flags=synthetic
+symbol fq=__local_0.values[kind=local] kind=local vis=private flags=_ type=kotlin.ShortArray
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_ShortArray_n_n package=golden.sema
-  decl golden.sema.main fun main sym=golden.sema.main
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:29 int(4) type=Int
 expr e@5:15 name(index) type=Int ref=s-0
 expr e@6:13 int(0) type=Int
@@ -20,9 +19,9 @@ expr e@9:21 int(32767) type=Int
 expr e@9:21#1 memberCall recv=e@9:21 callee=toShort args=[] type=Short
 expr e@5:9 when subject=e@5:15 branches=[e@6:13->e@6:19#1,e@7:13->e@7:19#1,e@8:13->e@8:18#1] else=e@9:21#1 type=Short
 expr e@4:32 lambda params=[index] body=e@5:9 label=ShortArray type=(Int) -> Short
-expr e@4:18 call callee=e@4:18#1 args=[_:e@4:29,_:e@4:32] type=kotlin.ShortArray call=kotlin.ShortArray#1
-expr e@4:5 localDecl values mutable=0 type=_ init=e@4:18 type=Unit ref=__local_0.values
-expr e@12:13 name(values) type=kotlin.ShortArray ref=__local_0.values
+expr e@4:18 call callee=e@4:18#1 args=[_:e@4:29,_:e@4:32] type=kotlin.ShortArray call=kotlin.ShortArray[kind=fun;params=Int,fn{p=Int;ret=Short}]
+expr e@4:5 localDecl values mutable=0 type=_ init=e@4:18 type=Unit ref=__local_0.values[kind=local]
+expr e@12:13 name(values) type=kotlin.ShortArray ref=__local_0.values[kind=local]
 expr e@12:20 int(0) type=Int
 expr e@12:13#1 indexedAccess receiver=e@12:13 indices=[e@12:20] type=Short
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

@@ -1,8 +1,8 @@
-symbol fq=golden.sema.AnnotatedClass kind=class vis=public flags=_
-symbol fq=golden.sema.MyExperimentalMarker kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.useMarker kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.AnnotatedClass[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.MyExperimentalMarker[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.useMarker[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstdlib_kotlin_n_ExperimentalSubclassOptIn package=golden.sema annotations=[@file:OptIn(ExperimentalSubclassOptIn::class)]
-  decl golden.sema.MyExperimentalMarker class MyExperimentalMarker sym=golden.sema.MyExperimentalMarker
-  decl golden.sema.AnnotatedClass class AnnotatedClass sym=golden.sema.AnnotatedClass
-  decl golden.sema.useMarker fun useMarker sym=golden.sema.useMarker
+  decl golden.sema.MyExperimentalMarker[kind=anno] class MyExperimentalMarker sym=golden.sema.MyExperimentalMarker[kind=anno]
+  decl golden.sema.AnnotatedClass[kind=class] class AnnotatedClass sym=golden.sema.AnnotatedClass[kind=class]
+  decl golden.sema.useMarker[kind=fun;params=] fun useMarker sym=golden.sema.useMarker[kind=fun;params=]
 expr e@12:27 string(ok) type=String

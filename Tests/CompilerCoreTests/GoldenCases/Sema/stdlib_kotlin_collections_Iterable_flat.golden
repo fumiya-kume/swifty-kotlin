@@ -1,45 +1,40 @@
-symbol fq=__local_0.iterableFlat kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=__local_1.sequenceFlat kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=__local_2.iterableIndexed kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=__local_3.sequenceIndexed kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=__local_4.iterableTo kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
-symbol fq=__local_5.sequenceTo kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
-symbol fq=__local_6.iterableIndexedTo kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
-symbol fq=__local_7.sequenceIndexedTo kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
-symbol fq=__local_8.nullableResult kind=local vis=private flags=_ type=kotlin.collections.List<Int?>
-symbol fq=iterableFlatFamily kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<Int?>] ret=Unit
-symbol fq=iterableFlatFamily.$0.nullableValues kind=valueParameter vis=private flags=_
-symbol fq=iterableFlatFamily.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+symbol fq=__local_0.iterableFlat[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_1.sequenceFlat[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_2.iterableIndexed[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_3.sequenceIndexed[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_4.iterableTo[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
+symbol fq=__local_5.sequenceTo[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
+symbol fq=__local_6.iterableIndexedTo[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
+symbol fq=__local_7.sequenceIndexedTo[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
+symbol fq=__local_8.nullableResult[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int?>
+symbol fq=iterableFlatFamily.$0.nullableValues[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=iterableFlatFamily.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=iterableFlatFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<Int?>] ret=Unit
 file fstdlib_kotlin_collections_Iterable_flat package=_
-  decl iterableFlatFamily fun iterableFlatFamily sym=iterableFlatFamily
-expr e@2:38 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values
+  decl iterableFlatFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<Int?>] fun iterableFlatFamily sym=iterableFlatFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<Int?>]
+expr e@2:38 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values[kind=vparam]
 expr e@3:16 name(value) type=Int ref=s-0
 expr e@3:16#1 memberCall recv=e@3:16 callee=toString args=[] type=String
 expr e@3:34 string(i) type=String
 expr e@3:40 name(value) type=Int ref=s-0
 expr e@3:40#1 memberCall recv=e@3:40 callee=toString args=[] type=String
 expr e@3:34#1 binary(add) lhs=e@3:34 rhs=e@3:40#1 type=String
-expr e@3:9 call callee=e@3:9#1 args=[_:e@3:16#1,_:e@3:34#1] type=kotlin.collections.List<out String> call=kotlin.collections.listOf#1 targs=[String]
+expr e@3:9 call callee=e@3:9#1 args=[_:e@3:16#1,_:e@3:34#1] type=kotlin.collections.List<out String> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[String]
 expr e@2:53 lambda params=[value] body=e@3:9 label=flatMap type=(Int) -> Any
-expr e@2:38#1 memberCall recv=e@2:38 callee=flatMap args=[_:e@2:53] type=kotlin.collections.List<String> call=kotlin.collections.flatMap#13 targs=[Int,String]
-expr e@2:5 localDecl iterableFlat mutable=0 type=List<String> init=e@2:38#1 type=Unit ref=__local_0.iterableFlat
-expr e@5:38 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values
+expr e@2:38#1 memberCall recv=e@2:38 callee=flatMap args=[_:e@2:53] type=kotlin.collections.List<String> call=kotlin.collections.flatMap[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=kotlin.collections.Iterable<T1>};gen=2] targs=[Int,String]
+expr e@2:5 localDecl iterableFlat mutable=0 type=List<String> init=e@2:38#1 type=Unit ref=__local_0.iterableFlat[kind=local]
+expr e@5:38 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values[kind=vparam]
 expr e@6:20 name(value) type=Int ref=s-1
 expr e@6:20#1 memberCall recv=e@6:20 callee=toString args=[] type=String
 expr e@6:38 string(s) type=String
 expr e@6:44 name(value) type=Int ref=s-1
 expr e@6:44#1 memberCall recv=e@6:44 callee=toString args=[] type=String
 expr e@6:38#1 binary(add) lhs=e@6:38 rhs=e@6:44#1 type=String
-expr e@6:9 call callee=e@6:9#1 args=[_:e@6:20#1,_:e@6:38#1] type=kotlin.sequences.Sequence<String> call=kotlin.sequences.sequenceOf targs=[String]
+expr e@6:9 call callee=e@6:9#1 args=[_:e@6:20#1,_:e@6:38#1] type=kotlin.sequences.Sequence<String> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[String]
 expr e@5:53 lambda params=[value] body=e@6:9 label=flatMap type=(Int) -> Any
-expr e@5:38#1 memberCall recv=e@5:38 callee=flatMap args=[_:e@5:53] type=kotlin.collections.List<String> call=kotlin.collections.flatMap#14 targs=[Int,String]
-expr e@5:5 localDecl sequenceFlat mutable=0 type=List<String> init=e@5:38#1 type=Unit ref=__local_1.sequenceFlat
-expr e@8:41 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values
+expr e@5:38#1 memberCall recv=e@5:38 callee=flatMap args=[_:e@5:53] type=kotlin.collections.List<String> call=kotlin.collections.flatMap[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=kotlin.sequences.Sequence<T1>};gen=2] targs=[Int,String]
+expr e@5:5 localDecl sequenceFlat mutable=0 type=List<String> init=e@5:38#1 type=Unit ref=__local_1.sequenceFlat[kind=local]
+expr e@8:41 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values[kind=vparam]
 expr e@9:16 name(index) type=Int ref=s-2
 expr e@9:16#1 memberCall recv=e@9:16 callee=toString args=[] type=String
 expr e@9:35 string(:) type=String
@@ -47,11 +42,11 @@ expr e@9:16#2 binary(add) lhs=e@9:16#1 rhs=e@9:35 type=String
 expr e@9:41 name(value) type=Int ref=s-3
 expr e@9:41#1 memberCall recv=e@9:41 callee=toString args=[] type=String
 expr e@9:16#3 binary(add) lhs=e@9:16#2 rhs=e@9:41#1 type=String
-expr e@9:9 call callee=e@9:9#1 args=[_:e@9:16#3] type=kotlin.collections.List<out String> call=kotlin.collections.listOf#1 targs=[String]
+expr e@9:9 call callee=e@9:9#1 args=[_:e@9:16#3] type=kotlin.collections.List<out String> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[String]
 expr e@8:63 lambda params=[index,value] body=e@9:9 label=flatMapIndexed type=(Int, Int) -> Any
-expr e@8:41#1 memberCall recv=e@8:41 callee=flatMapIndexed args=[_:e@8:63] type=kotlin.collections.List<String> call=kotlin.collections.flatMapIndexed#0 targs=[Int,String]
-expr e@8:5 localDecl iterableIndexed mutable=0 type=List<String> init=e@8:41#1 type=Unit ref=__local_2.iterableIndexed
-expr e@11:41 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values
+expr e@8:41#1 memberCall recv=e@8:41 callee=flatMapIndexed args=[_:e@8:63] type=kotlin.collections.List<String> call=kotlin.collections.flatMapIndexed[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=Int,T0;ret=kotlin.collections.Iterable<T1>};gen=2] targs=[Int,String]
+expr e@8:5 localDecl iterableIndexed mutable=0 type=List<String> init=e@8:41#1 type=Unit ref=__local_2.iterableIndexed[kind=local]
+expr e@11:41 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values[kind=vparam]
 expr e@12:20 name(index) type=Int ref=s-4
 expr e@12:20#1 memberCall recv=e@12:20 callee=toString args=[] type=String
 expr e@12:39 string(:) type=String
@@ -59,47 +54,47 @@ expr e@12:20#2 binary(add) lhs=e@12:20#1 rhs=e@12:39 type=String
 expr e@12:45 name(value) type=Int ref=s-5
 expr e@12:45#1 memberCall recv=e@12:45 callee=toString args=[] type=String
 expr e@12:20#3 binary(add) lhs=e@12:20#2 rhs=e@12:45#1 type=String
-expr e@12:9 call callee=e@12:9#1 args=[_:e@12:20#3] type=kotlin.sequences.Sequence<String> call=kotlin.sequences.sequenceOf targs=[String]
+expr e@12:9 call callee=e@12:9#1 args=[_:e@12:20#3] type=kotlin.sequences.Sequence<String> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[String]
 expr e@11:63 lambda params=[index,value] body=e@12:9 label=flatMapIndexed type=(Int, Int) -> Any
-expr e@11:41#1 memberCall recv=e@11:41 callee=flatMapIndexed args=[_:e@11:63] type=kotlin.collections.List<String> call=kotlin.collections.flatMapIndexed#1 targs=[Int,String]
-expr e@11:5 localDecl sequenceIndexed mutable=0 type=List<String> init=e@11:41#1 type=Unit ref=__local_3.sequenceIndexed
-expr e@15:41 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values
+expr e@11:41#1 memberCall recv=e@11:41 callee=flatMapIndexed args=[_:e@11:63] type=kotlin.collections.List<String> call=kotlin.collections.flatMapIndexed[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=Int,T0;ret=kotlin.sequences.Sequence<T1>};gen=2] targs=[Int,String]
+expr e@11:5 localDecl sequenceIndexed mutable=0 type=List<String> init=e@11:41#1 type=Unit ref=__local_3.sequenceIndexed[kind=local]
+expr e@15:41 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values[kind=vparam]
 expr e@15:78 string(seed-i) type=String
-expr e@15:58 call callee=e@15:58#1 args=[_:e@15:78] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf#1 targs=[Any?]
+expr e@15:58 call callee=e@15:58#1 args=[_:e@15:78] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Any?]
 expr e@16:16 name(value) type=Int ref=s-6
-expr e@16:9 call callee=e@16:9#1 args=[_:e@16:16] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@16:9 call callee=e@16:9#1 args=[_:e@16:16] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
 expr e@15:89 lambda params=[value] body=e@16:9 label=flatMapTo type=(Int) -> Any
-expr e@15:41#1 memberCall recv=e@15:41 callee=flatMapTo args=[_:e@15:58,_:e@15:89] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.flatMapTo#0 targs=[Int,Int,kotlin.collections.MutableList<Any?>]
-expr e@15:5 localDecl iterableTo mutable=0 type=MutableList<Any?> init=e@15:41#1 type=Unit ref=__local_4.iterableTo
-expr e@18:41 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values
+expr e@15:41#1 memberCall recv=e@15:41 callee=flatMapTo args=[_:e@15:58,_:e@15:89] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.flatMapTo[kind=fun;recv=kotlin.collections.Iterable<T0>;params=T2,fn{p=T0;ret=kotlin.collections.Iterable<T1>};gen=3] targs=[Int,Int,kotlin.collections.MutableList<Any?>]
+expr e@15:5 localDecl iterableTo mutable=0 type=MutableList<Any?> init=e@15:41#1 type=Unit ref=__local_4.iterableTo[kind=local]
+expr e@18:41 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values[kind=vparam]
 expr e@18:78 string(seed-s) type=String
-expr e@18:58 call callee=e@18:58#1 args=[_:e@18:78] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf#1 targs=[Any?]
+expr e@18:58 call callee=e@18:58#1 args=[_:e@18:78] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Any?]
 expr e@19:20 name(value) type=Int ref=s-7
-expr e@19:9 call callee=e@19:9#1 args=[_:e@19:20] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
+expr e@19:9 call callee=e@19:9#1 args=[_:e@19:20] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
 expr e@18:89 lambda params=[value] body=e@19:9 label=flatMapTo type=(Int) -> Any
-expr e@18:41#1 memberCall recv=e@18:41 callee=flatMapTo args=[_:e@18:58,_:e@18:89] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.flatMapTo#1 targs=[Int,Int,kotlin.collections.MutableList<Any?>]
-expr e@18:5 localDecl sequenceTo mutable=0 type=MutableList<Any?> init=e@18:41#1 type=Unit ref=__local_5.sequenceTo
-expr e@21:48 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values
+expr e@18:41#1 memberCall recv=e@18:41 callee=flatMapTo args=[_:e@18:58,_:e@18:89] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.flatMapTo[kind=fun;recv=kotlin.collections.Iterable<T0>;params=T2,fn{p=T0;ret=kotlin.sequences.Sequence<T1>};gen=3] targs=[Int,Int,kotlin.collections.MutableList<Any?>]
+expr e@18:5 localDecl sequenceTo mutable=0 type=MutableList<Any?> init=e@18:41#1 type=Unit ref=__local_5.sequenceTo[kind=local]
+expr e@21:48 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values[kind=vparam]
 expr e@21:92 string(seed-ii) type=String
-expr e@21:72 call callee=e@21:72#1 args=[_:e@21:92] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf#1 targs=[Any?]
+expr e@21:72 call callee=e@21:72#1 args=[_:e@21:92] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Any?]
 expr e@22:16 name(index) type=Int ref=s-8
 expr e@22:23 name(value) type=Int ref=s-9
-expr e@22:9 call callee=e@22:9#1 args=[_:e@22:16,_:e@22:23] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@22:9 call callee=e@22:9#1 args=[_:e@22:16,_:e@22:23] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
 expr e@21:104 lambda params=[index,value] body=e@22:9 label=flatMapIndexedTo type=(Int, Int) -> Any
-expr e@21:48#1 memberCall recv=e@21:48 callee=flatMapIndexedTo args=[_:e@21:72,_:e@21:104] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.flatMapIndexedTo#0 targs=[Int,Int,kotlin.collections.MutableList<Any?>]
-expr e@21:5 localDecl iterableIndexedTo mutable=0 type=MutableList<Any?> init=e@21:48#1 type=Unit ref=__local_6.iterableIndexedTo
-expr e@24:48 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values
+expr e@21:48#1 memberCall recv=e@21:48 callee=flatMapIndexedTo args=[_:e@21:72,_:e@21:104] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.flatMapIndexedTo[kind=fun;recv=kotlin.collections.Iterable<T0>;params=T2,fn{p=Int,T0;ret=kotlin.collections.Iterable<T1>};gen=3] targs=[Int,Int,kotlin.collections.MutableList<Any?>]
+expr e@21:5 localDecl iterableIndexedTo mutable=0 type=MutableList<Any?> init=e@21:48#1 type=Unit ref=__local_6.iterableIndexedTo[kind=local]
+expr e@24:48 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values[kind=vparam]
 expr e@24:92 string(seed-is) type=String
-expr e@24:72 call callee=e@24:72#1 args=[_:e@24:92] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf#1 targs=[Any?]
+expr e@24:72 call callee=e@24:72#1 args=[_:e@24:92] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Any?]
 expr e@25:20 name(index) type=Int ref=s-10
 expr e@25:27 name(value) type=Int ref=s-11
-expr e@25:9 call callee=e@25:9#1 args=[_:e@25:20,_:e@25:27] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
+expr e@25:9 call callee=e@25:9#1 args=[_:e@25:20,_:e@25:27] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
 expr e@24:104 lambda params=[index,value] body=e@25:9 label=flatMapIndexedTo type=(Int, Int) -> Any
-expr e@24:48#1 memberCall recv=e@24:48 callee=flatMapIndexedTo args=[_:e@24:72,_:e@24:104] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.flatMapIndexedTo#1 targs=[Int,Int,kotlin.collections.MutableList<Any?>]
-expr e@24:5 localDecl sequenceIndexedTo mutable=0 type=MutableList<Any?> init=e@24:48#1 type=Unit ref=__local_7.sequenceIndexedTo
-expr e@28:38 name(nullableValues) type=kotlin.collections.Iterable<Int?> ref=iterableFlatFamily.$0.nullableValues
+expr e@24:48#1 memberCall recv=e@24:48 callee=flatMapIndexedTo args=[_:e@24:72,_:e@24:104] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.flatMapIndexedTo[kind=fun;recv=kotlin.collections.Iterable<T0>;params=T2,fn{p=Int,T0;ret=kotlin.sequences.Sequence<T1>};gen=3] targs=[Int,Int,kotlin.collections.MutableList<Any?>]
+expr e@24:5 localDecl sequenceIndexedTo mutable=0 type=MutableList<Any?> init=e@24:48#1 type=Unit ref=__local_7.sequenceIndexedTo[kind=local]
+expr e@28:38 name(nullableValues) type=kotlin.collections.Iterable<Int?> ref=iterableFlatFamily.$0.nullableValues[kind=vparam]
 expr e@28:79 name(value) type=Int? ref=s-12
-expr e@28:72 call callee=e@28:72#1 args=[_:e@28:79] type=kotlin.collections.List<out Int?> call=kotlin.collections.listOf#1 targs=[Int?]
+expr e@28:72 call callee=e@28:72#1 args=[_:e@28:79] type=kotlin.collections.List<out Int?> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int?]
 expr e@28:61 lambda params=[value] body=e@28:72 label=flatMap type=(Int?) -> Any
-expr e@28:38#1 memberCall recv=e@28:38 callee=flatMap args=[_:e@28:61] type=kotlin.collections.List<Int?> call=kotlin.collections.flatMap#13 targs=[Int?,Int?]
-expr e@28:5 localDecl nullableResult mutable=0 type=List<Int?> init=e@28:38#1 type=Unit ref=__local_8.nullableResult
+expr e@28:38#1 memberCall recv=e@28:38 callee=flatMap args=[_:e@28:61] type=kotlin.collections.List<Int?> call=kotlin.collections.flatMap[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=kotlin.collections.Iterable<T1>};gen=2] targs=[Int?,Int?]
+expr e@28:5 localDecl nullableResult mutable=0 type=List<Int?> init=e@28:38#1 type=Unit ref=__local_8.nullableResult[kind=local]

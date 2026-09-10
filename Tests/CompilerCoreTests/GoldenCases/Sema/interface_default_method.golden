@@ -1,14 +1,14 @@
-symbol fq=golden.sema.Animal kind=interface vis=public flags=_
-symbol fq=golden.sema.DefaultGreeter kind=class vis=public flags=_
-symbol fq=golden.sema.Dog kind=class vis=public flags=_
-symbol fq=golden.sema.FormalGreeter kind=class vis=public flags=_
-symbol fq=golden.sema.Greeter kind=interface vis=public flags=_
+symbol fq=golden.sema.Animal[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.DefaultGreeter[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.Dog[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.FormalGreeter[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.Greeter[kind=iface] kind=interface vis=public flags=_
 file finterface_default_method package=golden.sema
-  decl golden.sema.Greeter interface Greeter sym=golden.sema.Greeter
-  decl golden.sema.FormalGreeter class FormalGreeter sym=golden.sema.FormalGreeter
-  decl golden.sema.DefaultGreeter class DefaultGreeter sym=golden.sema.DefaultGreeter
-  decl golden.sema.Animal interface Animal sym=golden.sema.Animal
-  decl golden.sema.Dog class Dog sym=golden.sema.Dog
+  decl golden.sema.Greeter[kind=iface] interface Greeter sym=golden.sema.Greeter[kind=iface]
+  decl golden.sema.FormalGreeter[kind=class] class FormalGreeter sym=golden.sema.FormalGreeter[kind=class]
+  decl golden.sema.DefaultGreeter[kind=class] class DefaultGreeter sym=golden.sema.DefaultGreeter[kind=class]
+  decl golden.sema.Animal[kind=iface] interface Animal sym=golden.sema.Animal[kind=iface]
+  decl golden.sema.Dog[kind=class] class Dog sym=golden.sema.Dog[kind=class]
 expr e@4:27 string(Hello) type=String
 expr e@8:36 string(Good day) type=String
 expr e@15:27 string(...) type=String

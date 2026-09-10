@@ -1,19 +1,17 @@
-symbol fq=golden.sema.levelEntries kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.RequiresOptIn.Level>
-symbol fq=golden.sema.levelValueOf kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.RequiresOptIn.Level
-symbol fq=golden.sema.levelValues kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.RequiresOptIn.Level>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
+symbol fq=golden.sema.levelEntries[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.RequiresOptIn.Level>
+symbol fq=golden.sema.levelValueOf[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.RequiresOptIn.Level
+symbol fq=golden.sema.levelValues[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.RequiresOptIn.Level>
 file fstdlib_kotlin_RequiresOptIn_Level_Level_n package=golden.sema
-  decl golden.sema.levelEntries fun levelEntries sym=golden.sema.levelEntries
-  decl golden.sema.levelValueOf fun levelValueOf sym=golden.sema.levelValueOf
-  decl golden.sema.levelValues fun levelValues sym=golden.sema.levelValues
-expr e@4:5 memberCall recv=e@4:5#1 callee=RequiresOptIn args=[] type=kotlin.RequiresOptIn ref=kotlin.RequiresOptIn
-expr e@4:5#2 memberCall recv=e@4:5 callee=Level args=[] type=kotlin.RequiresOptIn.Level ref=kotlin.RequiresOptIn.Level
-expr e@4:5#3 memberCall recv=e@4:5#2 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.RequiresOptIn.Level> call=kotlin.entries.$get#0
-expr e@7:5 memberCall recv=e@7:5#1 callee=RequiresOptIn args=[] type=kotlin.RequiresOptIn ref=kotlin.RequiresOptIn
-expr e@7:5#2 memberCall recv=e@7:5 callee=Level args=[] type=kotlin.RequiresOptIn.Level ref=kotlin.RequiresOptIn.Level
+  decl golden.sema.levelEntries[kind=fun;params=] fun levelEntries sym=golden.sema.levelEntries[kind=fun;params=]
+  decl golden.sema.levelValueOf[kind=fun;params=] fun levelValueOf sym=golden.sema.levelValueOf[kind=fun;params=]
+  decl golden.sema.levelValues[kind=fun;params=] fun levelValues sym=golden.sema.levelValues[kind=fun;params=]
+expr e@4:5 memberCall recv=e@4:5#1 callee=RequiresOptIn args=[] type=kotlin.RequiresOptIn ref=kotlin.RequiresOptIn[kind=anno]
+expr e@4:5#2 memberCall recv=e@4:5 callee=Level args=[] type=kotlin.RequiresOptIn.Level ref=kotlin.RequiresOptIn.Level[kind=enum]
+expr e@4:5#3 memberCall recv=e@4:5#2 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.RequiresOptIn.Level> call=kotlin.entries.$get[kind=fun;recv=kotlin.RequiresOptIn.Level;params=]
+expr e@7:5 memberCall recv=e@7:5#1 callee=RequiresOptIn args=[] type=kotlin.RequiresOptIn ref=kotlin.RequiresOptIn[kind=anno]
+expr e@7:5#2 memberCall recv=e@7:5 callee=Level args=[] type=kotlin.RequiresOptIn.Level ref=kotlin.RequiresOptIn.Level[kind=enum]
 expr e@7:40 string(WARNING) type=String
-expr e@7:5#3 memberCall recv=e@7:5#2 callee=valueOf args=[_:e@7:40] type=kotlin.RequiresOptIn.Level ref=kotlin.valueOf#0 call=kotlin.valueOf#0
-expr e@10:5 memberCall recv=e@10:5#1 callee=RequiresOptIn args=[] type=kotlin.RequiresOptIn ref=kotlin.RequiresOptIn
-expr e@10:5#2 memberCall recv=e@10:5 callee=Level args=[] type=kotlin.RequiresOptIn.Level ref=kotlin.RequiresOptIn.Level
-expr e@10:5#3 memberCall recv=e@10:5#2 callee=values args=[] type=kotlin.Array<kotlin.RequiresOptIn.Level> ref=kotlin.values#0 call=kotlin.values#0
+expr e@7:5#3 memberCall recv=e@7:5#2 callee=valueOf args=[_:e@7:40] type=kotlin.RequiresOptIn.Level ref=kotlin.valueOf[kind=fun;recv=kotlin.RequiresOptIn.Level;params=String] call=kotlin.valueOf[kind=fun;recv=kotlin.RequiresOptIn.Level;params=String]
+expr e@10:5 memberCall recv=e@10:5#1 callee=RequiresOptIn args=[] type=kotlin.RequiresOptIn ref=kotlin.RequiresOptIn[kind=anno]
+expr e@10:5#2 memberCall recv=e@10:5 callee=Level args=[] type=kotlin.RequiresOptIn.Level ref=kotlin.RequiresOptIn.Level[kind=enum]
+expr e@10:5#3 memberCall recv=e@10:5#2 callee=values args=[] type=kotlin.Array<kotlin.RequiresOptIn.Level> ref=kotlin.values[kind=fun;recv=kotlin.RequiresOptIn.Level;params=] call=kotlin.values[kind=fun;recv=kotlin.RequiresOptIn.Level;params=]

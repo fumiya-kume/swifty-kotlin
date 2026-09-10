@@ -1,29 +1,26 @@
-symbol fq=charSequenceZip kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=kotlin.collections.List<kotlin.Pair<Char, Char>>
-symbol fq=charSequenceZip.$0.cs kind=valueParameter vis=private flags=_
-symbol fq=charSequenceZip.$0.other kind=valueParameter vis=private flags=_
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=stringZip kind=function vis=public flags=_ sig=recv=_ params=[String,kotlin.CharSequence] ret=kotlin.collections.List<kotlin.Pair<Char, Char>>
-symbol fq=stringZip.$1.other kind=valueParameter vis=private flags=_
-symbol fq=stringZip.$1.s kind=valueParameter vis=private flags=_
-symbol fq=stringZipTransform kind=function vis=public flags=_ sig=recv=_ params=[String,kotlin.CharSequence] ret=kotlin.collections.List<String>
-symbol fq=stringZipTransform.$2.other kind=valueParameter vis=private flags=_
-symbol fq=stringZipTransform.$2.s kind=valueParameter vis=private flags=_
+symbol fq=charSequenceZip.$0.cs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=charSequenceZip.$0.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=charSequenceZip[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=kotlin.collections.List<kotlin.Pair<Char, Char>>
+symbol fq=stringZip.$1.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=stringZip.$1.s[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=stringZipTransform.$2.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=stringZipTransform.$2.s[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=stringZipTransform[kind=fun;params=String,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[String,kotlin.CharSequence] ret=kotlin.collections.List<String>
+symbol fq=stringZip[kind=fun;params=String,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[String,kotlin.CharSequence] ret=kotlin.collections.List<kotlin.Pair<Char, Char>>
 file fstring_zip package=_
-  decl stringZip fun stringZip sym=stringZip
-  decl charSequenceZip fun charSequenceZip sym=charSequenceZip
-  decl stringZipTransform fun stringZipTransform sym=stringZipTransform
-expr e@4:73 name(s) type=String ref=stringZip.$1.s
-expr e@4:79 name(other) type=kotlin.CharSequence ref=stringZip.$1.other
-expr e@4:73#1 memberCall recv=e@4:73 callee=zip args=[_:e@4:79] type=kotlin.collections.List<kotlin.Pair<Char, Char>> call=kotlin.text.zip#0
-expr e@5:86 name(cs) type=kotlin.CharSequence ref=charSequenceZip.$0.cs
-expr e@5:93 name(other) type=kotlin.CharSequence ref=charSequenceZip.$0.other
-expr e@5:86#1 memberCall recv=e@5:86 callee=zip args=[_:e@5:93] type=kotlin.collections.List<kotlin.Pair<Char, Char>> call=kotlin.text.zip#0
-expr e@6:72 name(s) type=String ref=stringZipTransform.$2.s
-expr e@6:78 name(other) type=kotlin.CharSequence ref=stringZipTransform.$2.other
+  decl stringZip[kind=fun;params=String,kotlin.CharSequence] fun stringZip sym=stringZip[kind=fun;params=String,kotlin.CharSequence]
+  decl charSequenceZip[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] fun charSequenceZip sym=charSequenceZip[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence]
+  decl stringZipTransform[kind=fun;params=String,kotlin.CharSequence] fun stringZipTransform sym=stringZipTransform[kind=fun;params=String,kotlin.CharSequence]
+expr e@4:73 name(s) type=String ref=stringZip.$1.s[kind=vparam]
+expr e@4:79 name(other) type=kotlin.CharSequence ref=stringZip.$1.other[kind=vparam]
+expr e@4:73#1 memberCall recv=e@4:73 callee=zip args=[_:e@4:79] type=kotlin.collections.List<kotlin.Pair<Char, Char>> call=kotlin.text.zip[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence]
+expr e@5:86 name(cs) type=kotlin.CharSequence ref=charSequenceZip.$0.cs[kind=vparam]
+expr e@5:93 name(other) type=kotlin.CharSequence ref=charSequenceZip.$0.other[kind=vparam]
+expr e@5:86#1 memberCall recv=e@5:86 callee=zip args=[_:e@5:93] type=kotlin.collections.List<kotlin.Pair<Char, Char>> call=kotlin.text.zip[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence]
+expr e@6:72 name(s) type=String ref=stringZipTransform.$2.s[kind=vparam]
+expr e@6:78 name(other) type=kotlin.CharSequence ref=stringZipTransform.$2.other[kind=vparam]
 expr e@6:97 name(a) type=Char ref=s-0
 expr e@6:99 name(b) type=Char ref=s-1
 expr e@6:95 stringTemplate[expr(e@6:97),expr(e@6:99)] type=String
 expr e@6:85 lambda params=[a,b] body=e@6:95 label=zip type=(Char, Char) -> String
-expr e@6:72#1 memberCall recv=e@6:72 callee=zip args=[_:e@6:78,_:e@6:85] type=kotlin.collections.List<String> call=kotlin.text.zip#1 targs=[String]
+expr e@6:72#1 memberCall recv=e@6:72 callee=zip args=[_:e@6:78,_:e@6:85] type=kotlin.collections.List<String> call=kotlin.text.zip[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence,fn{p=Char,Char;ret=T0};gen=1] targs=[String]

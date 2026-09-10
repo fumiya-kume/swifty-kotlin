@@ -28,6 +28,11 @@ public func kk_any_to_string(_ value: Int, _ tag: Int) -> UnsafeMutableRawPointe
     if value == runtimeNullSentinelInt {
         return runtimeMakeStringPointer("null")
     }
+    if tag == 1,
+       let override = runtimeAnyToStringOverride(value)
+    {
+        return override
+    }
     if tag == 2 {
         return runtimeMakeStringPointer(value != 0 ? "true" : "false")
     }
@@ -42,6 +47,29 @@ public func kk_any_to_string(_ value: Int, _ tag: Int) -> UnsafeMutableRawPointe
         return pointer
     }
     return runtimeMakeStringPointer(runtimeElementToString(value))
+}
+
+private func runtimeAnyToStringOverride(_ raw: Int) -> UnsafeMutableRawPointer? {
+    guard let objectPtr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    let objectKey = UInt(bitPattern: objectPtr)
+    guard let functionRaw = runtimeStorage.withMetadataLock({ state in
+        state.objectAnyToStringMethods[objectKey]
+    }) else {
+        return nil
+    }
+
+    let function = unsafeBitCast(functionRaw, to: KKFunctionEntryPoint1.self)
+    var thrown = 0
+    let result = function(raw, &thrown)
+    guard thrown == 0, result != 0 else {
+        return nil
+    }
+    if result == runtimeNullSentinelInt {
+        return runtimeMakeStringPointer("null")
+    }
+    return UnsafeMutableRawPointer(bitPattern: result)
 }
 
 /// Nullable-aware variant of `kk_any_to_string`, for call sites that know
@@ -198,6 +226,10 @@ private func runtimeUnboxedAnyHashCode(_ value: Int, _ tag: Int32) -> Int {
     }
 }
 
+private func runtimeStoredValueHash(_ value: RuntimeValue) -> Int {
+    kk_any_hashCode(value.legacyRawValue, Int(value.anyFallbackTag))
+}
+
 private func runtimeAnyHashCode(_ value: Int, _ tag: Int32) -> Int {
     if value == runtimeNullSentinelInt {
         return 0
@@ -326,20 +358,24 @@ private func runtimeAnyHashCode(_ value: Int, _ tag: Int32) -> Int {
                 hash &+ kk_any_hashCode(element.legacyRawValue, 0)
             }
         }
+        if runtimeIsDataClass(classID: objBox.classID) {
+            // The first two slots are the runtime object header. Data-class
+            // constructor fields are the tagged slots that follow it; plain
+            // inherited fields remain untagged and are not part of the
+            // compiler-synthesized data-class hash contract.
+            let fields = objBox.values.dropFirst(2).filter { $0.anyFallbackTag != 0 }
+            guard let firstField = fields.first else {
+                return 0
+            }
+            var hash = Int32(truncatingIfNeeded: runtimeStoredValueHash(firstField))
+            for field in fields.dropFirst() {
+                hash = 31 &* hash &+ Int32(truncatingIfNeeded: runtimeStoredValueHash(field))
+            }
+            return Int(hash)
+        }
+
         var hash = Int(truncatingIfNeeded: objBox.classID)
         for element in objBox.elements {
-            // KNOWN LIMITATION: RuntimeObjectBox.elements has no per-field type
-            // tag, so a raw (unboxed) Boolean field hashes as tag 0 here — its
-            // 0/1 value — instead of tag 2's Kotlin-standard 1231/1237. That
-            // mismatches the compiler-synthesized data-class hashCode() (which
-            // does know each field's declared type; see
-            // appendSyntheticDataClassHashCodeIfNeeded), so the same instance's
-            // hashCode() can differ between a direct call and this Any-erased
-            // fallback for a Boolean field. A real fix needs per-field type
-            // tags stored alongside RuntimeObjectBox's elements (a broader
-            // change to object allocation), tracked as a follow-up rather than
-            // rushed here; equal-by-content instances still hash equally to
-            // each other through this same fallback path.
             hash = 31 &* hash &+ kk_any_hashCode(element, 0)
         }
         return hash

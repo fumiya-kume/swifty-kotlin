@@ -1,8 +1,8 @@
-symbol fq=golden.sema.FirstMarker kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.SecondMarker kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.useOptIn kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.FirstMarker[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.SecondMarker[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.useOptIn[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_OptIn_n_n package=golden.sema
-  decl golden.sema.FirstMarker class FirstMarker sym=golden.sema.FirstMarker
-  decl golden.sema.SecondMarker class SecondMarker sym=golden.sema.SecondMarker
-  decl golden.sema.useOptIn fun useOptIn sym=golden.sema.useOptIn
+  decl golden.sema.FirstMarker[kind=anno] class FirstMarker sym=golden.sema.FirstMarker[kind=anno]
+  decl golden.sema.SecondMarker[kind=anno] class SecondMarker sym=golden.sema.SecondMarker[kind=anno]
+  decl golden.sema.useOptIn[kind=fun;params=] fun useOptIn sym=golden.sema.useOptIn[kind=fun;params=]
 expr e@10:23 int(1) type=Int
