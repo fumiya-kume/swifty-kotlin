@@ -175,6 +175,17 @@ private func runtimeStringHashCode(_ value: String) -> Int {
     }
 }
 
+// Kotlin Set.hashCode() is the order-independent sum of its element hashes.
+// Keep this aligned with RuntimeSetBox equality so sets that contain the same
+// elements in different insertion orders have identical hashes.
+private func runtimeSetHashCode(_ set: RuntimeSetBox) -> Int {
+    var hash: Int32 = 0
+    for element in set.elements {
+        hash = hash &+ Int32(truncatingIfNeeded: runtimeValueHash(element))
+    }
+    return Int(hash)
+}
+
 /// `(this xor (this ushr 32)).toInt()` — the formula behind Long/ULong/Double
 /// `.hashCode()`, applied to the value's full 64-bit bit pattern. A Swift
 /// arithmetic `>>` sign-extends instead of Kotlin's logical `ushr`, but the
@@ -298,11 +309,7 @@ private func runtimeAnyHashCode(_ value: Int, _ tag: Int32) -> Int {
         return Int(hash)
     }
     if let setBox = tryCast(pointer, to: RuntimeSetBox.self) {
-        var hash: Int32 = 0
-        for element in setBox.elements {
-            hash = hash &+ Int32(truncatingIfNeeded: runtimeValueHash(element))
-        }
-        return Int(hash)
+        return runtimeSetHashCode(setBox)
     }
     if let mapBox = tryCast(pointer, to: RuntimeMapBox.self) {
         var hash: Int32 = 0

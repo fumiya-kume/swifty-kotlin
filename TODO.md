@@ -1216,7 +1216,7 @@
   - 未実装シンボル一覧:
     - `kotlin.collections.MutableMap` — interface kotlin.collections.MutableMap  -- `abstract interface <#A: kotlin/Any?, #B: kotlin/Any?> kotlin.collections/MutableMap : kotlin.collections/Map<#A, #B> {`
 
-- [ ] KSP-947: kotlin.collections.MutableSet-family の未実装 stdlib API を実装する（1 件）
+- [x] KSP-947: kotlin.collections.MutableSet-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections` / top-level / family `MutableSet`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/MutableSet.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1225,6 +1225,7 @@
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.collections.MutableSet` — interface kotlin.collections.MutableSet  -- `abstract interface <#A: kotlin/Any?> kotlin.collections/MutableSet : kotlin.collections/MutableCollection<#A>, kotlin.collections/Set<#A> {`
+  - 完了根拠（2026-08-23）: `MutableSet.kt` を bundled source-backed 宣言として追加し、Set/MutableCollection/MutableIterable 経由の型解決と Boolean 返値の mutation surface を回帰固定。共有 RuntimeSetBox/ABI と mutation bridge は保持し、Set の順序非依存 hashCode を修正。Sema/Golden/diff/ABI/TODO-ID を検証。
 
 - [ ] KSP-949: kotlin.collections.array-family の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.collections` / top-level / family `array`
