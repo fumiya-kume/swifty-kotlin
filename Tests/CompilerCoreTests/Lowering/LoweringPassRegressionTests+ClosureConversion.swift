@@ -7,6 +7,78 @@ extension LoweringPassRegressionTests {
 
     // MARK: - CLSR-001: LambdaClosureConversionPass tests
 
+    @Test(arguments: [false, true])
+    func testClosureConversionDoesNotEmitWrapperForInlineOnlyCapture(hasMarker: Bool) throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+        let captureSymbol = SymbolID(rawValue: -2_000_042)
+        let valueSymbol = SymbolID(rawValue: -1_000_042)
+        let capturedValue = arena.appendExpr(.symbolRef(captureSymbol), type: types.intType)
+        let lambda = KIRFunction(
+            symbol: SymbolID(rawValue: 2),
+            name: interner.intern("kk_lambda_42"),
+            params: [
+                KIRParameter(symbol: captureSymbol, type: types.intType),
+                KIRParameter(symbol: valueSymbol, type: types.intType),
+            ],
+            returnType: types.intType,
+            body: [.returnValue(capturedValue)],
+            isSuspend: false,
+            isInline: false,
+            isInlineOnly: true
+        )
+        // The inline call has already been expanded. A marker in another body
+        // can still cause the pass to run for this module.
+        var body: [KIRInstruction] = []
+        if hasMarker {
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("<lambda>"),
+                arguments: [],
+                result: nil,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+        body.append(.returnUnit)
+        let mainID = arena.appendDecl(.function(KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: types.unitType,
+            body: body,
+            isSuspend: false,
+            isInline: false
+        )))
+        let lambdaID = arena.appendDecl(.function(lambda))
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID, lambdaID])],
+            arena: arena
+        )
+        let ctx = KIRContext(
+            diagnostics: DiagnosticEngine(),
+            options: CompilerOptions(
+                moduleName: "InlineOnlyCapture", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
+            interner: interner,
+            sema: makeSemaModule(
+                symbols: SymbolTable(), types: types,
+                bindings: BindingTable(), diagnostics: DiagnosticEngine()
+            ).ctx
+        )
+        let pass = LambdaClosureConversionPass()
+        #expect(pass.shouldRun(module: module, ctx: ctx) == hasMarker)
+        try pass.run(module: module, ctx: ctx)
+        #expect(arena.declarations.count == 2)
+        #expect(!findAllKIRFunctions(in: module).contains {
+            interner.resolve($0.name).hasPrefix("kk_closure_invoke_")
+        })
+    }
+
     /// Verifies that `<lambda>` marker calls are still rewritten to
     /// `kk_lambda_invoke` for backward compatibility.
     @Test

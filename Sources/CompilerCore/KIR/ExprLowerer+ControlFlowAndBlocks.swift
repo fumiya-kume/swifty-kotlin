@@ -1302,6 +1302,18 @@ extension ExprLowerer {
                         } else {
                             driver.ctx.setLocalValue(initializerID, for: symbol)
                         }
+                        if isMutable, !isDelegated, isCapturedByLambda(symbol, sema: sema) {
+                            // The cell must dominate every possible capture.
+                            // Allocating it at the first lowered lambda leaves
+                            // sibling branches using an uninitialized cell.
+                            _ = ensureMutableCaptureCell(
+                                for: symbol,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                instructions: &instructions
+                            )
+                        }
                     }
                 }
             } else if let symbol = sema.bindings.identifierSymbols[exprID] {

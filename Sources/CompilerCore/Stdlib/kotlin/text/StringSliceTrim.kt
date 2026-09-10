@@ -1,5 +1,51 @@
 package kotlin.text
 
+/** Returns a subsequence without leading and trailing characters matching [predicate]. */
+public inline fun CharSequence.trim(predicate: (Char) -> Boolean): CharSequence {
+    var startIndex = 0
+    var endIndex = length - 1
+    var startFound = false
+    while (startIndex <= endIndex) {
+        val index = if (!startFound) startIndex else endIndex
+        val match = predicate(this[index])
+        if (!startFound) {
+            if (!match) startFound = true else startIndex += 1
+        } else {
+            if (!match) break else endIndex -= 1
+        }
+    }
+    return this.subSequence(startIndex, endIndex + 1)
+}
+
+/** Returns a subsequence without leading characters matching [predicate]. */
+public inline fun CharSequence.trimStart(predicate: (Char) -> Boolean): CharSequence {
+    val endIndex = length
+    var index = 0
+    while (index < endIndex) {
+        if (!predicate(this[index])) return this.subSequence(index, length)
+        index += 1
+    }
+    return ""
+}
+
+/** Returns a subsequence without trailing characters matching [predicate]. */
+public inline fun CharSequence.trimEnd(predicate: (Char) -> Boolean): CharSequence {
+    var index = length - 1
+    while (index >= 0) {
+        if (!predicate(this[index])) return this.subSequence(0, index + 1)
+        index -= 1
+    }
+    return ""
+}
+
+public fun CharSequence.trim(vararg chars: Char): CharSequence = trim { it in chars }
+public fun CharSequence.trimStart(vararg chars: Char): CharSequence = trimStart { it in chars }
+public fun CharSequence.trimEnd(vararg chars: Char): CharSequence = trimEnd { it in chars }
+
+public fun CharSequence.trim(): CharSequence = trim { it.isWhitespace() }
+public fun CharSequence.trimStart(): CharSequence = trimStart { it.isWhitespace() }
+public fun CharSequence.trimEnd(): CharSequence = trimEnd { it.isWhitespace() }
+
 /**
  * Returns a string with leading and trailing whitespace removed.
  */
