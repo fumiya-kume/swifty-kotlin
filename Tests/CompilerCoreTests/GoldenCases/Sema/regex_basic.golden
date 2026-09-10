@@ -1,7 +1,6 @@
 symbol fq=__local_0.regex[kind=local] kind=local vis=private flags=_ type=kotlin.text.Regex
 symbol fq=__local_1.found[kind=local] kind=local vis=private flags=_ type=kotlin.text.MatchResult?
 symbol fq=__local_2.r[kind=local] kind=local vis=private flags=_ type=kotlin.text.Regex
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fregex_basic package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

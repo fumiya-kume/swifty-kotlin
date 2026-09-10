@@ -1,14 +1,6 @@
 symbol fq=__local_0.direct[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.CharRange
 symbol fq=__local_1.explicit[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.CharRange
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.ranges.CharRange.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.ranges.CharRange.endInclusive[kind=prop] kind=property vis=public flags=synthetic type=Char
-symbol fq=kotlin.ranges.CharRange.start[kind=prop] kind=property vis=public flags=synthetic type=Char
-symbol fq=kotlin.ranges.CharRange[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ranges.ClosedRange.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.ranges.ClosedRange.isEmpty[kind=fun;recv=kotlin.ranges.ClosedRange<T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.ranges.ClosedRange<kotlin.ranges.ClosedRange.T> params=[] ret=Boolean type=() -> Boolean
-symbol fq=kotlin.ranges.ClosedRange[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.text.code[kind=fun;recv=Char;params=] kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=Int
 file fstdlib_kotlin_ranges_CharRange_Companion_Companion_n package=golden.sema
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:29 name(CharRange) type=kotlin.ranges.CharRange.Companion ref=kotlin.ranges.CharRange[kind=class]

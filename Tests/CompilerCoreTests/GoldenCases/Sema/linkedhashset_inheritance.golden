@@ -9,8 +9,6 @@ symbol fq=__local_4.op[kind=local] kind=local vis=private flags=_ type=String
 symbol fq=acceptLinked.$0.set[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=acceptLinked[kind=fun;params=kotlin.collections.LinkedHashSet<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.LinkedHashSet<String>] ret=Unit
 symbol fq=inheritanceChecks[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.collections.MutableSet[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 file flinkedhashset_inheritance package=_
   decl MySet[kind=class] class MySet sym=MySet[kind=class]
   decl acceptLinked[kind=fun;params=kotlin.collections.LinkedHashSet<String>] fun acceptLinked sym=acceptLinked[kind=fun;params=kotlin.collections.LinkedHashSet<String>]

@@ -11,7 +11,6 @@ symbol fq=compareInts[kind=fun;params=Int,Int] kind=function vis=public flags=_ 
 symbol fq=compareTemperatures.$3.a[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=compareTemperatures.$3.b[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=compareTemperatures[kind=fun;params=Temperature,Temperature] kind=function vis=public flags=_ sig=recv=_ params=[Temperature,Temperature] ret=Boolean
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=max.$4.T[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=max.$4.a[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=max.$4.b[kind=vparam] kind=valueParameter vis=private flags=_

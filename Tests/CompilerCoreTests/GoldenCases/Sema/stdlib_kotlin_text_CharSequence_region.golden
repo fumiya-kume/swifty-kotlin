@@ -22,9 +22,6 @@ symbol fq=golden.sema.regionMatchesNamed.$5.other[kind=vparam] kind=valueParamet
 symbol fq=golden.sema.regionMatchesNamed.$5.source[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.regionMatchesNamed[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=Boolean
 symbol fq=golden.sema.regionMatchesString[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.text.get.index[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.text.get[kind=fun;recv=String;params=Int] kind=function vis=public flags=synthetic|operatorFunction sig=recv=String params=[Int] ret=Char
 file fstdlib_kotlin_text_CharSequence_region package=golden.sema
   decl golden.sema.RegionSequence[kind=class] class RegionSequence sym=golden.sema.RegionSequence[kind=class]
   decl golden.sema.regionMatchesDirect[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] fun regionMatchesDirect sym=golden.sema.regionMatchesDirect[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence]
@@ -35,7 +32,7 @@ file fstdlib_kotlin_text_CharSequence_region package=golden.sema
   decl golden.sema.regionMatchesCustom[kind=fun;params=] fun regionMatchesCustom sym=golden.sema.regionMatchesCustom[kind=fun;params=]
   decl golden.sema.regionMatchesEmpty[kind=fun;params=kotlin.CharSequence] fun regionMatchesEmpty sym=golden.sema.regionMatchesEmpty[kind=fun;params=kotlin.CharSequence]
 expr e@4:38 name(value) type=String ref=golden.sema.RegionSequence.value[kind=prop]
-expr e@4:38#1 memberCall recv=e@4:38 callee=length args=[] type=Int
+expr e@4:38#1 memberCall recv=e@4:38 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@5:42 name(value) type=String ref=golden.sema.RegionSequence.value[kind=prop]
 expr e@5:48 name(index) type=Int ref=golden.sema.RegionSequence.get.$1.index[kind=vparam]
 expr e@5:42#1 indexedAccess receiver=e@5:42 indices=[e@5:48] type=Char call=kotlin.text.get[kind=fun;recv=String;params=Int]

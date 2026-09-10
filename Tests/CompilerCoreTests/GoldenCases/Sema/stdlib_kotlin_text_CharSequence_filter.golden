@@ -13,7 +13,6 @@ symbol fq=golden.sema.charSequenceFilterTo.$5.destination[kind=vparam] kind=valu
 symbol fq=golden.sema.charSequenceFilterTo.$5.source[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.charSequenceFilterTo[kind=fun;params=kotlin.CharSequence,kotlin.text.Appendable] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.text.Appendable] ret=kotlin.text.Appendable
 symbol fq=golden.sema.charSequenceFilter[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.CharSequence
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_filter package=golden.sema
   decl golden.sema.charSequenceFilter[kind=fun;params=kotlin.CharSequence] fun charSequenceFilter sym=golden.sema.charSequenceFilter[kind=fun;params=kotlin.CharSequence]
   decl golden.sema.charSequenceFilterIndexed[kind=fun;params=kotlin.CharSequence] fun charSequenceFilterIndexed sym=golden.sema.charSequenceFilterIndexed[kind=fun;params=kotlin.CharSequence]

@@ -14,8 +14,6 @@ symbol fq=__local_12.boxedMin[kind=local] kind=local vis=private flags=_ type=An
 symbol fq=__local_13.maxIsByte[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_14.minIsByte[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Byte.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.Byte[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_Byte_Companion_Companion_n package=golden.sema
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:27 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte[kind=class]

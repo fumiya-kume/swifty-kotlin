@@ -1,9 +1,6 @@
 symbol fq=__destructuring_0.matching[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
 symbol fq=__destructuring_0.rest[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
 symbol fq=__local_0.result[kind=local] kind=local vis=private flags=_ type=kotlin.Pair<kotlin.collections.List<String?>, kotlin.collections.List<String?>>
-symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=partitionIterable.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=partitionIterable[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<Int>>
 symbol fq=partitionNullable.$1.values[kind=vparam] kind=valueParameter vis=private flags=_

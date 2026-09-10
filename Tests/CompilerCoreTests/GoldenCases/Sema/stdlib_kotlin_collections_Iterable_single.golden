@@ -2,7 +2,6 @@ symbol fq=__local_0.single[kind=local] kind=local vis=private flags=_ type=Strin
 symbol fq=__local_1.singlePredicate[kind=local] kind=local vis=private flags=_ type=String?
 symbol fq=__local_2.singleOrNull[kind=local] kind=local vis=private flags=_ type=String?
 symbol fq=__local_3.singleOrNullPredicate[kind=local] kind=local vis=private flags=_ type=String?
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=probe.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=probe[kind=fun;params=kotlin.collections.Iterable<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>] ret=Unit
 file fstdlib_kotlin_collections_Iterable_single package=_

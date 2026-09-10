@@ -4,7 +4,6 @@ symbol fq=__local_2.orEmpty[kind=local] kind=local vis=private flags=_ type=kotl
 symbol fq=__local_3.checkedOrEmpty[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Collection<Int>
 symbol fq=golden.sema.collectionNullableHelpers.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.collectionNullableHelpers[kind=fun;params=kotlin.collections.Collection<Int>?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>?] ret=Unit
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
 file fcollection_nullable_helpers package=golden.sema
   decl golden.sema.collectionNullableHelpers[kind=fun;params=kotlin.collections.Collection<Int>?] fun collectionNullableHelpers sym=golden.sema.collectionNullableHelpers[kind=fun;params=kotlin.collections.Collection<Int>?]
 expr e@6:23 name(values) type=kotlin.collections.Collection<Int>? ref=golden.sema.collectionNullableHelpers.$0.values[kind=vparam]

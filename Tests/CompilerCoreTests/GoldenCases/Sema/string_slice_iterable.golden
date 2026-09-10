@@ -2,9 +2,6 @@ symbol fq=golden.sema.useListOfExplicitTypeArg[kind=fun;params=] kind=function v
 symbol fq=golden.sema.useListSliceEmptyExplicitType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
 symbol fq=golden.sema.useListSliceListOf[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
 symbol fq=golden.sema.useListSliceRange[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
 file fstring_slice_iterable package=golden.sema
   decl golden.sema.useListSliceEmptyExplicitType[kind=fun;params=] fun useListSliceEmptyExplicitType sym=golden.sema.useListSliceEmptyExplicitType[kind=fun;params=]
   decl golden.sema.useListSliceListOf[kind=fun;params=] fun useListSliceListOf sym=golden.sema.useListSliceListOf[kind=fun;params=]

@@ -5,16 +5,6 @@ symbol fq=__local_3.projectedIterator[kind=local] kind=local vis=private flags=_
 symbol fq=__local_4.projectedEntry[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<Any?, kotlin.Number?>
 symbol fq=inspect.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=inspect[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Unit
-symbol fq=kotlin.collections.Iterator.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.hasNext[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
-symbol fq=kotlin.collections.Iterator.next[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
-symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_collections_Map_iterator package=_
   decl inspect[kind=fun;params=kotlin.collections.Map<String?,Int?>] fun inspect sym=inspect[kind=fun;params=kotlin.collections.Map<String?,Int?>]
 expr e@2:20 name(map) type=kotlin.collections.Map<String?, Int?> ref=inspect.$0.map[kind=vparam]

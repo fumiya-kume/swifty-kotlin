@@ -14,11 +14,6 @@ symbol fq=golden.sema.collectionPlus.$0.others[kind=vparam] kind=valueParameter 
 symbol fq=golden.sema.collectionPlus.$0.sequence[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.collectionPlus.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.collectionPlus[kind=fun;params=kotlin.collections.Collection<Int>,Int,kotlin.collections.List<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>,Int,kotlin.collections.List<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>] ret=Unit
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 file fcollection_plus_overloads package=golden.sema
   decl golden.sema.collectionPlus[kind=fun;params=kotlin.collections.Collection<Int>,Int,kotlin.collections.List<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>] fun collectionPlus sym=golden.sema.collectionPlus[kind=fun;params=kotlin.collections.Collection<Int>,Int,kotlin.collections.List<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>]
 expr e@12:23 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionPlus.$0.values[kind=vparam]

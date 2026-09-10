@@ -1,4 +1,3 @@
-symbol fq=kotlin.Triple[kind=class;gen=3] kind=class vis=public flags=_
 symbol fq=tripleCreate[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Triple<Int, String, Boolean>
 symbol fq=tripleFirst[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=tripleSecond[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String

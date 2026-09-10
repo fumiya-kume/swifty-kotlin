@@ -2,7 +2,6 @@ symbol fq=__local_0.flattened[kind=local] kind=local vis=private flags=_ type=ko
 symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
 symbol fq=flattenSequences.$0.seqs[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=flattenSequences[kind=fun;params=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>>] ret=Unit
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 file fflatten_sequence_sequence package=_
   decl flattenSequences[kind=fun;params=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>>] fun flattenSequences sym=flattenSequences[kind=fun;params=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>>]
 expr e@5:21 name(seqs) type=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>> ref=flattenSequences.$0.seqs[kind=vparam]

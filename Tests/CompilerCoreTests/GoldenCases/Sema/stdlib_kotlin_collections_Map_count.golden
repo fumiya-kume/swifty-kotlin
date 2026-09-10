@@ -1,13 +1,6 @@
 symbol fq=ObservedMap.<init>[kind=ctor;recv=ObservedMap;params=] kind=constructor vis=public flags=_ sig=recv=ObservedMap params=[] ret=ObservedMap
 symbol fq=ObservedMap[kind=class] kind=class vis=public flags=_
 symbol fq=customMapCount[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=mapCount.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=mapCount[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Int
 symbol fq=mapPredicateCount.$1.values[kind=vparam] kind=valueParameter vis=private flags=_

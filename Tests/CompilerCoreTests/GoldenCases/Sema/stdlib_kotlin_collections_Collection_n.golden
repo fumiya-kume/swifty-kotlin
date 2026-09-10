@@ -1,0 +1,282 @@
+symbol fq=__local_0.containsAll kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_1.count kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.indices kind=local vis=private flags=_ type=kotlin.ranges.IntRange
+symbol fq=__local_3.nullOrEmpty kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_4.orEmpty kind=local vis=private flags=_ type=kotlin.collections.Collection<Int>
+symbol fq=__local_5.plusElement kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_6.plusIterable kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_7.plusSequence kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_8.plusArray kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_9.plusElementAlias kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_10.random kind=local vis=private flags=_ type=Int
+symbol fq=__local_11.randomSeeded kind=local vis=private flags=_ type=Int
+symbol fq=__local_12.randomOrNull kind=local vis=private flags=_ type=Int?
+symbol fq=__local_13.randomOrNullSeeded kind=local vis=private flags=_ type=Int?
+symbol fq=__local_14.mutable kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_15.booleanArray kind=local vis=private flags=_ type=kotlin.BooleanArray
+symbol fq=__local_16.byteArray kind=local vis=private flags=_ type=kotlin.ByteArray
+symbol fq=__local_17.charArray kind=local vis=private flags=_ type=kotlin.CharArray
+symbol fq=__local_18.doubleArray kind=local vis=private flags=_ type=kotlin.DoubleArray
+symbol fq=__local_19.floatArray kind=local vis=private flags=_ type=kotlin.FloatArray
+symbol fq=__local_20.intArray kind=local vis=private flags=_ type=kotlin.IntArray
+symbol fq=__local_21.longArray kind=local vis=private flags=_ type=kotlin.LongArray
+symbol fq=__local_22.shortArray kind=local vis=private flags=_ type=kotlin.ShortArray
+symbol fq=__local_23.ubyteArray kind=local vis=private flags=_ type=kotlin.UByteArray
+symbol fq=__local_24.ushortArray kind=local vis=private flags=_ type=kotlin.UShortArray
+symbol fq=__local_25.uintArray kind=local vis=private flags=_ type=kotlin.UIntArray
+symbol fq=__local_26.ulongArray kind=local vis=private flags=_ type=kotlin.ULongArray
+symbol fq=golden.sema.collectionSurface kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>,kotlin.collections.Collection<Int>?,kotlin.collections.Collection<Boolean>,kotlin.collections.Collection<Byte>,kotlin.collections.Collection<Char>,kotlin.collections.Collection<Double>,kotlin.collections.Collection<Float>,kotlin.collections.Collection<Int>,kotlin.collections.Collection<Long>,kotlin.collections.Collection<Short>,kotlin.collections.Collection<UByte>,kotlin.collections.Collection<UShort>,kotlin.collections.Collection<UInt>,kotlin.collections.Collection<ULong>] ret=Unit
+symbol fq=golden.sema.collectionSurface.$0.booleans kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.bytes kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.chars kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.doubles kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.floats kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.ints kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.longs kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.nullableValues kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.shorts kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.ubytes kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.uints kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.ulongs kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.ushorts kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionSurface.$0.values kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_collections_Collection_n package=golden.sema annotations=[@file:OptIn(kotlin.ExperimentalUnsignedTypes::class)]
+  decl golden.sema.collectionSurface fun collectionSurface sym=golden.sema.collectionSurface
+expr e@23:23 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@23:49 int(1) type=Int
+expr e@23:52 int(2) type=Int
+expr e@23:42 call callee=e@23:42#1 args=[_:e@23:49,_:e@23:52] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@23:23#1 memberCall recv=e@23:23 callee=containsAll args=[_:e@23:42] type=Boolean call=kotlin.collections.Collection.containsAll
+expr e@23:5 localDecl containsAll mutable=0 type=_ init=e@23:23#1 type=Unit ref=__local_0.containsAll
+expr e@24:17 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@24:17#1 memberCall recv=e@24:17 callee=count args=[] type=Int
+expr e@24:5 localDecl count mutable=0 type=_ init=e@24:17#1 type=Unit ref=__local_1.count
+expr e@25:19 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@25:19#1 memberCall recv=e@25:19 callee=indices args=[] type=kotlin.ranges.IntRange call=kotlin.collections.indices#0
+expr e@25:5 localDecl indices mutable=0 type=_ init=e@25:19#1 type=Unit ref=__local_2.indices
+expr e@26:23 name(nullableValues) type=kotlin.collections.Collection<Int>? ref=golden.sema.collectionSurface.$0.nullableValues
+expr e@26:23#1 memberCall recv=e@26:23 callee=isNullOrEmpty args=[] type=Boolean call=kotlin.collections.isNullOrEmpty#0 targs=[Int]
+expr e@26:5 localDecl nullOrEmpty mutable=0 type=_ init=e@26:23#1 type=Unit ref=__local_3.nullOrEmpty
+expr e@27:19 name(nullableValues) type=kotlin.collections.Collection<Int>? ref=golden.sema.collectionSurface.$0.nullableValues
+expr e@27:19#1 memberCall recv=e@27:19 callee=orEmpty args=[] type=kotlin.collections.Collection<Int> call=kotlin.collections.orEmpty#0 targs=[Int]
+expr e@27:5 localDecl orEmpty mutable=0 type=_ init=e@27:19#1 type=Unit ref=__local_4.orEmpty
+expr e@29:23 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@29:32 int(3) type=Int
+expr e@29:23#1 binary(add) lhs=e@29:23 rhs=e@29:32 type=kotlin.collections.List<Int> call=kotlin.collections.plus#0 targs=[Int]
+expr e@29:5 localDecl plusElement mutable=0 type=_ init=e@29:23#1 type=Unit ref=__local_5.plusElement
+expr e@30:24 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@30:40 int(3) type=Int
+expr e@30:33 call callee=e@30:33#1 args=[_:e@30:40] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@30:24#1 binary(add) lhs=e@30:24 rhs=e@30:33 type=kotlin.collections.List<Int> call=kotlin.collections.plus#2 targs=[Int]
+expr e@30:5 localDecl plusIterable mutable=0 type=_ init=e@30:24#1 type=Unit ref=__local_6.plusIterable
+expr e@31:24 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@31:44 int(3) type=Int
+expr e@31:33 call callee=e@31:33#1 args=[_:e@31:44] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
+expr e@31:24#1 binary(add) lhs=e@31:24 rhs=e@31:33 type=kotlin.collections.List<Int> call=kotlin.collections.plus#3 targs=[Int]
+expr e@31:5 localDecl plusSequence mutable=0 type=_ init=e@31:24#1 type=Unit ref=__local_7.plusSequence
+expr e@32:21 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@32:38 int(3) type=Int
+expr e@32:30 call callee=e@32:30#1 args=[_:e@32:38] type=kotlin.Array<Int> call=kotlin.arrayOf targs=[Int]
+expr e@32:21#1 binary(add) lhs=e@32:21 rhs=e@32:30 type=kotlin.collections.List<Int> call=kotlin.collections.plus#1 targs=[Int]
+expr e@32:5 localDecl plusArray mutable=0 type=_ init=e@32:21#1 type=Unit ref=__local_8.plusArray
+expr e@33:28 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@33:47 int(3) type=Int
+expr e@33:28#1 memberCall recv=e@33:28 callee=plusElement args=[_:e@33:47] type=kotlin.collections.List<Int> call=kotlin.collections.plusElement#0 targs=[Int]
+expr e@33:5 localDecl plusElementAlias mutable=0 type=_ init=e@33:28#1 type=Unit ref=__local_9.plusElementAlias
+expr e@35:18 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@35:18#1 memberCall recv=e@35:18 callee=random args=[] type=Int call=kotlin.collections.random#0 targs=[Int]
+expr e@35:5 localDecl random mutable=0 type=_ init=e@35:18#1 type=Unit ref=__local_10.random
+expr e@36:24 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@36:45 int(7) type=Int
+expr e@36:38 call callee=e@36:38#1 args=[_:e@36:45] type=kotlin.random.Random call=kotlin.random.Random#2
+expr e@36:24#1 memberCall recv=e@36:24 callee=random args=[_:e@36:38] type=Int call=kotlin.collections.random#1 targs=[Int]
+expr e@36:5 localDecl randomSeeded mutable=0 type=_ init=e@36:24#1 type=Unit ref=__local_11.randomSeeded
+expr e@37:24 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@37:24#1 memberCall recv=e@37:24 callee=randomOrNull args=[] type=Int? call=kotlin.collections.randomOrNull#0 targs=[Int]
+expr e@37:5 localDecl randomOrNull mutable=0 type=_ init=e@37:24#1 type=Unit ref=__local_12.randomOrNull
+expr e@38:30 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@38:57 int(7) type=Int
+expr e@38:50 call callee=e@38:50#1 args=[_:e@38:57] type=kotlin.random.Random call=kotlin.random.Random#2
+expr e@38:30#1 memberCall recv=e@38:30 callee=randomOrNull args=[_:e@38:50] type=Int? call=kotlin.collections.randomOrNull#1 targs=[Int]
+expr e@38:5 localDecl randomOrNullSeeded mutable=0 type=_ init=e@38:30#1 type=Unit ref=__local_13.randomOrNullSeeded
+expr e@40:19 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@40:19#1 memberCall recv=e@40:19 callee=toMutableList args=[] type=kotlin.collections.MutableList<Int> call=kotlin.collections.toMutableList#0 targs=[Int]
+expr e@40:5 localDecl mutable mutable=0 type=_ init=e@40:19#1 type=Unit ref=__local_14.mutable
+expr e@41:24 name(booleans) type=kotlin.collections.Collection<Boolean> ref=golden.sema.collectionSurface.$0.booleans
+expr e@41:24#1 memberCall recv=e@41:24 callee=toBooleanArray args=[] type=kotlin.BooleanArray call=kotlin.collections.toBooleanArray#0
+expr e@41:5 localDecl booleanArray mutable=0 type=_ init=e@41:24#1 type=Unit ref=__local_15.booleanArray
+expr e@42:21 name(bytes) type=kotlin.collections.Collection<Byte> ref=golden.sema.collectionSurface.$0.bytes
+expr e@42:21#1 memberCall recv=e@42:21 callee=toByteArray args=[] type=kotlin.ByteArray call=kotlin.collections.toByteArray#0
+expr e@42:5 localDecl byteArray mutable=0 type=_ init=e@42:21#1 type=Unit ref=__local_16.byteArray
+expr e@43:21 name(chars) type=kotlin.collections.Collection<Char> ref=golden.sema.collectionSurface.$0.chars
+expr e@43:21#1 memberCall recv=e@43:21 callee=toCharArray args=[] type=kotlin.CharArray call=kotlin.collections.toCharArray#0
+expr e@43:5 localDecl charArray mutable=0 type=_ init=e@43:21#1 type=Unit ref=__local_17.charArray
+expr e@44:23 name(doubles) type=kotlin.collections.Collection<Double> ref=golden.sema.collectionSurface.$0.doubles
+expr e@44:23#1 memberCall recv=e@44:23 callee=toDoubleArray args=[] type=kotlin.DoubleArray call=kotlin.collections.toDoubleArray#0
+expr e@44:5 localDecl doubleArray mutable=0 type=_ init=e@44:23#1 type=Unit ref=__local_18.doubleArray
+expr e@45:22 name(floats) type=kotlin.collections.Collection<Float> ref=golden.sema.collectionSurface.$0.floats
+expr e@45:22#1 memberCall recv=e@45:22 callee=toFloatArray args=[] type=kotlin.FloatArray call=kotlin.collections.toFloatArray#0
+expr e@45:5 localDecl floatArray mutable=0 type=_ init=e@45:22#1 type=Unit ref=__local_19.floatArray
+expr e@46:20 name(ints) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.ints
+expr e@46:20#1 memberCall recv=e@46:20 callee=toIntArray args=[] type=kotlin.IntArray call=kotlin.collections.toIntArray#0
+expr e@46:5 localDecl intArray mutable=0 type=_ init=e@46:20#1 type=Unit ref=__local_20.intArray
+expr e@47:21 name(longs) type=kotlin.collections.Collection<Long> ref=golden.sema.collectionSurface.$0.longs
+expr e@47:21#1 memberCall recv=e@47:21 callee=toLongArray args=[] type=kotlin.LongArray call=kotlin.collections.toLongArray#0
+expr e@47:5 localDecl longArray mutable=0 type=_ init=e@47:21#1 type=Unit ref=__local_21.longArray
+expr e@48:22 name(shorts) type=kotlin.collections.Collection<Short> ref=golden.sema.collectionSurface.$0.shorts
+expr e@48:22#1 memberCall recv=e@48:22 callee=toShortArray args=[] type=kotlin.ShortArray call=kotlin.collections.toShortArray#0
+expr e@48:5 localDecl shortArray mutable=0 type=_ init=e@48:22#1 type=Unit ref=__local_22.shortArray
+expr e@49:22 name(ubytes) type=kotlin.collections.Collection<UByte> ref=golden.sema.collectionSurface.$0.ubytes
+expr e@49:22#1 memberCall recv=e@49:22 callee=toUByteArray args=[] type=kotlin.UByteArray call=kotlin.collections.toUByteArray#0
+expr e@49:5 localDecl ubyteArray mutable=0 type=_ init=e@49:22#1 type=Unit ref=__local_23.ubyteArray
+expr e@50:23 name(ushorts) type=kotlin.collections.Collection<UShort> ref=golden.sema.collectionSurface.$0.ushorts
+expr e@50:23#1 memberCall recv=e@50:23 callee=toUShortArray args=[] type=kotlin.UShortArray call=kotlin.collections.toUShortArray#0
+expr e@50:5 localDecl ushortArray mutable=0 type=_ init=e@50:23#1 type=Unit ref=__local_24.ushortArray
+expr e@51:21 name(uints) type=kotlin.collections.Collection<UInt> ref=golden.sema.collectionSurface.$0.uints
+expr e@51:21#1 memberCall recv=e@51:21 callee=toUIntArray args=[] type=kotlin.UIntArray call=kotlin.collections.toUIntArray#0
+expr e@51:5 localDecl uintArray mutable=0 type=_ init=e@51:21#1 type=Unit ref=__local_25.uintArray
+expr e@52:22 name(ulongs) type=kotlin.collections.Collection<ULong> ref=golden.sema.collectionSurface.$0.ulongs
+expr e@52:22#1 memberCall recv=e@52:22 callee=toULongArray args=[] type=kotlin.ULongArray call=kotlin.collections.toULongArray#0
+expr e@52:5 localDecl ulongArray mutable=0 type=_ init=e@52:22#1 type=Unit ref=__local_26.ulongArray
+expr e@55:9 name(containsAll) type=Boolean ref=__local_0.containsAll
+expr e@55:24 name(count) type=Int ref=__local_1.count
+expr e@55:33 int(0) type=Int
+expr e@55:24#1 binary(greaterOrEqual) lhs=e@55:24 rhs=e@55:33 type=Boolean
+expr e@55:9#1 binary(logicalAnd) lhs=e@55:9 rhs=e@55:24#1 type=Boolean
+expr e@55:38 name(indices) type=kotlin.ranges.IntRange ref=__local_2.indices
+expr e@55:38#1 memberCall recv=e@55:38 callee=first args=[] type=Int ref=kotlin.ranges.IntRange.first
+expr e@55:55 int(0) type=Int
+expr e@55:38#2 binary(equal) lhs=e@55:38#1 rhs=e@55:55 type=Boolean
+expr e@55:9#2 binary(logicalAnd) lhs=e@55:9#1 rhs=e@55:38#2 type=Boolean
+expr e@56:13 name(nullOrEmpty) type=Boolean ref=__local_3.nullOrEmpty
+expr e@56:29 name(nullableValues) type=kotlin.collections.Collection<Int>? ref=golden.sema.collectionSurface.$0.nullableValues
+expr e@56:47 name(null) type=Nothing?
+expr e@56:29#1 binary(equal) lhs=e@56:29 rhs=e@56:47 type=Boolean
+expr e@56:55 name(nullableValues) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.nullableValues
+expr e@56:55#1 memberCall recv=e@56:55 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Collection.isEmpty
+expr e@56:29#2 binary(logicalOr) lhs=e@56:29#1 rhs=e@56:55#1 type=Boolean
+expr e@56:13#1 binary(equal) lhs=e@56:13 rhs=e@56:29#2 type=Boolean
+expr e@55:9#3 binary(logicalAnd) lhs=e@55:9#2 rhs=e@56:13#1 type=Boolean
+expr e@57:13 name(orEmpty) type=kotlin.collections.Collection<Int> ref=__local_4.orEmpty
+expr e@57:13#1 memberCall recv=e@57:13 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Collection.isEmpty
+expr e@57:35 name(nullableValues) type=kotlin.collections.Collection<Int>? ref=golden.sema.collectionSurface.$0.nullableValues
+expr e@57:53 name(null) type=Nothing?
+expr e@57:35#1 binary(equal) lhs=e@57:35 rhs=e@57:53 type=Boolean
+expr e@57:61 name(nullableValues) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.nullableValues
+expr e@57:61#1 memberCall recv=e@57:61 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Collection.isEmpty
+expr e@57:35#2 binary(logicalOr) lhs=e@57:35#1 rhs=e@57:61#1 type=Boolean
+expr e@57:13#2 binary(equal) lhs=e@57:13#1 rhs=e@57:35#2 type=Boolean
+expr e@55:9#4 binary(logicalAnd) lhs=e@55:9#3 rhs=e@57:13#2 type=Boolean
+expr e@58:13 name(plusElement) type=kotlin.collections.List<Int> ref=__local_5.plusElement
+expr e@58:13#1 memberCall recv=e@58:13 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@58:33 name(plusIterable) type=kotlin.collections.List<Int> ref=__local_6.plusIterable
+expr e@58:33#1 memberCall recv=e@58:33 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@58:13#2 binary(equal) lhs=e@58:13#1 rhs=e@58:33#1 type=Boolean
+expr e@55:9#5 binary(logicalAnd) lhs=e@55:9#4 rhs=e@58:13#2 type=Boolean
+expr e@59:13 name(plusSequence) type=kotlin.collections.List<Int> ref=__local_7.plusSequence
+expr e@59:13#1 memberCall recv=e@59:13 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@59:34 name(plusArray) type=kotlin.collections.List<Int> ref=__local_8.plusArray
+expr e@59:34#1 memberCall recv=e@59:34 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@59:13#2 binary(equal) lhs=e@59:13#1 rhs=e@59:34#1 type=Boolean
+expr e@55:9#6 binary(logicalAnd) lhs=e@55:9#5 rhs=e@59:13#2 type=Boolean
+expr e@60:13 name(plusElementAlias) type=kotlin.collections.List<Int> ref=__local_9.plusElementAlias
+expr e@60:13#1 memberCall recv=e@60:13 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@60:38 name(plusElement) type=kotlin.collections.List<Int> ref=__local_5.plusElement
+expr e@60:38#1 memberCall recv=e@60:38 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@60:13#2 binary(equal) lhs=e@60:13#1 rhs=e@60:38#1 type=Boolean
+expr e@55:9#7 binary(logicalAnd) lhs=e@55:9#6 rhs=e@60:13#2 type=Boolean
+expr e@61:13 name(random) type=Int ref=__local_10.random
+expr e@61:23 name(null) type=Nothing?
+expr e@61:13#1 binary(notEqual) lhs=e@61:13 rhs=e@61:23 type=Boolean
+expr e@55:9#8 binary(logicalAnd) lhs=e@55:9#7 rhs=e@61:13#1 type=Boolean
+expr e@61:31 name(randomSeeded) type=Int ref=__local_11.randomSeeded
+expr e@61:47 name(null) type=Nothing?
+expr e@61:31#1 binary(notEqual) lhs=e@61:31 rhs=e@61:47 type=Boolean
+expr e@55:9#9 binary(logicalAnd) lhs=e@55:9#8 rhs=e@61:31#1 type=Boolean
+expr e@62:13 name(randomOrNull) type=Int? ref=__local_12.randomOrNull
+expr e@62:29 name(null) type=Nothing?
+expr e@62:13#1 binary(notEqual) lhs=e@62:13 rhs=e@62:29 type=Boolean
+expr e@55:9#10 binary(logicalAnd) lhs=e@55:9#9 rhs=e@62:13#1 type=Boolean
+expr e@62:37 name(randomOrNullSeeded) type=Int? ref=__local_13.randomOrNullSeeded
+expr e@62:59 name(null) type=Nothing?
+expr e@62:37#1 binary(notEqual) lhs=e@62:37 rhs=e@62:59 type=Boolean
+expr e@55:9#11 binary(logicalAnd) lhs=e@55:9#10 rhs=e@62:37#1 type=Boolean
+expr e@63:13 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_14.mutable
+expr e@63:13#1 memberCall recv=e@63:13 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@63:29 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.values
+expr e@63:29#1 memberCall recv=e@63:29 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@63:13#2 binary(equal) lhs=e@63:13#1 rhs=e@63:29#1 type=Boolean
+expr e@55:9#12 binary(logicalAnd) lhs=e@55:9#11 rhs=e@63:13#2 type=Boolean
+expr e@64:13 name(booleanArray) type=kotlin.BooleanArray ref=__local_15.booleanArray
+expr e@64:13#1 memberCall recv=e@64:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#1
+expr e@64:34 name(booleans) type=kotlin.collections.Collection<Boolean> ref=golden.sema.collectionSurface.$0.booleans
+expr e@64:34#1 memberCall recv=e@64:34 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@64:13#2 binary(equal) lhs=e@64:13#1 rhs=e@64:34#1 type=Boolean
+expr e@55:9#13 binary(logicalAnd) lhs=e@55:9#12 rhs=e@64:13#2 type=Boolean
+expr e@64:51 name(byteArray) type=kotlin.ByteArray ref=__local_16.byteArray
+expr e@64:51#1 memberCall recv=e@64:51 callee=size args=[] type=Int call=kotlin.collections.size.$get#2
+expr e@64:69 name(bytes) type=kotlin.collections.Collection<Byte> ref=golden.sema.collectionSurface.$0.bytes
+expr e@64:69#1 memberCall recv=e@64:69 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@64:51#2 binary(equal) lhs=e@64:51#1 rhs=e@64:69#1 type=Boolean
+expr e@55:9#14 binary(logicalAnd) lhs=e@55:9#13 rhs=e@64:51#2 type=Boolean
+expr e@65:13 name(charArray) type=kotlin.CharArray ref=__local_17.charArray
+expr e@65:13#1 memberCall recv=e@65:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#3
+expr e@65:31 name(chars) type=kotlin.collections.Collection<Char> ref=golden.sema.collectionSurface.$0.chars
+expr e@65:31#1 memberCall recv=e@65:31 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@65:13#2 binary(equal) lhs=e@65:13#1 rhs=e@65:31#1 type=Boolean
+expr e@55:9#15 binary(logicalAnd) lhs=e@55:9#14 rhs=e@65:13#2 type=Boolean
+expr e@65:45 name(doubleArray) type=kotlin.DoubleArray ref=__local_18.doubleArray
+expr e@65:45#1 memberCall recv=e@65:45 callee=size args=[] type=Int call=kotlin.collections.size.$get#4
+expr e@65:65 name(doubles) type=kotlin.collections.Collection<Double> ref=golden.sema.collectionSurface.$0.doubles
+expr e@65:65#1 memberCall recv=e@65:65 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@65:45#2 binary(equal) lhs=e@65:45#1 rhs=e@65:65#1 type=Boolean
+expr e@55:9#16 binary(logicalAnd) lhs=e@55:9#15 rhs=e@65:45#2 type=Boolean
+expr e@66:13 name(floatArray) type=kotlin.FloatArray ref=__local_19.floatArray
+expr e@66:13#1 memberCall recv=e@66:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#5
+expr e@66:32 name(floats) type=kotlin.collections.Collection<Float> ref=golden.sema.collectionSurface.$0.floats
+expr e@66:32#1 memberCall recv=e@66:32 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@66:13#2 binary(equal) lhs=e@66:13#1 rhs=e@66:32#1 type=Boolean
+expr e@55:9#17 binary(logicalAnd) lhs=e@55:9#16 rhs=e@66:13#2 type=Boolean
+expr e@66:47 name(intArray) type=kotlin.IntArray ref=__local_20.intArray
+expr e@66:47#1 memberCall recv=e@66:47 callee=size args=[] type=Int call=kotlin.collections.size.$get#6
+expr e@66:64 name(ints) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionSurface.$0.ints
+expr e@66:64#1 memberCall recv=e@66:64 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@66:47#2 binary(equal) lhs=e@66:47#1 rhs=e@66:64#1 type=Boolean
+expr e@55:9#18 binary(logicalAnd) lhs=e@55:9#17 rhs=e@66:47#2 type=Boolean
+expr e@67:13 name(longArray) type=kotlin.LongArray ref=__local_21.longArray
+expr e@67:13#1 memberCall recv=e@67:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#7
+expr e@67:31 name(longs) type=kotlin.collections.Collection<Long> ref=golden.sema.collectionSurface.$0.longs
+expr e@67:31#1 memberCall recv=e@67:31 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@67:13#2 binary(equal) lhs=e@67:13#1 rhs=e@67:31#1 type=Boolean
+expr e@55:9#19 binary(logicalAnd) lhs=e@55:9#18 rhs=e@67:13#2 type=Boolean
+expr e@67:45 name(shortArray) type=kotlin.ShortArray ref=__local_22.shortArray
+expr e@67:45#1 memberCall recv=e@67:45 callee=size args=[] type=Int call=kotlin.collections.size.$get#8
+expr e@67:64 name(shorts) type=kotlin.collections.Collection<Short> ref=golden.sema.collectionSurface.$0.shorts
+expr e@67:64#1 memberCall recv=e@67:64 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@67:45#2 binary(equal) lhs=e@67:45#1 rhs=e@67:64#1 type=Boolean
+expr e@55:9#20 binary(logicalAnd) lhs=e@55:9#19 rhs=e@67:45#2 type=Boolean
+expr e@68:13 name(ubyteArray) type=kotlin.UByteArray ref=__local_23.ubyteArray
+expr e@68:13#1 memberCall recv=e@68:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#9
+expr e@68:32 name(ubytes) type=kotlin.collections.Collection<UByte> ref=golden.sema.collectionSurface.$0.ubytes
+expr e@68:32#1 memberCall recv=e@68:32 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@68:13#2 binary(equal) lhs=e@68:13#1 rhs=e@68:32#1 type=Boolean
+expr e@55:9#21 binary(logicalAnd) lhs=e@55:9#20 rhs=e@68:13#2 type=Boolean
+expr e@68:47 name(ushortArray) type=kotlin.UShortArray ref=__local_24.ushortArray
+expr e@68:47#1 memberCall recv=e@68:47 callee=size args=[] type=Int call=kotlin.collections.size.$get#12
+expr e@68:67 name(ushorts) type=kotlin.collections.Collection<UShort> ref=golden.sema.collectionSurface.$0.ushorts
+expr e@68:67#1 memberCall recv=e@68:67 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@68:47#2 binary(equal) lhs=e@68:47#1 rhs=e@68:67#1 type=Boolean
+expr e@55:9#22 binary(logicalAnd) lhs=e@55:9#21 rhs=e@68:47#2 type=Boolean
+expr e@69:13 name(uintArray) type=kotlin.UIntArray ref=__local_25.uintArray
+expr e@69:13#1 memberCall recv=e@69:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#10
+expr e@69:31 name(uints) type=kotlin.collections.Collection<UInt> ref=golden.sema.collectionSurface.$0.uints
+expr e@69:31#1 memberCall recv=e@69:31 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@69:13#2 binary(equal) lhs=e@69:13#1 rhs=e@69:31#1 type=Boolean
+expr e@55:9#23 binary(logicalAnd) lhs=e@55:9#22 rhs=e@69:13#2 type=Boolean
+expr e@69:45 name(ulongArray) type=kotlin.ULongArray ref=__local_26.ulongArray
+expr e@69:45#1 memberCall recv=e@69:45 callee=size args=[] type=Int call=kotlin.collections.size.$get#11
+expr e@69:64 name(ulongs) type=kotlin.collections.Collection<ULong> ref=golden.sema.collectionSurface.$0.ulongs
+expr e@69:64#1 memberCall recv=e@69:64 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@69:45#2 binary(equal) lhs=e@69:45#1 rhs=e@69:64#1 type=Boolean
+expr e@55:9#24 binary(logicalAnd) lhs=e@55:9#23 rhs=e@69:45#2 type=Boolean
+expr e@54:5 call callee=e@54:5#1 args=[_:e@55:9#24] type=Unit call=kotlin.io.println#1

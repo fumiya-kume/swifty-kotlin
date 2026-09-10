@@ -1,9 +1,3 @@
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlinx.coroutines.flow.Flow.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.coroutines.flow.Flow[kind=iface;gen=1] kind=interface vis=public flags=synthetic type=kotlinx.coroutines.flow.Flow<out kotlinx.coroutines.flow.Flow.T>
 symbol fq=probe.$0.flow[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=probe.$0.iterable[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=probe.$0.list[kind=vparam] kind=valueParameter vis=private flags=_

@@ -13,7 +13,6 @@ symbol fq=basicDestructuring[kind=fun;params=] kind=function vis=public flags=_ 
 symbol fq=destructuringWithContextualKeywordNames.$1.pair[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=destructuringWithContextualKeywordNames[kind=fun;params=kotlin.Pair<Int,String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Pair<Int, String>] ret=Unit
 symbol fq=destructuringWithUnderscore[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
 file fdestructuring_decl package=_
   decl Point[kind=class] class Point sym=Point[kind=class]
   decl basicDestructuring[kind=fun;params=] fun basicDestructuring sym=basicDestructuring[kind=fun;params=]

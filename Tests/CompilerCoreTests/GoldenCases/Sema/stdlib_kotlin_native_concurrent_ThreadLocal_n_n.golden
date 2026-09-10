@@ -1,6 +1,4 @@
 symbol fq=constructThreadLocal[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any?
-symbol fq=kotlin.native.concurrent.ThreadLocal.<init>[kind=ctor;params=] kind=constructor vis=public flags=synthetic sig=recv=_ params=[] ret=kotlin.native.concurrent.ThreadLocal
-symbol fq=kotlin.native.concurrent.ThreadLocal[kind=anno] kind=annotationClass vis=public flags=synthetic
 symbol fq=threadLocalValue[kind=prop] kind=property vis=public flags=mutable type=Int
 file fstdlib_kotlin_native_concurrent_ThreadLocal_n_n package=_
   decl threadLocalValue[kind=prop] property threadLocalValue var=1 sym=threadLocalValue[kind=prop]

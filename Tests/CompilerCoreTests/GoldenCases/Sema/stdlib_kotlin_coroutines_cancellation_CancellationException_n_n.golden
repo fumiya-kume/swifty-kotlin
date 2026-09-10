@@ -6,7 +6,6 @@ symbol fq=golden.sema.messageAndCause.$2.message[kind=vparam] kind=valueParamete
 symbol fq=golden.sema.messageAndCause[kind=fun;params=String?,kotlin.Throwable?] kind=function vis=public flags=_ sig=recv=_ params=[String?,kotlin.Throwable?] ret=kotlin.coroutines.cancellation.CancellationException
 symbol fq=golden.sema.message[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.coroutines.cancellation.CancellationException
 symbol fq=golden.sema.noArg[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.coroutines.cancellation.CancellationException
-symbol fq=kotlin.Throwable[kind=class] kind=class vis=public flags=openType
 file fstdlib_kotlin_coroutines_cancellation_CancellationException_n_n package=golden.sema
   decl golden.sema.noArg[kind=fun;params=] fun noArg sym=golden.sema.noArg[kind=fun;params=]
   decl golden.sema.message[kind=fun;params=String?] fun message sym=golden.sema.message[kind=fun;params=String?]

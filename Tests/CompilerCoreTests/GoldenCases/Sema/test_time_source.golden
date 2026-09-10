@@ -1,9 +1,6 @@
 symbol fq=__local_0.source[kind=local] kind=local vis=private flags=_ type=kotlin.time.TestTimeSource
 symbol fq=__local_1.mark1[kind=local] kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
 symbol fq=__local_2.mark2[kind=local] kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
-symbol fq=kotlin.time.AbstractLongTimeSource[kind=class] kind=class vis=public flags=abstractType|openType
-symbol fq=kotlin.time.ComparableTimeMark[kind=iface] kind=interface vis=public flags=_
-symbol fq=kotlin.time.TestTimeSource[kind=class] kind=class vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ftest_time_source package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

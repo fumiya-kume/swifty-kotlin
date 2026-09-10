@@ -1,0 +1,86 @@
+symbol fq=__for_0.i kind=local vis=private flags=_ type=Int
+symbol fq=__local_0.largeSeq kind=local vis=private flags=_ type=kotlin.sequences.Sequence<out kotlin.collections.List<out Int>>
+symbol fq=__local_1.flattenedSeq kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_2.nestedSeq kind=local vis=private flags=_ type=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>>
+symbol fq=__local_3.mixedSeq kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Any>
+symbol fq=__local_4.singleSeq kind=local vis=private flags=_ type=kotlin.sequences.Sequence<kotlin.collections.List<out Int>>
+symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+file fflatten_sequence_stdlib package=_
+  decl main fun main sym=main
+expr e@2:13 call callee=e@2:13#1 args=[] type=kotlin.sequences.Sequence<kotlin.collections.List<Int>> call=kotlin.sequences.emptySequence targs=[kotlin.collections.List<Int>]
+expr e@2:13#2 memberCall recv=e@2:13 callee=flatten args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.flatten targs=[Int]
+expr e@2:13#3 memberCall recv=e@2:13#2 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.toList targs=[Int]
+expr e@2:5 call callee=e@2:5#1 args=[_:e@2:13#3] type=Unit call=kotlin.io.println#1
+expr e@3:13 call callee=e@3:13#1 args=[] type=kotlin.sequences.Sequence<kotlin.collections.List<Int>> call=kotlin.sequences.sequenceOf targs=[kotlin.collections.List<Int>]
+expr e@3:13#2 memberCall recv=e@3:13 callee=flatten args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.flatten targs=[Int]
+expr e@3:13#3 memberCall recv=e@3:13#2 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.toList targs=[Int]
+expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13#3] type=Unit call=kotlin.io.println#1
+expr e@5:24 call callee=e@5:24#1 args=[] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#0 targs=[Int]
+expr e@5:46 int(1) type=Int
+expr e@5:39 call callee=e@5:39#1 args=[_:e@5:46] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@5:50 call callee=e@5:50#1 args=[] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#0 targs=[Int]
+expr e@5:13 call callee=e@5:13#1 args=[_:e@5:24,_:e@5:39,_:e@5:50] type=kotlin.sequences.Sequence<kotlin.collections.List<out Int>> call=kotlin.sequences.sequenceOf targs=[kotlin.collections.List<out Int>]
+expr e@5:13#2 memberCall recv=e@5:13 callee=flatten args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.flatten targs=[Int]
+expr e@5:13#3 memberCall recv=e@5:13#2 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.toList targs=[Int]
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#3] type=Unit call=kotlin.io.println#1
+expr e@8:19 int(1) type=Int
+expr e@8:22 int(10) type=Int
+expr e@8:19#1 binary(rangeTo) lhs=e@8:19 rhs=e@8:22 type=Int
+expr e@9:26 name(i) type=Int ref=__for_0.i
+expr e@9:19 call callee=e@9:19#1 args=[_:e@9:26] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@9:13 call callee=e@9:13#1 args=[_:e@9:19] type=Unit call=kotlin.sequences.SequenceScope.yield
+expr e@8:26 blockExpr stmts=[] trailing=e@9:13 type=Unit
+expr e@8:9 for var=i iterable=e@8:19#1 body=e@8:26 type=Unit ref=__for_0.i
+expr e@7:29 lambda params=[] body=e@8:9 label=sequence type=suspend kotlin.sequences.SequenceScope<kotlin.collections.List<out <error>>>.() -> Unit
+expr e@7:20 call callee=e@7:20#1 args=[_:e@7:29] type=kotlin.sequences.Sequence<out kotlin.collections.List<out Int>> call=kotlin.sequences.sequence
+expr e@7:5 localDecl largeSeq mutable=0 type=_ init=e@7:20 type=Unit ref=__local_0.largeSeq
+expr e@12:24 name(largeSeq) type=kotlin.sequences.Sequence<out kotlin.collections.List<out Int>> ref=__local_0.largeSeq
+expr e@12:24#1 memberCall recv=e@12:24 callee=flatten args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.flatten targs=[Int]
+expr e@12:24#2 memberCall recv=e@12:24#1 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.toList targs=[Int]
+expr e@12:5 localDecl flattenedSeq mutable=0 type=_ init=e@12:24#2 type=Unit ref=__local_1.flattenedSeq
+expr e@13:13 name(flattenedSeq) type=kotlin.collections.List<Int> ref=__local_1.flattenedSeq
+expr e@13:13#1 memberCall recv=e@13:13 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println#1
+expr e@14:13 name(flattenedSeq) type=kotlin.collections.List<Int> ref=__local_1.flattenedSeq
+expr e@14:31 int(5) type=Int
+expr e@14:13#1 memberCall recv=e@14:13 callee=take args=[_:e@14:31] type=kotlin.collections.List<Int> call=kotlin.collections.take#1 targs=[Int]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println#1
+expr e@15:13 name(flattenedSeq) type=kotlin.collections.List<Int> ref=__local_1.flattenedSeq
+expr e@15:31 name(flattenedSeq) type=kotlin.collections.List<Int> ref=__local_1.flattenedSeq
+expr e@15:31#1 memberCall recv=e@15:31 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@15:51 int(5) type=Int
+expr e@15:31#2 binary(subtract) lhs=e@15:31#1 rhs=e@15:51 type=Int
+expr e@15:13#1 memberCall recv=e@15:13 callee=drop args=[_:e@15:31#2] type=kotlin.collections.List<Int> call=kotlin.collections.drop#1 targs=[Int]
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println#1
+expr e@18:20 int(1) type=Int
+expr e@18:23 int(2) type=Int
+expr e@18:9 call callee=e@18:9#1 args=[_:e@18:20,_:e@18:23] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
+expr e@19:20 int(3) type=Int
+expr e@19:23 int(4) type=Int
+expr e@19:9 call callee=e@19:9#1 args=[_:e@19:20,_:e@19:23] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
+expr e@17:21 call callee=e@17:21#1 args=[_:e@18:9,_:e@19:9] type=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>> call=kotlin.sequences.sequenceOf targs=[kotlin.sequences.Sequence<Int>]
+expr e@17:5 localDecl nestedSeq mutable=0 type=_ init=e@17:21 type=Unit ref=__local_2.nestedSeq
+expr e@21:13 name(nestedSeq) type=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>> ref=__local_2.nestedSeq
+expr e@21:13#1 memberCall recv=e@21:13 callee=flatten args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.flatten targs=[Int]
+expr e@21:13#2 memberCall recv=e@21:13#1 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.toList targs=[Int]
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13#2] type=Unit call=kotlin.io.println#1
+expr e@23:38 int(1) type=Int
+expr e@23:41 int(2) type=Int
+expr e@23:31 call callee=e@23:31#1 args=[_:e@23:38,_:e@23:41] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@23:56 int(3) type=Int
+expr e@23:59 int(4) type=Int
+expr e@23:45 call callee=e@23:45#1 args=[_:e@23:56,_:e@23:59] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
+expr e@23:20 call callee=e@23:20#1 args=[_:e@23:31,_:e@23:45] type=kotlin.sequences.Sequence<Any> call=kotlin.sequences.sequenceOf targs=[Any]
+expr e@23:5 localDecl mixedSeq mutable=0 type=_ init=e@23:20 type=Unit ref=__local_3.mixedSeq
+expr e@24:13 name(mixedSeq) type=kotlin.sequences.Sequence<Any> ref=__local_3.mixedSeq
+expr e@24:13#1 memberCall recv=e@24:13 callee=flatten args=[] type=kotlin.sequences.Sequence<out Any> call=kotlin.sequences.flatten targs=[Any]
+expr e@24:13#2 memberCall recv=e@24:13#1 callee=toList args=[] type=kotlin.collections.List<Any> call=kotlin.sequences.toList targs=[Any]
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13#2] type=Unit call=kotlin.io.println#1
+expr e@26:39 int(42) type=Int
+expr e@26:32 call callee=e@26:32#1 args=[_:e@26:39] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@26:21 call callee=e@26:21#1 args=[_:e@26:32] type=kotlin.sequences.Sequence<kotlin.collections.List<out Int>> call=kotlin.sequences.sequenceOf targs=[kotlin.collections.List<out Int>]
+expr e@26:5 localDecl singleSeq mutable=0 type=_ init=e@26:21 type=Unit ref=__local_4.singleSeq
+expr e@27:13 name(singleSeq) type=kotlin.sequences.Sequence<kotlin.collections.List<out Int>> ref=__local_4.singleSeq
+expr e@27:13#1 memberCall recv=e@27:13 callee=flatten args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.flatten targs=[Int]
+expr e@27:13#2 memberCall recv=e@27:13#1 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.toList targs=[Int]
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13#2] type=Unit call=kotlin.io.println#1

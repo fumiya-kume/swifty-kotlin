@@ -7,9 +7,6 @@ symbol fq=__local_5.checkedIndices[kind=local] kind=local vis=private flags=_ ty
 symbol fq=golden.sema.collectionQueries.$0.other[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.collectionQueries.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.collectionQueries[kind=fun;params=kotlin.collections.Collection<Int>,kotlin.collections.Collection<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>,kotlin.collections.Collection<Int>] ret=Unit
-symbol fq=kotlin.collections.Collection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
 file fcollection_contains_indices package=golden.sema
   decl golden.sema.collectionQueries[kind=fun;params=kotlin.collections.Collection<Int>,kotlin.collections.Collection<Int>] fun collectionQueries sym=golden.sema.collectionQueries[kind=fun;params=kotlin.collections.Collection<Int>,kotlin.collections.Collection<Int>]
 expr e@5:23 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionQueries.$0.values[kind=vparam]

@@ -20,13 +20,6 @@ symbol fq=golden.sema.mapMinWith.$9.map[kind=vparam] kind=valueParameter vis=pri
 symbol fq=golden.sema.mapMinWithOrNull.$10.map[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.mapMinWithOrNull[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=kotlin.collections.Map.Entry<out String, out Int>?
 symbol fq=golden.sema.mapMinWith[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=kotlin.collections.Map.Entry<out String, out Int>
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_collections_Map_min package=golden.sema
   decl golden.sema.mapMinBy[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinBy sym=golden.sema.mapMinBy[kind=fun;params=kotlin.collections.Map<String,Int>]
   decl golden.sema.mapMinOfComparable[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinOfComparable sym=golden.sema.mapMinOfComparable[kind=fun;params=kotlin.collections.Map<String,Int>]

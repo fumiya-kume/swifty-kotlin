@@ -5,16 +5,6 @@ symbol fq=__local_3.isDirResult[kind=local] kind=local vis=private flags=_ type=
 symbol fq=__local_4.files[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<out java.io.File>?
 symbol fq=__local_5.walkResult[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<out java.io.File>
 symbol fq=__local_6.deleteResult[kind=local] kind=local vis=private flags=_ type=Boolean
-symbol fq=java.io.File.<init>.path[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.File.<init>[kind=ctor;params=String] kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
-symbol fq=java.io.File.delete[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=Boolean
-symbol fq=java.io.File.exists[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=Boolean
-symbol fq=java.io.File.isDirectory[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=Boolean
-symbol fq=java.io.File.listFiles[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=kotlin.collections.List<out java.io.File>?
-symbol fq=java.io.File.mkdirs[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=Boolean
-symbol fq=java.io.File.walk[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=kotlin.collections.List<out java.io.File>
-symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ffile_operations_basic package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

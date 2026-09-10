@@ -11,8 +11,6 @@ symbol fq=__local_9.minWrap[kind=local] kind=local vis=private flags=_ type=UInt
 symbol fq=__local_10.maxBoundary[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_11.minBoundary[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.UInt.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.UInt[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_UInt_Companion_Companion_n package=golden.sema
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:27 name(UInt) type=kotlin.UInt.Companion ref=kotlin.UInt[kind=class]

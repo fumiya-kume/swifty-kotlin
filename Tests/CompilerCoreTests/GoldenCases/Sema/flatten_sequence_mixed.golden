@@ -2,8 +2,6 @@ symbol fq=__local_0.mixed[kind=local] kind=local vis=private flags=_ type=kotlin
 symbol fq=__local_1.flattened[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<out Any>
 symbol fq=__local_2.checked[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Any>
 symbol fq=flattenMixed[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 file fflatten_sequence_mixed package=_
   decl flattenMixed[kind=fun;params=] fun flattenMixed sym=flattenMixed[kind=fun;params=]
 expr e@8:35 int(1) type=Int

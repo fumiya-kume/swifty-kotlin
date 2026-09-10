@@ -26,7 +26,6 @@ symbol fq=golden.sema.tryMultiCatchJoin[kind=fun;params=Int] kind=function vis=p
 symbol fq=golden.sema.tryMultiCatch[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.tryPartialCatchRethrow.$2.flag[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.tryPartialCatchRethrow[kind=fun;params=Boolean] kind=function vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int
-symbol fq=kotlin.Exception[kind=class] kind=class vis=public flags=openType type=kotlin.Exception
 file ftry_expression package=golden.sema
   decl golden.sema.Handled[kind=class] class Handled sym=golden.sema.Handled[kind=class]
   decl golden.sema.Unhandled[kind=class] class Unhandled sym=golden.sema.Unhandled[kind=class]

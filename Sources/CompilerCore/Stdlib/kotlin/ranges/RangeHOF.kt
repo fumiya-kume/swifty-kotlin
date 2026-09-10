@@ -557,6 +557,22 @@ public fun <R> IntProgression.foldIndexed(initial: R, operation: (Int, R, Int) -
 public fun IntProgression.find(predicate: (Int) -> Boolean): Int? = firstOrNull(predicate)
 public fun IntProgression.findLast(predicate: (Int) -> Boolean): Int? = lastOrNull(predicate)
 
+private fun intProgressionDescription(progression: IntProgression): String {
+    val step = progression.step
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun IntProgression.first(): Int {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${intProgressionDescription(this)} is empty.")
+    return this.first
+}
+
 public fun IntProgression.first(predicate: (Int) -> Boolean): Int {
     for (element in this) if (predicate(element)) return element
     throw NoSuchElementException("No element found matching predicate.")
@@ -566,6 +582,13 @@ public fun IntProgression.firstOrNull(): Int? = if (isEmpty()) null else first
 public fun IntProgression.firstOrNull(predicate: (Int) -> Boolean): Int? {
     for (element in this) if (predicate(element)) return element
     return null
+}
+
+@SinceKotlin("1.7")
+public fun IntProgression.last(): Int {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${intProgressionDescription(this)} is empty.")
+    return this.last
 }
 
 @NoInline
@@ -756,6 +779,37 @@ public fun LongRange.sum(): Long {
 public external fun LongRange.reversed(): LongProgression
 
 // MARK: - LongProgression
+
+private fun longProgressionDescription(progression: LongProgression): String {
+    // Widen before negation so the existing Int-typed synthetic step also
+    // renders Int.MIN_VALUE as 2147483648 when used in an empty message.
+    val step = progression.step.toLong()
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun LongProgression.first(): Long {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${longProgressionDescription(this)} is empty.")
+    return this.first
+}
+
+@SinceKotlin("1.7")
+public fun LongProgression.firstOrNull(): Long? = if (isEmpty()) null else this.first
+
+@SinceKotlin("1.7")
+public fun LongProgression.last(): Long {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${longProgressionDescription(this)} is empty.")
+    return this.last
+}
+
+@SinceKotlin("1.7")
+public fun LongProgression.lastOrNull(): Long? = if (isEmpty()) null else this.last
 
 public fun LongProgression.forEach(action: (Long) -> Unit) {
     for (element in this) { action(element) }
@@ -1309,6 +1363,35 @@ public external fun UIntRange.reversed(): UIntProgression
 
 // MARK: - UIntProgression
 
+private fun uintProgressionDescription(progression: UIntProgression): String {
+    val step = progression.step
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun UIntProgression.first(): UInt {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${uintProgressionDescription(this)} is empty.")
+    return this.first
+}
+
+@SinceKotlin("1.7")
+public fun UIntProgression.firstOrNull(): UInt? = if (isEmpty()) null else this.first
+
+@SinceKotlin("1.7")
+public fun UIntProgression.last(): UInt {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${uintProgressionDescription(this)} is empty.")
+    return this.last
+}
+
+@SinceKotlin("1.7")
+public fun UIntProgression.lastOrNull(): UInt? = if (isEmpty()) null else this.last
+
 public fun UIntProgression.forEach(action: (UInt) -> Unit) {
     for (element in this) { action(element) }
 }
@@ -1542,6 +1625,35 @@ public fun ULongRange.sum(): ULong {
 public external fun ULongRange.reversed(): ULongProgression
 
 // MARK: - ULongProgression
+
+private fun ulongProgressionDescription(progression: ULongProgression): String {
+    val step = progression.step
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun ULongProgression.first(): ULong {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${ulongProgressionDescription(this)} is empty.")
+    return this.first
+}
+
+@SinceKotlin("1.7")
+public fun ULongProgression.firstOrNull(): ULong? = if (isEmpty()) null else this.first
+
+@SinceKotlin("1.7")
+public fun ULongProgression.last(): ULong {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${ulongProgressionDescription(this)} is empty.")
+    return this.last
+}
+
+@SinceKotlin("1.7")
+public fun ULongProgression.lastOrNull(): ULong? = if (isEmpty()) null else this.last
 
 public fun ULongProgression.forEach(action: (ULong) -> Unit) {
     for (element in this) { action(element) }

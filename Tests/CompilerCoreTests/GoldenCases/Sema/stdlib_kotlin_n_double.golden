@@ -5,7 +5,6 @@ symbol fq=golden.sema.convertDoubleToULong[kind=fun;params=Double] kind=function
 symbol fq=golden.sema.makeDoubleArrayFromSpread.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.makeDoubleArrayFromSpread[kind=fun;params=kotlin.DoubleArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.DoubleArray] ret=kotlin.DoubleArray
 symbol fq=golden.sema.makeDoubleArray[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.DoubleArray
-symbol fq=kotlin.DoubleArray[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_n_double package=golden.sema
   decl golden.sema.makeDoubleArray[kind=fun;params=] fun makeDoubleArray sym=golden.sema.makeDoubleArray[kind=fun;params=]
   decl golden.sema.makeDoubleArrayFromSpread[kind=fun;params=kotlin.DoubleArray] fun makeDoubleArrayFromSpread sym=golden.sema.makeDoubleArrayFromSpread[kind=fun;params=kotlin.DoubleArray]

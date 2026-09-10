@@ -2,12 +2,6 @@ symbol fq=__local_0.a[kind=local] kind=local vis=private flags=_ type=Int
 symbol fq=__local_1.b[kind=local] kind=local vis=private flags=_ type=Int
 symbol fq=__local_2.c[kind=local] kind=local vis=private flags=_ type=Long
 symbol fq=__local_3.d[kind=local] kind=local vis=private flags=_ type=Double
-symbol fq=kotlin.Double.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.Double[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.Int.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.Int[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.Long.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.Long[kind=class] kind=class vis=public flags=synthetic
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fnumeric_constants package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

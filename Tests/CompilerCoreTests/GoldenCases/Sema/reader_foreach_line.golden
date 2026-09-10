@@ -5,15 +5,6 @@ symbol fq=golden.sema.collectLinesFromReader.$0.path[kind=vparam] kind=valuePara
 symbol fq=golden.sema.collectLinesFromReader[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.collections.List<String>
 symbol fq=golden.sema.printEachLine.$1.path[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.printEachLine[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=Unit
-symbol fq=java.io.BufferedReader[kind=class] kind=class vis=public flags=synthetic type=java.io.BufferedReader
-symbol fq=java.io.File.<init>.path[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.File.<init>[kind=ctor;params=String] kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
-symbol fq=java.io.File.bufferedReader[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=java.io.BufferedReader
-symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableList.add[kind=fun;recv=kotlin.collections.MutableList<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[kotlin.collections.MutableList.E] ret=Boolean
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file freader_foreach_line package=golden.sema
   decl golden.sema.printEachLine[kind=fun;params=String] fun printEachLine sym=golden.sema.printEachLine[kind=fun;params=String]
   decl golden.sema.collectLinesFromReader[kind=fun;params=String] fun collectLinesFromReader sym=golden.sema.collectLinesFromReader[kind=fun;params=String]

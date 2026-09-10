@@ -22,8 +22,6 @@ symbol fq=constrain.$0.list[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=constrain[kind=fun;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[constrain.$0.T] ret=constrain.$0.T bounds=[kotlin.collections.MutableList<String>]
 symbol fq=createList[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.MutableList<Int>
 symbol fq=customExtension[kind=fun;recv=kotlin.collections.MutableList<String>;params=] kind=function vis=public flags=_ sig=recv=kotlin.collections.MutableList<String> params=[] ret=String
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=processList.$1.list[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=processList[kind=fun;params=kotlin.collections.MutableList<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableList<String>] ret=Unit

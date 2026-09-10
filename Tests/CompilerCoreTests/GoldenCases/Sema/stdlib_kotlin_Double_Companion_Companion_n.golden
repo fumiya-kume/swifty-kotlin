@@ -13,8 +13,6 @@ symbol fq=__local_11.explicitNaN[kind=local] kind=local vis=private flags=_ type
 symbol fq=__local_12.explicitBytes[kind=local] kind=local vis=private flags=_ type=Int
 symbol fq=__local_13.explicitBits[kind=local] kind=local vis=private flags=_ type=Int
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Double.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.Double[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_Double_Companion_Companion_n package=golden.sema
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:29 name(Double) type=kotlin.Double.Companion ref=kotlin.Double[kind=class]

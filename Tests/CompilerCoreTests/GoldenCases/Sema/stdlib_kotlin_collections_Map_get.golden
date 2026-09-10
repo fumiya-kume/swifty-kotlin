@@ -10,10 +10,6 @@ symbol fq=golden.sema.mapGetValue.$3.key[kind=vparam] kind=valueParameter vis=pr
 symbol fq=golden.sema.mapGetValue.$3.map[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.mapGetValue[kind=fun;params=kotlin.collections.Map<String,Int>,String] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,String] ret=Int
 symbol fq=golden.sema.mapGet[kind=fun;params=kotlin.collections.Map<out String,Int?>,String] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<out String, Int?>,String] ret=Int?
-symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_collections_Map_get package=golden.sema
   decl golden.sema.mapGet[kind=fun;params=kotlin.collections.Map<out String,Int?>,String] fun mapGet sym=golden.sema.mapGet[kind=fun;params=kotlin.collections.Map<out String,Int?>,String]
   decl golden.sema.mapGetOrElse[kind=fun;params=kotlin.collections.Map<String,Int?>,String] fun mapGetOrElse sym=golden.sema.mapGetOrElse[kind=fun;params=kotlin.collections.Map<String,Int?>,String]

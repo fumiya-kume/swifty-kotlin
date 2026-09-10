@@ -17,8 +17,6 @@ symbol fq=golden.sema.catchIndexOutOfBounds[kind=fun;params=] kind=function vis=
 symbol fq=golden.sema.catchNoSuchElement[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.catchUnsupportedOperation[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.throwableProperties[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.RuntimeException[kind=class] kind=class vis=public flags=openType
-symbol fq=kotlin.Throwable[kind=class] kind=class vis=public flags=openType
 file fexception_classes package=golden.sema
   decl golden.sema.catchIllegalArgument[kind=fun;params=] fun catchIllegalArgument sym=golden.sema.catchIllegalArgument[kind=fun;params=]
   decl golden.sema.catchIllegalState[kind=fun;params=] fun catchIllegalState sym=golden.sema.catchIllegalState[kind=fun;params=]

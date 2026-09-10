@@ -8,16 +8,6 @@ symbol fq=flatMapIterableNullable.$1.destination[kind=vparam] kind=valueParamete
 symbol fq=flatMapIterableNullable.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=flatMapIterableNullable[kind=fun;params=kotlin.collections.Map<String?,Int?>,kotlin.collections.MutableList<Any?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>,kotlin.collections.MutableList<Any?>] ret=Unit
 symbol fq=flatMapIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.MutableList<Any>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.collections.MutableList<Any>] ret=Unit
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fmap_flat_map_to_iterable package=_
   decl flatMapIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.MutableList<Any>] fun flatMapIterable sym=flatMapIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.MutableList<Any>]
   decl flatMapIterableNullable[kind=fun;params=kotlin.collections.Map<String?,Int?>,kotlin.collections.MutableList<Any?>] fun flatMapIterableNullable sym=flatMapIterableNullable[kind=fun;params=kotlin.collections.Map<String?,Int?>,kotlin.collections.MutableList<Any?>]

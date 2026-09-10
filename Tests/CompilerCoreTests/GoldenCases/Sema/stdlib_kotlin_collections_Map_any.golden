@@ -1,12 +1,6 @@
 symbol fq=ProbeMap[kind=class] kind=class vis=public flags=abstractType|openType
 symbol fq=customMap.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=customMap[kind=fun;params=ProbeMap] kind=function vis=public flags=_ sig=recv=_ params=[ProbeMap] ret=Boolean
-symbol fq=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=noArg.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=noArg[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Boolean
 symbol fq=predicate.$2.values[kind=vparam] kind=valueParameter vis=private flags=_

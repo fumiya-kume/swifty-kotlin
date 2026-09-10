@@ -2,7 +2,6 @@ symbol fq=golden.sema.charSequenceAny.$0.cs[kind=vparam] kind=valueParameter vis
 symbol fq=golden.sema.charSequenceAny[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
 symbol fq=golden.sema.emptyAny[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 symbol fq=golden.sema.stringAny[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_any package=golden.sema
   decl golden.sema.charSequenceAny[kind=fun;params=kotlin.CharSequence] fun charSequenceAny sym=golden.sema.charSequenceAny[kind=fun;params=kotlin.CharSequence]
   decl golden.sema.stringAny[kind=fun;params=] fun stringAny sym=golden.sema.stringAny[kind=fun;params=]

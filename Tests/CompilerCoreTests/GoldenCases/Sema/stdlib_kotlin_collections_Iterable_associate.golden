@@ -3,11 +3,6 @@ symbol fq=associateFamily.$0.destination[kind=vparam] kind=valueParameter vis=pr
 symbol fq=associateFamily.$0.iterable[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=associateFamily.$0.list[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=associateFamily[kind=fun;params=kotlin.collections.Iterable<String>,kotlin.collections.Iterable<String>,kotlin.collections.List<String>,kotlin.collections.MutableMap<Any?,Any?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>,kotlin.collections.Iterable<String>,kotlin.collections.List<String>,kotlin.collections.MutableMap<Any?, Any?>] ret=Unit
-symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_collections_Iterable_associate package=_
   decl associateFamily[kind=fun;params=kotlin.collections.Iterable<String>,kotlin.collections.Iterable<String>,kotlin.collections.List<String>,kotlin.collections.MutableMap<Any?,Any?>] fun associateFamily sym=associateFamily[kind=fun;params=kotlin.collections.Iterable<String>,kotlin.collections.Iterable<String>,kotlin.collections.List<String>,kotlin.collections.MutableMap<Any?,Any?>]
 expr e@7:5 name(iterable) type=kotlin.collections.Iterable<String> ref=associateFamily.$0.iterable[kind=vparam]

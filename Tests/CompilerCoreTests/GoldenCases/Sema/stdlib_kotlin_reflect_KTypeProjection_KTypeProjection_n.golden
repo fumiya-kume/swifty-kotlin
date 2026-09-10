@@ -15,7 +15,6 @@ symbol fq=golden.sema.projectionType.$6.projection[kind=vparam] kind=valueParame
 symbol fq=golden.sema.projectionType[kind=fun;params=kotlin.reflect.KTypeProjection] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KType?
 symbol fq=golden.sema.projectionVariance.$7.projection[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.projectionVariance[kind=fun;params=kotlin.reflect.KTypeProjection] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KVariance?
-symbol fq=kotlin.reflect.KType[kind=iface] kind=interface vis=public flags=_
 file fstdlib_kotlin_reflect_KTypeProjection_KTypeProjection_n package=golden.sema
   decl golden.sema.projectionVariance[kind=fun;params=kotlin.reflect.KTypeProjection] fun projectionVariance sym=golden.sema.projectionVariance[kind=fun;params=kotlin.reflect.KTypeProjection]
   decl golden.sema.projectionType[kind=fun;params=kotlin.reflect.KTypeProjection] fun projectionType sym=golden.sema.projectionType[kind=fun;params=kotlin.reflect.KTypeProjection]

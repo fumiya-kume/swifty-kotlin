@@ -12,7 +12,6 @@ symbol fq=golden.sema.stringBuilderMatches[kind=fun;params=kotlin.text.StringBui
 symbol fq=golden.sema.stringMatches.$4.regex[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.stringMatches.$4.value[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.stringMatches[kind=fun;params=String,kotlin.text.Regex] kind=function vis=public flags=_ sig=recv=_ params=[String,kotlin.text.Regex] ret=Boolean
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_matches package=golden.sema
   decl golden.sema.charSequenceMatches[kind=fun;params=kotlin.CharSequence,kotlin.text.Regex] fun charSequenceMatches sym=golden.sema.charSequenceMatches[kind=fun;params=kotlin.CharSequence,kotlin.text.Regex]
   decl golden.sema.charSequenceMatchesInfix[kind=fun;params=kotlin.CharSequence,kotlin.text.Regex] fun charSequenceMatchesInfix sym=golden.sema.charSequenceMatchesInfix[kind=fun;params=kotlin.CharSequence,kotlin.text.Regex]

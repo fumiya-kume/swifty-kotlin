@@ -8,7 +8,6 @@ symbol fq=golden.sema.compareBound[kind=fun;params=T0,T0;gen=1] kind=function vi
 symbol fq=golden.sema.comparePrimitive.$2.a[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.comparePrimitive.$2.b[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.comparePrimitive[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_Comparable_n package=golden.sema
   decl golden.sema.Version[kind=class] class Version sym=golden.sema.Version[kind=class]
   decl golden.sema.compareBound[kind=fun;params=T0,T0;gen=1] fun compareBound sym=golden.sema.compareBound[kind=fun;params=T0,T0;gen=1]

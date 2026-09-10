@@ -1,7 +1,4 @@
 symbol fq=FixedClock[kind=class] kind=class vis=public flags=_
-symbol fq=kotlin.time.Clock[kind=iface] kind=interface vis=public flags=_
-symbol fq=kotlin.time.Instant.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.time.Instant[kind=class] kind=class vis=public flags=synthetic
 symbol fq=readClock.$0.clock[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=readClock[kind=fun;params=kotlin.time.Clock] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.time.Clock] ret=kotlin.time.Instant
 file fstdlib_kotlin_time_Clock_Clock_n_n package=_

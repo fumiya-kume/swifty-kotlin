@@ -1,11 +1,5 @@
 symbol fq=__local_0.items[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<out String>
 symbol fq=__local_1.hs[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableSet.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableSet.add[kind=fun;recv=kotlin.collections.MutableSet<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableSet<kotlin.collections.MutableSet.E> params=[kotlin.collections.MutableSet.E] ret=Boolean
-symbol fq=kotlin.collections.MutableSet.remove[kind=fun;recv=kotlin.collections.MutableSet<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableSet<kotlin.collections.MutableSet.E> params=[kotlin.collections.MutableSet.E] ret=Boolean
-symbol fq=kotlin.collections.MutableSet[kind=iface;gen=1] kind=interface vis=public flags=synthetic
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fto_hash_set package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

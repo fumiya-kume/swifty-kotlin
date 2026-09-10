@@ -10,14 +10,6 @@ symbol fq=__local_8.progression[kind=local] kind=local vis=private flags=_ type=
 symbol fq=__local_9.checked[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.ULongProgression
 symbol fq=charProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=intProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.ranges.CharProgression.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.ranges.CharProgression[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ranges.LongProgression.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.ranges.LongProgression[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ranges.UIntProgression.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.ranges.UIntProgression[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ranges.ULongProgression.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.ranges.ULongProgression[kind=class] kind=class vis=public flags=synthetic|openType
 symbol fq=longProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=uintProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=ulongProgression[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit

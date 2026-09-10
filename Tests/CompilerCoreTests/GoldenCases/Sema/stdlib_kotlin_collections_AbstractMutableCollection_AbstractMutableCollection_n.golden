@@ -11,16 +11,6 @@ symbol fq=golden.sema.BagIterator[kind=class] kind=class vis=public flags=_
 symbol fq=golden.sema.Bag[kind=class] kind=class vis=public flags=_
 symbol fq=golden.sema.probe.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.probe[kind=fun;params=golden.sema.Bag] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Bag] ret=Int
-symbol fq=kotlin.collections.AbstractMutableCollection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.AbstractMutableCollection[kind=class;gen=1] kind=class vis=public flags=abstractType|openType type=kotlin.collections.AbstractMutableCollection<kotlin.collections.AbstractMutableCollection.E>
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.List.get[kind=fun;recv=kotlin.collections.List<out T0>;params=Int;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[Int] ret=kotlin.collections.List.E
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableList.add[kind=fun;recv=kotlin.collections.MutableList<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[kotlin.collections.MutableList.E] ret=Boolean
-symbol fq=kotlin.collections.MutableList.removeAt[kind=fun;recv=kotlin.collections.MutableList<T0>;params=Int;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[Int] ret=kotlin.collections.MutableList.E
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_AbstractMutableCollection_AbstractMutableCollection_n package=golden.sema
   decl golden.sema.BagIterator[kind=class] class BagIterator sym=golden.sema.BagIterator[kind=class]
   decl golden.sema.Bag[kind=class] class Bag sym=golden.sema.Bag[kind=class]

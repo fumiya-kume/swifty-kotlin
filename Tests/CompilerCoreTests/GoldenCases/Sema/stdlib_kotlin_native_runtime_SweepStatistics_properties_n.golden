@@ -1,6 +1,5 @@
 symbol fq=__local_0.statistics[kind=local] kind=local vis=private flags=_ type=kotlin.native.runtime.SweepStatistics
 symbol fq=golden.sema.sweepStatisticsProperties[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
-symbol fq=kotlin.native.runtime.SweepStatistics[kind=class] kind=class vis=public flags=_ type=kotlin.native.runtime.SweepStatistics
 file fstdlib_kotlin_native_runtime_SweepStatistics_properties_n package=golden.sema
   decl golden.sema.sweepStatisticsProperties[kind=fun;params=] fun sweepStatisticsProperties sym=golden.sema.sweepStatisticsProperties[kind=fun;params=]
 expr e@7:39 long(9223372036854775807) type=Long

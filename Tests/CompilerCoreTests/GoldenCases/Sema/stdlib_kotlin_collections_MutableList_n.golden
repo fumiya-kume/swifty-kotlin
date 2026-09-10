@@ -18,12 +18,6 @@ symbol fq=__local_16.safeFirst[kind=local] kind=local vis=private flags=_ type=I
 symbol fq=__local_17.safeRemoveAll[kind=local] kind=local vis=private flags=_ type=Boolean?
 symbol fq=__local_18.safeReverse[kind=local] kind=local vis=private flags=_ type=Unit
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableCollection.remove.element[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.MutableCollection.remove[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.MutableCollection.E] ret=Boolean
-symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_MutableList_n package=golden.sema
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@5:51 int(1) type=Int

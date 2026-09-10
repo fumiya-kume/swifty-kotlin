@@ -1,7 +1,5 @@
 symbol fq=iterableWithIndex.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=iterableWithIndex[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.Iterable<kotlin.collections.IndexedValue<Int>>
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=listWithIndex.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=listWithIndex[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=kotlin.collections.Iterable<kotlin.collections.IndexedValue<String>>
 symbol fq=nullableWithIndex.$2.values[kind=vparam] kind=valueParameter vis=private flags=_

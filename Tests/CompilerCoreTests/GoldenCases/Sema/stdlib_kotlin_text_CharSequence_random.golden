@@ -14,7 +14,6 @@ symbol fq=golden.sema.randomOrNullOnCharSequence[kind=fun;params=kotlin.CharSequ
 symbol fq=golden.sema.randomOrNullOnStringSeeded.$5.random[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.randomOrNullOnStringSeeded[kind=fun;params=kotlin.random.Random] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.random.Random] ret=Char?
 symbol fq=golden.sema.randomOrNullOnString[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char?
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_random package=golden.sema
   decl golden.sema.randomOnCharSequence[kind=fun;params=kotlin.CharSequence] fun randomOnCharSequence sym=golden.sema.randomOnCharSequence[kind=fun;params=kotlin.CharSequence]
   decl golden.sema.randomOnCharSequenceSeeded[kind=fun;params=kotlin.CharSequence,kotlin.random.Random] fun randomOnCharSequenceSeeded sym=golden.sema.randomOnCharSequenceSeeded[kind=fun;params=kotlin.CharSequence,kotlin.random.Random]
