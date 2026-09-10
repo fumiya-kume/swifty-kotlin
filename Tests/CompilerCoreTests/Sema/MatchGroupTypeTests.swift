@@ -13,16 +13,10 @@ struct MatchGroupTypeTests {
 
     private static nonisolated(unsafe) var _sharedSema: (SemaModule, StringInterner, CompilationContext)?
 
-    private func sharedSema() throws -> (SemaModule, StringInterner, CompilationContext) {
-        if let cached = Self._sharedSema { return cached }
-        let triple = try makeSema()
-        Self._sharedSema = triple
-        return triple
-    }
-
     // MARK: - Shared sema fixture
 
-    private func makeSema() throws -> (SemaModule, StringInterner, CompilationContext) {
+    private func sharedSema() throws -> (SemaModule, StringInterner, CompilationContext) {
+        if let cached = Self._sharedSema { return cached }
         var result: (SemaModule, StringInterner, CompilationContext)?
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
@@ -30,7 +24,9 @@ struct MatchGroupTypeTests {
             let sema = try #require(ctx.sema)
             result = (sema, ctx.interner, ctx)
         }
-        return try #require(result)
+        let triple = try #require(result)
+        Self._sharedSema = triple
+        return triple
     }
 
     private func sourcePath(
