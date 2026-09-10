@@ -27,6 +27,7 @@ struct NativeConcurrentAPISurfaceInventoryTests {
         TopLevelEntry(name: "ThreadLocal", kind: .annotationClass, todo: nil),
         TopLevelEntry(name: "TransferMode", kind: .enumClass, todo: nil),
         TopLevelEntry(name: "Worker", kind: .class, todo: nil),
+        TopLevelEntry(name: "WorkerBoundReference", kind: .class, todo: nil),
         TopLevelEntry(name: "callContinuation0", kind: .function, todo: nil),
         TopLevelEntry(name: "callContinuation1", kind: .function, todo: nil),
         TopLevelEntry(name: "callContinuation2", kind: .function, todo: nil),
@@ -61,8 +62,8 @@ struct NativeConcurrentAPISurfaceInventoryTests {
 
         // Each TopLevelEntry must have a unique name (no two entries share a `name`).
         #expect(targetEntries.count == targetNames.count)
-        #expect(targetEntries.count == 17)
-        #expect(Self.implementedTopLevelEntries.count == 17)
+        #expect(targetEntries.count == 18)
+        #expect(Self.implementedTopLevelEntries.count == 18)
         #expect(Self.knownGapTopLevelEntries.count == 0)
     }
 
