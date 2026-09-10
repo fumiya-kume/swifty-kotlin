@@ -219,6 +219,84 @@ public fun <T> Iterable<Iterable<T>>.flatten(): List<T> {
     return result
 }
 
+// KSP-978: Keep Iterable group-family operations on the iterator-backed
+// source path so custom and one-shot Iterables preserve encounter order.
+@Suppress("UNCHECKED_CAST")
+public inline fun <T, K> Iterable<T>.groupBy(keySelector: (T) -> K): Map<K, List<T>> {
+    val result = mutableMapOf<K, MutableList<T>>()
+    for (element in this) {
+        val key = keySelector(element)
+        val existing = result[key]
+        if (existing == null) {
+            val bucket = mutableListOf<T>()
+            bucket.add(element)
+            result[key] = bucket
+        } else {
+            existing.add(element)
+        }
+    }
+    return result as Map<K, List<T>>
+}
+
+@Suppress("UNCHECKED_CAST")
+public inline fun <T, K, V> Iterable<T>.groupBy(
+    keySelector: (T) -> K,
+    valueTransform: (T) -> V
+): Map<K, List<V>> {
+    val result = mutableMapOf<K, MutableList<V>>()
+    for (element in this) {
+        val key = keySelector(element)
+        val existing = result[key]
+        if (existing == null) {
+            val bucket = mutableListOf<V>()
+            bucket.add(valueTransform(element))
+            result[key] = bucket
+        } else {
+            existing.add(valueTransform(element))
+        }
+    }
+    return result as Map<K, List<V>>
+}
+
+@IgnorableReturnValue
+public inline fun <T, K, M : MutableMap<in K, MutableList<T>>> Iterable<T>.groupByTo(
+    destination: M,
+    keySelector: (T) -> K
+): M {
+    for (element in this) {
+        val key = keySelector(element)
+        val existing = destination[key]
+        if (existing == null) {
+            val bucket = mutableListOf<T>()
+            bucket.add(element)
+            destination[key] = bucket
+        } else {
+            existing.add(element)
+        }
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <T, K, V, M : MutableMap<in K, MutableList<V>>> Iterable<T>.groupByTo(
+    destination: M,
+    keySelector: (T) -> K,
+    valueTransform: (T) -> V
+): M {
+    for (element in this) {
+        val key = keySelector(element)
+        val existing = destination[key]
+        if (existing == null) {
+            val bucket = mutableListOf<V>()
+            bucket.add(valueTransform(element))
+            destination[key] = bucket
+        } else {
+            existing.add(valueTransform(element))
+        }
+    }
+    return destination
+}
+
 // KSP-974: Iterable flat-map transformations are source-backed. Keep the
 // Iterable and Sequence inner-result overloads distinct so lambda-return-type
 // overload resolution selects the same public API as the Kotlin stdlib.
