@@ -1,0 +1,182 @@
+symbol fq=UserSequence.<init>.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=UserSequence.<init>[kind=ctor;recv=UserSequence;params=kotlin.sequences.Sequence<Int>] kind=constructor vis=public flags=_ sig=recv=UserSequence params=[kotlin.sequences.Sequence<Int>] ret=UserSequence
+symbol fq=UserSequence.values[kind=prop] kind=property vis=public flags=_ type=kotlin.sequences.Sequence<Int>
+symbol fq=UserSequence[kind=class] kind=class vis=public flags=_
+symbol fq=__local_0.source[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
+symbol fq=__local_1.iterableDestination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_2.iterableReturned[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_3.sequenceDestination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_4.sequenceReturned[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_5.numberDestination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<kotlin.Number>
+symbol fq=__local_6.numberReturned[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<kotlin.Number>
+symbol fq=__local_7.indexedDestination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_8.indexedReturned[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_9.emptyCalls[kind=local] kind=local vis=private flags=mutable type=Int
+symbol fq=__local_10.emptyDestination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_11.emptyReturned[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_12.visited[kind=local] kind=local vis=private flags=mutable type=String
+symbol fq=__local_13.userDestination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_14.userReturned[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__try_0_catch_0._[kind=local] kind=local vis=internal flags=_ type=kotlin.IllegalStateException
+symbol fq=flatMapTo.$1.destination[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=flatMapTo.$1.transform[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=flatMapTo[kind=fun;recv=UserSequence;params=kotlin.collections.MutableList<Int>,fn{p=Int;ret=kotlin.sequences.Sequence<Int>}] kind=function vis=public flags=_ sig=recv=UserSequence params=[kotlin.collections.MutableList<Int>,(Int) -> kotlin.sequences.Sequence<Int>] ret=kotlin.collections.MutableList<Int>
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableList.E[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableList.add[kind=fun;recv=kotlin.collections.MutableList<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[kotlin.collections.MutableList.E] ret=Boolean
+symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.sequences.Sequence.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+file fstdlib_kotlin_sequences_Sequence_flat package=_
+  decl UserSequence[kind=class] class UserSequence sym=UserSequence[kind=class]
+  decl flatMapTo[kind=fun;recv=UserSequence;params=kotlin.collections.MutableList<Int>,fn{p=Int;ret=kotlin.sequences.Sequence<Int>}] fun flatMapTo sym=flatMapTo[kind=fun;recv=UserSequence;params=kotlin.collections.MutableList<Int>,fn{p=Int;ret=kotlin.sequences.Sequence<Int>}]
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+expr e@2:46 name(values) type=kotlin.sequences.Sequence<Int> ref=UserSequence.values[kind=prop]
+expr e@2:46#1 memberCall recv=e@2:46 callee=iterator args=[] type=kotlin.collections.Iterator<Int> call=kotlin.sequences.Sequence.iterator[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int]
+expr e@9:5 name(destination) type=kotlin.collections.MutableList<Int> ref=flatMapTo.$1.destination[kind=vparam]
+expr e@9:21 int(700) type=Int
+expr e@9:5#1 memberCall recv=e@9:5 callee=add args=[_:e@9:21] type=Boolean call=kotlin.collections.MutableList.add[kind=fun;recv=kotlin.collections.MutableList<T0>;params=T0;gen=1]
+expr e@10:12 name(destination) type=kotlin.collections.MutableList<Int> ref=flatMapTo.$1.destination[kind=vparam]
+expr e@10:5 return value=e@10:12 type=Nothing
+expr e@14:44 int(1) type=Int
+expr e@14:47 int(2) type=Int
+expr e@14:50 int(3) type=Int
+expr e@14:33 call callee=e@14:33#1 args=[_:e@14:44,_:e@14:47,_:e@14:50] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@14:5 localDecl source mutable=0 type=Sequence<Int> init=e@14:33 type=Unit ref=__local_0.source[kind=local]
+expr e@16:63 int(99) type=Int
+expr e@16:49 call callee=e@16:49#1 args=[_:e@16:63] type=kotlin.collections.MutableList<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@16:5 localDecl iterableDestination mutable=0 type=MutableList<Int> init=e@16:49 type=Unit ref=__local_1.iterableDestination[kind=local]
+expr e@17:28 name(source) type=kotlin.sequences.Sequence<Int> ref=__local_0.source[kind=local]
+expr e@17:45 name(iterableDestination) type=kotlin.collections.MutableList<Int> ref=__local_1.iterableDestination[kind=local]
+expr e@17:84 name(value) type=Int ref=s-0
+expr e@17:91 name(value) type=Int ref=s-0
+expr e@17:99 int(10) type=Int
+expr e@17:91#1 binary(multiply) lhs=e@17:91 rhs=e@17:99 type=Int
+expr e@17:77 call callee=e@17:77#1 args=[_:e@17:84,_:e@17:91#1] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@17:66 lambda params=[value] body=e@17:77 label=flatMapTo type=(Int) -> Any
+expr e@17:28#1 memberCall recv=e@17:28 callee=flatMapTo args=[_:e@17:45,_:e@17:66] type=kotlin.collections.MutableList<Int> call=kotlin.sequences.flatMapTo[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=T2,fn{p=T0;ret=kotlin.collections.Iterable<T1>};gen=3] targs=[Int,Int,kotlin.collections.MutableList<Int>]
+expr e@17:5 localDecl iterableReturned mutable=0 type=_ init=e@17:28#1 type=Unit ref=__local_2.iterableReturned[kind=local]
+expr e@18:13 name(iterableReturned) type=kotlin.collections.MutableList<Int> ref=__local_2.iterableReturned[kind=local]
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@19:13 name(iterableReturned) type=kotlin.collections.MutableList<Int> ref=__local_2.iterableReturned[kind=local]
+expr e@19:34 name(iterableDestination) type=kotlin.collections.MutableList<Int> ref=__local_1.iterableDestination[kind=local]
+expr e@19:13#1 binary(identityEqual) lhs=e@19:13 rhs=e@19:34 type=Boolean
+expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@21:63 int(88) type=Int
+expr e@21:49 call callee=e@21:49#1 args=[_:e@21:63] type=kotlin.collections.MutableList<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@21:5 localDecl sequenceDestination mutable=0 type=MutableList<Int> init=e@21:49 type=Unit ref=__local_3.sequenceDestination[kind=local]
+expr e@22:28 name(source) type=kotlin.sequences.Sequence<Int> ref=__local_0.source[kind=local]
+expr e@22:45 name(sequenceDestination) type=kotlin.collections.MutableList<Int> ref=__local_3.sequenceDestination[kind=local]
+expr e@22:88 name(value) type=Int ref=s-1
+expr e@22:95 name(value) type=Int ref=s-1
+expr e@22:103 int(100) type=Int
+expr e@22:95#1 binary(multiply) lhs=e@22:95 rhs=e@22:103 type=Int
+expr e@22:77 call callee=e@22:77#1 args=[_:e@22:88,_:e@22:95#1] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@22:66 lambda params=[value] body=e@22:77 label=flatMapTo type=(Int) -> Any
+expr e@22:28#1 memberCall recv=e@22:28 callee=flatMapTo args=[_:e@22:45,_:e@22:66] type=kotlin.collections.MutableList<Int> call=kotlin.sequences.flatMapTo[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=T2,fn{p=T0;ret=kotlin.sequences.Sequence<T1>};gen=3] targs=[Int,Int,kotlin.collections.MutableList<Int>]
+expr e@22:5 localDecl sequenceReturned mutable=0 type=_ init=e@22:28#1 type=Unit ref=__local_4.sequenceReturned[kind=local]
+expr e@23:13 name(sequenceReturned) type=kotlin.collections.MutableList<Int> ref=__local_4.sequenceReturned[kind=local]
+expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@24:13 name(sequenceReturned) type=kotlin.collections.MutableList<Int> ref=__local_4.sequenceReturned[kind=local]
+expr e@24:34 name(sequenceDestination) type=kotlin.collections.MutableList<Int> ref=__local_3.sequenceDestination[kind=local]
+expr e@24:13#1 binary(identityEqual) lhs=e@24:13 rhs=e@24:34 type=Boolean
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@26:64 int(77) type=Int
+expr e@26:50 call callee=e@26:50#1 args=[_:e@26:64] type=kotlin.collections.MutableList<kotlin.Number> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[kotlin.Number]
+expr e@26:5 localDecl numberDestination mutable=0 type=MutableList<Number> init=e@26:50 type=Unit ref=__local_5.numberDestination[kind=local]
+expr e@27:26 name(source) type=kotlin.sequences.Sequence<Int> ref=__local_0.source[kind=local]
+expr e@27:43 name(numberDestination) type=kotlin.collections.MutableList<kotlin.Number> ref=__local_5.numberDestination[kind=local]
+expr e@27:84 name(value) type=Int ref=s-2
+expr e@27:92 int(2) type=Int
+expr e@27:84#1 binary(multiply) lhs=e@27:84 rhs=e@27:92 type=Int
+expr e@27:73 call callee=e@27:73#1 args=[_:e@27:84#1] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@27:62 lambda params=[value] body=e@27:73 label=flatMapTo type=(Int) -> Any
+expr e@27:26#1 memberCall recv=e@27:26 callee=flatMapTo args=[_:e@27:43,_:e@27:62] type=kotlin.collections.MutableList<kotlin.Number> call=kotlin.sequences.flatMapTo[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=T2,fn{p=T0;ret=kotlin.sequences.Sequence<T1>};gen=3] targs=[Int,Int,kotlin.collections.MutableList<kotlin.Number>]
+expr e@27:5 localDecl numberReturned mutable=0 type=_ init=e@27:26#1 type=Unit ref=__local_6.numberReturned[kind=local]
+expr e@28:13 name(numberReturned) type=kotlin.collections.MutableList<kotlin.Number> ref=__local_6.numberReturned[kind=local]
+expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@30:62 int(66) type=Int
+expr e@30:48 call callee=e@30:48#1 args=[_:e@30:62] type=kotlin.collections.MutableList<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@30:5 localDecl indexedDestination mutable=0 type=MutableList<Int> init=e@30:48 type=Unit ref=__local_7.indexedDestination[kind=local]
+expr e@31:27 name(source) type=kotlin.sequences.Sequence<Int> ref=__local_0.source[kind=local]
+expr e@31:51 name(indexedDestination) type=kotlin.collections.MutableList<Int> ref=__local_7.indexedDestination[kind=local]
+expr e@31:100 name(index) type=Int ref=s-3
+expr e@31:107 name(value) type=Int ref=s-4
+expr e@31:115 int(3) type=Int
+expr e@31:107#1 binary(multiply) lhs=e@31:107 rhs=e@31:115 type=Int
+expr e@31:89 call callee=e@31:89#1 args=[_:e@31:100,_:e@31:107#1] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@31:71 lambda params=[index,value] body=e@31:89 label=flatMapIndexedTo type=(Int, Int) -> Any
+expr e@31:27#1 memberCall recv=e@31:27 callee=flatMapIndexedTo args=[_:e@31:51,_:e@31:71] type=kotlin.collections.MutableList<Int> call=kotlin.sequences.flatMapIndexedTo[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=T2,fn{p=Int,T0;ret=kotlin.sequences.Sequence<T1>};gen=3] targs=[Int,Int,kotlin.collections.MutableList<Int>]
+expr e@31:5 localDecl indexedReturned mutable=0 type=_ init=e@31:27#1 type=Unit ref=__local_8.indexedReturned[kind=local]
+expr e@32:13 name(indexedReturned) type=kotlin.collections.MutableList<Int> ref=__local_8.indexedReturned[kind=local]
+expr e@32:5 call callee=e@32:5#1 args=[_:e@32:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@33:13 name(indexedReturned) type=kotlin.collections.MutableList<Int> ref=__local_8.indexedReturned[kind=local]
+expr e@33:33 name(indexedDestination) type=kotlin.collections.MutableList<Int> ref=__local_7.indexedDestination[kind=local]
+expr e@33:13#1 binary(identityEqual) lhs=e@33:13 rhs=e@33:33 type=Boolean
+expr e@33:5 call callee=e@33:5#1 args=[_:e@33:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@35:22 int(0) type=Int
+expr e@35:5 localDecl emptyCalls mutable=1 type=_ init=e@35:22 type=Unit ref=__local_9.emptyCalls[kind=local]
+expr e@36:60 int(55) type=Int
+expr e@36:46 call callee=e@36:46#1 args=[_:e@36:60] type=kotlin.collections.MutableList<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@36:5 localDecl emptyDestination mutable=0 type=MutableList<Int> init=e@36:46 type=Unit ref=__local_10.emptyDestination[kind=local]
+expr e@37:25 call callee=e@37:25#1 args=[] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.emptySequence[kind=fun;params=;gen=1] targs=[Int]
+expr e@37:56 name(emptyDestination) type=kotlin.collections.MutableList<Int> ref=__local_10.emptyDestination[kind=local]
+expr e@38:23 int(1) type=Int
+expr e@38:9 compoundAssign(plusAssign) name=emptyCalls value=e@38:23 type=Unit ref=__local_9.emptyCalls[kind=local]
+expr e@39:20 int(1) type=Int
+expr e@39:9 call callee=e@39:9#1 args=[_:e@39:20] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@38:9#1 blockExpr stmts=[e@38:9] trailing=e@39:9 type=kotlin.sequences.Sequence<Int>
+expr e@37:74 lambda params=[] body=e@38:9#1 label=flatMapTo type=(Int) -> Any
+expr e@37:25#2 memberCall recv=e@37:25 callee=flatMapTo args=[_:e@37:56,_:e@37:74] type=kotlin.collections.MutableList<Int> call=kotlin.sequences.flatMapTo[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=T2,fn{p=T0;ret=kotlin.sequences.Sequence<T1>};gen=3] targs=[Int,Int,kotlin.collections.MutableList<Int>]
+expr e@37:5 localDecl emptyReturned mutable=0 type=_ init=e@37:25#2 type=Unit ref=__local_11.emptyReturned[kind=local]
+expr e@41:13 name(emptyReturned) type=kotlin.collections.MutableList<Int> ref=__local_11.emptyReturned[kind=local]
+expr e@41:5 call callee=e@41:5#1 args=[_:e@41:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@42:13 name(emptyCalls) type=Int ref=__local_9.emptyCalls[kind=local]
+expr e@42:5 call callee=e@42:5#1 args=[_:e@42:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@44:19 string() type=String
+expr e@44:5 localDecl visited mutable=1 type=_ init=e@44:19 type=Unit ref=__local_12.visited[kind=local]
+expr e@46:9 name(source) type=kotlin.sequences.Sequence<Int> ref=__local_0.source[kind=local]
+expr e@46:26 call callee=e@46:26#1 args=[] type=kotlin.collections.MutableList<Int> call=kotlin.collections.mutableListOf[kind=fun;params=;gen=1] targs=[Int]
+expr e@47:24 name(value) type=Int ref=s-5
+expr e@47:24#1 memberCall recv=e@47:24 callee=toString args=[] type=String
+expr e@47:13 compoundAssign(plusAssign) name=visited value=e@47:24#1 type=Unit ref=__local_12.visited[kind=local]
+expr e@48:17 name(value) type=Int ref=s-5
+expr e@48:26 int(2) type=Int
+expr e@48:17#1 binary(equal) lhs=e@48:17 rhs=e@48:26 type=Boolean
+expr e@48:57 string(stop) type=String
+expr e@48:35 call callee=e@48:35#1 args=[_:e@48:57] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>[kind=ctor;recv=kotlin.IllegalStateException;params=String?]
+expr e@48:29 throw value=e@48:35 type=Nothing
+expr e@48:13 if cond=e@48:17#1 then=e@48:29 else=_ type=Unit
+expr e@49:24 name(value) type=Int ref=s-5
+expr e@49:13 call callee=e@49:13#1 args=[_:e@49:24] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@47:13#1 blockExpr stmts=[e@47:13,e@48:13] trailing=e@49:13 type=kotlin.sequences.Sequence<Int>
+expr e@46:48 lambda params=[value] body=e@47:13#1 label=flatMapTo type=(Int) -> Any
+expr e@46:9#1 memberCall recv=e@46:9 callee=flatMapTo args=[_:e@46:26,_:e@46:48] type=kotlin.collections.MutableList<Int> call=kotlin.sequences.flatMapTo[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=T2,fn{p=T0;ret=kotlin.sequences.Sequence<T1>};gen=3] targs=[Int,Int,kotlin.collections.MutableList<Int>]
+expr e@51:17 string(returned) type=String
+expr e@51:9 call callee=e@51:9#1 args=[_:e@51:17] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@45:9 blockExpr stmts=[e@46:9#1] trailing=e@51:9 type=Unit
+expr e@53:26 name(visited) type=String ref=__local_12.visited[kind=local]
+expr e@53:17 stringTemplate[lit(caught:),expr(e@53:26)] type=String
+expr e@53:9 call callee=e@53:9#1 args=[_:e@53:17] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@52:40 blockExpr stmts=[] trailing=e@53:9 type=Unit ref=__try_0_catch_0._[kind=local]
+expr e@45:5 try body=e@45:9 catches=[e@52:40] finally=_ type=Unit
+expr e@56:59 int(44) type=Int
+expr e@56:45 call callee=e@56:45#1 args=[_:e@56:59] type=kotlin.collections.MutableList<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@56:5 localDecl userDestination mutable=0 type=MutableList<Int> init=e@56:45 type=Unit ref=__local_13.userDestination[kind=local]
+expr e@57:48 int(5) type=Int
+expr e@57:37 call callee=e@57:37#1 args=[_:e@57:48] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@57:24 call callee=e@57:24#1 args=[_:e@57:37] type=UserSequence call=UserSequence.<init>[kind=ctor;recv=UserSequence;params=kotlin.sequences.Sequence<Int>]
+expr e@57:62 name(userDestination) type=kotlin.collections.MutableList<Int> ref=__local_13.userDestination[kind=local]
+expr e@57:92 name(it) type=Int ref=s-6
+expr e@57:97 int(2) type=Int
+expr e@57:92#1 binary(multiply) lhs=e@57:92 rhs=e@57:97 type=Int
+expr e@57:81 call callee=e@57:81#1 args=[_:e@57:92#1] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@57:79 lambda params=[] body=e@57:81 label=flatMapTo type=(Int) -> kotlin.sequences.Sequence<Int>
+expr e@57:24#2 memberCall recv=e@57:24 callee=flatMapTo args=[_:e@57:62,_:e@57:79] type=kotlin.collections.MutableList<Int> call=flatMapTo[kind=fun;recv=UserSequence;params=kotlin.collections.MutableList<Int>,fn{p=Int;ret=kotlin.sequences.Sequence<Int>}]
+expr e@57:5 localDecl userReturned mutable=0 type=_ init=e@57:24#2 type=Unit ref=__local_14.userReturned[kind=local]
+expr e@58:13 name(userReturned) type=kotlin.collections.MutableList<Int> ref=__local_14.userReturned[kind=local]
+expr e@58:5 call callee=e@58:5#1 args=[_:e@58:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
