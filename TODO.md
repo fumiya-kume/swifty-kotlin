@@ -3196,7 +3196,7 @@
     - `kotlin.native.concurrent.Worker.Companion.fromCPointer` — fun Companion.fromCPointer(CPointer): Worker  -- `final fun fromCPointer(kotlinx.cinterop/CPointer<out kotlinx.cinterop/CPointed>?): kotlin.native.concurrent/Worker`
     - `kotlin.native.concurrent.Worker.Companion.start` — fun Companion.start(Boolean, String): Worker  -- `final fun start(kotlin/Boolean = ..., kotlin/String? = ...): kotlin.native.concurrent/Worker`
 
-- [ ] KSP-1252: kotlin.native.concurrent.WorkerBoundReference top-level の未実装 stdlib API を実装する（1 件）
+- [x] KSP-1252: kotlin.native.concurrent.WorkerBoundReference top-level の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.native.concurrent.WorkerBoundReference` / top-level
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/native/concurrent/WorkerBoundReference/Stdlib.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3205,6 +3205,8 @@
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.native.concurrent.WorkerBoundReference.<init>` — constructor ()  -- `constructor <init>(#A)`
+  - 完了根拠: `WorkerBoundReference<out T : Any>(value: T)` の constructor を Kotlin/Native 2.3.10 の正規 source に合わせて bundled Kotlin source 化。KSP-1253 所有の `value` / `valueOrNull` / `worker` は追加せず、旧 synthetic stub・Runtime ABI・special lowering は存在しないため変更なし。
+  - 検証: 専用 Sema Golden、Kotlin/JVM では Native-only のため `SKIP-DIFF` とした専用 diff case、Native concurrent inventory、TODO ID 検査、`git diff --check`。
 
 - [ ] KSP-1253: kotlin.native.concurrent.WorkerBoundReference.WorkerBoundReference の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.native.concurrent.WorkerBoundReference` / receiver `WorkerBoundReference`

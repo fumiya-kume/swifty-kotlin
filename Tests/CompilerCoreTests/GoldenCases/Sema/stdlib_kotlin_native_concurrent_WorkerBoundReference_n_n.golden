@@ -1,0 +1,6 @@
+symbol fq=construct kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.native.concurrent.WorkerBoundReference<String>
+symbol fq=construct.$0.value kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_native_concurrent_WorkerBoundReference_n_n package=_ annotations=[@file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class),@file:Suppress("DEPRECATION_ERROR")]
+  decl construct fun construct sym=construct
+expr e@6:83 name(value) type=String ref=construct.$0.value
+expr e@6:62 call callee=e@6:62#1 args=[_:e@6:83] type=kotlin.native.concurrent.WorkerBoundReference<String> call=kotlin.native.concurrent.WorkerBoundReference.<init> targs=[String]
