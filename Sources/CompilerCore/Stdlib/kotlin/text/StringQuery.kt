@@ -1,5 +1,9 @@
 package kotlin.text
 
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
+
 // KSP-402
 // String query helpers migrated from Swift runtime entry points.
 
@@ -73,6 +77,42 @@ public fun String.lastOrNull(predicate: (Char) -> Boolean): Char? {
     return null
 }
 
+// KSP-1384: CharSequence last-family APIs are source-backed. Keep the
+// String-specific bridge overloads above because unrelated String callers
+// still use their runtime-backed no-predicate implementations.
+public fun CharSequence.last(): Char {
+    if (isEmpty())
+        throw NoSuchElementException("Char sequence is empty.")
+    return this[length - 1]
+}
+
+public inline fun CharSequence.last(predicate: (Char) -> Boolean): Char {
+    var index = length - 1
+    while (index >= 0) {
+        val element = this[index]
+        if (predicate(element)) return element
+        index--
+    }
+    throw NoSuchElementException("Char sequence contains no character matching the predicate.")
+}
+
+public val CharSequence.lastIndex: Int
+    get() = this.length - 1
+
+public fun CharSequence.lastOrNull(): Char? {
+    return if (isEmpty()) null else this[length - 1]
+}
+
+public inline fun CharSequence.lastOrNull(predicate: (Char) -> Boolean): Char? {
+    var index = length - 1
+    while (index >= 0) {
+        val element = this[index]
+        if (predicate(element)) return element
+        index--
+    }
+    return null
+}
+
 public fun String.single(): Char {
     return this.__kk_string_single()
 }
@@ -125,3 +165,13 @@ public fun String.singleOrNull(predicate: (Char) -> Boolean): Char? {
 public fun String.getOrNull(index: Int): Char? {
     return this.__kk_string_getOrNull(index)
 }
+
+@kotlin.internal.InlineOnly
+@OptIn(ExperimentalContracts::class)
+public inline fun CharSequence.getOrElse(index: Int, defaultValue: (Int) -> Char): Char {
+    contract { callsInPlace(defaultValue, InvocationKind.AT_MOST_ONCE) }
+    return if (index >= 0 && index < length) get(index) else defaultValue(index)
+}
+
+public fun CharSequence.getOrNull(index: Int): Char? =
+    if (index >= 0 && index < length) get(index) else null

@@ -1,0 +1,70 @@
+symbol fq=__local_0.joinedBuffer[kind=local] kind=local vis=private flags=_ type=kotlin.text.Appendable
+symbol fq=__local_1.transformedBuffer[kind=local] kind=local vis=private flags=_ type=kotlin.text.Appendable
+symbol fq=__local_2.plain[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_3.transformed[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_4.namedTransform[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=joinFamily.$0.buffer[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=joinFamily.$0.separator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=joinFamily.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=joinFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.text.Appendable,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.text.Appendable,kotlin.CharSequence] ret=String
+file fstdlib_kotlin_collections_Iterable_join package=_
+  decl joinFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.text.Appendable,kotlin.CharSequence] fun joinFamily sym=joinFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.text.Appendable,kotlin.CharSequence]
+expr e@8:36 name(values) type=kotlin.collections.Iterable<Int> ref=joinFamily.$0.values[kind=vparam]
+expr e@9:18 name(buffer) type=kotlin.text.Appendable ref=joinFamily.$0.buffer[kind=vparam]
+expr e@10:21 name(separator) type=kotlin.CharSequence ref=joinFamily.$0.separator[kind=vparam]
+expr e@11:18 string([) type=String
+expr e@12:19 string(]) type=String
+expr e@13:17 int(2) type=Int
+expr e@14:21 string(!) type=String
+expr e@8:36#1 memberCall recv=e@8:36 callee=joinTo args=[buffer:e@9:18,separator:e@10:21,prefix:e@11:18,postfix:e@12:19,limit:e@13:17,truncated:e@14:21] type=kotlin.text.Appendable call=kotlin.collections.joinTo[kind=fun;recv=kotlin.collections.Iterable<T0>;params=T1,kotlin.CharSequence,kotlin.CharSequence,kotlin.CharSequence,Int,kotlin.CharSequence;gen=2] targs=[Int,kotlin.text.Appendable]
+expr e@8:5 localDecl joinedBuffer mutable=0 type=Appendable init=e@8:36#1 type=Unit ref=__local_0.joinedBuffer[kind=local]
+expr e@16:41 name(values) type=kotlin.collections.Iterable<Int> ref=joinFamily.$0.values[kind=vparam]
+expr e@17:18 call callee=e@17:18#1 args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=]
+expr e@18:21 name(separator) type=kotlin.CharSequence ref=joinFamily.$0.separator[kind=vparam]
+expr e@19:18 string({) type=String
+expr e@20:19 string(}) type=String
+expr e@21:17 int(2) type=Int
+expr e@22:21 string(!) type=String
+expr e@23:12 name(it) type=Int ref=s-0
+expr e@23:9 stringTemplate[lit(b),expr(e@23:12)] type=String
+expr e@23:7 lambda params=[] body=e@23:9 label=joinTo type=(Int) -> kotlin.CharSequence
+expr e@16:41#1 memberCall recv=e@16:41 callee=joinTo args=[buffer:e@17:18,separator:e@18:21,prefix:e@19:18,postfix:e@20:19,limit:e@21:17,truncated:e@22:21,_:e@23:7] type=kotlin.text.StringBuilder call=kotlin.collections.joinTo[kind=fun;recv=kotlin.collections.Iterable<T0>;params=T1,kotlin.CharSequence,kotlin.CharSequence,kotlin.CharSequence,Int,kotlin.CharSequence,fn{p=T0;ret=kotlin.CharSequence};gen=2] targs=[Int,kotlin.text.StringBuilder]
+expr e@16:5 localDecl transformedBuffer mutable=0 type=Appendable init=e@16:41#1 type=Unit ref=__local_1.transformedBuffer[kind=local]
+expr e@24:17 name(values) type=kotlin.collections.Iterable<Int> ref=joinFamily.$0.values[kind=vparam]
+expr e@25:21 name(separator) type=kotlin.CharSequence ref=joinFamily.$0.separator[kind=vparam]
+expr e@26:18 string([) type=String
+expr e@27:19 string(]) type=String
+expr e@28:17 int(2) type=Int
+expr e@29:21 string(!) type=String
+expr e@24:17#1 memberCall recv=e@24:17 callee=joinToString args=[separator:e@25:21,prefix:e@26:18,postfix:e@27:19,limit:e@28:17,truncated:e@29:21] type=String call=kotlin.collections.joinToString[kind=fun;recv=kotlin.collections.Iterable<T0>;params=kotlin.CharSequence,kotlin.CharSequence,kotlin.CharSequence,Int,kotlin.CharSequence;gen=1] targs=[Int]
+expr e@24:5 localDecl plain mutable=0 type=_ init=e@24:17#1 type=Unit ref=__local_2.plain[kind=local]
+expr e@31:23 name(values) type=kotlin.collections.Iterable<Int> ref=joinFamily.$0.values[kind=vparam]
+expr e@32:21 name(separator) type=kotlin.CharSequence ref=joinFamily.$0.separator[kind=vparam]
+expr e@33:18 string(<) type=String
+expr e@34:19 string(>) type=String
+expr e@35:17 int(2) type=Int
+expr e@36:21 string(!) type=String
+expr e@37:12 name(it) type=Int ref=s-1
+expr e@37:9 stringTemplate[lit(v),expr(e@37:12)] type=String
+expr e@37:7 lambda params=[] body=e@37:9 label=joinToString type=(Int) -> kotlin.CharSequence
+expr e@31:23#1 memberCall recv=e@31:23 callee=joinToString args=[separator:e@32:21,prefix:e@33:18,postfix:e@34:19,limit:e@35:17,truncated:e@36:21,_:e@37:7] type=String call=kotlin.collections.joinToString[kind=fun;recv=kotlin.collections.Iterable<T0>;params=kotlin.CharSequence,kotlin.CharSequence,kotlin.CharSequence,Int,kotlin.CharSequence,fn{p=T0;ret=kotlin.CharSequence};gen=1] targs=[Int]
+expr e@31:5 localDecl transformed mutable=0 type=_ init=e@31:23#1 type=Unit ref=__local_3.transformed[kind=local]
+expr e@38:26 name(values) type=kotlin.collections.Iterable<Int> ref=joinFamily.$0.values[kind=vparam]
+expr e@39:21 name(separator) type=kotlin.CharSequence ref=joinFamily.$0.separator[kind=vparam]
+expr e@40:26 name(it) type=Int ref=s-2
+expr e@40:23 stringTemplate[lit(n),expr(e@40:26)] type=String
+expr e@40:21 lambda params=[] body=e@40:23 label=joinToString type=(Int) -> kotlin.CharSequence
+expr e@38:26#1 memberCall recv=e@38:26 callee=joinToString args=[separator:e@39:21,transform:e@40:21] type=String call=kotlin.collections.joinToString[kind=fun;recv=kotlin.collections.Iterable<T0>;params=kotlin.CharSequence,kotlin.CharSequence,kotlin.CharSequence,Int,kotlin.CharSequence,fn{p=T0;ret=kotlin.CharSequence};gen=1] targs=[Int]
+expr e@38:5 localDecl namedTransform mutable=0 type=_ init=e@38:26#1 type=Unit ref=__local_4.namedTransform[kind=local]
+expr e@42:12 name(joinedBuffer) type=kotlin.text.Appendable ref=__local_0.joinedBuffer[kind=local]
+expr e@42:12#1 memberCall recv=e@42:12 callee=toString args=[] type=String call=kotlin.Any.toString[kind=fun;recv=kotlin.Any;params=]
+expr e@42:38 name(transformedBuffer) type=kotlin.text.Appendable ref=__local_1.transformedBuffer[kind=local]
+expr e@42:38#1 memberCall recv=e@42:38 callee=toString args=[] type=String call=kotlin.Any.toString[kind=fun;recv=kotlin.Any;params=]
+expr e@42:12#2 binary(add) lhs=e@42:12#1 rhs=e@42:38#1 type=String
+expr e@42:69 name(plain) type=String ref=__local_2.plain[kind=local]
+expr e@42:12#3 binary(add) lhs=e@42:12#2 rhs=e@42:69 type=String
+expr e@42:77 name(transformed) type=String ref=__local_3.transformed[kind=local]
+expr e@42:12#4 binary(add) lhs=e@42:12#3 rhs=e@42:77 type=String
+expr e@42:91 name(namedTransform) type=String ref=__local_4.namedTransform[kind=local]
+expr e@42:12#5 binary(add) lhs=e@42:12#4 rhs=e@42:91 type=String
+expr e@42:5 return value=e@42:12#5 type=Nothing

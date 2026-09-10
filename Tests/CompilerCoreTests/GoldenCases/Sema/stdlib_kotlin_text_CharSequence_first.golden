@@ -1,0 +1,37 @@
+symbol fq=golden.sema.charSequenceFirst.$0.cs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceFirstOrNull.$1.cs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceFirstOrNullPredicate.$2.cs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceFirstOrNullPredicate[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char?
+symbol fq=golden.sema.charSequenceFirstOrNull[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char?
+symbol fq=golden.sema.charSequenceFirstPredicate.$3.cs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceFirstPredicate[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
+symbol fq=golden.sema.charSequenceFirst[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
+symbol fq=golden.sema.emptyFirstOrNull[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char?
+symbol fq=golden.sema.stringFirst[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char
+file fstdlib_kotlin_text_CharSequence_first package=golden.sema
+  decl golden.sema.charSequenceFirst[kind=fun;params=kotlin.CharSequence] fun charSequenceFirst sym=golden.sema.charSequenceFirst[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.charSequenceFirstPredicate[kind=fun;params=kotlin.CharSequence] fun charSequenceFirstPredicate sym=golden.sema.charSequenceFirstPredicate[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.charSequenceFirstOrNull[kind=fun;params=kotlin.CharSequence] fun charSequenceFirstOrNull sym=golden.sema.charSequenceFirstOrNull[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.charSequenceFirstOrNullPredicate[kind=fun;params=kotlin.CharSequence] fun charSequenceFirstOrNullPredicate sym=golden.sema.charSequenceFirstOrNullPredicate[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.stringFirst[kind=fun;params=] fun stringFirst sym=golden.sema.stringFirst[kind=fun;params=]
+  decl golden.sema.emptyFirstOrNull[kind=fun;params=] fun emptyFirstOrNull sym=golden.sema.emptyFirstOrNull[kind=fun;params=]
+expr e@3:49 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceFirst.$0.cs[kind=vparam]
+expr e@3:49#1 memberCall recv=e@3:49 callee=first args=[] type=Char call=kotlin.text.first[kind=fun;recv=kotlin.CharSequence;params=]
+expr e@5:58 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceFirstPredicate.$3.cs[kind=vparam]
+expr e@5:69 name(it) type=Char ref=s-0
+expr e@5:75 char(120) type=Char
+expr e@5:69#1 binary(equal) lhs=e@5:69 rhs=e@5:75 type=Boolean
+expr e@5:67 lambda params=[] body=e@5:69#1 label=first type=(Char) -> Boolean
+expr e@5:58#1 memberCall recv=e@5:58 callee=first args=[_:e@5:67] type=Char call=kotlin.text.first[kind=fun;recv=kotlin.CharSequence;params=fn{p=Char;ret=Boolean}]
+expr e@7:56 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceFirstOrNull.$1.cs[kind=vparam]
+expr e@7:56#1 memberCall recv=e@7:56 callee=firstOrNull args=[] type=Char? call=kotlin.text.firstOrNull[kind=fun;recv=kotlin.CharSequence;params=]
+expr e@9:65 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceFirstOrNullPredicate.$2.cs[kind=vparam]
+expr e@9:82 name(it) type=Char ref=s-1
+expr e@9:88 char(120) type=Char
+expr e@9:82#1 binary(equal) lhs=e@9:82 rhs=e@9:88 type=Boolean
+expr e@9:80 lambda params=[] body=e@9:82#1 label=firstOrNull type=(Char) -> Boolean
+expr e@9:65#1 memberCall recv=e@9:65 callee=firstOrNull args=[_:e@9:80] type=Char? call=kotlin.text.firstOrNull[kind=fun;recv=kotlin.CharSequence;params=fn{p=Char;ret=Boolean}]
+expr e@11:27 string(x) type=String
+expr e@11:27#1 memberCall recv=e@11:27 callee=first args=[] type=Char call=kotlin.text.first[kind=fun;recv=String;params=]
+expr e@13:33 string() type=String
+expr e@13:33#1 memberCall recv=e@13:33 callee=firstOrNull args=[] type=Char? call=kotlin.text.firstOrNull[kind=fun;recv=String;params=]

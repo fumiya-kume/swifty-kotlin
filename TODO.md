@@ -626,6 +626,8 @@
 
 - [ ] BUG-236: 要素型の異なる引数を渡した `arrayOf` の要素型推論が、Kotlin の LUB ではなく `Any` へ広げられる。最小再現: `fun main() { val mixed = arrayOf(1, "two", 3.0) }`。kotlinc（実測は 2.4.10 / language version 2.4）は `T` を `Comparable<*> & java.io.Serializable` の交差型と推論し、reified 型パラメータへの交差型の具象化を `error: type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>' & 'Serializable']` として**コンパイルエラー**にする（`kotlinc -Xcontext-parameters` の既定設定で実測）。本コンパイラは同じ式を診断なしで受理し `kotlin.Array<Any>` を推論する（`Tests/CompilerCoreTests/GoldenCases/Sema/arrayof_element_type_inference.golden` の `arrayOfMixed` が `targs=[Any]` として固定している。TYPE-103 以来の既定動作で、本 PR で新たに導入した挙動ではない）。この差により、混在 `arrayOf` の**実行**結果を `Scripts/diff_cases/` に置くことはできない（参照側がコンパイルエラーになるため diff の対象にならない）。明示注釈を付けた `arrayOf<Any>(1, "two", 3)` の実行は `Scripts/diff_cases/array_edge_cases.kt` が既にカバーしている。発見元: RF-FIXTURE-002 で分割後の実行検証を補完する際、混在ケースを `Scripts/diff_cases/arrayof_type_safety.kt` に追加したところ参照コンパイルが失敗して発覚。今回修正しない理由: 修正には共通上位型（LUB）計算と交差型の表現、および reified 型パラメータへの交差型具象化の診断という型システム側の新機能が必要で、Kotlin/Native には `java.io.Serializable` が存在しないため交差型の構成要素自体の設計判断も伴う。golden fixture の依存削減という RF-FIXTURE-002 のスコープを大きく超える。
 
+- [ ] BUG-242: `ImportedInlineKIRMaterializer.materialize()`（`7afb87a1e8` = KSP-1384 `#6703` squash-merge で新設、`LoweringPhase.swift` から無条件に呼ばれていた）が、`--stdlib-library`（`.kklib` artifact）経由の実行で imported inline 関数と無関係な多数の Iterable/Set/Map/Sequence/Range HOF を `KSwiftK panic [KSWIFTK-LINK-0003]: Unhandled top-level exception` で壊す広範な回帰。当初 `Iterable<T>.sumBy` / `sumByDouble` / `firstNotNullOfOrNull` の3件のみで発覚したが、GitHub Actions CI（`#6698`、Linux）実測では `Scripts/diff_cases/` の**55件**（`iterable_*`/`stdlib_kotlin_collections_Iterable_*`/`list_*`/`map_*`/`set_*`/`range_hof`/`synchronized_basic` 等）と、`CodegenBackend*`/`BundledStdlibExecutionTests`/`StdlibArtifactRegressionTests` 等**約25個の Swift Testing スイート**に及ぶと判明（`flow_*` 系6件は同じ CI ランで `Runtime/RuntimeStringArray.swift:493: kk_array_get_inbounds precondition failed` という別の panic 種別で失敗していたが、`materialize()` 無効化後に `Scripts/diff_kotlinc.sh Scripts/diff_cases` 全件（1293件）を再実行したところ6件とも PASS に回復しており、同一原因と確定）。最小再現: `fun main() { println(listOf(7).sumBy { it * 3 }) }`（受信者の静的型は `List`/`Iterable` いずれでも再現し無関係。`Scripts/diff_cases/collection_sumby.kt` / `collection_sumbydouble.kt` / `collection_firstnotnullofornull.kt` で確認済み）。同シェイプのユーザー定義関数（`fun mySum(items: List<Int>, selector: (Int) -> Int): Int { var sum = 0; for (x in items) sum += selector(x); return sum }`）は正しく動作し、`for (x in listOf(7)) println(x)` や `listOf(7).size` も問題ないため、iterator/`listOf` 自体や「非 Boolean 結果を返すコールバック呼び出し」一般の問題ではなく、これら3関数の bundled 実装が `.kklib` 経由でロードされる際の何かに固有。原因コミットを bisect で確定: `codex/todo50-ksp-1378-charsequence-get`（本 PR のブランチ）上で `1c092f3400`（親）は問題なく、`7afb87a1e8`（KSP-1384 `#6703` の squash-merge、既にこのブランチへマージ済み）で初めて発生する。`7afb87a1e8` が新設した `Sources/CompilerCore/Lowering/LoweringPhase.swift` 内の無条件呼び出し `ImportedInlineKIRMaterializer.materialize(...)`（`Sources/CompilerCore/KIR/ImportedInlineKIRMaterializer.swift`、新規ファイル）をコメントアウトするだけで3件とも直ることを確認済み（KSP-1384 自身の機能である `stdlib_kotlin_text_CharSequence_last.kt` / `_first.kt` は無効化後も引き続き PASS）。materializer 内の `inferConcreteBooleanInvokeResults` が `kk_function_invoke*` 呼び出しの戻り値型を Boolean のケースだけ復元している点を疑い、この Boolean 限定ガードを外して任意の戻り値型を復元するよう緩めて再ビルドしたが、3件とも症状は変わらず（この仮説は棄却）。有力な手がかり: `remap` は `arena.appendTemporary()` で元の式種別を持たない `.temporary(rawID)` プレースホルダを consumer arena に追加するだけで、実際の中身への差し替えは別途（おそらく `InlineLoweringPass` によるスプライス時）に行われる設計に見えるが、`Sources/CompilerBackend/NativeEmitter+EmissionConstants.swift:911` は未解決の `.temporary(raw)` を「生の内部式 ID 値をそのまま整数リテラルとして emit する」フォールバックを持っており、これがコード生成まで漏れ出すと不正な値が焼き込まれる（`Sources/CompilerCore/Lowering/InlineLoweringPass.swift:28,42,61` が `importedInlineFunctions` をどう消費するかの追跡が未完了）。発見元: 本 PR（`#6698` のコンフリクト解消作業）で `master` マージ後にフル `swift_test.sh` を流したところ `CodegenBackendCollectionWindowedEdgeCasesTests` で3件失敗し発覚、その後 push した CI（Linux）で上記の実際の規模が判明。`git worktree` で分離した環境で三分岐検証（`master` 単体 88864270f9 は PASS / 本 PR ブランチ単体 `7afb87a1e8` は同一症状で FAIL）し、コンフリクト解消・マージ自体が原因でないことを確認済み。**暫定対処（本 PR で実施）**: `LoweringPhase.swift` から `materialize()` の呼び出しを無効化（関数・ファイル自体は残置）。これにより上記の広範な回帰は解消するが、この pass が閉じるはずだった穴が再開する: imported inline `CharSequence.first`/`last` に渡した predicate 内の non-local return（`#6703` の対象機能）が再び壊れる。対応する回帰テスト `ImportedInlineKIRRegressionTests.importedFirstPredicateFalseBranchRunsThroughArtifact` は `.disabled("BUG-242: ...")` としてスキップ済み。**根本修正の条件**: `.temporary` プレースホルダが `InlineLoweringPass` によるスプライスを経ずにコード生成へ漏れ出す経路を特定・修正し、`ImportedInlineKIRRegressionTests` を再度有効化した上で上記55件 + 約25スイートが全て green であることを確認してから `materialize()` 呼び出しを復活させること。
+
 ---
 
 ## テストパイプライン集約タスク（Sema API tests migration）
@@ -1348,14 +1350,18 @@
     - `kotlin.collections.groupByTo` — fun Iterable.groupByTo(, Function1): #C  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin.collections/MutableMap<in #B, kotlin.collections/MutableList<#A>>> (kotlin.collections/Iterable<#A>).kotlin.collections/groupByTo(#C, kotlin/Function1<#A, #B>): #C`
     - `kotlin.collections.groupByTo` — fun Iterable.groupByTo(, Function1, Function1): #D  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin/Any?, #D: kotlin.collections/MutableMap<in #B, kotlin.collections/MutableList<#C>>> (kotlin.collections/Iterable<#A>).kotlin.collections/groupByTo(#D, kotlin/Function1<#A, #B>, kotlin/Function1<#A, #C>): #D`
 
-- [ ] KSP-980: kotlin.collections.Iterable.join-family の未実装 stdlib API を実装する（2 件）
+- [x] KSP-980: kotlin.collections.Iterable.join-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.collections` / receiver `Iterable` / family `join`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/Iterables.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_Iterable_join.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_Iterable_join.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_Iterable_join.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
-  - 未実装シンボル一覧:
+  - 完了確認（2026-09-04）: Kotlin 2.3.10 の `Iterable.joinTo` / `joinToString` を `Iterables.kt` に source-backed 実装。`A : Appendable`、`CharSequence` の separator/prefix/postfix/truncated、limit、transform、末尾ラムダと named transform の呼出しを回帰。
+  - Kotlin 2.3.10 の公式 signature は nullable function type `((T) -> CharSequence)? = null` だが、現コンパイラは nullable function-typed parameter を lowering できないため、no-transform と non-null-transform の source overload に分割し、デフォルト値と出力契約を保持した。
+  - 旧 `__kk_iterable_*` runtime bridge/ABI は KSP-621 の削除状態を維持し、`iterableJoinToABIsAreSourceBacked` で不在を確認。Sequence/KSP-1350 は対象外。
+  - 回帰: `stdlib_kotlin_collections_Iterable_join.kt` の focused Sema GoldenHarnessWorker、同名 kotlinc diff、`iterable_generic_surface.kt`、既存 List/Array/Sequence join diff、`iterableJoinToABIsAreSourceBacked`、`check_todo_ids.sh`。
+  - 当初の未実装シンボル一覧:
     - `kotlin.collections.joinTo` — fun Iterable.joinTo(, CharSequence, CharSequence, CharSequence, Int, CharSequence, Function1): #B  -- `final fun <#A: kotlin/Any?, #B: kotlin.text/Appendable> (kotlin.collections/Iterable<#A>).kotlin.collections/joinTo(#B, kotlin/CharSequence = ..., kotlin/CharSequence = ..., kotlin/CharSequence = ..., kotlin/Int = ..., kotlin/CharSequence = ..., kotlin/Function1<#A, kotlin/CharSequence>? = ...): #B`
     - `kotlin.collections.joinToString` — fun Iterable.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, Function1): String  -- `final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlin.collections/joinToString(kotlin/CharSequence = ..., kotlin/CharSequence = ..., kotlin/CharSequence = ..., kotlin/Int = ..., kotlin/CharSequence = ..., kotlin/Function1<#A, kotlin/CharSequence>? = ...): kotlin/String`
 
@@ -4475,7 +4481,8 @@
     - `kotlin.text.dropLastWhile` — fun CharSequence.dropLastWhile(Function1): CharSequence  -- `final inline fun (kotlin/CharSequence).kotlin.text/dropLastWhile(kotlin/Function1<kotlin/Char, kotlin/Boolean>): kotlin/CharSequence`
     - `kotlin.text.dropWhile` — fun CharSequence.dropWhile(Function1): CharSequence  -- `final inline fun (kotlin/CharSequence).kotlin.text/dropWhile(kotlin/Function1<kotlin/Char, kotlin/Boolean>): kotlin/CharSequence`
 
-- [ ] KSP-1372: kotlin.text.CharSequence.element-family の未実装 stdlib API を実装する（3 件）
+- [~] KSP-1372: kotlin.text.CharSequence.element-family の未実装 stdlib API を実装する（3 件）
+  - 実装中: 3 API の Kotlin source 宣言と member/safe-member inline lambda の non-local return 配線を追加。名前付き引数の型推論修正 PR #6608 を基点とする依存 PR とし、共有修正の重複を避ける。全体 G はこの PR head で未完了。
   - 対象: `kotlin.text` / receiver `CharSequence` / family `element`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -4487,9 +4494,11 @@
     - `kotlin.text.elementAtOrElse` — fun CharSequence.elementAtOrElse(Int, Function1): Char  -- `final inline fun (kotlin/CharSequence).kotlin.text/elementAtOrElse(kotlin/Int, kotlin/Function1<kotlin/Int, kotlin/Char>): kotlin/Char`
     - `kotlin.text.elementAtOrNull` — fun CharSequence.elementAtOrNull(Int): Char  -- `final inline fun (kotlin/CharSequence).kotlin.text/elementAtOrNull(kotlin/Int): kotlin/Char?`
 
-- [ ] KSP-1374: kotlin.text.CharSequence.first-family の未実装 stdlib API を実装する（6 件）
+- [~] KSP-1374: kotlin.text.CharSequence.first-family の未実装 stdlib API を実装する（6 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `first`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
+  - 実装済み（ゲート保留）: `first()` / `first(predicate)` / `firstOrNull()` / `firstOrNull(predicate)` の4 APIをKotlin 2.3.10 source contractに沿って追加。`firstNotNullOf` / `firstNotNullOfOrNull` は既存実装を確認し、重複追加しない。CharSequence predicate loopはcustom receiverの`get` dispatchと反復中のlength再評価を保持する。
+  - 検証保留: bundled stdlib inline predicate の non-local return は既存 `Iterable.first` と同じく現行 compiler の precompiled-inline lowering 制約（最小 probe で reference `120` / candidate `97`）に当たり、KSP-1372 の既存修正範囲外のため別修正へ切り分ける。captured predicate と通常 predicate の順序・値は PASS。
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_text_CharSequence_first.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_text_CharSequence_first.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_text_CharSequence_first.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
@@ -4539,7 +4548,8 @@
     - `kotlin.text.forEach` — fun CharSequence.forEach(Function1): Unit  -- `final inline fun (kotlin/CharSequence).kotlin.text/forEach(kotlin/Function1<kotlin/Char, kotlin/Unit>)`
     - `kotlin.text.forEachIndexed` — fun CharSequence.forEachIndexed(Function2): Unit  -- `final inline fun (kotlin/CharSequence).kotlin.text/forEachIndexed(kotlin/Function2<kotlin/Int, kotlin/Char, kotlin/Unit>)`
 
-- [ ] KSP-1378: kotlin.text.CharSequence.get-family の未実装 stdlib API を実装する（2 件）
+- [~] KSP-1378: kotlin.text.CharSequence.get-family の未実装 stdlib API を実装する（2 件）
+  - 実装中: CharSequence の getOrElse / getOrNull を Kotlin source に追加。#6690 の inline/member return 修正を基点とし、全体 G はこの PR head で未完了。
   - 対象: `kotlin.text` / receiver `CharSequence` / family `get`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -4603,9 +4613,10 @@
   - 未実装シンボル一覧:
     - `kotlin.text.iterator` — fun CharSequence.iterator(): CharIterator  -- `final fun (kotlin/CharSequence).kotlin.text/iterator(): kotlin.collections/CharIterator`
 
-- [ ] KSP-1384: kotlin.text.CharSequence.last-family の未実装 stdlib API を実装する（5 件）
+- [~] KSP-1384: kotlin.text.CharSequence.last-family の未実装 stdlib API を実装する（5 件）
+  - 実装中: CharSequence の last / lastOrNull（predicate を含む）と lastIndex を Kotlin source に追加。#6698（#6690 系列）の source-backed inline/member return 配線を基点とし、全体 G はこの PR head で未完了。
   - 対象: `kotlin.text` / receiver `CharSequence` / family `last`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringIndexOf.kt`
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringQuery.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_text_CharSequence_last.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_text_CharSequence_last.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_text_CharSequence_last.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。

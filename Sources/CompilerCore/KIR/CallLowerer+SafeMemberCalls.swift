@@ -813,8 +813,18 @@ extension CallLowerer {
         }
 
         // Lower arguments only on the non-null path.
-        let loweredArgIDs = args.map { argument in
-            driver.lowerExpr(
+        let loweredArgIDs = args.enumerated().map { argumentIndex, argument in
+            let previousAllowance = driver.ctx.pendingLambdaNonLocalReturnAllowance
+            driver.ctx.pendingLambdaNonLocalReturnAllowance = allowsNonLocalReturn(
+                argumentExpr: argument.expr,
+                argumentIndex: argumentIndex,
+                ast: ast,
+                sema: sema,
+                callBinding: callBinding,
+                chosen: chosen
+            )
+            defer { driver.ctx.pendingLambdaNonLocalReturnAllowance = previousAllowance }
+            return driver.lowerExpr(
                 argument.expr,
                 shared: shared, emit: &instructions
             )
@@ -829,9 +839,19 @@ extension CallLowerer {
         var finalArguments = safeNormalized.arguments
         if let chosen,
            let signature = sema.symbols.functionSignature(for: chosen),
-           signature.receiverType != nil
+           let declaredReceiverType = signature.receiverType
         {
-            finalArguments.insert(loweredReceiverID, at: 0)
+            var receiverArgument = loweredReceiverID
+            if safeReceiverType != nonNullSafeReceiverType,
+               case .primitive(_, .nonNull) = sema.types.kind(of: declaredReceiverType)
+            {
+                // The null branch has exited. ABI argument adaptation skips
+                // the receiver slot, so expose this boundary as a typed copy
+                // to unbox nullable primitives before calling their member.
+                receiverArgument = arena.appendTemporary(type: declaredReceiverType)
+                instructions.append(.copy(from: loweredReceiverID, to: receiverArgument))
+            }
+            finalArguments.insert(receiverArgument, at: 0)
         } else if chosen == nil {
             let calleeStr = interner.resolve(effectiveCalleeName)
             if Self.unresolvedCoroutineHandleMemberNames.contains(calleeStr), isCoroutineReceiver {
@@ -842,7 +862,7 @@ extension CallLowerer {
         // Safe-call collection fallback can resolve the source-backed
         // joinToString declaration without retaining its default-value flags.
         // In that case normalizedCallArguments leaves zero sentinels for the
-        // omitted String parameters, which become literal `null` at runtime.
+        // omitted parameters, including the limit and truncation marker.
         // Recover the mask from the source call labels and materialize the
         // Kotlin defaults before emitting the direct source-backed call.
         let sourceBackedJoinToStringMask: Int64 = {
