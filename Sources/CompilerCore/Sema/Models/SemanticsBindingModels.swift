@@ -73,6 +73,9 @@ public enum ScopeFunctionKind: Equatable {
 
 /// Identifies special stdlib calls that need dedicated lowering.
 public enum StdlibSpecialCallKind: Equatable {
+    /// Compiler-only contract DSL; its lambda is recorded by Sema and must
+    /// not be emitted into KIR.
+    case contract
     case typeOf
     case maxOfInt
     case minOfInt

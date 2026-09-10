@@ -42,7 +42,7 @@ expr e@8:40 call callee=e@8:40#1 args=[_:e@8:48,_:e@8:53] type=kotlin.Array<Stri
 expr e@8:21 call callee=e@8:21#1 args=[_:e@8:40] type=kotlin.collections.HashSet<String> call=kotlin.collections.hashSetOf#1 targs=[String]
 expr e@8:5 localDecl spreadSet mutable=0 type=_ init=e@8:21 type=Unit ref=__local_5.spreadSet
 expr e@10:13 name(emptyMap) type=kotlin.collections.HashMap<String?, Int?> ref=__local_0.emptyMap
-expr e@10:13#1 memberCall recv=e@10:13 callee=size args=[] type=Int
+expr e@10:13#1 memberCall recv=e@10:13 callee=size args=[] type=Int ref=kotlin.collections.HashMap.size
 expr e@10:29 name(map) type=kotlin.collections.MutableMap<String?, Int?> ref=__local_1.map
 expr e@10:29#1 memberCall recv=e@10:29 callee=size args=[] type=Int
 expr e@10:13#2 binary(add) lhs=e@10:13#1 rhs=e@10:29#1 type=Int

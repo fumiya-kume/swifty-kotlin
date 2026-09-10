@@ -3,7 +3,6 @@ symbol fq=AnyAscendingComparator.<init> kind=constructor vis=private flags=_ sig
 symbol fq=AnyAscendingComparator.compare.$0.a kind=valueParameter vis=private flags=_
 symbol fq=AnyAscendingComparator.compare.$0.b kind=valueParameter vis=private flags=_
 symbol fq=__local_0.comparator kind=local vis=private flags=_ type=kotlin.Comparator<Any>
-symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=sequenceSortedWithAnyComparator kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int>] ret=kotlin.sequences.Sequence<Int>
 symbol fq=sequenceSortedWithAnyComparator.$1.values kind=valueParameter vis=private flags=_

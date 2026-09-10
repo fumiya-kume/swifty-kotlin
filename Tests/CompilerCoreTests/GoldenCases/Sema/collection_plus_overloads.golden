@@ -1,0 +1,53 @@
+symbol fq=__local_0.plusElement kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_1.checkedElement kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_2.plusIterable kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_3.checkedIterable kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_4.plusSequence kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_5.checkedSequence kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_6.plusArray kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_7.checkedArray kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_8.plusElementAlias kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_9.checkedAlias kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=golden.sema.collectionPlus kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>,Int,kotlin.collections.List<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>] ret=Unit
+symbol fq=golden.sema.collectionPlus.$0.array kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionPlus.$0.element kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionPlus.$0.others kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionPlus.$0.sequence kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionPlus.$0.values kind=valueParameter vis=private flags=_
+symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+file fcollection_plus_overloads package=golden.sema
+  decl golden.sema.collectionPlus fun collectionPlus sym=golden.sema.collectionPlus
+expr e@12:23 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionPlus.$0.values
+expr e@12:32 name(element) type=Int ref=golden.sema.collectionPlus.$0.element
+expr e@12:23#1 binary(add) lhs=e@12:23 rhs=e@12:32 type=kotlin.collections.List<Int> call=kotlin.collections.plus#0 targs=[Int]
+expr e@12:5 localDecl plusElement mutable=0 type=_ init=e@12:23#1 type=Unit ref=__local_0.plusElement
+expr e@13:37 name(plusElement) type=kotlin.collections.List<Int> ref=__local_0.plusElement
+expr e@13:5 localDecl checkedElement mutable=0 type=List<Int> init=e@13:37 type=Unit ref=__local_1.checkedElement
+expr e@14:24 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionPlus.$0.values
+expr e@14:33 name(others) type=kotlin.collections.List<Int> ref=golden.sema.collectionPlus.$0.others
+expr e@14:24#1 binary(add) lhs=e@14:24 rhs=e@14:33 type=kotlin.collections.List<Int> call=kotlin.collections.plus#2 targs=[Int]
+expr e@14:5 localDecl plusIterable mutable=0 type=_ init=e@14:24#1 type=Unit ref=__local_2.plusIterable
+expr e@15:38 name(plusIterable) type=kotlin.collections.List<Int> ref=__local_2.plusIterable
+expr e@15:5 localDecl checkedIterable mutable=0 type=List<Int> init=e@15:38 type=Unit ref=__local_3.checkedIterable
+expr e@16:24 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionPlus.$0.values
+expr e@16:33 name(sequence) type=kotlin.sequences.Sequence<Int> ref=golden.sema.collectionPlus.$0.sequence
+expr e@16:24#1 binary(add) lhs=e@16:24 rhs=e@16:33 type=kotlin.collections.List<Int> call=kotlin.collections.plus#3 targs=[Int]
+expr e@16:5 localDecl plusSequence mutable=0 type=_ init=e@16:24#1 type=Unit ref=__local_4.plusSequence
+expr e@17:38 name(plusSequence) type=kotlin.collections.List<Int> ref=__local_4.plusSequence
+expr e@17:5 localDecl checkedSequence mutable=0 type=List<Int> init=e@17:38 type=Unit ref=__local_5.checkedSequence
+expr e@18:21 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionPlus.$0.values
+expr e@18:30 name(array) type=kotlin.Array<Int> ref=golden.sema.collectionPlus.$0.array
+expr e@18:21#1 binary(add) lhs=e@18:21 rhs=e@18:30 type=kotlin.collections.List<Int> call=kotlin.collections.plus#1 targs=[Int]
+expr e@18:5 localDecl plusArray mutable=0 type=_ init=e@18:21#1 type=Unit ref=__local_6.plusArray
+expr e@19:35 name(plusArray) type=kotlin.collections.List<Int> ref=__local_6.plusArray
+expr e@19:5 localDecl checkedArray mutable=0 type=List<Int> init=e@19:35 type=Unit ref=__local_7.checkedArray
+expr e@20:28 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionPlus.$0.values
+expr e@20:47 name(element) type=Int ref=golden.sema.collectionPlus.$0.element
+expr e@20:28#1 memberCall recv=e@20:28 callee=plusElement args=[_:e@20:47] type=kotlin.collections.List<Int> call=kotlin.collections.plusElement#0 targs=[Int]
+expr e@20:5 localDecl plusElementAlias mutable=0 type=_ init=e@20:28#1 type=Unit ref=__local_8.plusElementAlias
+expr e@21:35 name(plusElementAlias) type=kotlin.collections.List<Int> ref=__local_8.plusElementAlias
+expr e@21:5 localDecl checkedAlias mutable=0 type=List<Int> init=e@21:35 type=Unit ref=__local_9.checkedAlias

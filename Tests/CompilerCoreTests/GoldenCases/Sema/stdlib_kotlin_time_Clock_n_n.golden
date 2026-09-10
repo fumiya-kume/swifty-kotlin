@@ -4,10 +4,9 @@ symbol fq=__local_0.companion kind=local vis=private flags=_ type=kotlin.time.Cl
 symbol fq=__local_1.system kind=local vis=private flags=_ type=kotlin.time.Clock.System
 symbol fq=__local_2.asClock kind=local vis=private flags=_ type=kotlin.time.Clock
 symbol fq=__local_3.custom kind=local vis=private flags=_ type=kotlin.time.Clock
-symbol fq=kotlin.time.Clock kind=interface vis=public flags=synthetic
+symbol fq=kotlin.time.Clock kind=interface vis=public flags=_
 symbol fq=kotlin.time.Clock.Companion kind=object vis=public flags=synthetic|static
 symbol fq=kotlin.time.Clock.System kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.time.Clock.now kind=function vis=public flags=synthetic sig=recv=kotlin.time.Clock params=[] ret=kotlin.time.Instant
 symbol fq=kotlin.time.Instant kind=class vis=public flags=synthetic
 symbol fq=kotlin.time.Instant.Companion kind=object vis=public flags=synthetic|static
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit

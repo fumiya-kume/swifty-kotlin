@@ -32,6 +32,25 @@ public inline fun <T> Sequence<T>.findLast(predicate: (T) -> Boolean): T? {
     return last
 }
 
+// KSP-1346: Sequence fold-family APIs are source-backed with the Kotlin 2.3.10
+// terminal traversal contract.
+public inline fun <T, R> Sequence<T>.fold(initial: R, operation: (acc: R, T) -> R): R {
+    var accumulator = initial
+    for (element in this) accumulator = operation(accumulator, element)
+    return accumulator
+}
+
+public inline fun <T, R> Sequence<T>.foldIndexed(initial: R, operation: (index: Int, acc: R, T) -> R): R {
+    var index = 0
+    var accumulator = initial
+    for (element in this) {
+        if (index < 0) throw ArithmeticException("Index overflow has happened.")
+        accumulator = operation(index, accumulator, element)
+        index += 1
+    }
+    return accumulator
+}
+
 @KsSymbolName("kk_sequence_to_list")
 public fun <T> Sequence<T>.toList(): List<T> {
     val result = mutableListOf<T>()

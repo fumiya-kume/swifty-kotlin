@@ -719,7 +719,6 @@ extension CallLowerer {
             interner.intern("__kk_char_progression_fromClosedRange"),
             interner.intern("__kk_op_step"),
             interner.intern("__kk_char_range_step"),
-            interner.intern("kk_sequence_foldIndexed"),
             interner.intern("kk_sequence_reduceOrNull"),
             interner.intern("kk_sequence_reduceRight"),
             interner.intern("kk_sequence_reduce"),
