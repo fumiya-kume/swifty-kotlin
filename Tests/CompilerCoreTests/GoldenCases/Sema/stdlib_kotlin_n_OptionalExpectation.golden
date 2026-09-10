@@ -1,3 +1,3 @@
-symbol fq=golden.sema.PlatformMarker kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.PlatformMarker[kind=anno] kind=annotationClass vis=public flags=_
 file fstdlib_kotlin_n_OptionalExpectation package=golden.sema
-  decl golden.sema.PlatformMarker class PlatformMarker sym=golden.sema.PlatformMarker
+  decl golden.sema.PlatformMarker[kind=anno] class PlatformMarker sym=golden.sema.PlatformMarker[kind=anno]

@@ -1,5 +1,5 @@
-symbol fq=golden.sema.marker kind=function vis=public flags=_ sig=recv=_ params=[kotlin.MustUseReturnValues?] ret=Int
-symbol fq=golden.sema.marker.$0.x kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.marker.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.marker[kind=fun;params=kotlin.MustUseReturnValues?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.MustUseReturnValues?] ret=Int
 file fstdlib_kotlin_n_MustUseReturnValues package=golden.sema
-  decl golden.sema.marker fun marker sym=golden.sema.marker
+  decl golden.sema.marker[kind=fun;params=kotlin.MustUseReturnValues?] fun marker sym=golden.sema.marker[kind=fun;params=kotlin.MustUseReturnValues?]
 expr e@3:44 int(0) type=Int

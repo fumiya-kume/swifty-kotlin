@@ -1,17 +1,17 @@
-symbol fq=__ObjectLiteral_0_48_113 kind=class vis=private flags=synthetic
-symbol fq=__ObjectLiteral_0_48_113.x kind=property vis=public flags=synthetic type=Int
-symbol fq=__ObjectLiteral_0_48_113.y kind=property vis=public flags=synthetic type=String
-symbol fq=__local_0.obj kind=local vis=private flags=_ type=__ObjectLiteral_0_48_113
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__ObjectLiteral_0_48_113.x[kind=prop] kind=property vis=public flags=synthetic type=Int
+symbol fq=__ObjectLiteral_0_48_113.y[kind=prop] kind=property vis=public flags=synthetic type=String
+symbol fq=__ObjectLiteral_0_48_113[kind=class] kind=class vis=private flags=synthetic
+symbol fq=__local_0.obj[kind=local] kind=local vis=private flags=_ type=__ObjectLiteral_0_48_113
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fobject_literal_property_no_init package=golden.sema
-  decl golden.sema.main fun main sym=golden.sema.main
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@5:17 int(42) type=Int
 expr e@6:25 string(hello) type=String
 expr e@4:15 objectLiteral supers=[] type=__ObjectLiteral_0_48_113
-expr e@4:5 localDecl obj mutable=0 type=_ init=e@4:15 type=Unit ref=__local_0.obj
-expr e@8:13 name(obj) type=__ObjectLiteral_0_48_113 ref=__local_0.obj
-expr e@8:13#1 memberCall recv=e@8:13 callee=x args=[] type=Int ref=__ObjectLiteral_0_48_113.x
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println#1
-expr e@9:13 name(obj) type=__ObjectLiteral_0_48_113 ref=__local_0.obj
-expr e@9:13#1 memberCall recv=e@9:13 callee=y args=[] type=String ref=__ObjectLiteral_0_48_113.y
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#2
+expr e@4:5 localDecl obj mutable=0 type=_ init=e@4:15 type=Unit ref=__local_0.obj[kind=local]
+expr e@8:13 name(obj) type=__ObjectLiteral_0_48_113 ref=__local_0.obj[kind=local]
+expr e@8:13#1 memberCall recv=e@8:13 callee=x args=[] type=Int ref=__ObjectLiteral_0_48_113.x[kind=prop]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@9:13 name(obj) type=__ObjectLiteral_0_48_113 ref=__local_0.obj[kind=local]
+expr e@9:13#1 memberCall recv=e@9:13 callee=y args=[] type=String ref=__ObjectLiteral_0_48_113.y[kind=prop]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]

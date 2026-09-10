@@ -1,11 +1,11 @@
-symbol fq=golden.sema.convertToNative kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ULongArray] ret=kotlinx.cinterop.CValues<kotlinx.cinterop.ULongVar>
-symbol fq=golden.sema.convertToNative.$0.ulongs kind=valueParameter vis=private flags=_
-symbol fq=kotlin.ULongArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlinx.cinterop.CValues kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CValues<kotlinx.cinterop.CValues.T>
-symbol fq=kotlinx.cinterop.CValues.T kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.ULongVar kind=class vis=public flags=synthetic type=kotlinx.cinterop.ULongVar
-symbol fq=kotlinx.cinterop.toCValues#3 kind=function vis=public flags=synthetic sig=recv=kotlin.ULongArray params=[] ret=kotlinx.cinterop.CValues<kotlinx.cinterop.ULongVar>
+symbol fq=golden.sema.convertToNative.$0.ulongs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.convertToNative[kind=fun;params=kotlin.ULongArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ULongArray] ret=kotlinx.cinterop.CValues<kotlinx.cinterop.ULongVar>
+symbol fq=kotlin.ULongArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlinx.cinterop.CValues.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlinx.cinterop.CValues[kind=class;gen=1] kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CValues<kotlinx.cinterop.CValues.T>
+symbol fq=kotlinx.cinterop.ULongVar[kind=class] kind=class vis=public flags=synthetic type=kotlinx.cinterop.ULongVar
+symbol fq=kotlinx.cinterop.toCValues[kind=fun;recv=kotlin.ULongArray;params=] kind=function vis=public flags=synthetic sig=recv=kotlin.ULongArray params=[] ret=kotlinx.cinterop.CValues<kotlinx.cinterop.ULongVar>
 file fcinterop_ulongarray_to_cvalues package=golden.sema
-  decl golden.sema.convertToNative fun convertToNative sym=golden.sema.convertToNative
-expr e@9:62 name(ulongs) type=kotlin.ULongArray ref=golden.sema.convertToNative.$0.ulongs
-expr e@9:62#1 memberCall recv=e@9:62 callee=toCValues args=[] type=kotlinx.cinterop.CValues<kotlinx.cinterop.ULongVar> call=kotlinx.cinterop.toCValues#3
+  decl golden.sema.convertToNative[kind=fun;params=kotlin.ULongArray] fun convertToNative sym=golden.sema.convertToNative[kind=fun;params=kotlin.ULongArray]
+expr e@9:62 name(ulongs) type=kotlin.ULongArray ref=golden.sema.convertToNative.$0.ulongs[kind=vparam]
+expr e@9:62#1 memberCall recv=e@9:62 callee=toCValues args=[] type=kotlinx.cinterop.CValues<kotlinx.cinterop.ULongVar> call=kotlinx.cinterop.toCValues[kind=fun;recv=kotlin.ULongArray;params=]

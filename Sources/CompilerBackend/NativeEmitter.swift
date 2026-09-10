@@ -293,6 +293,7 @@ struct NativeEmitter {
         for spec in RuntimeABISpec.allFunctions {
             if spec.name == "kk_object_register_itable_method"
                 || spec.name == "kk_object_register_vtable_method"
+                || spec.name == "kk_object_register_any_to_string"
                 || spec.name.hasPrefix("__kk_kfunction_create")
                 || spec.name == "__kk_kconstructor_create" {
                 continue

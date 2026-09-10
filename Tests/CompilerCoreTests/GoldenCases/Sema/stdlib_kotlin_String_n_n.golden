@@ -1,25 +1,25 @@
-symbol fq=__local_0.empty kind=local vis=private flags=_ type=String
-symbol fq=__local_1.typed kind=local vis=private flags=_ type=String
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.takeString kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String
-symbol fq=golden.sema.takeString.$0.value kind=valueParameter vis=private flags=_
+symbol fq=__local_0.empty[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_1.typed[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.takeString.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.takeString[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String
 file fstdlib_kotlin_String_n_n package=golden.sema
-  decl golden.sema.takeString fun takeString sym=golden.sema.takeString
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@3:41 name(value) type=String ref=golden.sema.takeString.$0.value
-expr e@6:25 call callee=e@6:25#1 args=[] type=String call=kotlin.String#1
-expr e@6:5 localDecl empty mutable=0 type=String init=e@6:25 type=Unit ref=__local_0.empty
-expr e@7:28 name(empty) type=String ref=__local_0.empty
-expr e@7:17 call callee=e@7:17#1 args=[_:e@7:28] type=String call=golden.sema.takeString
-expr e@7:5 localDecl typed mutable=0 type=_ init=e@7:17 type=Unit ref=__local_1.typed
-expr e@8:13 name(typed) type=String ref=__local_1.typed
+  decl golden.sema.takeString[kind=fun;params=String] fun takeString sym=golden.sema.takeString[kind=fun;params=String]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@3:41 name(value) type=String ref=golden.sema.takeString.$0.value[kind=vparam]
+expr e@6:25 call callee=e@6:25#1 args=[] type=String call=kotlin.String[kind=fun;params=]
+expr e@6:5 localDecl empty mutable=0 type=String init=e@6:25 type=Unit ref=__local_0.empty[kind=local]
+expr e@7:28 name(empty) type=String ref=__local_0.empty[kind=local]
+expr e@7:17 call callee=e@7:17#1 args=[_:e@7:28] type=String call=golden.sema.takeString[kind=fun;params=String]
+expr e@7:5 localDecl typed mutable=0 type=_ init=e@7:17 type=Unit ref=__local_1.typed[kind=local]
+expr e@8:13 name(typed) type=String ref=__local_1.typed[kind=local]
 expr e@8:22 string() type=String
 expr e@8:13#1 binary(equal) lhs=e@8:13 rhs=e@8:22 type=Boolean
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println#1
-expr e@9:13 name(typed) type=String ref=__local_1.typed
-expr e@9:13#1 memberCall recv=e@9:13 callee=length args=[] type=Int call=kotlin.length.$get
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#1
-expr e@10:13 name(typed) type=String ref=__local_1.typed
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@9:13 name(typed) type=String ref=__local_1.typed[kind=local]
+expr e@9:13#1 memberCall recv=e@9:13 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@10:13 name(typed) type=String ref=__local_1.typed[kind=local]
 expr e@10:21 string(x) type=String
 expr e@10:13#1 binary(add) lhs=e@10:13 rhs=e@10:21 type=String
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#2
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]

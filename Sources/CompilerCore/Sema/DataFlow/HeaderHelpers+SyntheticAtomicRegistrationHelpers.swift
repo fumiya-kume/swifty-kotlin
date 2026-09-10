@@ -221,6 +221,11 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic]
         )
+        // A factory parameter can occupy the same FQName (e.g. `fun AtomicIntArray(size:)`).
+        // Do not reparent that parameter if coexistence failed to create a property.
+        guard symbols.symbol(propertySymbol)?.kind == .property else {
+            return
+        }
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setExternalLinkName(getterLinkName, for: propertySymbol)
         symbols.setPropertyType(valueType, for: propertySymbol)

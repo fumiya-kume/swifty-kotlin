@@ -1,22 +1,22 @@
-symbol fq=golden.sema.cause kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Throwable?] ret=kotlin.IllegalStateException
-symbol fq=golden.sema.cause.$0.cause kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.message kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.IllegalStateException
-symbol fq=golden.sema.message.$1.message kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.messageAndCause kind=function vis=public flags=_ sig=recv=_ params=[String?,kotlin.Throwable?] ret=kotlin.IllegalStateException
-symbol fq=golden.sema.messageAndCause.$2.cause kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.messageAndCause.$2.message kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.noArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.IllegalStateException
-symbol fq=kotlin.Throwable kind=class vis=public flags=openType
+symbol fq=golden.sema.cause.$0.cause[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.cause[kind=fun;params=kotlin.Throwable?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Throwable?] ret=kotlin.IllegalStateException
+symbol fq=golden.sema.message.$1.message[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.messageAndCause.$2.cause[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.messageAndCause.$2.message[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.messageAndCause[kind=fun;params=String?,kotlin.Throwable?] kind=function vis=public flags=_ sig=recv=_ params=[String?,kotlin.Throwable?] ret=kotlin.IllegalStateException
+symbol fq=golden.sema.message[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.IllegalStateException
+symbol fq=golden.sema.noArg[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.IllegalStateException
+symbol fq=kotlin.Throwable[kind=class] kind=class vis=public flags=openType
 file fstdlib_kotlin_IllegalStateException_n_n package=golden.sema
-  decl golden.sema.noArg fun noArg sym=golden.sema.noArg
-  decl golden.sema.message fun message sym=golden.sema.message
-  decl golden.sema.cause fun cause sym=golden.sema.cause
-  decl golden.sema.messageAndCause fun messageAndCause sym=golden.sema.messageAndCause
-expr e@3:38 call callee=e@3:38#1 args=[] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>#0
-expr e@5:78 name(message) type=String? ref=golden.sema.message.$1.message
-expr e@5:56 call callee=e@5:56#1 args=[_:e@5:78] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>#1
-expr e@7:77 name(cause) type=kotlin.Throwable? ref=golden.sema.cause.$0.cause
-expr e@7:55 call callee=e@7:55#1 args=[_:e@7:77] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>#3
-expr e@10:27 name(message) type=String? ref=golden.sema.messageAndCause.$2.message
-expr e@10:36 name(cause) type=kotlin.Throwable? ref=golden.sema.messageAndCause.$2.cause
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:27,_:e@10:36] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>#2
+  decl golden.sema.noArg[kind=fun;params=] fun noArg sym=golden.sema.noArg[kind=fun;params=]
+  decl golden.sema.message[kind=fun;params=String?] fun message sym=golden.sema.message[kind=fun;params=String?]
+  decl golden.sema.cause[kind=fun;params=kotlin.Throwable?] fun cause sym=golden.sema.cause[kind=fun;params=kotlin.Throwable?]
+  decl golden.sema.messageAndCause[kind=fun;params=String?,kotlin.Throwable?] fun messageAndCause sym=golden.sema.messageAndCause[kind=fun;params=String?,kotlin.Throwable?]
+expr e@3:38 call callee=e@3:38#1 args=[] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>[kind=ctor;recv=kotlin.IllegalStateException;params=]
+expr e@5:78 name(message) type=String? ref=golden.sema.message.$1.message[kind=vparam]
+expr e@5:56 call callee=e@5:56#1 args=[_:e@5:78] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>[kind=ctor;recv=kotlin.IllegalStateException;params=String?]
+expr e@7:77 name(cause) type=kotlin.Throwable? ref=golden.sema.cause.$0.cause[kind=vparam]
+expr e@7:55 call callee=e@7:55#1 args=[_:e@7:77] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>[kind=ctor;recv=kotlin.IllegalStateException;params=kotlin.Throwable?]
+expr e@10:27 name(message) type=String? ref=golden.sema.messageAndCause.$2.message[kind=vparam]
+expr e@10:36 name(cause) type=kotlin.Throwable? ref=golden.sema.messageAndCause.$2.cause[kind=vparam]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:27,_:e@10:36] type=kotlin.IllegalStateException call=kotlin.IllegalStateException.<init>[kind=ctor;recv=kotlin.IllegalStateException;params=String?,kotlin.Throwable?]

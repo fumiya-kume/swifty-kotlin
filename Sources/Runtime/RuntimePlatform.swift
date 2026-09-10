@@ -14,10 +14,10 @@ private enum RuntimePlatformOsFamily: Int {
 
 private enum RuntimePlatformCpuArchitecture: Int {
     case unknown = 0
-    case x86 = 1
-    case x64 = 2
-    case arm32 = 3
-    case arm64 = 4
+    case arm32 = 1
+    case arm64 = 2
+    case x86 = 3
+    case x64 = 4
     case mips32 = 5
     case mipsel32 = 6
     case wasm32 = 7

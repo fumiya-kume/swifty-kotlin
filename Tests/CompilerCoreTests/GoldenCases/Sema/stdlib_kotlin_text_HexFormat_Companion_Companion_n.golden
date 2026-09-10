@@ -1,5 +1,5 @@
-symbol fq=upperCaseFormat kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.HexFormat
+symbol fq=upperCaseFormat[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.HexFormat
 file fstdlib_kotlin_text_HexFormat_Companion_Companion_n package=_
-  decl upperCaseFormat fun upperCaseFormat sym=upperCaseFormat
-expr e@1:36 name(HexFormat) type=kotlin.text.HexFormat.Companion ref=kotlin.text.HexFormat
-expr e@1:36#1 memberCall recv=e@1:36 callee=UpperCase args=[] type=kotlin.text.HexFormat ref=kotlin.text.HexFormat.Companion.UpperCase
+  decl upperCaseFormat[kind=fun;params=] fun upperCaseFormat sym=upperCaseFormat[kind=fun;params=]
+expr e@1:36 name(HexFormat) type=kotlin.text.HexFormat.Companion ref=kotlin.text.HexFormat[kind=class]
+expr e@1:36#1 memberCall recv=e@1:36 callee=UpperCase args=[] type=kotlin.text.HexFormat ref=kotlin.text.HexFormat.Companion.UpperCase[kind=prop]

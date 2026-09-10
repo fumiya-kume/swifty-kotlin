@@ -1,3 +1,10 @@
+/*
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Licensed under the Apache License, Version 2.0.
+ *
+ * Derived from kotlin-stdlib libraries/stdlib/src/kotlin/collections/Iterables.kt.
+ */
+
 package kotlin.collections
 
 import kotlin.comparisons.compareValues
@@ -19,6 +26,16 @@ private external fun kk_unbox_double(value: Double): Double
 
 // KSP-963: Kotlin's Iterable.asIterable() is an identity conversion.
 public inline fun <T> Iterable<T>.asIterable(): Iterable<T> = this
+
+// KSP-966: Published helpers expose a Collection's known size without
+// traversing a general Iterable.
+@PublishedApi
+internal fun <T> Iterable<T>.collectionSizeOrNull(): Int? =
+    if (this is Collection<*>) (this as Collection<*>).size else null
+
+@PublishedApi
+internal fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int =
+    if (this is Collection<*>) (this as Collection<*>).size else default
 
 public fun <T> Iterable<T>.toList(): List<T> {
     val result = mutableListOf<T>()
@@ -916,6 +933,21 @@ public fun <T> Iterable<T>.all(predicate: (T) -> Boolean): Boolean {
     return true
 }
 
+// KSP-986: Preserve the Collection fast path while keeping arbitrary
+// Iterable implementations on the iterator-backed source path.
+public fun <T> Iterable<T>.none(): Boolean {
+    if (this is Collection<*>) return (this as Collection<*>).isEmpty()
+    return !iterator().hasNext()
+}
+
+public inline fun <T> Iterable<T>.none(predicate: (T) -> Boolean): Boolean {
+    if (this is Collection<*> && (this as Collection<*>).isEmpty()) return true
+    for (element in this) {
+        if (predicate(element)) return false
+    }
+    return true
+}
+
 public fun <T> Iterable<T>.count(): Int {
     if (this is Collection<*>) return (this as Collection<*>).size
 
@@ -1003,9 +1035,21 @@ public fun <T : Any> Iterable<T?>.requireNoNulls(): Iterable<T> {
     return this as Iterable<T>
 }
 
-// Shared by Sequence.joinTo/joinToString (SequenceAggregateHOF.kt,
-// kotlin.sequences). The legacy Sequence surface only needs iterator(), so a
-// single implementation keyed on Iterator<T> covers its receiver type (KSP-621).
+// Kotlin 2.3.10 exposes a List-specific overload so the narrowed return type
+// is preserved for statically typed List receivers.
+@Suppress("UNCHECKED_CAST")
+public fun <T : Any> List<T?>.requireNoNulls(): List<T> {
+    for (element in this) {
+        if (element == null) {
+            throw IllegalArgumentException("null element found in $this.")
+        }
+    }
+    return this as List<T>
+}
+
+// Shared by Iterable.joinTo/joinToString (below) and Sequence.joinTo/joinToString
+// (SequenceAggregateHOF.kt, kotlin.sequences) — both only need iterator(), so a
+// single implementation keyed on Iterator<T> covers both receiver types (KSP-621).
 internal fun <T> appendJoinToPlain(
     iterator: Iterator<T>,
     buffer: StringBuilder,

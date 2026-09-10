@@ -3,7 +3,7 @@
 ///
 /// The function is a top-level extension in the `kotlin.random` package with
 /// `java.util.Random` as its receiver and `kotlin.random.Random` as its return
-/// type (Sources/CompilerCore/Stdlib/kotlin/random/JavaRandomInterop.kt). KSP-466:
+/// type (Sources/CompilerCore/Stdlib/kotlin/random/PlatformRandom.kt). KSP-466:
 /// real Kotlin source (`this.delegate`), not a native bridge.
 
 #if canImport(Testing)
@@ -41,7 +41,7 @@ struct RandomAsKotlinRandomFunctionTests {
     }
 
     /// The registered overload accepts no value parameters. KSP-466: asKotlinRandom
-    /// is real Kotlin source now (JavaRandomInterop.kt: `this.delegate`), not a
+    /// is real Kotlin source now (PlatformRandom.kt: `this.delegate`), not a
     /// native bridge — a raw pointer passthrough stopped being safe once
     /// kotlin.random.Random became a genuine compiled object.
     @Test func testAsKotlinRandomLinksToRuntimeStub() throws {

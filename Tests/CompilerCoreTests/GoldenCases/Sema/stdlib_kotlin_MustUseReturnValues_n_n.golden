@@ -1,21 +1,21 @@
-symbol fq=golden.sema.AnnotatedScope kind=class vis=public flags=_
-symbol fq=golden.sema.construct kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.MustUseReturnValues
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.marker kind=function vis=public flags=_ sig=recv=_ params=[kotlin.MustUseReturnValues?] ret=Int
-symbol fq=golden.sema.marker.$0.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.AnnotatedScope[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.construct[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.MustUseReturnValues
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.marker.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.marker[kind=fun;params=kotlin.MustUseReturnValues?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.MustUseReturnValues?] ret=Int
 file fstdlib_kotlin_MustUseReturnValues_n_n package=golden.sema
-  decl golden.sema.AnnotatedScope class AnnotatedScope sym=golden.sema.AnnotatedScope
-  decl golden.sema.construct fun construct sym=golden.sema.construct
-  decl golden.sema.marker fun marker sym=golden.sema.marker
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@6:40 call callee=e@6:40#1 args=[] type=kotlin.MustUseReturnValues call=kotlin.MustUseReturnValues.<init>
-expr e@8:52 name(value) type=kotlin.MustUseReturnValues? ref=golden.sema.marker.$0.value
+  decl golden.sema.AnnotatedScope[kind=class] class AnnotatedScope sym=golden.sema.AnnotatedScope[kind=class]
+  decl golden.sema.construct[kind=fun;params=] fun construct sym=golden.sema.construct[kind=fun;params=]
+  decl golden.sema.marker[kind=fun;params=kotlin.MustUseReturnValues?] fun marker sym=golden.sema.marker[kind=fun;params=kotlin.MustUseReturnValues?]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@6:40 call callee=e@6:40#1 args=[] type=kotlin.MustUseReturnValues call=kotlin.MustUseReturnValues.<init>[kind=ctor;recv=kotlin.MustUseReturnValues;params=]
+expr e@8:52 name(value) type=kotlin.MustUseReturnValues? ref=golden.sema.marker.$0.value[kind=vparam]
 expr e@8:61 name(null) type=Nothing?
 expr e@8:52#1 binary(equal) lhs=e@8:52 rhs=e@8:61 type=Boolean
 expr e@8:67 int(0) type=Int
 expr e@8:74 int(1) type=Int
 expr e@8:48 if cond=e@8:52#1 then=e@8:67 else=e@8:74 type=Int
-expr e@11:5 call callee=e@11:5#1 args=[] type=kotlin.MustUseReturnValues call=golden.sema.construct
+expr e@11:5 call callee=e@11:5#1 args=[] type=kotlin.MustUseReturnValues call=golden.sema.construct[kind=fun;params=]
 expr e@12:20 name(null) type=Nothing?
-expr e@12:13 call callee=e@12:13#1 args=[_:e@12:20] type=Int call=golden.sema.marker
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13] type=Unit call=kotlin.io.println#1
+expr e@12:13 call callee=e@12:13#1 args=[_:e@12:20] type=Int call=golden.sema.marker[kind=fun;params=kotlin.MustUseReturnValues?]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
