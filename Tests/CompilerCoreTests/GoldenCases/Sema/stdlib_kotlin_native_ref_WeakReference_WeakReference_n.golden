@@ -1,0 +1,17 @@
+symbol fq=golden.sema.clearWeakReference.$0.reference[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.clearWeakReference[kind=fun;params=kotlin.native.ref.WeakReference<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.ref.WeakReference<String>] ret=Unit
+symbol fq=golden.sema.getWeakReference.$1.reference[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.getWeakReference[kind=fun;params=kotlin.native.ref.WeakReference<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.ref.WeakReference<String>] ret=String?
+symbol fq=golden.sema.valueWeakReference.$2.reference[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.valueWeakReference[kind=fun;params=kotlin.native.ref.WeakReference<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.ref.WeakReference<String>] ret=Any?
+symbol fq=kotlin.native.ref.WeakReference.T[kind=tparam] kind=typeParameter vis=private flags=_
+file fstdlib_kotlin_native_ref_WeakReference_WeakReference_n package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)]
+  decl golden.sema.clearWeakReference[kind=fun;params=kotlin.native.ref.WeakReference<String>] fun clearWeakReference sym=golden.sema.clearWeakReference[kind=fun;params=kotlin.native.ref.WeakReference<String>]
+  decl golden.sema.getWeakReference[kind=fun;params=kotlin.native.ref.WeakReference<String>] fun getWeakReference sym=golden.sema.getWeakReference[kind=fun;params=kotlin.native.ref.WeakReference<String>]
+  decl golden.sema.valueWeakReference[kind=fun;params=kotlin.native.ref.WeakReference<String>] fun valueWeakReference sym=golden.sema.valueWeakReference[kind=fun;params=kotlin.native.ref.WeakReference<String>]
+expr e@9:5 name(reference) type=kotlin.native.ref.WeakReference<String> ref=golden.sema.clearWeakReference.$0.reference[kind=vparam]
+expr e@9:5#1 memberCall recv=e@9:5 callee=clear args=[] type=Unit call=kotlin.native.ref.clear[kind=fun;recv=kotlin.native.ref.WeakReference<T0>;params=;gen=1] targs=[String]
+expr e@12:67 name(reference) type=kotlin.native.ref.WeakReference<String> ref=golden.sema.getWeakReference.$1.reference[kind=vparam]
+expr e@12:67#1 memberCall recv=e@12:67 callee=get args=[] type=String? call=kotlin.native.ref.get[kind=fun;recv=kotlin.native.ref.WeakReference<T0>;params=;gen=1] targs=[String]
+expr e@14:66 name(reference) type=kotlin.native.ref.WeakReference<String> ref=golden.sema.valueWeakReference.$2.reference[kind=vparam]
+expr e@14:66#1 memberCall recv=e@14:66 callee=value args=[] type=Any? call=kotlin.native.ref.value.$get[kind=fun;recv=kotlin.native.ref.WeakReference<*>;params=]

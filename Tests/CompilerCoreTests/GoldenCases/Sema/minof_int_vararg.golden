@@ -1,8 +1,8 @@
-symbol fq=golden.sema.varargMinInt kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.varargMinInt[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fminof_int_vararg package=golden.sema
-  decl golden.sema.varargMinInt fun varargMinInt sym=golden.sema.varargMinInt
+  decl golden.sema.varargMinInt[kind=fun;params=] fun varargMinInt sym=golden.sema.varargMinInt[kind=fun;params=]
 expr e@3:33 int(5) type=Int
 expr e@3:36 int(2) type=Int
 expr e@3:39 int(8) type=Int
 expr e@3:42 int(1) type=Int
-expr e@3:27 call callee=e@3:27#1 args=[_:e@3:33,_:e@3:36,_:e@3:39,_:e@3:42] type=Int call=kotlin.comparisons.minOf#10
+expr e@3:27 call callee=e@3:27#1 args=[_:e@3:33,_:e@3:36,_:e@3:39,_:e@3:42] type=Int call=kotlin.comparisons.minOf[kind=fun;params=Int,*Int]

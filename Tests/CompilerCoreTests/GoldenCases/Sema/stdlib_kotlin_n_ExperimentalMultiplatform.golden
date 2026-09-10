@@ -1,6 +1,6 @@
-symbol fq=golden.sema.MyExperimentalApi kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.markedFun kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.MyExperimentalApi[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.markedFun[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_n_ExperimentalMultiplatform package=golden.sema annotations=[@file:OptIn(kotlin.ExperimentalMultiplatform::class)]
-  decl golden.sema.MyExperimentalApi class MyExperimentalApi sym=golden.sema.MyExperimentalApi
-  decl golden.sema.markedFun fun markedFun sym=golden.sema.markedFun
+  decl golden.sema.MyExperimentalApi[kind=anno] class MyExperimentalApi sym=golden.sema.MyExperimentalApi[kind=anno]
+  decl golden.sema.markedFun[kind=fun;params=] fun markedFun sym=golden.sema.markedFun[kind=fun;params=]
 expr e@10:24 int(1) type=Int

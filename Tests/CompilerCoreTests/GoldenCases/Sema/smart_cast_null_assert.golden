@@ -1,8 +1,8 @@
-symbol fq=nullAssertNarrows kind=function vis=public flags=_ sig=recv=_ params=[Int?] ret=Int
-symbol fq=nullAssertNarrows.$0.x kind=valueParameter vis=private flags=_
+symbol fq=nullAssertNarrows.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=nullAssertNarrows[kind=fun;params=Int?] kind=function vis=public flags=_ sig=recv=_ params=[Int?] ret=Int
 file fsmart_cast_null_assert package=_
-  decl nullAssertNarrows fun nullAssertNarrows sym=nullAssertNarrows
-expr e@2:5 name(x) type=Int? ref=nullAssertNarrows.$0.x
+  decl nullAssertNarrows[kind=fun;params=Int?] fun nullAssertNarrows sym=nullAssertNarrows[kind=fun;params=Int?]
+expr e@2:5 name(x) type=Int? ref=nullAssertNarrows.$0.x[kind=vparam]
 expr e@2:5#1 nullAssert expr=e@2:5 type=Int
-expr e@3:12 name(x) type=Int ref=nullAssertNarrows.$0.x
+expr e@3:12 name(x) type=Int ref=nullAssertNarrows.$0.x[kind=vparam]
 expr e@3:5 return value=e@3:12 type=Nothing

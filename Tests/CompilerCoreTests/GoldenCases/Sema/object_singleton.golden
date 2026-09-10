@@ -1,19 +1,19 @@
-symbol fq=golden.sema.Counter kind=object vis=public flags=_
-symbol fq=golden.sema.Counter.increment kind=function vis=public flags=_ sig=recv=golden.sema.Counter params=[] ret=Unit
-symbol fq=golden.sema.Counter.n kind=property vis=public flags=mutable type=Int
-symbol fq=golden.sema.useCounter kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.Counter.increment[kind=fun;recv=golden.sema.Counter;params=] kind=function vis=public flags=_ sig=recv=golden.sema.Counter params=[] ret=Unit
+symbol fq=golden.sema.Counter.n[kind=prop] kind=property vis=public flags=mutable type=Int
+symbol fq=golden.sema.Counter[kind=obj] kind=object vis=public flags=_
+symbol fq=golden.sema.useCounter[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fobject_singleton package=golden.sema
-  decl golden.sema.Counter object Counter sym=golden.sema.Counter
-  decl golden.sema.useCounter fun useCounter sym=golden.sema.useCounter
+  decl golden.sema.Counter[kind=obj] object Counter sym=golden.sema.Counter[kind=obj]
+  decl golden.sema.useCounter[kind=fun;params=] fun useCounter sym=golden.sema.useCounter[kind=fun;params=]
 expr e@4:25 string(counter) type=String
 expr e@5:18 int(0) type=Int
-expr e@11:27 name(n) type=Int ref=golden.sema.Counter.n
+expr e@11:27 name(n) type=Int ref=golden.sema.Counter.n[kind=prop]
 expr e@11:31 int(1) type=Int
 expr e@11:27#1 binary(add) lhs=e@11:27 rhs=e@11:31 type=Int
-expr e@11:23 localAssign n value=e@11:27#1 type=Unit ref=golden.sema.Counter.n
+expr e@11:23 localAssign n value=e@11:27#1 type=Unit ref=golden.sema.Counter.n[kind=prop]
 expr e@8:13 int(1) type=Int
-expr e@8:9 localAssign n value=e@8:13 type=Unit ref=golden.sema.Counter.n
-expr e@15:5 name(Counter) type=golden.sema.Counter ref=golden.sema.Counter
-expr e@15:5#1 memberCall recv=e@15:5 callee=increment args=[] type=Unit call=golden.sema.Counter.increment
-expr e@16:5 name(Counter) type=golden.sema.Counter ref=golden.sema.Counter
-expr e@16:5#1 memberCall recv=e@16:5 callee=increment args=[] type=Unit call=golden.sema.Counter.increment
+expr e@8:9 localAssign n value=e@8:13 type=Unit ref=golden.sema.Counter.n[kind=prop]
+expr e@15:5 name(Counter) type=golden.sema.Counter ref=golden.sema.Counter[kind=obj]
+expr e@15:5#1 memberCall recv=e@15:5 callee=increment args=[] type=Unit call=golden.sema.Counter.increment[kind=fun;recv=golden.sema.Counter;params=]
+expr e@16:5 name(Counter) type=golden.sema.Counter ref=golden.sema.Counter[kind=obj]
+expr e@16:5#1 memberCall recv=e@16:5 callee=increment args=[] type=Unit call=golden.sema.Counter.increment[kind=fun;recv=golden.sema.Counter;params=]

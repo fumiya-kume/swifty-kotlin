@@ -36,18 +36,19 @@ public fun <T, K> Iterable<T>.groupingBy(keySelector: (T) -> K): Grouping<T, K> 
  * sequentially, passing the previously accumulated value and the current element as arguments, and stores
  * the results in the given [destination] map.
  */
-@Suppress("UNCHECKED_CAST")
-public fun <T, K, R> Grouping<T, K>.aggregateTo(
-    destination: MutableMap<K, R>,
+public inline fun <T, K, R, M : MutableMap<in K, R>> Grouping<T, K>.aggregateTo(
+    destination: M,
     operation: (K, R?, T, Boolean) -> R
-): MutableMap<K, R> {
+): M {
+    // KSwiftK does not dispatch containsKey through the bounded M type parameter.
+    val map: MutableMap<in K, R> = destination
     val iterator = sourceIterator()
     while (iterator.hasNext()) {
         val element = iterator.next()
         val key = keyOf(element)
-        val accumulator = destination[key]
-        val first = accumulator == null && !destination.containsKey(key)
-        destination[key] = operation(key, accumulator, element, first)
+        val accumulator = map[key]
+        val first = accumulator == null && !map.containsKey(key)
+        map[key] = operation(key, accumulator, element, first)
     }
     return destination
 }
@@ -67,22 +68,23 @@ public fun <T, K, R> Grouping<T, K>.aggregate(
  * in the given [destination] map.
  */
 @Suppress("UNCHECKED_CAST")
-public fun <T, K, R> Grouping<T, K>.foldTo(
-    destination: MutableMap<K, R>,
+public inline fun <T, K, R, M : MutableMap<in K, R>> Grouping<T, K>.foldTo(
+    destination: M,
     initialValueSelector: (K, T) -> R,
     operation: (K, R, T) -> R
-): MutableMap<K, R> {
+): M {
+    val map: MutableMap<in K, R> = destination
     val iterator = sourceIterator()
     while (iterator.hasNext()) {
         val element = iterator.next()
         val key = keyOf(element)
-        val current = destination[key]
-        val accumulator = if (current == null && !destination.containsKey(key)) {
+        val current = map[key]
+        val accumulator = if (current == null && !map.containsKey(key)) {
             initialValueSelector(key, element)
         } else {
             current as R
         }
-        destination[key] = operation(key, accumulator, element)
+        map[key] = operation(key, accumulator, element)
     }
     return destination
 }
@@ -102,22 +104,23 @@ public fun <T, K, R> Grouping<T, K>.fold(
  * sequentially, starting with [initialValue], and stores the results in the given [destination] map.
  */
 @Suppress("UNCHECKED_CAST")
-public fun <T, K, R> Grouping<T, K>.foldTo(
-    destination: MutableMap<K, R>,
+public inline fun <T, K, R, M : MutableMap<in K, R>> Grouping<T, K>.foldTo(
+    destination: M,
     initialValue: R,
     operation: (R, T) -> R
-): MutableMap<K, R> {
+): M {
+    val map: MutableMap<in K, R> = destination
     val iterator = sourceIterator()
     while (iterator.hasNext()) {
         val element = iterator.next()
         val key = keyOf(element)
-        val current = destination[key]
-        val accumulator = if (current == null && !destination.containsKey(key)) {
+        val current = map[key]
+        val accumulator = if (current == null && !map.containsKey(key)) {
             initialValue
         } else {
             current as R
         }
-        destination[key] = operation(accumulator, element)
+        map[key] = operation(accumulator, element)
     }
     return destination
 }
@@ -137,21 +140,22 @@ public fun <T, K, R> Grouping<T, K>.fold(
  * of each group sequentially, storing the results in the given [destination] map.
  */
 @Suppress("UNCHECKED_CAST")
-public fun <T, K> Grouping<T, K>.reduceTo(
-    destination: MutableMap<K, T>,
-    operation: (K, T, T) -> T
-): MutableMap<K, T> {
+public inline fun <S, T : S, K, M : MutableMap<in K, S>> Grouping<T, K>.reduceTo(
+    destination: M,
+    operation: (K, S, T) -> S
+): M {
+    val map: MutableMap<in K, S> = destination
     val iterator = sourceIterator()
     while (iterator.hasNext()) {
         val element = iterator.next()
         val key = keyOf(element)
-        val current = destination[key]
-        val accumulator = if (current == null && !destination.containsKey(key)) {
-            element
+        val current = map[key]
+        val accumulator: S = if (current == null && !map.containsKey(key)) {
+            element as S
         } else {
-            operation(key, current as T, element)
+            operation(key, current as S, element)
         }
-        destination[key] = accumulator
+        map.put(key, accumulator)
     }
     return destination
 }
@@ -169,13 +173,14 @@ public fun <T, K> Grouping<T, K>.reduce(
  * Groups elements from the [Grouping] source by key and counts elements in each group
  * into the given [destination] map.
  */
-public fun <T, K> Grouping<T, K>.eachCountTo(destination: MutableMap<K, Int>): MutableMap<K, Int> {
+public fun <T, K, M : MutableMap<in K, Int>> Grouping<T, K>.eachCountTo(destination: M): M {
+    val map: MutableMap<in K, Int> = destination
     val iterator = sourceIterator()
     while (iterator.hasNext()) {
         val element = iterator.next()
         val key = keyOf(element)
-        val current = destination[key]
-        destination[key] = if (current == null) 1 else current + 1
+        val current = map[key]
+        map[key] = if (current == null) 1 else current + 1
     }
     return destination
 }

@@ -1,13 +1,13 @@
 extension KotlinLexer {
     func symbolKind() -> Symbol? {
-        // Multi-character symbols: check longest first for correct greedy matching
-        for (literal, sym) in Self.symbolTable where starts(with: literal) {
-            offset += literal.utf8.count
-            return sym
-        }
-        // Single-character symbols: check by byte
         guard offset < byteCount() else { return nil }
         let ch = byte(at: offset)
+        // Multi-character symbols: check longest first for correct greedy matching
+        for candidate in Self.symbolsByFirstByte[ch] ?? [] where starts(with: candidate.bytes, at: offset) {
+            offset += candidate.bytes.count
+            return candidate.symbol
+        }
+        // Single-character symbols: check by byte
         if let sym = Self.singleCharSymbols[ch] {
             offset += 1
             return sym
@@ -42,6 +42,16 @@ extension KotlinLexer {
         ("--", .minusMinus),
         ("..", .dotDot),
     ]
+
+    private static let symbolsByFirstByte: [UInt8: [(bytes: [UInt8], symbol: Symbol)]] = {
+        var grouped: [UInt8: [(bytes: [UInt8], symbol: Symbol)]] = [:]
+        for (literal, symbol) in symbolTable {
+            let bytes = Array(literal.utf8)
+            // Preserve the table's matching order within each prefix group.
+            grouped[bytes[0], default: []].append((bytes, symbol))
+        }
+        return grouped
+    }()
 
     private static let singleCharSymbols: [UInt8: Symbol] = [
         0x26: .amp, // &

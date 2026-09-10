@@ -1,27 +1,27 @@
-symbol fq=golden.sema.acceptULongRangeClosedRange kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.ClosedRange<ULong>] ret=Boolean
-symbol fq=golden.sema.acceptULongRangeClosedRange.$0.range kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.acceptULongRangeCompanion kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
-symbol fq=golden.sema.acceptULongRangeCompanion.$1.companion kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.acceptULongRangeProgression kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.ULongProgression] ret=Boolean
-symbol fq=golden.sema.acceptULongRangeProgression.$2.range kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.makeULongRange kind=function vis=public flags=_ sig=recv=_ params=[ULong,ULong] ret=kotlin.ranges.ULongRange
-symbol fq=golden.sema.makeULongRange.$3.endInclusive kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.makeULongRange.$3.start kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.useULongRangeCompanion kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
-symbol fq=kotlin.ranges.ClosedRange kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.ULongProgression kind=class vis=public flags=synthetic|openType
-symbol fq=kotlin.ranges.ULongRange kind=class vis=public flags=_
+symbol fq=golden.sema.acceptULongRangeClosedRange.$0.range[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptULongRangeClosedRange[kind=fun;params=kotlin.ranges.ClosedRange<ULong>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.ClosedRange<ULong>] ret=Boolean
+symbol fq=golden.sema.acceptULongRangeCompanion.$1.companion[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptULongRangeCompanion[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
+symbol fq=golden.sema.acceptULongRangeProgression.$2.range[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptULongRangeProgression[kind=fun;params=kotlin.ranges.ULongProgression] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.ULongProgression] ret=Boolean
+symbol fq=golden.sema.makeULongRange.$3.endInclusive[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeULongRange.$3.start[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeULongRange[kind=fun;params=ULong,ULong] kind=function vis=public flags=_ sig=recv=_ params=[ULong,ULong] ret=kotlin.ranges.ULongRange
+symbol fq=golden.sema.useULongRangeCompanion[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
+symbol fq=kotlin.ranges.ClosedRange[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.ranges.ULongProgression[kind=class] kind=class vis=public flags=synthetic|openType
+symbol fq=kotlin.ranges.ULongRange[kind=class] kind=class vis=public flags=_
 file fstdlib_kotlin_ranges_ULongRange_n_n package=golden.sema
-  decl golden.sema.makeULongRange fun makeULongRange sym=golden.sema.makeULongRange
-  decl golden.sema.acceptULongRangeProgression fun acceptULongRangeProgression sym=golden.sema.acceptULongRangeProgression
-  decl golden.sema.acceptULongRangeClosedRange fun acceptULongRangeClosedRange sym=golden.sema.acceptULongRangeClosedRange
-  decl golden.sema.acceptULongRangeCompanion fun acceptULongRangeCompanion sym=golden.sema.acceptULongRangeCompanion
-  decl golden.sema.useULongRangeCompanion fun useULongRangeCompanion sym=golden.sema.useULongRangeCompanion
-expr e@4:16 name(start) type=ULong ref=golden.sema.makeULongRange.$3.start
-expr e@4:23 name(endInclusive) type=ULong ref=golden.sema.makeULongRange.$3.endInclusive
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:16,_:e@4:23] type=kotlin.ranges.ULongRange call=kotlin.ranges.ULongRange.<init>
+  decl golden.sema.makeULongRange[kind=fun;params=ULong,ULong] fun makeULongRange sym=golden.sema.makeULongRange[kind=fun;params=ULong,ULong]
+  decl golden.sema.acceptULongRangeProgression[kind=fun;params=kotlin.ranges.ULongProgression] fun acceptULongRangeProgression sym=golden.sema.acceptULongRangeProgression[kind=fun;params=kotlin.ranges.ULongProgression]
+  decl golden.sema.acceptULongRangeClosedRange[kind=fun;params=kotlin.ranges.ClosedRange<ULong>] fun acceptULongRangeClosedRange sym=golden.sema.acceptULongRangeClosedRange[kind=fun;params=kotlin.ranges.ClosedRange<ULong>]
+  decl golden.sema.acceptULongRangeCompanion[kind=fun;params=Any] fun acceptULongRangeCompanion sym=golden.sema.acceptULongRangeCompanion[kind=fun;params=Any]
+  decl golden.sema.useULongRangeCompanion[kind=fun;params=] fun useULongRangeCompanion sym=golden.sema.useULongRangeCompanion[kind=fun;params=]
+expr e@4:16 name(start) type=ULong ref=golden.sema.makeULongRange.$3.start[kind=vparam]
+expr e@4:23 name(endInclusive) type=ULong ref=golden.sema.makeULongRange.$3.endInclusive[kind=vparam]
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:16,_:e@4:23] type=kotlin.ranges.ULongRange call=kotlin.ranges.ULongRange.<init>[kind=ctor;recv=kotlin.ranges.ULongRange;params=ULong,ULong]
 expr e@6:69 bool(true) type=Boolean
 expr e@8:71 bool(true) type=Boolean
 expr e@10:58 bool(true) type=Boolean
-expr e@12:37 name(ULongRange) type=kotlin.ranges.ULongRange ref=kotlin.ranges.ULongRange
-expr e@12:37#1 memberCall recv=e@12:37 callee=Companion args=[] type=kotlin.ranges.ULongRange.Companion ref=kotlin.ranges.ULongRange.Companion
+expr e@12:37 name(ULongRange) type=kotlin.ranges.ULongRange ref=kotlin.ranges.ULongRange[kind=class]
+expr e@12:37#1 memberCall recv=e@12:37 callee=Companion args=[] type=kotlin.ranges.ULongRange.Companion ref=kotlin.ranges.ULongRange.Companion[kind=obj]

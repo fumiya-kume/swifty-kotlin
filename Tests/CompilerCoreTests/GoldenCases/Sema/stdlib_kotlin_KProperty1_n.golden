@@ -1,30 +1,30 @@
-symbol fq=__local_0.property kind=local vis=private flags=_ type=kotlin.reflect.KProperty1<golden.sema.Person, String>
-symbol fq=golden.sema.Person kind=class vis=public flags=_
-symbol fq=golden.sema.Person.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.Person params=[String] ret=golden.sema.Person
-symbol fq=golden.sema.Person.<init>.$0.name kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Person.name kind=property vis=public flags=_ type=String
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.read kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KProperty1<golden.sema.read.$1.T, golden.sema.read.$1.V>,golden.sema.read.$1.T,kotlin.reflect.KProperty<*>] ret=golden.sema.read.$1.V
-symbol fq=golden.sema.read.$1.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.read.$1.V kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.read.$1.metadata kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.read.$1.property kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.read.$1.receiver kind=valueParameter vis=private flags=_
-symbol fq=kotlin.reflect.KProperty kind=interface vis=public flags=synthetic
+symbol fq=__local_0.property[kind=local] kind=local vis=private flags=_ type=kotlin.reflect.KProperty1<golden.sema.Person, String>
+symbol fq=golden.sema.Person.<init>.$0.name[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Person.<init>[kind=ctor;recv=golden.sema.Person;params=String] kind=constructor vis=public flags=_ sig=recv=golden.sema.Person params=[String] ret=golden.sema.Person
+symbol fq=golden.sema.Person.name[kind=prop] kind=property vis=public flags=_ type=String
+symbol fq=golden.sema.Person[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.read.$1.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.read.$1.V[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.read.$1.metadata[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.read.$1.property[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.read.$1.receiver[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.read[kind=fun;params=kotlin.reflect.KProperty1<T0,T1>,T0,kotlin.reflect.KProperty<*>;gen=2] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KProperty1<golden.sema.read.$1.T, golden.sema.read.$1.V>,golden.sema.read.$1.T,kotlin.reflect.KProperty<*>] ret=golden.sema.read.$1.V
+symbol fq=kotlin.reflect.KProperty[kind=iface] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_KProperty1_n package=golden.sema
-  decl golden.sema.Person class Person sym=golden.sema.Person
-  decl golden.sema.read fun read sym=golden.sema.read
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@9:5 name(property) type=kotlin.reflect.KProperty1<golden.sema.read.$1.T, golden.sema.read.$1.V> ref=golden.sema.read.$1.property
-expr e@9:23 name(receiver) type=golden.sema.read.$1.T ref=golden.sema.read.$1.receiver
-expr e@9:33 name(metadata) type=kotlin.reflect.KProperty<*> ref=golden.sema.read.$1.metadata
-expr e@9:5#1 memberCall recv=e@9:5 callee=getValue args=[_:e@9:23,_:e@9:33] type=golden.sema.read.$1.V call=kotlin.getValue#1 targs=[golden.sema.read.$1.T,golden.sema.read.$1.V]
-expr e@12:48 name(Person) type=Any ref=golden.sema.Person
-expr e@12:48#1 callableRef recv=e@12:48 member=name type=kotlin.reflect.KProperty1<golden.sema.Person, String> ref=golden.sema.Person.name
-expr e@12:5 localDecl property mutable=0 type=KProperty1<Person,String> init=e@12:48#1 type=Unit ref=__local_0.property
-expr e@13:18 name(property) type=kotlin.reflect.KProperty1<golden.sema.Person, String> ref=__local_0.property
+  decl golden.sema.Person[kind=class] class Person sym=golden.sema.Person[kind=class]
+  decl golden.sema.read[kind=fun;params=kotlin.reflect.KProperty1<T0,T1>,T0,kotlin.reflect.KProperty<*>;gen=2] fun read sym=golden.sema.read[kind=fun;params=kotlin.reflect.KProperty1<T0,T1>,T0,kotlin.reflect.KProperty<*>;gen=2]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@9:5 name(property) type=kotlin.reflect.KProperty1<golden.sema.read.$1.T, golden.sema.read.$1.V> ref=golden.sema.read.$1.property[kind=vparam]
+expr e@9:23 name(receiver) type=golden.sema.read.$1.T ref=golden.sema.read.$1.receiver[kind=vparam]
+expr e@9:33 name(metadata) type=kotlin.reflect.KProperty<*> ref=golden.sema.read.$1.metadata[kind=vparam]
+expr e@9:5#1 memberCall recv=e@9:5 callee=getValue args=[_:e@9:23,_:e@9:33] type=golden.sema.read.$1.V call=kotlin.getValue[kind=fun;recv=kotlin.reflect.KProperty1<T0,T1>;params=T0,kotlin.reflect.KProperty<*>;gen=2] targs=[golden.sema.read.$1.T,golden.sema.read.$1.V]
+expr e@12:48 name(Person) type=Any ref=golden.sema.Person[kind=class]
+expr e@12:48#1 callableRef recv=e@12:48 member=name type=kotlin.reflect.KProperty1<golden.sema.Person, String> ref=golden.sema.Person.name[kind=prop]
+expr e@12:5 localDecl property mutable=0 type=KProperty1<Person,String> init=e@12:48#1 type=Unit ref=__local_0.property[kind=local]
+expr e@13:18 name(property) type=kotlin.reflect.KProperty1<golden.sema.Person, String> ref=__local_0.property[kind=local]
 expr e@13:35 string(Ada) type=String
-expr e@13:28 call callee=e@13:28#1 args=[_:e@13:35] type=golden.sema.Person call=golden.sema.Person.<init>
-expr e@13:43 name(property) type=kotlin.reflect.KProperty1<golden.sema.Person, String> ref=__local_0.property
-expr e@13:13 call callee=e@13:13#1 args=[_:e@13:18,_:e@13:28,_:e@13:43] type=String call=golden.sema.read targs=[golden.sema.Person,String]
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13] type=Unit call=kotlin.io.println#2
+expr e@13:28 call callee=e@13:28#1 args=[_:e@13:35] type=golden.sema.Person call=golden.sema.Person.<init>[kind=ctor;recv=golden.sema.Person;params=String]
+expr e@13:43 name(property) type=kotlin.reflect.KProperty1<golden.sema.Person, String> ref=__local_0.property[kind=local]
+expr e@13:13 call callee=e@13:13#1 args=[_:e@13:18,_:e@13:28,_:e@13:43] type=String call=golden.sema.read[kind=fun;params=kotlin.reflect.KProperty1<T0,T1>,T0,kotlin.reflect.KProperty<*>;gen=2] targs=[golden.sema.Person,String]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13] type=Unit call=kotlin.io.println[kind=fun;params=String]

@@ -29,6 +29,8 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("withTimeoutOrNull"),
             ctx.interner.intern("suspendCoroutineUninterceptedOrReturn"),
             ctx.interner.intern("flow"),
+            ctx.interner.intern("channelFlow"),
+            ctx.interner.intern("callbackFlow"),
             ctx.interner.intern("emit"),
             ctx.interner.intern("collect"),
             ctx.interner.intern("collectLatest"),
@@ -55,6 +57,8 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("kk_suspend_function_invoke"),
             ctx.interner.intern("kk_suspend_function_invoke_2"),
             ctx.interner.intern("kk_flow_create"),
+            ctx.interner.intern("kk_channel_flow_create"),
+            ctx.interner.intern("kk_callback_flow_create"),
             ctx.interner.intern("kk_flow_emit"),
             ctx.interner.intern("kk_flow_collect"),
         ]

@@ -1,8 +1,8 @@
-symbol fq=golden.sema.makeSuspendFunction kind=function vis=public flags=_ sig=recv=_ params=[] ret=suspend () -> String
-symbol fq=golden.sema.sourceSuspend kind=function vis=public flags=suspendFunction sig=recv=_ params=[] ret=String suspend=1
+symbol fq=golden.sema.makeSuspendFunction[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=suspend () -> String
+symbol fq=golden.sema.sourceSuspend[kind=fun;params=;susp] kind=function vis=public flags=suspendFunction sig=recv=_ params=[] ret=String suspend=1
 file fstdlib_kotlin_n_suspend package=golden.sema
-  decl golden.sema.sourceSuspend fun sourceSuspend suspend=1 sym=golden.sema.sourceSuspend
-  decl golden.sema.makeSuspendFunction fun makeSuspendFunction sym=golden.sema.makeSuspendFunction
+  decl golden.sema.sourceSuspend[kind=fun;params=;susp] fun sourceSuspend suspend=1 sym=golden.sema.sourceSuspend[kind=fun;params=;susp]
+  decl golden.sema.makeSuspendFunction[kind=fun;params=] fun makeSuspendFunction sym=golden.sema.makeSuspendFunction[kind=fun;params=]
 expr e@3:39 string(ok) type=String
-expr e@6:15 call callee=e@6:15#1 args=[] type=String call=golden.sema.sourceSuspend
+expr e@6:15 call callee=e@6:15#1 args=[] type=String call=golden.sema.sourceSuspend[kind=fun;params=;susp]
 expr e@6:5 lambda params=[] body=e@6:15 type=suspend () -> String
