@@ -1,0 +1,111 @@
+symbol fq=__local_0.source[kind=local] kind=local vis=private flags=_ type=kotlin.CharSequence
+symbol fq=__local_1.other[kind=local] kind=local vis=private flags=_ type=kotlin.CharSequence
+symbol fq=__local_2.source[kind=local] kind=local vis=private flags=_ type=kotlin.CharSequence
+symbol fq=__local_3.source[kind=local] kind=local vis=private flags=_ type=kotlin.CharSequence
+symbol fq=__local_4.other[kind=local] kind=local vis=private flags=_ type=kotlin.CharSequence
+symbol fq=golden.sema.RegionSequence.<init>.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.RegionSequence.<init>[kind=ctor;recv=golden.sema.RegionSequence;params=String] kind=constructor vis=public flags=_ sig=recv=golden.sema.RegionSequence params=[String] ret=golden.sema.RegionSequence
+symbol fq=golden.sema.RegionSequence.get.$1.index[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.RegionSequence.subSequence.$2.endIndex[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.RegionSequence.subSequence.$2.startIndex[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.RegionSequence.value[kind=prop] kind=property vis=public flags=_ type=String
+symbol fq=golden.sema.RegionSequence[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.regionMatchesBuilder[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.regionMatchesCustom[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.regionMatchesDefault.$3.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.regionMatchesDefault.$3.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.regionMatchesDefault[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.regionMatchesDirect.$4.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.regionMatchesDirect.$4.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.regionMatchesDirect[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.regionMatchesEmpty.$5.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.regionMatchesEmpty[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.regionMatchesNamed.$6.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.regionMatchesNamed.$6.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.regionMatchesNamed[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.regionMatchesString[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.text.get.index[kind=vparam] kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.text.get[kind=fun;recv=String;params=Int] kind=function vis=public flags=synthetic|operatorFunction sig=recv=String params=[Int] ret=Char
+file fstdlib_kotlin_text_CharSequence_region package=golden.sema
+  decl golden.sema.RegionSequence[kind=class] class RegionSequence sym=golden.sema.RegionSequence[kind=class]
+  decl golden.sema.regionMatchesDirect[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] fun regionMatchesDirect sym=golden.sema.regionMatchesDirect[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence]
+  decl golden.sema.regionMatchesDefault[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] fun regionMatchesDefault sym=golden.sema.regionMatchesDefault[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence]
+  decl golden.sema.regionMatchesNamed[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] fun regionMatchesNamed sym=golden.sema.regionMatchesNamed[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence]
+  decl golden.sema.regionMatchesString[kind=fun;params=] fun regionMatchesString sym=golden.sema.regionMatchesString[kind=fun;params=]
+  decl golden.sema.regionMatchesBuilder[kind=fun;params=] fun regionMatchesBuilder sym=golden.sema.regionMatchesBuilder[kind=fun;params=]
+  decl golden.sema.regionMatchesCustom[kind=fun;params=] fun regionMatchesCustom sym=golden.sema.regionMatchesCustom[kind=fun;params=]
+  decl golden.sema.regionMatchesEmpty[kind=fun;params=kotlin.CharSequence] fun regionMatchesEmpty sym=golden.sema.regionMatchesEmpty[kind=fun;params=kotlin.CharSequence]
+expr e@4:38 name(value) type=String ref=golden.sema.RegionSequence.value[kind=prop]
+expr e@4:38#1 memberCall recv=e@4:38 callee=length args=[] type=Int
+expr e@5:42 name(value) type=String ref=golden.sema.RegionSequence.value[kind=prop]
+expr e@5:48 name(index) type=Int ref=golden.sema.RegionSequence.get.$1.index[kind=vparam]
+expr e@5:42#1 indexedAccess receiver=e@5:42 indices=[e@5:48] type=Char call=kotlin.text.get[kind=fun;recv=String;params=Int]
+expr e@6:78 name(value) type=String ref=golden.sema.RegionSequence.value[kind=prop]
+expr e@6:94 name(startIndex) type=Int ref=golden.sema.RegionSequence.subSequence.$2.startIndex[kind=vparam]
+expr e@6:106 name(endIndex) type=Int ref=golden.sema.RegionSequence.subSequence.$2.endIndex[kind=vparam]
+expr e@6:78#1 memberCall recv=e@6:78 callee=substring args=[_:e@6:94,_:e@6:106] type=String call=kotlin.text.substring[kind=fun;recv=String;params=Int,Int]
+expr e@10:5 name(source) type=kotlin.CharSequence ref=golden.sema.regionMatchesDirect.$4.source[kind=vparam]
+expr e@10:26 int(0) type=Int
+expr e@10:29 name(other) type=kotlin.CharSequence ref=golden.sema.regionMatchesDirect.$4.other[kind=vparam]
+expr e@10:36 int(2) type=Int
+expr e@10:39 int(2) type=Int
+expr e@10:5#1 memberCall recv=e@10:5 callee=regionMatches args=[_:e@10:26,_:e@10:29,_:e@10:36,_:e@10:39] type=Boolean call=kotlin.text.regionMatches[kind=fun;recv=kotlin.CharSequence;params=Int,kotlin.CharSequence,Int,Int,Boolean]
+expr e@13:5 name(source) type=kotlin.CharSequence ref=golden.sema.regionMatchesDefault.$3.source[kind=vparam]
+expr e@13:26 int(0) type=Int
+expr e@13:29 name(other) type=kotlin.CharSequence ref=golden.sema.regionMatchesDefault.$3.other[kind=vparam]
+expr e@13:36 int(0) type=Int
+expr e@13:39 int(2) type=Int
+expr e@13:5#1 memberCall recv=e@13:5 callee=regionMatches args=[_:e@13:26,_:e@13:29,_:e@13:36,_:e@13:39] type=Boolean call=kotlin.text.regionMatches[kind=fun;recv=kotlin.CharSequence;params=Int,kotlin.CharSequence,Int,Int,Boolean]
+expr e@16:5 name(source) type=kotlin.CharSequence ref=golden.sema.regionMatchesNamed.$6.source[kind=vparam]
+expr e@17:22 int(1) type=Int
+expr e@18:17 name(other) type=kotlin.CharSequence ref=golden.sema.regionMatchesNamed.$6.other[kind=vparam]
+expr e@19:23 int(1) type=Int
+expr e@20:18 int(2) type=Int
+expr e@21:22 bool(true) type=Boolean
+expr e@16:5#1 memberCall recv=e@16:5 callee=regionMatches args=[thisOffset:e@17:22,other:e@18:17,otherOffset:e@19:23,length:e@20:18,ignoreCase:e@21:22] type=Boolean call=kotlin.text.regionMatches[kind=fun;recv=kotlin.CharSequence;params=Int,kotlin.CharSequence,Int,Int,Boolean]
+expr e@25:32 string(A😀BC) type=String
+expr e@25:5 localDecl source mutable=0 type=CharSequence init=e@25:32 type=Unit ref=__local_0.source[kind=local]
+expr e@26:31 string(a😀bc) type=String
+expr e@26:5 localDecl other mutable=0 type=CharSequence init=e@26:31 type=Unit ref=__local_1.other[kind=local]
+expr e@27:12 name(source) type=kotlin.CharSequence ref=__local_0.source[kind=local]
+expr e@27:33 int(0) type=Int
+expr e@27:36 name(other) type=kotlin.CharSequence ref=__local_1.other[kind=local]
+expr e@27:43 int(0) type=Int
+expr e@27:46 int(5) type=Int
+expr e@27:49 bool(true) type=Boolean
+expr e@27:12#1 memberCall recv=e@27:12 callee=regionMatches args=[_:e@27:33,_:e@27:36,_:e@27:43,_:e@27:46,_:e@27:49] type=Boolean call=kotlin.text.regionMatches[kind=fun;recv=kotlin.CharSequence;params=Int,kotlin.CharSequence,Int,Int,Boolean]
+expr e@27:5 return value=e@27:12#1 type=Nothing
+expr e@31:46 string(Ab) type=String
+expr e@31:32 call callee=e@31:32#1 args=[_:e@31:46] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=String]
+expr e@31:5 localDecl source mutable=0 type=CharSequence init=e@31:32 type=Unit ref=__local_2.source[kind=local]
+expr e@32:12 name(source) type=kotlin.CharSequence ref=__local_2.source[kind=local]
+expr e@32:33 int(0) type=Int
+expr e@32:36 string(aB) type=String
+expr e@32:42 int(0) type=Int
+expr e@32:45 int(2) type=Int
+expr e@32:48 bool(true) type=Boolean
+expr e@32:12#1 memberCall recv=e@32:12 callee=regionMatches args=[_:e@32:33,_:e@32:36,_:e@32:42,_:e@32:45,_:e@32:48] type=Boolean call=kotlin.text.regionMatches[kind=fun;recv=kotlin.CharSequence;params=Int,kotlin.CharSequence,Int,Int,Boolean]
+expr e@32:5 return value=e@32:12#1 type=Nothing
+expr e@36:47 string(Ab) type=String
+expr e@36:32 call callee=e@36:32#1 args=[_:e@36:47] type=golden.sema.RegionSequence call=golden.sema.RegionSequence.<init>[kind=ctor;recv=golden.sema.RegionSequence;params=String]
+expr e@36:5 localDecl source mutable=0 type=CharSequence init=e@36:32 type=Unit ref=__local_3.source[kind=local]
+expr e@37:46 string(aB) type=String
+expr e@37:31 call callee=e@37:31#1 args=[_:e@37:46] type=golden.sema.RegionSequence call=golden.sema.RegionSequence.<init>[kind=ctor;recv=golden.sema.RegionSequence;params=String]
+expr e@37:5 localDecl other mutable=0 type=CharSequence init=e@37:31 type=Unit ref=__local_4.other[kind=local]
+expr e@38:12 name(source) type=kotlin.CharSequence ref=__local_3.source[kind=local]
+expr e@38:33 int(0) type=Int
+expr e@38:36 name(other) type=kotlin.CharSequence ref=__local_4.other[kind=local]
+expr e@38:43 int(0) type=Int
+expr e@38:46 int(2) type=Int
+expr e@38:49 bool(true) type=Boolean
+expr e@38:12#1 memberCall recv=e@38:12 callee=regionMatches args=[_:e@38:33,_:e@38:36,_:e@38:43,_:e@38:46,_:e@38:49] type=Boolean call=kotlin.text.regionMatches[kind=fun;recv=kotlin.CharSequence;params=Int,kotlin.CharSequence,Int,Int,Boolean]
+expr e@38:5 return value=e@38:12#1 type=Nothing
+expr e@42:5 name(source) type=kotlin.CharSequence ref=golden.sema.regionMatchesEmpty.$5.source[kind=vparam]
+expr e@42:26 name(source) type=kotlin.CharSequence ref=golden.sema.regionMatchesEmpty.$5.source[kind=vparam]
+expr e@42:26#1 memberCall recv=e@42:26 callee=length args=[] type=Int ref=kotlin.CharSequence.length[kind=prop]
+expr e@42:41 name(source) type=kotlin.CharSequence ref=golden.sema.regionMatchesEmpty.$5.source[kind=vparam]
+expr e@42:49 name(source) type=kotlin.CharSequence ref=golden.sema.regionMatchesEmpty.$5.source[kind=vparam]
+expr e@42:49#1 memberCall recv=e@42:49 callee=length args=[] type=Int ref=kotlin.CharSequence.length[kind=prop]
+expr e@42:64 int(0) type=Int
+expr e@42:5#1 memberCall recv=e@42:5 callee=regionMatches args=[_:e@42:26#1,_:e@42:41,_:e@42:49#1,_:e@42:64] type=Boolean call=kotlin.text.regionMatches[kind=fun;recv=kotlin.CharSequence;params=Int,kotlin.CharSequence,Int,Int,Boolean]

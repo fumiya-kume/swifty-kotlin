@@ -25,14 +25,8 @@ struct ReflectKClassBooleanIntrospectionTests {
 
     private func sharedSema() throws -> (SemaModule, StringInterner, CompilationContext) {
         if let cached = Self._sharedSema { return cached }
-        let triple = try makeSema(source: Self.sharedSource)
-        Self._sharedSema = triple
-        return triple
-    }
-
-    private func makeSema(source: String) throws -> (SemaModule, StringInterner, CompilationContext) {
         var result: (SemaModule, StringInterner, CompilationContext)?
-        try withTemporaryFile(contents: source) { path in
+        try withTemporaryFile(contents: Self.sharedSource) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
             #expect(
@@ -41,7 +35,9 @@ struct ReflectKClassBooleanIntrospectionTests {
             )
             result = (try #require(ctx.sema), ctx.interner, ctx)
         }
-        return try #require(result)
+        let triple = try #require(result)
+        Self._sharedSema = triple
+        return triple
     }
 
     @Test func testClassLiteralBooleanMembersInferBoolean() throws {

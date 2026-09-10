@@ -1,0 +1,81 @@
+symbol fq=__local_0.source[kind=local] kind=local vis=private flags=_ type=kotlin.CharSequence
+symbol fq=golden.sema.containsBuilder[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.containsChar.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsCharNamed.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsCharNamed[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.containsCharOperator.$2.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsCharOperator[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.containsChar[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.containsRegex.$3.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsRegexNamed.$4.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsRegexNamed[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.containsRegexOperator.$5.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsRegexOperator[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.containsRegex[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.containsSequence.$6.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsSequence.$6.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsSequenceNamed.$7.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsSequenceNamed.$7.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsSequenceNamed[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.containsSequenceOperator.$8.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsSequenceOperator.$8.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.containsSequenceOperator[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.containsSequence[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.containsStringRegex[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
+file fstdlib_kotlin_text_CharSequence_contains package=golden.sema
+  decl golden.sema.containsSequence[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] fun containsSequence sym=golden.sema.containsSequence[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence]
+  decl golden.sema.containsSequenceNamed[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] fun containsSequenceNamed sym=golden.sema.containsSequenceNamed[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence]
+  decl golden.sema.containsSequenceOperator[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] fun containsSequenceOperator sym=golden.sema.containsSequenceOperator[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence]
+  decl golden.sema.containsChar[kind=fun;params=kotlin.CharSequence] fun containsChar sym=golden.sema.containsChar[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.containsCharNamed[kind=fun;params=kotlin.CharSequence] fun containsCharNamed sym=golden.sema.containsCharNamed[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.containsCharOperator[kind=fun;params=kotlin.CharSequence] fun containsCharOperator sym=golden.sema.containsCharOperator[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.containsRegex[kind=fun;params=kotlin.CharSequence] fun containsRegex sym=golden.sema.containsRegex[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.containsRegexNamed[kind=fun;params=kotlin.CharSequence] fun containsRegexNamed sym=golden.sema.containsRegexNamed[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.containsRegexOperator[kind=fun;params=kotlin.CharSequence] fun containsRegexOperator sym=golden.sema.containsRegexOperator[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.containsStringRegex[kind=fun;params=] fun containsStringRegex sym=golden.sema.containsStringRegex[kind=fun;params=]
+  decl golden.sema.containsBuilder[kind=fun;params=] fun containsBuilder sym=golden.sema.containsBuilder[kind=fun;params=]
+expr e@4:5 name(source) type=kotlin.CharSequence ref=golden.sema.containsSequence.$6.source[kind=vparam]
+expr e@4:21 name(other) type=kotlin.CharSequence ref=golden.sema.containsSequence.$6.other[kind=vparam]
+expr e@4:5#1 memberCall recv=e@4:5 callee=contains args=[_:e@4:21] type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence]
+expr e@7:5 name(source) type=kotlin.CharSequence ref=golden.sema.containsSequenceNamed.$7.source[kind=vparam]
+expr e@7:29 name(other) type=kotlin.CharSequence ref=golden.sema.containsSequenceNamed.$7.other[kind=vparam]
+expr e@7:49 bool(true) type=Boolean
+expr e@7:5#1 memberCall recv=e@7:5 callee=contains args=[other:e@7:29,ignoreCase:e@7:49] type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence,Boolean]
+expr e@10:5 name(other) type=kotlin.CharSequence ref=golden.sema.containsSequenceOperator.$8.other[kind=vparam]
+expr e@10:14 name(source) type=kotlin.CharSequence ref=golden.sema.containsSequenceOperator.$8.source[kind=vparam]
+expr e@10:5#1 inExpr lhs=e@10:5 rhs=e@10:14 type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence]
+expr e@13:5 name(source) type=kotlin.CharSequence ref=golden.sema.containsChar.$0.source[kind=vparam]
+expr e@13:21 char(120) type=Char
+expr e@13:5#1 memberCall recv=e@13:5 callee=contains args=[_:e@13:21] type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=Char]
+expr e@16:5 name(source) type=kotlin.CharSequence ref=golden.sema.containsCharNamed.$1.source[kind=vparam]
+expr e@16:28 char(120) type=Char
+expr e@16:46 bool(true) type=Boolean
+expr e@16:5#1 memberCall recv=e@16:5 callee=contains args=[char:e@16:28,ignoreCase:e@16:46] type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=Char,Boolean]
+expr e@19:5 char(120) type=Char
+expr e@19:12 name(source) type=kotlin.CharSequence ref=golden.sema.containsCharOperator.$2.source[kind=vparam]
+expr e@19:5#1 inExpr lhs=e@19:5 rhs=e@19:12 type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=Char]
+expr e@22:5 name(source) type=kotlin.CharSequence ref=golden.sema.containsRegex.$3.source[kind=vparam]
+expr e@22:27 string(x+) type=String
+expr e@22:21 call callee=e@22:21#1 args=[_:e@22:27] type=kotlin.text.Regex call=kotlin.text.Regex.<init>[kind=ctor;recv=kotlin.text.Regex;params=String]
+expr e@22:5#1 memberCall recv=e@22:5 callee=contains args=[_:e@22:21] type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=kotlin.text.Regex]
+expr e@25:5 name(source) type=kotlin.CharSequence ref=golden.sema.containsRegexNamed.$4.source[kind=vparam]
+expr e@25:35 string(x+) type=String
+expr e@25:29 call callee=e@25:29#1 args=[_:e@25:35] type=kotlin.text.Regex call=kotlin.text.Regex.<init>[kind=ctor;recv=kotlin.text.Regex;params=String]
+expr e@25:5#1 memberCall recv=e@25:5 callee=contains args=[regex:e@25:29] type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=kotlin.text.Regex]
+expr e@28:11 string(x+) type=String
+expr e@28:5 call callee=e@28:5#1 args=[_:e@28:11] type=kotlin.text.Regex call=kotlin.text.Regex.<init>[kind=ctor;recv=kotlin.text.Regex;params=String]
+expr e@28:20 name(source) type=kotlin.CharSequence ref=golden.sema.containsRegexOperator.$5.source[kind=vparam]
+expr e@28:5#2 inExpr lhs=e@28:5 rhs=e@28:20 type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=kotlin.text.Regex]
+expr e@31:5 string(xxx) type=String
+expr e@31:26 string(x+) type=String
+expr e@31:20 call callee=e@31:20#1 args=[_:e@31:26] type=kotlin.text.Regex call=kotlin.text.Regex.<init>[kind=ctor;recv=kotlin.text.Regex;params=String]
+expr e@31:5#1 memberCall recv=e@31:5 callee=contains args=[_:e@31:20] type=Boolean call=kotlin.text.contains[kind=fun;recv=String;params=kotlin.text.Regex]
+expr e@34:46 string(Box) type=String
+expr e@34:32 call callee=e@34:32#1 args=[_:e@34:46] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=String]
+expr e@34:5 localDecl source mutable=0 type=CharSequence init=e@34:32 type=Unit ref=__local_0.source[kind=local]
+expr e@35:12 name(source) type=kotlin.CharSequence ref=__local_0.source[kind=local]
+expr e@35:28 char(120) type=Char
+expr e@35:46 bool(true) type=Boolean
+expr e@35:12#1 memberCall recv=e@35:12 callee=contains args=[_:e@35:28,ignoreCase:e@35:46] type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=Char,Boolean]
+expr e@35:5 return value=e@35:12#1 type=Nothing

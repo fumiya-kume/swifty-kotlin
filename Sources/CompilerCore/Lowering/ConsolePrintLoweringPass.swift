@@ -1,6 +1,6 @@
 
-/// Rewrites `kotlin.io.print`/`println` call sites so class, data-class and
-/// enum values print via their `toString()` implementation instead of
+/// Rewrites `kotlin.io.print`/`println` call sites so class, data-class, object
+/// and enum values print via their `toString()` implementation instead of
 /// `Any.toString()` falling back to the raw handle.
 ///
 /// With `print`/`println` implemented in bundled Kotlin source, the `Any?`
@@ -465,8 +465,45 @@ final class ConsolePrintLoweringPass: LoweringPass, ParallelLoweringPass {
     ) -> KIRExprWithInstructions? {
         var instructions: [KIRInstruction] = []
 
-        // Regular and data objects print their simple name.
+        // Objects without an own toString() keep the simple-name fallback. An
+        // explicitly declared (or synthesized) object toString() must still
+        // be called, just like it is for an ordinary class.
         if classSymbol.kind == .object {
+            let toStringName = interner.intern("toString")
+            let toStringFQName = classSymbol.fqName + [toStringName]
+            let toStringSymbol: SymbolID? = sema.symbols.lookupAll(fqName: toStringFQName).first { id in
+                guard let sym = sema.symbols.symbol(id),
+                      sym.kind == .function
+                else {
+                    return false
+                }
+                let sig = sema.symbols.functionSignature(for: id)
+                return sig?.parameterTypes.isEmpty ?? true
+            }
+
+            if let toStringSym = toStringSymbol,
+               let sym = sema.symbols.symbol(toStringSym),
+               !isSyntheticAnyToStringSymbol(sym, interner: interner)
+            {
+                let externalLinkName = sema.symbols.externalLinkName(for: toStringSym)
+                let toStringCallee: InternedString = if let externalLinkName, !externalLinkName.isEmpty {
+                    interner.intern(externalLinkName)
+                } else {
+                    toStringName
+                }
+                let toStringResult = arena.appendTemporary(type: stringType)
+                instructions.append(.call(
+                    symbol: toStringSym,
+                    callee: toStringCallee,
+                    arguments: [argument],
+                    result: toStringResult,
+                    canThrow: false,
+                    thrownResult: nil,
+                    isSuperCall: false
+                ))
+                return KIRExprWithInstructions(value: toStringResult, instructions: instructions)
+            }
+
             let objectName = interner.resolve(classSymbol.name)
             let interned = interner.intern(objectName)
             let expr = arena.appendExpr(.stringLiteral(interned), type: stringType)
