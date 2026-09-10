@@ -1,13 +1,13 @@
-symbol fq=charLowercase kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=charTitlecase kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=charUppercase kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=charLowercase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=charTitlecase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=charUppercase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fchar_case_conversion package=_
-  decl charUppercase fun charUppercase sym=charUppercase
-  decl charLowercase fun charLowercase sym=charLowercase
-  decl charTitlecase fun charTitlecase sym=charTitlecase
+  decl charUppercase[kind=fun;params=] fun charUppercase sym=charUppercase[kind=fun;params=]
+  decl charLowercase[kind=fun;params=] fun charLowercase sym=charLowercase[kind=fun;params=]
+  decl charTitlecase[kind=fun;params=] fun charTitlecase sym=charTitlecase[kind=fun;params=]
 expr e@1:31 char(97) type=Char
-expr e@1:31#1 memberCall recv=e@1:31 callee=uppercase args=[] type=String call=kotlin.text.uppercase#0
+expr e@1:31#1 memberCall recv=e@1:31 callee=uppercase args=[] type=String call=kotlin.text.uppercase[kind=fun;recv=Char;params=]
 expr e@2:31 char(65) type=Char
-expr e@2:31#1 memberCall recv=e@2:31 callee=lowercase args=[] type=String call=kotlin.text.lowercase#0
+expr e@2:31#1 memberCall recv=e@2:31 callee=lowercase args=[] type=String call=kotlin.text.lowercase[kind=fun;recv=Char;params=]
 expr e@3:31 char(97) type=Char
-expr e@3:31#1 memberCall recv=e@3:31 callee=titlecase args=[] type=String call=kotlin.text.titlecase
+expr e@3:31#1 memberCall recv=e@3:31 callee=titlecase args=[] type=String call=kotlin.text.titlecase[kind=fun;recv=Char;params=]

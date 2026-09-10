@@ -1,16 +1,16 @@
-symbol fq=golden.sema.charSequenceReversed kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.CharSequence
-symbol fq=golden.sema.charSequenceReversed.$0.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequenceReversedBuilder kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder] ret=kotlin.CharSequence
-symbol fq=golden.sema.charSequenceReversedBuilder.$1.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.stringReversed kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=golden.sema.charSequenceReversed.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceReversedBuilder.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceReversedBuilder[kind=fun;params=kotlin.text.StringBuilder] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder] ret=kotlin.CharSequence
+symbol fq=golden.sema.charSequenceReversed[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.CharSequence
+symbol fq=golden.sema.stringReversed[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_reversed package=golden.sema
-  decl golden.sema.charSequenceReversed fun charSequenceReversed sym=golden.sema.charSequenceReversed
-  decl golden.sema.charSequenceReversedBuilder fun charSequenceReversedBuilder sym=golden.sema.charSequenceReversedBuilder
-  decl golden.sema.stringReversed fun stringReversed sym=golden.sema.stringReversed
-expr e@3:64 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceReversed.$0.source
-expr e@3:64#1 memberCall recv=e@3:64 callee=reversed args=[] type=kotlin.CharSequence call=kotlin.text.reversed#1
-expr e@5:72 name(source) type=kotlin.text.StringBuilder ref=golden.sema.charSequenceReversedBuilder.$1.source
-expr e@5:72#1 memberCall recv=e@5:72 callee=reversed args=[] type=kotlin.CharSequence call=kotlin.text.reversed#1
+  decl golden.sema.charSequenceReversed[kind=fun;params=kotlin.CharSequence] fun charSequenceReversed sym=golden.sema.charSequenceReversed[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.charSequenceReversedBuilder[kind=fun;params=kotlin.text.StringBuilder] fun charSequenceReversedBuilder sym=golden.sema.charSequenceReversedBuilder[kind=fun;params=kotlin.text.StringBuilder]
+  decl golden.sema.stringReversed[kind=fun;params=] fun stringReversed sym=golden.sema.stringReversed[kind=fun;params=]
+expr e@3:64 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceReversed.$0.source[kind=vparam]
+expr e@3:64#1 memberCall recv=e@3:64 callee=reversed args=[] type=kotlin.CharSequence call=kotlin.text.reversed[kind=fun;recv=kotlin.CharSequence;params=]
+expr e@5:72 name(source) type=kotlin.text.StringBuilder ref=golden.sema.charSequenceReversedBuilder.$1.source[kind=vparam]
+expr e@5:72#1 memberCall recv=e@5:72 callee=reversed args=[] type=kotlin.CharSequence call=kotlin.text.reversed[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@7:32 string(abc) type=String
-expr e@7:32#1 memberCall recv=e@7:32 callee=reversed args=[] type=String call=kotlin.text.reversed#0
+expr e@7:32#1 memberCall recv=e@7:32 callee=reversed args=[] type=String call=kotlin.text.reversed[kind=fun;recv=String;params=]

@@ -1,48 +1,48 @@
-symbol fq=__local_0.x kind=local vis=private flags=_ type=Any?
-symbol fq=golden.sema.Box kind=class vis=public flags=_
-symbol fq=golden.sema.Box.$class0.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.Box.get kind=function vis=public flags=_ sig=recv=golden.sema.Box<golden.sema.Box.$class0.T> params=[] ret=golden.sema.Box.$class0.T
-symbol fq=golden.sema.Box.set kind=function vis=public flags=_ sig=recv=golden.sema.Box<golden.sema.Box.$class0.T> params=[golden.sema.Box.$class0.T] ret=Unit
-symbol fq=golden.sema.Box.set.$0.v kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.E kind=class vis=public flags=_
-symbol fq=golden.sema.E.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.E params=[] ret=golden.sema.E
-symbol fq=golden.sema.readOnly kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<out Any>] ret=Any
-symbol fq=golden.sema.readOnly.$1.box kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.starRead kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<*>] ret=Any?
-symbol fq=golden.sema.starRead.$2.box kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.starReadInferred kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<*>] ret=Unit
-symbol fq=golden.sema.starReadInferred.$3.box kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.starWrite kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<*>] ret=Unit
-symbol fq=golden.sema.starWrite.$4.box kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.writeBlocked kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<out Any>] ret=Unit
-symbol fq=golden.sema.writeBlocked.$5.box kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.writeOnly kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<in Int>] ret=Unit
-symbol fq=golden.sema.writeOnly.$6.box kind=valueParameter vis=private flags=_
+symbol fq=__local_0.x[kind=local] kind=local vis=private flags=_ type=Any?
+symbol fq=golden.sema.Box.$class0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.Box.get[kind=fun;recv=golden.sema.Box<T0>;params=;gen=1] kind=function vis=public flags=_ sig=recv=golden.sema.Box<golden.sema.Box.$class0.T> params=[] ret=golden.sema.Box.$class0.T
+symbol fq=golden.sema.Box.set.$0.v[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Box.set[kind=fun;recv=golden.sema.Box<T0>;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=golden.sema.Box<golden.sema.Box.$class0.T> params=[golden.sema.Box.$class0.T] ret=Unit
+symbol fq=golden.sema.Box[kind=class;gen=1] kind=class vis=public flags=_
+symbol fq=golden.sema.E.<init>[kind=ctor;recv=golden.sema.E;params=] kind=constructor vis=public flags=_ sig=recv=golden.sema.E params=[] ret=golden.sema.E
+symbol fq=golden.sema.E[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.readOnly.$1.box[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.readOnly[kind=fun;params=golden.sema.Box<out Any>] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<out Any>] ret=Any
+symbol fq=golden.sema.starRead.$2.box[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.starReadInferred.$3.box[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.starReadInferred[kind=fun;params=golden.sema.Box<*>] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<*>] ret=Unit
+symbol fq=golden.sema.starRead[kind=fun;params=golden.sema.Box<*>] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<*>] ret=Any?
+symbol fq=golden.sema.starWrite.$4.box[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.starWrite[kind=fun;params=golden.sema.Box<*>] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<*>] ret=Unit
+symbol fq=golden.sema.writeBlocked.$5.box[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.writeBlocked[kind=fun;params=golden.sema.Box<out Any>] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<out Any>] ret=Unit
+symbol fq=golden.sema.writeOnly.$6.box[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.writeOnly[kind=fun;params=golden.sema.Box<in Int>] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Box<in Int>] ret=Unit
 file fuse_site_variance package=golden.sema
-  decl golden.sema.E class E sym=golden.sema.E
-  decl golden.sema.Box class Box sym=golden.sema.Box
-  decl golden.sema.readOnly fun readOnly sym=golden.sema.readOnly
-  decl golden.sema.writeBlocked fun writeBlocked sym=golden.sema.writeBlocked
-  decl golden.sema.writeOnly fun writeOnly sym=golden.sema.writeOnly
-  decl golden.sema.starRead fun starRead sym=golden.sema.starRead
-  decl golden.sema.starReadInferred fun starReadInferred sym=golden.sema.starReadInferred
-  decl golden.sema.starWrite fun starWrite sym=golden.sema.starWrite
-expr e@6:26 call callee=e@6:26#1 args=[] type=golden.sema.E call=golden.sema.E.<init>
+  decl golden.sema.E[kind=class] class E sym=golden.sema.E[kind=class]
+  decl golden.sema.Box[kind=class;gen=1] class Box sym=golden.sema.Box[kind=class;gen=1]
+  decl golden.sema.readOnly[kind=fun;params=golden.sema.Box<out Any>] fun readOnly sym=golden.sema.readOnly[kind=fun;params=golden.sema.Box<out Any>]
+  decl golden.sema.writeBlocked[kind=fun;params=golden.sema.Box<out Any>] fun writeBlocked sym=golden.sema.writeBlocked[kind=fun;params=golden.sema.Box<out Any>]
+  decl golden.sema.writeOnly[kind=fun;params=golden.sema.Box<in Int>] fun writeOnly sym=golden.sema.writeOnly[kind=fun;params=golden.sema.Box<in Int>]
+  decl golden.sema.starRead[kind=fun;params=golden.sema.Box<*>] fun starRead sym=golden.sema.starRead[kind=fun;params=golden.sema.Box<*>]
+  decl golden.sema.starReadInferred[kind=fun;params=golden.sema.Box<*>] fun starReadInferred sym=golden.sema.starReadInferred[kind=fun;params=golden.sema.Box<*>]
+  decl golden.sema.starWrite[kind=fun;params=golden.sema.Box<*>] fun starWrite sym=golden.sema.starWrite[kind=fun;params=golden.sema.Box<*>]
+expr e@6:26 call callee=e@6:26#1 args=[] type=golden.sema.E call=golden.sema.E.<init>[kind=ctor;recv=golden.sema.E;params=]
 expr e@6:20 throw value=e@6:26 type=Nothing
-expr e@10:40 name(box) type=golden.sema.Box<out Any> ref=golden.sema.readOnly.$1.box
-expr e@10:40#1 memberCall recv=e@10:40 callee=get args=[] type=Any call=golden.sema.Box.get targs=[Any]
-expr e@13:5 name(box) type=golden.sema.Box<out Any> ref=golden.sema.writeBlocked.$5.box
+expr e@10:40 name(box) type=golden.sema.Box<out Any> ref=golden.sema.readOnly.$1.box[kind=vparam]
+expr e@10:40#1 memberCall recv=e@10:40 callee=get args=[] type=Any call=golden.sema.Box.get[kind=fun;recv=golden.sema.Box<T0>;params=;gen=1] targs=[Any]
+expr e@13:5 name(box) type=golden.sema.Box<out Any> ref=golden.sema.writeBlocked.$5.box[kind=vparam]
 expr e@13:13 int(42) type=Int
 expr e@13:5#1 memberCall recv=e@13:5 callee=set args=[_:e@13:13] type=<error>
-expr e@17:5 name(box) type=golden.sema.Box<in Int> ref=golden.sema.writeOnly.$6.box
+expr e@17:5 name(box) type=golden.sema.Box<in Int> ref=golden.sema.writeOnly.$6.box[kind=vparam]
 expr e@17:13 int(42) type=Int
-expr e@17:5#1 memberCall recv=e@17:5 callee=set args=[_:e@17:13] type=Unit call=golden.sema.Box.set targs=[Any?]
-expr e@20:35 name(box) type=golden.sema.Box<*> ref=golden.sema.starRead.$2.box
-expr e@20:35#1 memberCall recv=e@20:35 callee=get args=[] type=Any? call=golden.sema.Box.get targs=[Any?]
-expr e@23:13 name(box) type=golden.sema.Box<*> ref=golden.sema.starReadInferred.$3.box
-expr e@23:13#1 memberCall recv=e@23:13 callee=get args=[] type=Any? call=golden.sema.Box.get targs=[Any?]
-expr e@23:5 localDecl x mutable=0 type=_ init=e@23:13#1 type=Unit ref=__local_0.x
-expr e@27:5 name(box) type=golden.sema.Box<*> ref=golden.sema.starWrite.$4.box
+expr e@17:5#1 memberCall recv=e@17:5 callee=set args=[_:e@17:13] type=Unit call=golden.sema.Box.set[kind=fun;recv=golden.sema.Box<T0>;params=T0;gen=1] targs=[Any?]
+expr e@20:35 name(box) type=golden.sema.Box<*> ref=golden.sema.starRead.$2.box[kind=vparam]
+expr e@20:35#1 memberCall recv=e@20:35 callee=get args=[] type=Any? call=golden.sema.Box.get[kind=fun;recv=golden.sema.Box<T0>;params=;gen=1] targs=[Any?]
+expr e@23:13 name(box) type=golden.sema.Box<*> ref=golden.sema.starReadInferred.$3.box[kind=vparam]
+expr e@23:13#1 memberCall recv=e@23:13 callee=get args=[] type=Any? call=golden.sema.Box.get[kind=fun;recv=golden.sema.Box<T0>;params=;gen=1] targs=[Any?]
+expr e@23:5 localDecl x mutable=0 type=_ init=e@23:13#1 type=Unit ref=__local_0.x[kind=local]
+expr e@27:5 name(box) type=golden.sema.Box<*> ref=golden.sema.starWrite.$4.box[kind=vparam]
 expr e@27:13 int(42) type=Int
 expr e@27:5#1 memberCall recv=e@27:5 callee=set args=[_:e@27:13] type=<error>
 diagnostic severity=error code=KSWIFTK-SEMA-VAR-OUT at=13:5 msg=A type projection on the receiver prevents calling 'set' because the type parameter appears in an 'in' position (parameter type 'T').

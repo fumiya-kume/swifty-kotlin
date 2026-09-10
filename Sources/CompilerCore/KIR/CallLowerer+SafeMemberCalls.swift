@@ -514,13 +514,21 @@ extension CallLowerer {
             instructions.append(.copy(from: nullExpr, to: result))
             instructions.append(.jump(endLabel))
             instructions.append(.label(callLabel))
+            let hashReceiverID = boxSentinelProneHashCodeReceiver(
+                loweredReceiverID,
+                sourceType: anyFallbackReceiverType,
+                sema: sema,
+                interner: interner,
+                arena: arena,
+                into: &instructions.instructions
+            )
             let receiverTag = anyFallbackTag(for: anyFallbackReceiverType, sema: sema)
             let receiverTagID = arena.appendExpr(.intLiteral(receiverTag), type: intType)
             instructions.append(.constValue(result: receiverTagID, value: .intLiteral(receiverTag)))
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_any_hashCode"),
-                arguments: [loweredReceiverID, receiverTagID],
+                arguments: [hashReceiverID, receiverTagID],
                 result: result,
                 canThrow: false,
                 thrownResult: nil

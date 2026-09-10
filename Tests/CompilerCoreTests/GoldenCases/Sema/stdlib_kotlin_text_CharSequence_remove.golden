@@ -1,47 +1,47 @@
-symbol fq=__local_0.source kind=local vis=private flags=_ type=kotlin.CharSequence
-symbol fq=__local_1.source kind=local vis=private flags=_ type=kotlin.CharSequence
-symbol fq=golden.sema.removeRangeEmpty kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.CharSequence
-symbol fq=golden.sema.removeRangeEmpty.$0.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.removeRangeIndices kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.CharSequence
-symbol fq=golden.sema.removeRangeIndices.$1.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.removeRangeIntRange kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.CharSequence
-symbol fq=golden.sema.removeRangeIntRange.$2.source kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.removeRangeStringAsCharSequence kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharSequence
-symbol fq=golden.sema.removeRangeStringBuilderAsCharSequence kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharSequence
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
+symbol fq=__local_0.source[kind=local] kind=local vis=private flags=_ type=kotlin.CharSequence
+symbol fq=__local_1.source[kind=local] kind=local vis=private flags=_ type=kotlin.CharSequence
+symbol fq=golden.sema.removeRangeEmpty.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.removeRangeEmpty[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.CharSequence
+symbol fq=golden.sema.removeRangeIndices.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.removeRangeIndices[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.CharSequence
+symbol fq=golden.sema.removeRangeIntRange.$2.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.removeRangeIntRange[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.CharSequence
+symbol fq=golden.sema.removeRangeStringAsCharSequence[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharSequence
+symbol fq=golden.sema.removeRangeStringBuilderAsCharSequence[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharSequence
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_text_CharSequence_remove package=golden.sema
-  decl golden.sema.removeRangeIndices fun removeRangeIndices sym=golden.sema.removeRangeIndices
-  decl golden.sema.removeRangeIntRange fun removeRangeIntRange sym=golden.sema.removeRangeIntRange
-  decl golden.sema.removeRangeStringAsCharSequence fun removeRangeStringAsCharSequence sym=golden.sema.removeRangeStringAsCharSequence
-  decl golden.sema.removeRangeStringBuilderAsCharSequence fun removeRangeStringBuilderAsCharSequence sym=golden.sema.removeRangeStringBuilderAsCharSequence
-  decl golden.sema.removeRangeEmpty fun removeRangeEmpty sym=golden.sema.removeRangeEmpty
-expr e@3:62 name(source) type=kotlin.CharSequence ref=golden.sema.removeRangeIndices.$1.source
+  decl golden.sema.removeRangeIndices[kind=fun;params=kotlin.CharSequence] fun removeRangeIndices sym=golden.sema.removeRangeIndices[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.removeRangeIntRange[kind=fun;params=kotlin.CharSequence] fun removeRangeIntRange sym=golden.sema.removeRangeIntRange[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.removeRangeStringAsCharSequence[kind=fun;params=] fun removeRangeStringAsCharSequence sym=golden.sema.removeRangeStringAsCharSequence[kind=fun;params=]
+  decl golden.sema.removeRangeStringBuilderAsCharSequence[kind=fun;params=] fun removeRangeStringBuilderAsCharSequence sym=golden.sema.removeRangeStringBuilderAsCharSequence[kind=fun;params=]
+  decl golden.sema.removeRangeEmpty[kind=fun;params=kotlin.CharSequence] fun removeRangeEmpty sym=golden.sema.removeRangeEmpty[kind=fun;params=kotlin.CharSequence]
+expr e@3:62 name(source) type=kotlin.CharSequence ref=golden.sema.removeRangeIndices.$1.source[kind=vparam]
 expr e@3:81 int(1) type=Int
 expr e@3:84 int(3) type=Int
-expr e@3:62#1 memberCall recv=e@3:62 callee=removeRange args=[_:e@3:81,_:e@3:84] type=kotlin.CharSequence call=kotlin.text.removeRange#2
-expr e@5:63 name(source) type=kotlin.CharSequence ref=golden.sema.removeRangeIntRange.$2.source
+expr e@3:62#1 memberCall recv=e@3:62 callee=removeRange args=[_:e@3:81,_:e@3:84] type=kotlin.CharSequence call=kotlin.text.removeRange[kind=fun;recv=kotlin.CharSequence;params=Int,Int]
+expr e@5:63 name(source) type=kotlin.CharSequence ref=golden.sema.removeRangeIntRange.$2.source[kind=vparam]
 expr e@5:82 int(1) type=Int
 expr e@5:85 int(2) type=Int
 expr e@5:82#1 binary(rangeTo) lhs=e@5:82 rhs=e@5:85 type=Int
-expr e@5:63#1 memberCall recv=e@5:63 callee=removeRange args=[_:e@5:82#1] type=kotlin.CharSequence call=kotlin.text.removeRange#3
+expr e@5:63#1 memberCall recv=e@5:63 callee=removeRange args=[_:e@5:82#1] type=kotlin.CharSequence call=kotlin.text.removeRange[kind=fun;recv=kotlin.CharSequence;params=kotlin.ranges.IntRange]
 expr e@8:32 string(A😀BC) type=String
-expr e@8:5 localDecl source mutable=0 type=CharSequence init=e@8:32 type=Unit ref=__local_0.source
-expr e@9:12 name(source) type=kotlin.CharSequence ref=__local_0.source
+expr e@8:5 localDecl source mutable=0 type=CharSequence init=e@8:32 type=Unit ref=__local_0.source[kind=local]
+expr e@9:12 name(source) type=kotlin.CharSequence ref=__local_0.source[kind=local]
 expr e@9:31 int(1) type=Int
 expr e@9:34 int(3) type=Int
-expr e@9:12#1 memberCall recv=e@9:12 callee=removeRange args=[_:e@9:31,_:e@9:34] type=kotlin.CharSequence call=kotlin.text.removeRange#2
+expr e@9:12#1 memberCall recv=e@9:12 callee=removeRange args=[_:e@9:31,_:e@9:34] type=kotlin.CharSequence call=kotlin.text.removeRange[kind=fun;recv=kotlin.CharSequence;params=Int,Int]
 expr e@9:5 return value=e@9:12#1 type=Nothing
 expr e@13:46 string(A😀BC) type=String
-expr e@13:32 call callee=e@13:32#1 args=[_:e@13:46] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#2
-expr e@13:5 localDecl source mutable=0 type=CharSequence init=e@13:32 type=Unit ref=__local_1.source
-expr e@14:12 name(source) type=kotlin.CharSequence ref=__local_1.source
+expr e@13:32 call callee=e@13:32#1 args=[_:e@13:46] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=String]
+expr e@13:5 localDecl source mutable=0 type=CharSequence init=e@13:32 type=Unit ref=__local_1.source[kind=local]
+expr e@14:12 name(source) type=kotlin.CharSequence ref=__local_1.source[kind=local]
 expr e@14:31 int(1) type=Int
 expr e@14:34 int(2) type=Int
 expr e@14:31#1 binary(rangeTo) lhs=e@14:31 rhs=e@14:34 type=Int
-expr e@14:12#1 memberCall recv=e@14:12 callee=removeRange args=[_:e@14:31#1] type=kotlin.CharSequence call=kotlin.text.removeRange#3
+expr e@14:12#1 memberCall recv=e@14:12 callee=removeRange args=[_:e@14:31#1] type=kotlin.CharSequence call=kotlin.text.removeRange[kind=fun;recv=kotlin.CharSequence;params=kotlin.ranges.IntRange]
 expr e@14:5 return value=e@14:12#1 type=Nothing
-expr e@17:60 name(source) type=kotlin.CharSequence ref=golden.sema.removeRangeEmpty.$0.source
+expr e@17:60 name(source) type=kotlin.CharSequence ref=golden.sema.removeRangeEmpty.$0.source[kind=vparam]
 expr e@17:79 int(2) type=Int
 expr e@17:82 int(2) type=Int
-expr e@17:60#1 memberCall recv=e@17:60 callee=removeRange args=[_:e@17:79,_:e@17:82] type=kotlin.CharSequence call=kotlin.text.removeRange#2
+expr e@17:60#1 memberCall recv=e@17:60 callee=removeRange args=[_:e@17:79,_:e@17:82] type=kotlin.CharSequence call=kotlin.text.removeRange[kind=fun;recv=kotlin.CharSequence;params=Int,Int]

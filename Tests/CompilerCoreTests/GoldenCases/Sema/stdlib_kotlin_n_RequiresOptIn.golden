@@ -1,5 +1,5 @@
-symbol fq=golden.sema.MyMarker kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.useMarker kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.MyMarker[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.useMarker[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_n_RequiresOptIn package=golden.sema
-  decl golden.sema.MyMarker class MyMarker sym=golden.sema.MyMarker
-  decl golden.sema.useMarker fun useMarker sym=golden.sema.useMarker
+  decl golden.sema.MyMarker[kind=anno] class MyMarker sym=golden.sema.MyMarker[kind=anno]
+  decl golden.sema.useMarker[kind=fun;params=] fun useMarker sym=golden.sema.useMarker[kind=fun;params=]

@@ -1,10 +1,10 @@
-symbol fq=golden.sema.buildFunction kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.buildProperty kind=property vis=public flags=_ type=Int
-symbol fq=golden.sema.useBuilderInference kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.BuilderInference?
+symbol fq=golden.sema.buildFunction[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.buildProperty[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.useBuilderInference[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.BuilderInference?
 file fstdlib_kotlin_n_BuilderInference package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalTypeInference::class)]
-  decl golden.sema.buildFunction fun buildFunction sym=golden.sema.buildFunction
-  decl golden.sema.buildProperty property buildProperty var=0 sym=golden.sema.buildProperty
-  decl golden.sema.useBuilderInference fun useBuilderInference sym=golden.sema.useBuilderInference
+  decl golden.sema.buildFunction[kind=fun;params=] fun buildFunction sym=golden.sema.buildFunction[kind=fun;params=]
+  decl golden.sema.buildProperty[kind=prop] property buildProperty var=0 sym=golden.sema.buildProperty[kind=prop]
+  decl golden.sema.useBuilderInference[kind=fun;params=] fun useBuilderInference sym=golden.sema.useBuilderInference[kind=fun;params=]
 expr e@6:28 int(0) type=Int
 expr e@9:26 int(0) type=Int
 expr e@11:55 name(null) type=Nothing?

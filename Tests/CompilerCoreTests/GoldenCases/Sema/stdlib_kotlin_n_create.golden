@@ -1,7 +1,7 @@
-symbol fq=golden.sema.wrapFailure kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Throwable] ret=Any
-symbol fq=golden.sema.wrapFailure.$0.exception kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Throwable kind=class vis=public flags=openType
+symbol fq=golden.sema.wrapFailure.$0.exception[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.wrapFailure[kind=fun;params=kotlin.Throwable] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Throwable] ret=Any
+symbol fq=kotlin.Throwable[kind=class] kind=class vis=public flags=openType
 file fstdlib_kotlin_n_create package=golden.sema
-  decl golden.sema.wrapFailure fun wrapFailure sym=golden.sema.wrapFailure
-expr e@3:67 name(exception) type=kotlin.Throwable ref=golden.sema.wrapFailure.$0.exception
-expr e@3:46 memberCall recv=e@3:46#1 callee=createFailure args=[_:e@3:67] type=Any call=kotlin.createFailure
+  decl golden.sema.wrapFailure[kind=fun;params=kotlin.Throwable] fun wrapFailure sym=golden.sema.wrapFailure[kind=fun;params=kotlin.Throwable]
+expr e@3:67 name(exception) type=kotlin.Throwable ref=golden.sema.wrapFailure.$0.exception[kind=vparam]
+expr e@3:46 memberCall recv=e@3:46#1 callee=createFailure args=[_:e@3:67] type=Any call=kotlin.createFailure[kind=fun;params=kotlin.Throwable]

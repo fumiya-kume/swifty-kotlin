@@ -362,6 +362,21 @@ struct RuntimeChannelTests {
         #expect(kk_channel_is_closed_token(kChannelResultCancelled) == 1, "cancelled is a failure status")
     }
 
+    @Test func trySendReportsFailureWithoutSuspending() {
+        let channelHandle = kk_channel_create(1)
+
+        #expect(kk_channel_try_send(channelHandle, 10) == kChannelResultSuccess)
+        #expect(kk_channel_try_send(channelHandle, 20) == kChannelResultFailed)
+        #expect(kk_channel_is_closed_token(kChannelResultFailed) == 0)
+
+        #expect(channelReceiveValue(channelHandle, 0) == 10)
+        #expect(kk_channel_try_send(channelHandle, 20) == kChannelResultSuccess)
+        #expect(channelReceiveValue(channelHandle, 0) == 20)
+
+        _ = kk_channel_close(channelHandle)
+        #expect(kk_channel_try_send(channelHandle, 30) == kChannelResultClosed)
+    }
+
     @Test func sendAndReceiveLongMinValue() {
         let ch = kk_channel_create(1)
         #expect(kk_channel_send(ch, Int.min, 0) == kChannelResultSuccess)

@@ -1,29 +1,29 @@
-symbol fq=golden.sema.Animal kind=class vis=public flags=openType
-symbol fq=golden.sema.Dog kind=class vis=public flags=_
-symbol fq=golden.sema.Dog.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.Dog params=[] ret=golden.sema.Dog
-symbol fq=golden.sema.accept kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.accept.$0.T] ret=golden.sema.accept.$0.T bounds=[golden.sema.Animal]
-symbol fq=golden.sema.accept.$0.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.accept.$0.x kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.acceptWhere kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.acceptWhere.$1.T] ret=golden.sema.acceptWhere.$1.T bounds=[golden.sema.Animal]
-symbol fq=golden.sema.acceptWhere.$1.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.acceptWhere.$1.x kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.callUnbounded kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.callValid kind=function vis=public flags=_ sig=recv=_ params=[] ret=golden.sema.Animal
-symbol fq=golden.sema.unbounded kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.unbounded.$2.T] ret=golden.sema.unbounded.$2.T
-symbol fq=golden.sema.unbounded.$2.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.unbounded.$2.x kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Animal[kind=class] kind=class vis=public flags=openType
+symbol fq=golden.sema.Dog.<init>[kind=ctor;recv=golden.sema.Dog;params=] kind=constructor vis=public flags=_ sig=recv=golden.sema.Dog params=[] ret=golden.sema.Dog
+symbol fq=golden.sema.Dog[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.accept.$0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.accept.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptWhere.$1.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.acceptWhere.$1.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptWhere[kind=fun;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.acceptWhere.$1.T] ret=golden.sema.acceptWhere.$1.T bounds=[golden.sema.Animal]
+symbol fq=golden.sema.accept[kind=fun;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.accept.$0.T] ret=golden.sema.accept.$0.T bounds=[golden.sema.Animal]
+symbol fq=golden.sema.callUnbounded[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.callValid[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=golden.sema.Animal
+symbol fq=golden.sema.unbounded.$2.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.unbounded.$2.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unbounded[kind=fun;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.unbounded.$2.T] ret=golden.sema.unbounded.$2.T
 file ftype_param_bounds package=golden.sema
-  decl golden.sema.Animal class Animal sym=golden.sema.Animal
-  decl golden.sema.Dog class Dog sym=golden.sema.Dog
-  decl golden.sema.accept fun accept sym=golden.sema.accept
-  decl golden.sema.callValid fun callValid sym=golden.sema.callValid
-  decl golden.sema.unbounded fun unbounded sym=golden.sema.unbounded
-  decl golden.sema.callUnbounded fun callUnbounded sym=golden.sema.callUnbounded
-  decl golden.sema.acceptWhere fun acceptWhere sym=golden.sema.acceptWhere
-expr e@6:36 name(x) type=golden.sema.accept.$0.T ref=golden.sema.accept.$0.x
-expr e@7:34 call callee=e@7:34#1 args=[] type=golden.sema.Dog call=golden.sema.Dog.<init>
-expr e@7:27 call callee=e@7:27#1 args=[_:e@7:34] type=golden.sema.Dog call=golden.sema.accept targs=[golden.sema.Dog]
-expr e@8:30 name(x) type=golden.sema.unbounded.$2.T ref=golden.sema.unbounded.$2.x
+  decl golden.sema.Animal[kind=class] class Animal sym=golden.sema.Animal[kind=class]
+  decl golden.sema.Dog[kind=class] class Dog sym=golden.sema.Dog[kind=class]
+  decl golden.sema.accept[kind=fun;params=T0;gen=1] fun accept sym=golden.sema.accept[kind=fun;params=T0;gen=1]
+  decl golden.sema.callValid[kind=fun;params=] fun callValid sym=golden.sema.callValid[kind=fun;params=]
+  decl golden.sema.unbounded[kind=fun;params=T0;gen=1] fun unbounded sym=golden.sema.unbounded[kind=fun;params=T0;gen=1]
+  decl golden.sema.callUnbounded[kind=fun;params=] fun callUnbounded sym=golden.sema.callUnbounded[kind=fun;params=]
+  decl golden.sema.acceptWhere[kind=fun;params=T0;gen=1] fun acceptWhere sym=golden.sema.acceptWhere[kind=fun;params=T0;gen=1]
+expr e@6:36 name(x) type=golden.sema.accept.$0.T ref=golden.sema.accept.$0.x[kind=vparam]
+expr e@7:34 call callee=e@7:34#1 args=[] type=golden.sema.Dog call=golden.sema.Dog.<init>[kind=ctor;recv=golden.sema.Dog;params=]
+expr e@7:27 call callee=e@7:27#1 args=[_:e@7:34] type=golden.sema.Dog call=golden.sema.accept[kind=fun;params=T0;gen=1] targs=[golden.sema.Dog]
+expr e@8:30 name(x) type=golden.sema.unbounded.$2.T ref=golden.sema.unbounded.$2.x[kind=vparam]
 expr e@9:38 int(42) type=Int
-expr e@9:28 call callee=e@9:28#1 args=[_:e@9:38] type=Int call=golden.sema.unbounded targs=[Int]
-expr e@11:49 name(x) type=golden.sema.acceptWhere.$1.T ref=golden.sema.acceptWhere.$1.x
+expr e@9:28 call callee=e@9:28#1 args=[_:e@9:38] type=Int call=golden.sema.unbounded[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@11:49 name(x) type=golden.sema.acceptWhere.$1.T ref=golden.sema.acceptWhere.$1.x[kind=vparam]

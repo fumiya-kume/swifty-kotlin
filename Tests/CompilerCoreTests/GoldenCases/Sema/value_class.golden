@@ -1,13 +1,13 @@
-symbol fq=golden.sema.Meter kind=class vis=public flags=valueType
-symbol fq=golden.sema.Meter.amount kind=property vis=public flags=_ type=Int
-symbol fq=golden.sema.measure kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Meter] ret=Int
-symbol fq=golden.sema.measure.$0.m kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.toAny kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Meter] ret=Any
-symbol fq=golden.sema.toAny.$1.m kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Meter.amount[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.Meter[kind=class] kind=class vis=public flags=valueType
+symbol fq=golden.sema.measure.$0.m[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.measure[kind=fun;params=golden.sema.Meter] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Meter] ret=Int
+symbol fq=golden.sema.toAny.$1.m[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.toAny[kind=fun;params=golden.sema.Meter] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Meter] ret=Any
 file fvalue_class package=golden.sema
-  decl golden.sema.Meter class Meter sym=golden.sema.Meter
-  decl golden.sema.measure fun measure sym=golden.sema.measure
-  decl golden.sema.toAny fun toAny sym=golden.sema.toAny
-expr e@5:30 name(m) type=golden.sema.Meter ref=golden.sema.measure.$0.m
-expr e@5:30#1 memberCall recv=e@5:30 callee=amount args=[] type=Int ref=golden.sema.Meter.amount
-expr e@7:28 name(m) type=golden.sema.Meter ref=golden.sema.toAny.$1.m
+  decl golden.sema.Meter[kind=class] class Meter sym=golden.sema.Meter[kind=class]
+  decl golden.sema.measure[kind=fun;params=golden.sema.Meter] fun measure sym=golden.sema.measure[kind=fun;params=golden.sema.Meter]
+  decl golden.sema.toAny[kind=fun;params=golden.sema.Meter] fun toAny sym=golden.sema.toAny[kind=fun;params=golden.sema.Meter]
+expr e@5:30 name(m) type=golden.sema.Meter ref=golden.sema.measure.$0.m[kind=vparam]
+expr e@5:30#1 memberCall recv=e@5:30 callee=amount args=[] type=Int ref=golden.sema.Meter.amount[kind=prop]
+expr e@7:28 name(m) type=golden.sema.Meter ref=golden.sema.toAny.$1.m[kind=vparam]

@@ -1,13 +1,13 @@
-symbol fq=golden.sema.writeThenReadUuid kind=function vis=public flags=_ sig=recv=_ params=[java.nio.ByteBuffer,kotlin.uuid.Uuid] ret=kotlin.uuid.Uuid
-symbol fq=golden.sema.writeThenReadUuid.$0.buf kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.writeThenReadUuid.$0.u kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.writeThenReadUuid.$0.buf[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.writeThenReadUuid.$0.u[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.writeThenReadUuid[kind=fun;params=java.nio.ByteBuffer,kotlin.uuid.Uuid] kind=function vis=public flags=_ sig=recv=_ params=[java.nio.ByteBuffer,kotlin.uuid.Uuid] ret=kotlin.uuid.Uuid
 file fuuid_put_uuid package=golden.sema annotations=[@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)]
-  decl golden.sema.writeThenReadUuid fun writeThenReadUuid sym=golden.sema.writeThenReadUuid
-expr e@11:5 name(buf) type=java.nio.ByteBuffer ref=golden.sema.writeThenReadUuid.$0.buf
+  decl golden.sema.writeThenReadUuid[kind=fun;params=java.nio.ByteBuffer,kotlin.uuid.Uuid] fun writeThenReadUuid sym=golden.sema.writeThenReadUuid[kind=fun;params=java.nio.ByteBuffer,kotlin.uuid.Uuid]
+expr e@11:5 name(buf) type=java.nio.ByteBuffer ref=golden.sema.writeThenReadUuid.$0.buf[kind=vparam]
 expr e@11:17 int(0) type=Int
-expr e@11:20 name(u) type=kotlin.uuid.Uuid ref=golden.sema.writeThenReadUuid.$0.u
-expr e@11:5#1 memberCall recv=e@11:5 callee=putUuid args=[_:e@11:17,_:e@11:20] type=java.nio.ByteBuffer call=kotlin.uuid.putUuid#0
-expr e@12:12 name(buf) type=java.nio.ByteBuffer ref=golden.sema.writeThenReadUuid.$0.buf
+expr e@11:20 name(u) type=kotlin.uuid.Uuid ref=golden.sema.writeThenReadUuid.$0.u[kind=vparam]
+expr e@11:5#1 memberCall recv=e@11:5 callee=putUuid args=[_:e@11:17,_:e@11:20] type=java.nio.ByteBuffer call=kotlin.uuid.putUuid[kind=fun;recv=java.nio.ByteBuffer;params=Int,kotlin.uuid.Uuid]
+expr e@12:12 name(buf) type=java.nio.ByteBuffer ref=golden.sema.writeThenReadUuid.$0.buf[kind=vparam]
 expr e@12:24 int(0) type=Int
-expr e@12:12#1 memberCall recv=e@12:12 callee=getUuid args=[_:e@12:24] type=kotlin.uuid.Uuid call=kotlin.uuid.getUuid#1
+expr e@12:12#1 memberCall recv=e@12:12 callee=getUuid args=[_:e@12:24] type=kotlin.uuid.Uuid call=kotlin.uuid.getUuid[kind=fun;recv=java.nio.ByteBuffer;params=Int]
 expr e@12:5 return value=e@12:12#1 type=Nothing

@@ -1,22 +1,22 @@
-symbol fq=__try_0_catch_0.e kind=local vis=internal flags=_ type=kotlin.NoSuchElementException
-symbol fq=golden.sema.catchNoSuchElementException kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.noSuchElementExceptionMessage kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.NoSuchElementException
-symbol fq=golden.sema.noSuchElementExceptionMessage.$0.message kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.noSuchElementExceptionNoArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.NoSuchElementException
+symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.NoSuchElementException
+symbol fq=golden.sema.catchNoSuchElementException[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.noSuchElementExceptionMessage.$0.message[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.noSuchElementExceptionMessage[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.NoSuchElementException
+symbol fq=golden.sema.noSuchElementExceptionNoArg[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.NoSuchElementException
 file fstdlib_kotlin_NoSuchElementException_n_n package=golden.sema
-  decl golden.sema.noSuchElementExceptionNoArg fun noSuchElementExceptionNoArg sym=golden.sema.noSuchElementExceptionNoArg
-  decl golden.sema.noSuchElementExceptionMessage fun noSuchElementExceptionMessage sym=golden.sema.noSuchElementExceptionMessage
-  decl golden.sema.catchNoSuchElementException fun catchNoSuchElementException sym=golden.sema.catchNoSuchElementException
-expr e@3:61 call callee=e@3:61#1 args=[] type=kotlin.NoSuchElementException call=kotlin.NoSuchElementException.<init>#0
-expr e@6:28 name(message) type=String? ref=golden.sema.noSuchElementExceptionMessage.$0.message
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:28] type=kotlin.NoSuchElementException call=kotlin.NoSuchElementException.<init>#1
+  decl golden.sema.noSuchElementExceptionNoArg[kind=fun;params=] fun noSuchElementExceptionNoArg sym=golden.sema.noSuchElementExceptionNoArg[kind=fun;params=]
+  decl golden.sema.noSuchElementExceptionMessage[kind=fun;params=String?] fun noSuchElementExceptionMessage sym=golden.sema.noSuchElementExceptionMessage[kind=fun;params=String?]
+  decl golden.sema.catchNoSuchElementException[kind=fun;params=] fun catchNoSuchElementException sym=golden.sema.catchNoSuchElementException[kind=fun;params=]
+expr e@3:61 call callee=e@3:61#1 args=[] type=kotlin.NoSuchElementException call=kotlin.NoSuchElementException.<init>[kind=ctor;recv=kotlin.NoSuchElementException;params=]
+expr e@6:28 name(message) type=String? ref=golden.sema.noSuchElementExceptionMessage.$0.message[kind=vparam]
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:28] type=kotlin.NoSuchElementException call=kotlin.NoSuchElementException.<init>[kind=ctor;recv=kotlin.NoSuchElementException;params=String?]
 expr e@10:38 string(empty) type=String
-expr e@10:15 call callee=e@10:15#1 args=[_:e@10:38] type=kotlin.NoSuchElementException call=kotlin.NoSuchElementException.<init>#1
+expr e@10:15 call callee=e@10:15#1 args=[_:e@10:38] type=kotlin.NoSuchElementException call=kotlin.NoSuchElementException.<init>[kind=ctor;recv=kotlin.NoSuchElementException;params=String?]
 expr e@10:9 throw value=e@10:15 type=Nothing
 expr e@9:9 blockExpr stmts=[] trailing=e@10:9 type=Nothing
-expr e@12:9 name(e) type=kotlin.NoSuchElementException ref=__try_0_catch_0.e
-expr e@12:9#1 memberCall recv=e@12:9 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@12:9 name(e) type=kotlin.NoSuchElementException ref=__try_0_catch_0.e[kind=local]
+expr e@12:9#1 memberCall recv=e@12:9 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@12:22 string(null) type=String
 expr e@12:9#2 binary(elvis) lhs=e@12:9#1 rhs=e@12:22 type=String
-expr e@11:41 blockExpr stmts=[] trailing=e@12:9#2 type=String ref=__try_0_catch_0.e
+expr e@11:41 blockExpr stmts=[] trailing=e@12:9#2 type=String ref=__try_0_catch_0.e[kind=local]
 expr e@9:5 try body=e@9:9 catches=[e@11:41] finally=_ type=String

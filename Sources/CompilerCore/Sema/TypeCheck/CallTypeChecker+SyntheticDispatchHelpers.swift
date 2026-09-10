@@ -41,6 +41,33 @@ extension CallTypeChecker {
         return !hasRealCandidate
     }
 
+    /// Returns true only for the bundled source-backed producer-flow builders.
+    /// A same-named user declaration must keep the regular callable ABI.
+    func isSourceBackedProducerFlowBuilder(
+        _ symbolID: SymbolID,
+        ctx: TypeInferenceContext
+    ) -> Bool {
+        guard let symbol = ctx.sema.symbols.symbol(symbolID),
+              symbol.kind == .function,
+              ctx.sema.symbols.isSourceBackedSymbol(symbolID)
+        else {
+            return false
+        }
+        let interner = ctx.interner
+        let channelFlow = interner.intern("channelFlow")
+        let callbackFlow = interner.intern("callbackFlow")
+        guard symbol.name == channelFlow || symbol.name == callbackFlow else {
+            return false
+        }
+        let flowPackage = [
+            interner.intern("kotlinx"),
+            interner.intern("coroutines"),
+            interner.intern("flow"),
+        ]
+        let matches = symbol.fqName == flowPackage + [symbol.name]
+        return matches
+    }
+
     /// Returns true when `name` is shadowed by a non-synthetic (user-defined) symbol,
     /// either as a local variable binding or as a scope-visible declaration.
     /// Used to guard stdlib special-call paths (measureTimeMillis, measureNanoTime, etc.)

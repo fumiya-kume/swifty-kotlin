@@ -1,78 +1,78 @@
-symbol fq=golden.sema.appendLines kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder,Boolean,Byte,Char,kotlin.CharArray,kotlin.CharSequence?,Double,Float,Int,Long,Short,String?] ret=kotlin.text.StringBuilder
-symbol fq=golden.sema.appendLines.$0.bool kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendLines.$0.builder kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendLines.$0.byte kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendLines.$0.char kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendLines.$0.chars kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendLines.$0.double kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendLines.$0.float kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendLines.$0.int kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendLines.$0.long kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendLines.$0.sequence kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendLines.$0.short kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendLines.$0.string kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendValues kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder,Any?,Byte,Short,kotlin.CharArray] ret=kotlin.text.StringBuilder
-symbol fq=golden.sema.appendValues.$1.builder kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendValues.$1.byte kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendValues.$1.chars kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendValues.$1.short kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendValues.$1.value kind=valueParameter vis=private flags=_
-symbol fq=kotlin.CharArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=golden.sema.appendLines.$0.bool[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines.$0.builder[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines.$0.byte[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines.$0.char[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines.$0.chars[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines.$0.double[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines.$0.float[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines.$0.int[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines.$0.long[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines.$0.sequence[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines.$0.short[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines.$0.string[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines[kind=fun;params=kotlin.text.StringBuilder,Boolean,Byte,Char,kotlin.CharArray,kotlin.CharSequence?,Double,Float,Int,Long,Short,String?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder,Boolean,Byte,Char,kotlin.CharArray,kotlin.CharSequence?,Double,Float,Int,Long,Short,String?] ret=kotlin.text.StringBuilder
+symbol fq=golden.sema.appendValues.$1.builder[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendValues.$1.byte[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendValues.$1.chars[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendValues.$1.short[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendValues.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendValues[kind=fun;params=kotlin.text.StringBuilder,Any?,Byte,Short,kotlin.CharArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder,Any?,Byte,Short,kotlin.CharArray] ret=kotlin.text.StringBuilder
+symbol fq=kotlin.CharArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_StringBuilder_append package=golden.sema
-  decl golden.sema.appendValues fun appendValues sym=golden.sema.appendValues
-  decl golden.sema.appendLines fun appendLines sym=golden.sema.appendLines
-expr e@4:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendValues.$1.builder
-expr e@4:20 name(value) type=Any? ref=golden.sema.appendValues.$1.value
-expr e@4:5#1 memberCall recv=e@4:5 callee=append args=[_:e@4:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#0
-expr e@5:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendValues.$1.builder
-expr e@5:20 name(byte) type=Byte ref=golden.sema.appendValues.$1.byte
-expr e@5:5#1 memberCall recv=e@5:5 callee=append args=[_:e@5:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#3
-expr e@6:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendValues.$1.builder
-expr e@6:20 name(short) type=Short ref=golden.sema.appendValues.$1.short
-expr e@6:5#1 memberCall recv=e@6:5 callee=append args=[_:e@6:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#9
-expr e@7:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendValues.$1.builder
-expr e@7:20 name(chars) type=kotlin.CharArray ref=golden.sema.appendValues.$1.chars
+  decl golden.sema.appendValues[kind=fun;params=kotlin.text.StringBuilder,Any?,Byte,Short,kotlin.CharArray] fun appendValues sym=golden.sema.appendValues[kind=fun;params=kotlin.text.StringBuilder,Any?,Byte,Short,kotlin.CharArray]
+  decl golden.sema.appendLines[kind=fun;params=kotlin.text.StringBuilder,Boolean,Byte,Char,kotlin.CharArray,kotlin.CharSequence?,Double,Float,Int,Long,Short,String?] fun appendLines sym=golden.sema.appendLines[kind=fun;params=kotlin.text.StringBuilder,Boolean,Byte,Char,kotlin.CharArray,kotlin.CharSequence?,Double,Float,Int,Long,Short,String?]
+expr e@4:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendValues.$1.builder[kind=vparam]
+expr e@4:20 name(value) type=Any? ref=golden.sema.appendValues.$1.value[kind=vparam]
+expr e@4:5#1 memberCall recv=e@4:5 callee=append args=[_:e@4:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=Any?]
+expr e@5:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendValues.$1.builder[kind=vparam]
+expr e@5:20 name(byte) type=Byte ref=golden.sema.appendValues.$1.byte[kind=vparam]
+expr e@5:5#1 memberCall recv=e@5:5 callee=append args=[_:e@5:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=Byte]
+expr e@6:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendValues.$1.builder[kind=vparam]
+expr e@6:20 name(short) type=Short ref=golden.sema.appendValues.$1.short[kind=vparam]
+expr e@6:5#1 memberCall recv=e@6:5 callee=append args=[_:e@6:20] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=Short]
+expr e@7:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendValues.$1.builder[kind=vparam]
+expr e@7:20 name(chars) type=kotlin.CharArray ref=golden.sema.appendValues.$1.chars[kind=vparam]
 expr e@7:27 int(0) type=Int
 expr e@7:30 int(1) type=Int
-expr e@7:5#1 memberCall recv=e@7:5 callee=append args=[_:e@7:20,_:e@7:27,_:e@7:30] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append#12
-expr e@8:12 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendValues.$1.builder
-expr e@8:32 name(chars) type=kotlin.CharArray ref=golden.sema.appendValues.$1.chars
+expr e@7:5#1 memberCall recv=e@7:5 callee=append args=[_:e@7:20,_:e@7:27,_:e@7:30] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.append[kind=fun;recv=kotlin.text.StringBuilder;params=kotlin.CharArray,Int,Int]
+expr e@8:12 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendValues.$1.builder[kind=vparam]
+expr e@8:32 name(chars) type=kotlin.CharArray ref=golden.sema.appendValues.$1.chars[kind=vparam]
 expr e@8:39 int(0) type=Int
 expr e@8:42 int(1) type=Int
-expr e@8:12#1 memberCall recv=e@8:12 callee=appendRange args=[_:e@8:32,_:e@8:39,_:e@8:42] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendRange#0
+expr e@8:12#1 memberCall recv=e@8:12 callee=appendRange args=[_:e@8:32,_:e@8:39,_:e@8:42] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendRange[kind=fun;recv=kotlin.text.StringBuilder;params=kotlin.CharArray,Int,Int]
 expr e@8:5 return value=e@8:12#1 type=Nothing
-expr e@14:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder
-expr e@14:24 name(bool) type=Boolean ref=golden.sema.appendLines.$0.bool
-expr e@14:5#1 memberCall recv=e@14:5 callee=appendLine args=[_:e@14:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine#2
-expr e@15:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder
-expr e@15:24 name(byte) type=Byte ref=golden.sema.appendLines.$0.byte
-expr e@15:5#1 memberCall recv=e@15:5 callee=appendLine args=[_:e@15:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine#3
-expr e@16:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder
-expr e@16:24 name(char) type=Char ref=golden.sema.appendLines.$0.char
-expr e@16:5#1 memberCall recv=e@16:5 callee=appendLine args=[_:e@16:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine#4
-expr e@17:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder
-expr e@17:24 name(chars) type=kotlin.CharArray ref=golden.sema.appendLines.$0.chars
-expr e@17:5#1 memberCall recv=e@17:5 callee=appendLine args=[_:e@17:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine#11
-expr e@18:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder
-expr e@18:24 name(sequence) type=kotlin.CharSequence? ref=golden.sema.appendLines.$0.sequence
-expr e@18:5#1 memberCall recv=e@18:5 callee=appendLine args=[_:e@18:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine#12
-expr e@19:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder
-expr e@19:24 name(double) type=Double ref=golden.sema.appendLines.$0.double
-expr e@19:5#1 memberCall recv=e@19:5 callee=appendLine args=[_:e@19:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine#5
-expr e@20:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder
-expr e@20:24 name(float) type=Float ref=golden.sema.appendLines.$0.float
-expr e@20:5#1 memberCall recv=e@20:5 callee=appendLine args=[_:e@20:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine#6
-expr e@21:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder
-expr e@21:24 name(int) type=Int ref=golden.sema.appendLines.$0.int
-expr e@21:5#1 memberCall recv=e@21:5 callee=appendLine args=[_:e@21:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine#7
-expr e@22:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder
-expr e@22:24 name(long) type=Long ref=golden.sema.appendLines.$0.long
-expr e@22:5#1 memberCall recv=e@22:5 callee=appendLine args=[_:e@22:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine#8
-expr e@23:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder
-expr e@23:24 name(short) type=Short ref=golden.sema.appendLines.$0.short
-expr e@23:5#1 memberCall recv=e@23:5 callee=appendLine args=[_:e@23:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine#9
-expr e@24:12 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder
-expr e@24:31 name(string) type=String? ref=golden.sema.appendLines.$0.string
-expr e@24:12#1 memberCall recv=e@24:12 callee=appendLine args=[_:e@24:31] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine#10
+expr e@14:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder[kind=vparam]
+expr e@14:24 name(bool) type=Boolean ref=golden.sema.appendLines.$0.bool[kind=vparam]
+expr e@14:5#1 memberCall recv=e@14:5 callee=appendLine args=[_:e@14:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine[kind=fun;recv=kotlin.text.StringBuilder;params=Boolean]
+expr e@15:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder[kind=vparam]
+expr e@15:24 name(byte) type=Byte ref=golden.sema.appendLines.$0.byte[kind=vparam]
+expr e@15:5#1 memberCall recv=e@15:5 callee=appendLine args=[_:e@15:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine[kind=fun;recv=kotlin.text.StringBuilder;params=Byte]
+expr e@16:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder[kind=vparam]
+expr e@16:24 name(char) type=Char ref=golden.sema.appendLines.$0.char[kind=vparam]
+expr e@16:5#1 memberCall recv=e@16:5 callee=appendLine args=[_:e@16:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine[kind=fun;recv=kotlin.text.StringBuilder;params=Char]
+expr e@17:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder[kind=vparam]
+expr e@17:24 name(chars) type=kotlin.CharArray ref=golden.sema.appendLines.$0.chars[kind=vparam]
+expr e@17:5#1 memberCall recv=e@17:5 callee=appendLine args=[_:e@17:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine[kind=fun;recv=kotlin.text.StringBuilder;params=kotlin.CharArray]
+expr e@18:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder[kind=vparam]
+expr e@18:24 name(sequence) type=kotlin.CharSequence? ref=golden.sema.appendLines.$0.sequence[kind=vparam]
+expr e@18:5#1 memberCall recv=e@18:5 callee=appendLine args=[_:e@18:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine[kind=fun;recv=kotlin.text.StringBuilder;params=kotlin.CharSequence?]
+expr e@19:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder[kind=vparam]
+expr e@19:24 name(double) type=Double ref=golden.sema.appendLines.$0.double[kind=vparam]
+expr e@19:5#1 memberCall recv=e@19:5 callee=appendLine args=[_:e@19:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine[kind=fun;recv=kotlin.text.StringBuilder;params=Double]
+expr e@20:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder[kind=vparam]
+expr e@20:24 name(float) type=Float ref=golden.sema.appendLines.$0.float[kind=vparam]
+expr e@20:5#1 memberCall recv=e@20:5 callee=appendLine args=[_:e@20:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine[kind=fun;recv=kotlin.text.StringBuilder;params=Float]
+expr e@21:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder[kind=vparam]
+expr e@21:24 name(int) type=Int ref=golden.sema.appendLines.$0.int[kind=vparam]
+expr e@21:5#1 memberCall recv=e@21:5 callee=appendLine args=[_:e@21:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine[kind=fun;recv=kotlin.text.StringBuilder;params=Int]
+expr e@22:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder[kind=vparam]
+expr e@22:24 name(long) type=Long ref=golden.sema.appendLines.$0.long[kind=vparam]
+expr e@22:5#1 memberCall recv=e@22:5 callee=appendLine args=[_:e@22:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine[kind=fun;recv=kotlin.text.StringBuilder;params=Long]
+expr e@23:5 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder[kind=vparam]
+expr e@23:24 name(short) type=Short ref=golden.sema.appendLines.$0.short[kind=vparam]
+expr e@23:5#1 memberCall recv=e@23:5 callee=appendLine args=[_:e@23:24] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine[kind=fun;recv=kotlin.text.StringBuilder;params=Short]
+expr e@24:12 name(builder) type=kotlin.text.StringBuilder ref=golden.sema.appendLines.$0.builder[kind=vparam]
+expr e@24:31 name(string) type=String? ref=golden.sema.appendLines.$0.string[kind=vparam]
+expr e@24:12#1 memberCall recv=e@24:12 callee=appendLine args=[_:e@24:31] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.appendLine[kind=fun;recv=kotlin.text.StringBuilder;params=String?]
 expr e@24:5 return value=e@24:12#1 type=Nothing

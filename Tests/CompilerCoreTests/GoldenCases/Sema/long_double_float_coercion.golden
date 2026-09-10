@@ -1,103 +1,103 @@
-symbol fq=__local_0.l kind=local vis=private flags=_ type=Long
-symbol fq=__local_1.lClamped kind=local vis=private flags=_ type=Long
-symbol fq=__local_2.lAtLeast kind=local vis=private flags=_ type=Long
-symbol fq=__local_3.lAtMost kind=local vis=private flags=_ type=Long
-symbol fq=__local_4.d kind=local vis=private flags=_ type=Double
-symbol fq=__local_5.dClamped kind=local vis=private flags=_ type=Double
-symbol fq=__local_6.dAtLeast kind=local vis=private flags=_ type=Double
-symbol fq=__local_7.dAtMost kind=local vis=private flags=_ type=Double
-symbol fq=__local_8.f kind=local vis=private flags=_ type=Float
-symbol fq=__local_9.fClamped kind=local vis=private flags=_ type=Float
-symbol fq=__local_10.fAtLeast kind=local vis=private flags=_ type=Float
-symbol fq=__local_11.fAtMost kind=local vis=private flags=_ type=Float
-symbol fq=__local_12.i kind=local vis=private flags=_ type=Int
-symbol fq=__local_13.iClamped kind=local vis=private flags=_ type=Int
-symbol fq=__local_14.iAtLeast kind=local vis=private flags=_ type=Int
-symbol fq=__local_15.iAtMost kind=local vis=private flags=_ type=Int
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.l[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_1.lClamped[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_2.lAtLeast[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_3.lAtMost[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_4.d[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_5.dClamped[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_6.dAtLeast[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_7.dAtMost[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_8.f[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=__local_9.fClamped[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=__local_10.fAtLeast[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=__local_11.fAtMost[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=__local_12.i[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_13.iClamped[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_14.iAtLeast[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_15.iAtMost[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file flong_double_float_coercion package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@3:19 long(100) type=Long
-expr e@3:5 localDecl l mutable=0 type=Long init=e@3:19 type=Unit ref=__local_0.l
-expr e@4:26 name(l) type=Long ref=__local_0.l
+expr e@3:5 localDecl l mutable=0 type=Long init=e@3:19 type=Unit ref=__local_0.l[kind=local]
+expr e@4:26 name(l) type=Long ref=__local_0.l[kind=local]
 expr e@4:37 long(0) type=Long
 expr e@4:41 long(200) type=Long
-expr e@4:26#1 memberCall recv=e@4:26 callee=coerceIn args=[_:e@4:37,_:e@4:41] type=Long call=kotlin.ranges.coerceIn#5
-expr e@4:5 localDecl lClamped mutable=0 type=Long init=e@4:26#1 type=Unit ref=__local_1.lClamped
-expr e@5:26 name(l) type=Long ref=__local_0.l
+expr e@4:26#1 memberCall recv=e@4:26 callee=coerceIn args=[_:e@4:37,_:e@4:41] type=Long call=kotlin.ranges.coerceIn[kind=fun;recv=Long;params=Long,Long]
+expr e@4:5 localDecl lClamped mutable=0 type=Long init=e@4:26#1 type=Unit ref=__local_1.lClamped[kind=local]
+expr e@5:26 name(l) type=Long ref=__local_0.l[kind=local]
 expr e@5:42 long(50) type=Long
-expr e@5:26#1 memberCall recv=e@5:26 callee=coerceAtLeast args=[_:e@5:42] type=Long call=kotlin.ranges.coerceAtLeast#4
-expr e@5:5 localDecl lAtLeast mutable=0 type=Long init=e@5:26#1 type=Unit ref=__local_2.lAtLeast
-expr e@6:25 name(l) type=Long ref=__local_0.l
+expr e@5:26#1 memberCall recv=e@5:26 callee=coerceAtLeast args=[_:e@5:42] type=Long call=kotlin.ranges.coerceAtLeast[kind=fun;recv=Long;params=Long]
+expr e@5:5 localDecl lAtLeast mutable=0 type=Long init=e@5:26#1 type=Unit ref=__local_2.lAtLeast[kind=local]
+expr e@6:25 name(l) type=Long ref=__local_0.l[kind=local]
 expr e@6:40 long(150) type=Long
-expr e@6:25#1 memberCall recv=e@6:25 callee=coerceAtMost args=[_:e@6:40] type=Long call=kotlin.ranges.coerceAtMost#4
-expr e@6:5 localDecl lAtMost mutable=0 type=Long init=e@6:25#1 type=Unit ref=__local_3.lAtMost
-expr e@7:13 name(lClamped) type=Long ref=__local_1.lClamped
-expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13] type=Unit call=kotlin.io.println#1
-expr e@8:13 name(lAtLeast) type=Long ref=__local_2.lAtLeast
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println#1
-expr e@9:13 name(lAtMost) type=Long ref=__local_3.lAtMost
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println#1
+expr e@6:25#1 memberCall recv=e@6:25 callee=coerceAtMost args=[_:e@6:40] type=Long call=kotlin.ranges.coerceAtMost[kind=fun;recv=Long;params=Long]
+expr e@6:5 localDecl lAtMost mutable=0 type=Long init=e@6:25#1 type=Unit ref=__local_3.lAtMost[kind=local]
+expr e@7:13 name(lClamped) type=Long ref=__local_1.lClamped[kind=local]
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@8:13 name(lAtLeast) type=Long ref=__local_2.lAtLeast[kind=local]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@9:13 name(lAtMost) type=Long ref=__local_3.lAtMost[kind=local]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@12:21 double(3.14) type=Double
-expr e@12:5 localDecl d mutable=0 type=Double init=e@12:21 type=Unit ref=__local_4.d
-expr e@13:28 name(d) type=Double ref=__local_4.d
+expr e@12:5 localDecl d mutable=0 type=Double init=e@12:21 type=Unit ref=__local_4.d[kind=local]
+expr e@13:28 name(d) type=Double ref=__local_4.d[kind=local]
 expr e@13:39 double(0.0) type=Double
 expr e@13:44 double(10.0) type=Double
-expr e@13:28#1 memberCall recv=e@13:28 callee=coerceIn args=[_:e@13:39,_:e@13:44] type=Double call=kotlin.ranges.coerceIn#1
-expr e@13:5 localDecl dClamped mutable=0 type=Double init=e@13:28#1 type=Unit ref=__local_5.dClamped
-expr e@14:28 name(d) type=Double ref=__local_4.d
+expr e@13:28#1 memberCall recv=e@13:28 callee=coerceIn args=[_:e@13:39,_:e@13:44] type=Double call=kotlin.ranges.coerceIn[kind=fun;recv=Double;params=Double,Double]
+expr e@13:5 localDecl dClamped mutable=0 type=Double init=e@13:28#1 type=Unit ref=__local_5.dClamped[kind=local]
+expr e@14:28 name(d) type=Double ref=__local_4.d[kind=local]
 expr e@14:44 double(1.0) type=Double
-expr e@14:28#1 memberCall recv=e@14:28 callee=coerceAtLeast args=[_:e@14:44] type=Double call=kotlin.ranges.coerceAtLeast#1
-expr e@14:5 localDecl dAtLeast mutable=0 type=Double init=e@14:28#1 type=Unit ref=__local_6.dAtLeast
-expr e@15:27 name(d) type=Double ref=__local_4.d
+expr e@14:28#1 memberCall recv=e@14:28 callee=coerceAtLeast args=[_:e@14:44] type=Double call=kotlin.ranges.coerceAtLeast[kind=fun;recv=Double;params=Double]
+expr e@14:5 localDecl dAtLeast mutable=0 type=Double init=e@14:28#1 type=Unit ref=__local_6.dAtLeast[kind=local]
+expr e@15:27 name(d) type=Double ref=__local_4.d[kind=local]
 expr e@15:42 double(5.0) type=Double
-expr e@15:27#1 memberCall recv=e@15:27 callee=coerceAtMost args=[_:e@15:42] type=Double call=kotlin.ranges.coerceAtMost#1
-expr e@15:5 localDecl dAtMost mutable=0 type=Double init=e@15:27#1 type=Unit ref=__local_7.dAtMost
-expr e@16:13 name(dClamped) type=Double ref=__local_5.dClamped
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13] type=Unit call=kotlin.io.println#1
-expr e@17:13 name(dAtLeast) type=Double ref=__local_6.dAtLeast
-expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13] type=Unit call=kotlin.io.println#1
-expr e@18:13 name(dAtMost) type=Double ref=__local_7.dAtMost
-expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println#1
+expr e@15:27#1 memberCall recv=e@15:27 callee=coerceAtMost args=[_:e@15:42] type=Double call=kotlin.ranges.coerceAtMost[kind=fun;recv=Double;params=Double]
+expr e@15:5 localDecl dAtMost mutable=0 type=Double init=e@15:27#1 type=Unit ref=__local_7.dAtMost[kind=local]
+expr e@16:13 name(dClamped) type=Double ref=__local_5.dClamped[kind=local]
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@17:13 name(dAtLeast) type=Double ref=__local_6.dAtLeast[kind=local]
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@18:13 name(dAtMost) type=Double ref=__local_7.dAtMost[kind=local]
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@21:20 float(2.5) type=Float
-expr e@21:5 localDecl f mutable=0 type=Float init=e@21:20 type=Unit ref=__local_8.f
-expr e@22:27 name(f) type=Float ref=__local_8.f
+expr e@21:5 localDecl f mutable=0 type=Float init=e@21:20 type=Unit ref=__local_8.f[kind=local]
+expr e@22:27 name(f) type=Float ref=__local_8.f[kind=local]
 expr e@22:38 float(0.0) type=Float
 expr e@22:44 float(5.0) type=Float
-expr e@22:27#1 memberCall recv=e@22:27 callee=coerceIn args=[_:e@22:38,_:e@22:44] type=Float call=kotlin.ranges.coerceIn#2
-expr e@22:5 localDecl fClamped mutable=0 type=Float init=e@22:27#1 type=Unit ref=__local_9.fClamped
-expr e@23:27 name(f) type=Float ref=__local_8.f
+expr e@22:27#1 memberCall recv=e@22:27 callee=coerceIn args=[_:e@22:38,_:e@22:44] type=Float call=kotlin.ranges.coerceIn[kind=fun;recv=Float;params=Float,Float]
+expr e@22:5 localDecl fClamped mutable=0 type=Float init=e@22:27#1 type=Unit ref=__local_9.fClamped[kind=local]
+expr e@23:27 name(f) type=Float ref=__local_8.f[kind=local]
 expr e@23:43 float(1.0) type=Float
-expr e@23:27#1 memberCall recv=e@23:27 callee=coerceAtLeast args=[_:e@23:43] type=Float call=kotlin.ranges.coerceAtLeast#2
-expr e@23:5 localDecl fAtLeast mutable=0 type=Float init=e@23:27#1 type=Unit ref=__local_10.fAtLeast
-expr e@24:26 name(f) type=Float ref=__local_8.f
+expr e@23:27#1 memberCall recv=e@23:27 callee=coerceAtLeast args=[_:e@23:43] type=Float call=kotlin.ranges.coerceAtLeast[kind=fun;recv=Float;params=Float]
+expr e@23:5 localDecl fAtLeast mutable=0 type=Float init=e@23:27#1 type=Unit ref=__local_10.fAtLeast[kind=local]
+expr e@24:26 name(f) type=Float ref=__local_8.f[kind=local]
 expr e@24:41 float(4.0) type=Float
-expr e@24:26#1 memberCall recv=e@24:26 callee=coerceAtMost args=[_:e@24:41] type=Float call=kotlin.ranges.coerceAtMost#2
-expr e@24:5 localDecl fAtMost mutable=0 type=Float init=e@24:26#1 type=Unit ref=__local_11.fAtMost
-expr e@25:13 name(fClamped) type=Float ref=__local_9.fClamped
-expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println#1
-expr e@26:13 name(fAtLeast) type=Float ref=__local_10.fAtLeast
-expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println#1
-expr e@27:13 name(fAtMost) type=Float ref=__local_11.fAtMost
-expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println#1
+expr e@24:26#1 memberCall recv=e@24:26 callee=coerceAtMost args=[_:e@24:41] type=Float call=kotlin.ranges.coerceAtMost[kind=fun;recv=Float;params=Float]
+expr e@24:5 localDecl fAtMost mutable=0 type=Float init=e@24:26#1 type=Unit ref=__local_11.fAtMost[kind=local]
+expr e@25:13 name(fClamped) type=Float ref=__local_9.fClamped[kind=local]
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@26:13 name(fAtLeast) type=Float ref=__local_10.fAtLeast[kind=local]
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@27:13 name(fAtMost) type=Float ref=__local_11.fAtMost[kind=local]
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@30:18 int(42) type=Int
-expr e@30:5 localDecl i mutable=0 type=Int init=e@30:18 type=Unit ref=__local_12.i
-expr e@31:25 name(i) type=Int ref=__local_12.i
+expr e@30:5 localDecl i mutable=0 type=Int init=e@30:18 type=Unit ref=__local_12.i[kind=local]
+expr e@31:25 name(i) type=Int ref=__local_12.i[kind=local]
 expr e@31:36 int(0) type=Int
 expr e@31:39 int(100) type=Int
-expr e@31:25#1 memberCall recv=e@31:25 callee=coerceIn args=[_:e@31:36,_:e@31:39] type=Int call=kotlin.ranges.coerceIn#3
-expr e@31:5 localDecl iClamped mutable=0 type=Int init=e@31:25#1 type=Unit ref=__local_13.iClamped
-expr e@32:25 name(i) type=Int ref=__local_12.i
+expr e@31:25#1 memberCall recv=e@31:25 callee=coerceIn args=[_:e@31:36,_:e@31:39] type=Int call=kotlin.ranges.coerceIn[kind=fun;recv=Int;params=Int,Int]
+expr e@31:5 localDecl iClamped mutable=0 type=Int init=e@31:25#1 type=Unit ref=__local_13.iClamped[kind=local]
+expr e@32:25 name(i) type=Int ref=__local_12.i[kind=local]
 expr e@32:41 int(10) type=Int
-expr e@32:25#1 memberCall recv=e@32:25 callee=coerceAtLeast args=[_:e@32:41] type=Int call=kotlin.ranges.coerceAtLeast#3
-expr e@32:5 localDecl iAtLeast mutable=0 type=Int init=e@32:25#1 type=Unit ref=__local_14.iAtLeast
-expr e@33:24 name(i) type=Int ref=__local_12.i
+expr e@32:25#1 memberCall recv=e@32:25 callee=coerceAtLeast args=[_:e@32:41] type=Int call=kotlin.ranges.coerceAtLeast[kind=fun;recv=Int;params=Int]
+expr e@32:5 localDecl iAtLeast mutable=0 type=Int init=e@32:25#1 type=Unit ref=__local_14.iAtLeast[kind=local]
+expr e@33:24 name(i) type=Int ref=__local_12.i[kind=local]
 expr e@33:39 int(50) type=Int
-expr e@33:24#1 memberCall recv=e@33:24 callee=coerceAtMost args=[_:e@33:39] type=Int call=kotlin.ranges.coerceAtMost#3
-expr e@33:5 localDecl iAtMost mutable=0 type=Int init=e@33:24#1 type=Unit ref=__local_15.iAtMost
-expr e@34:13 name(iClamped) type=Int ref=__local_13.iClamped
-expr e@34:5 call callee=e@34:5#1 args=[_:e@34:13] type=Unit call=kotlin.io.println#1
-expr e@35:13 name(iAtLeast) type=Int ref=__local_14.iAtLeast
-expr e@35:5 call callee=e@35:5#1 args=[_:e@35:13] type=Unit call=kotlin.io.println#1
-expr e@36:13 name(iAtMost) type=Int ref=__local_15.iAtMost
-expr e@36:5 call callee=e@36:5#1 args=[_:e@36:13] type=Unit call=kotlin.io.println#1
+expr e@33:24#1 memberCall recv=e@33:24 callee=coerceAtMost args=[_:e@33:39] type=Int call=kotlin.ranges.coerceAtMost[kind=fun;recv=Int;params=Int]
+expr e@33:5 localDecl iAtMost mutable=0 type=Int init=e@33:24#1 type=Unit ref=__local_15.iAtMost[kind=local]
+expr e@34:13 name(iClamped) type=Int ref=__local_13.iClamped[kind=local]
+expr e@34:5 call callee=e@34:5#1 args=[_:e@34:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@35:13 name(iAtLeast) type=Int ref=__local_14.iAtLeast[kind=local]
+expr e@35:5 call callee=e@35:5#1 args=[_:e@35:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@36:13 name(iAtMost) type=Int ref=__local_15.iAtMost[kind=local]
+expr e@36:5 call callee=e@36:5#1 args=[_:e@36:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
