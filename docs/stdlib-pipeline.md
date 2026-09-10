@@ -189,11 +189,15 @@ public fun ByteArray.decodeToString(): String = __stringFromUtf8(this, 0, size)
 （デフォルト `.artifacts/diff_kotlinc`）配下に生成され、リポジトリにはコミットしない。これにより
 case あたりの stdlib 再コンパイルを回避する。
 
-1. 現状 (~2,300 行) は毎回フロントエンドに乗せる。`PhaseTimer` で
-   「bundled stdlib 由来の Lex/Parse/Sema 時間」を分離計測できるようにする（RF-STDLIB-006）
-2. 計測ゲート: stdlib 注入によるコンパイル時間の増分が **hello.kt 相当の小入力で +100ms** を超えたら
+1. 現状 (~2,300 行) は毎回フロントエンドに乗せる。`PhaseTimer` の
+   `TOTAL` を使い、同じ入力・compiler・emit/options で source-injected と
+   `--no-stdlib` を対にした**全フェーズ差分**を計測する（RF-STDLIB-006）。`Lex`/`Parse` の
+   `bundled-stdlib` subphase は原因分析用に併記するが、注入コストそのものにはしない。
+2. 計測ゲート: stdlib 注入による全フェーズ差分が、同一条件の基準値から **+100ms** 以上増えたら
    キャッシュ着手のトリガーとする（[`docs/refactoring-metrics.md`](refactoring-metrics.md) で正式化済み:
-   ベースライン中央値 36.05ms、トリガー = 中央値 ≥ 136.05ms）
+   `Scripts/measurement_cases/bundled_stdlib_injection.kt` を使った基準値中央値 **3472.27ms**、
+   トリガー = 中央値 **≥ 3572.27ms**）。compiler binary、入力、emit mode、frontend flags のいずれかが
+   変わる場合は基準値を再計測する。
 3. `diff_kotlinc.sh` では `.kklib` 共有を使い、PoC ケースの candidate compile 合計/中央値を baseline 比 50% 以上、
    full shard wall time を baseline 比 20% 以上削減できない場合は CI 切り替えを完了扱いにしない。
 4. キャッシュの段階案（トリガー後に選択）:
@@ -254,7 +258,7 @@ fiction audit ダンプを起点に棚卸し）:
 | `HeaderHelpers+SyntheticAtomicScalarStubs.swift` | 306 | (b) | `AtomicInt`/`AtomicLong`/`AtomicBoolean`/`AtomicReference<T>`, plus `java.util.concurrent.atomic.AtomicInteger` — a live, tested direct-construction surface sharing the `kk_atomic_int_create` box and retained Java compatibility members, not a target-out cleanup pocket (KSP-695 split; KSP-696 scalar public wrappers are source-backed). |
 | `HeaderHelpers+SyntheticAtomicResidualRegistry.swift` | 295 | (b) | Residual Atomic orchestration after KSP-696 removed `HeaderHelpers+SyntheticAtomicStubs.swift`: arrays, package metadata/type aliases, NativePtr, Java compatibility, and shared synthetic nominal shells remain registered here. |
 | `HeaderHelpers+SyntheticBase64Stubs.swift` | 830 | (b) | MIGRATION-ENC owner; Kotlin source exists but public stubs still dispatch directly. |
-| `HeaderHelpers+SyntheticBuilderDSLStubs.swift` | 414 | (b) | M3 collection builder source migration. |
+| `HeaderHelpers+SyntheticBuilderDSLStubs.swift` | 0 (deleted) | (b) migrated | KSP-697: both `buildList` overloads use `CollectionBuilders.kt`; legacy lowering/ABI cleanup is tracked by RF-LOWER-CALL-004–006. |
 | `HeaderHelpers+SyntheticCInteropStubs.swift` | 3065 | (c) | Kotlin/Native interop compiler/runtime surface; table-driven residual candidate. |
 | `HeaderHelpers+SyntheticCharStubs.swift` | 889 | (c) | Primitive `Char` shell plus helpers; RF-STUB-003 declarative residual registration started here. |
 | `HeaderHelpers+SyntheticClockStubs.swift` | 174 | (c) | KSP-712 reclassified: `Clock.now()` remains a hidden runtime dispatch bridge and `Clock.System` bootstrap anchor; public `Clock.System.now()` is bundled Kotlin source. |
@@ -264,8 +268,8 @@ fiction audit ダンプを起点に棚卸し）:
 | `HeaderHelpers+SyntheticCollectionTypeFallbacks.swift` | 845 | (c) | KSP-701/KSP-665 の分離先（`HeaderHelpers+SyntheticIterableRegistry.swift` 削除時と `+SyntheticStringTypeHelpers.swift` 削除時の残存 fallback shell が合流）。呼び出し元は `+SyntheticComparableAndCollectionStubs.swift`（KSP-700 対象）の `registerSyntheticCollectionStubs` のみ。`AbstractCollection`/`AbstractMutableCollection`/`MutableIterable` の型登録は bundled Kotlin source を再利用する fallback 専用で対応不要。`Collection`/`MutableCollection`/`Iterable`/`Iterator`/`MutableIterator` の型シェルと `isEmpty`/`contains`/`add`系/`iterator`/`hasNext`/`next` メンバは、List/Set/Iterator の runtime box が itable に自己登録しないため virtual dispatch を bypass する目的の bridge（`Collections.kt` の KSP-435 コメント、本ファイル内 BUG-166 コメント参照）で (c) 残置。`random`/`randomOrNull` は KSP-1509 が降格予定の `kk_list_random`/`kk_list_randomOrNull` と同一ブリッジを共有。次アクション: KSP-1542。 |
 | `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift` | 631 | (b) | Core collection/comparable shells; source migration owner, with residual type hooks. |
 | `HeaderHelpers+SyntheticComparableHelpers.swift` | 168 | (c) | Helper-only file for residual comparable registration. |
-| `HeaderHelpers+SyntheticComparatorStubs.swift` | 1446 | (b) | M5 comparisons/comparator source migration. |
-| `HeaderHelpers+SyntheticComparisonStubs.swift` | 157 | (b) | **完了・ファイル削除済み**（KSP-684）。トップレベル `maxWith`/`minWith` は `Stdlib/kotlin/comparisons/Comparisons.kt` へ移行し、残る比較ヘルパーは source-backed または Comparator anchor 側で管理する。 |
+| `HeaderHelpers+SyntheticComparatorStubs.swift` | deleted | (b) | **完了・ファイル削除済み**（KSP-1520）。既存の `kotlin/Comparator.kt` を `predeclareBundledComparatorHeaders` で早期 nominal 宣言し、`String.Companion.CASE_INSENSITIVE_ORDER` の初期参照を解決する。Comparator 固有の synthetic itable/vtable anchor は不要になったが、共有 `__kk_compare_with_comparator` と runtime singleton は保持する。 |
+| `HeaderHelpers+SyntheticComparisonStubs.swift` | 157 | (b) | **完了・ファイル削除済み**（KSP-684）。トップレベル `maxWith`/`minWith` は `Stdlib/kotlin/comparisons/Comparisons.kt` へ移行し、残る比較ヘルパーは source-backed Comparator member と共有比較コアで管理する。 |
 | `HeaderHelpers+SyntheticCoroutineRegistry.swift` | 3552 | (c) | RF-STUB-005 consolidated coroutine package, ABI, and helper registry. |
 | `HeaderHelpers+SyntheticDeepRecursiveStubs.swift` | 324 | (b) | ~~Public stdlib surface; source migration before removal.~~ **完了・ファイル削除済み**（KSP-612, `Stdlib/kotlin/DeepRecursive.kt`）。 |
 | `HeaderHelpers+SyntheticDurationStubs.swift` | 1390 | (b) | M8 duration source migration; bridge-only `__kk_*` declarations may remain private. |

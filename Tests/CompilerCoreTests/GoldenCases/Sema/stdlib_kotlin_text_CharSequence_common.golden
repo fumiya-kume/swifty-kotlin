@@ -1,0 +1,74 @@
+symbol fq=CustomCharSequence kind=class vis=private flags=_
+symbol fq=CustomCharSequence.<init> kind=constructor vis=private flags=_ sig=recv=CustomCharSequence params=[String] ret=CustomCharSequence
+symbol fq=CustomCharSequence.<init>.$0.value kind=valueParameter vis=private flags=_
+symbol fq=CustomCharSequence.get.$1.index kind=valueParameter vis=private flags=_
+symbol fq=CustomCharSequence.subSequence.$2.endIndex kind=valueParameter vis=private flags=_
+symbol fq=CustomCharSequence.subSequence.$2.startIndex kind=valueParameter vis=private flags=_
+symbol fq=CustomCharSequence.value kind=property vis=public flags=_ type=String
+symbol fq=__local_0.value kind=local vis=private flags=_ type=kotlin.CharSequence
+symbol fq=__local_1.value kind=local vis=private flags=_ type=kotlin.CharSequence
+symbol fq=charSequenceCommonPrefix kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=String
+symbol fq=charSequenceCommonPrefix.$3.other kind=valueParameter vis=private flags=_
+symbol fq=charSequenceCommonPrefix.$3.value kind=valueParameter vis=private flags=_
+symbol fq=charSequenceCommonPrefixIgnoreCase kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=String
+symbol fq=charSequenceCommonPrefixIgnoreCase.$4.other kind=valueParameter vis=private flags=_
+symbol fq=charSequenceCommonPrefixIgnoreCase.$4.value kind=valueParameter vis=private flags=_
+symbol fq=charSequenceCommonSuffix kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=String
+symbol fq=charSequenceCommonSuffix.$5.other kind=valueParameter vis=private flags=_
+symbol fq=charSequenceCommonSuffix.$5.value kind=valueParameter vis=private flags=_
+symbol fq=charSequenceCommonSuffixIgnoreCase kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=String
+symbol fq=charSequenceCommonSuffixIgnoreCase.$6.other kind=valueParameter vis=private flags=_
+symbol fq=charSequenceCommonSuffixIgnoreCase.$6.value kind=valueParameter vis=private flags=_
+symbol fq=customCharSequenceCommonSuffix kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.text.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=String params=[Int] ret=Char
+symbol fq=kotlin.text.get.index kind=valueParameter vis=private flags=synthetic
+symbol fq=stringBuilderCommonPrefix kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+file fstdlib_kotlin_text_CharSequence_common package=_
+  decl CustomCharSequence class CustomCharSequence sym=CustomCharSequence
+  decl charSequenceCommonPrefix fun charSequenceCommonPrefix sym=charSequenceCommonPrefix
+  decl charSequenceCommonPrefixIgnoreCase fun charSequenceCommonPrefixIgnoreCase sym=charSequenceCommonPrefixIgnoreCase
+  decl charSequenceCommonSuffix fun charSequenceCommonSuffix sym=charSequenceCommonSuffix
+  decl charSequenceCommonSuffixIgnoreCase fun charSequenceCommonSuffixIgnoreCase sym=charSequenceCommonSuffixIgnoreCase
+  decl stringBuilderCommonPrefix fun stringBuilderCommonPrefix sym=stringBuilderCommonPrefix
+  decl customCharSequenceCommonSuffix fun customCharSequenceCommonSuffix sym=customCharSequenceCommonSuffix
+expr e@3:17 name(value) type=String ref=CustomCharSequence.value
+expr e@3:17#1 memberCall recv=e@3:17 callee=length args=[] type=Int
+expr e@5:42 name(value) type=String ref=CustomCharSequence.value
+expr e@5:48 name(index) type=Int ref=CustomCharSequence.get.$1.index
+expr e@5:42#1 indexedAccess receiver=e@5:42 indices=[e@5:48] type=Char call=kotlin.text.get
+expr e@8:9 name(value) type=String ref=CustomCharSequence.value
+expr e@8:25 name(startIndex) type=Int ref=CustomCharSequence.subSequence.$2.startIndex
+expr e@8:37 name(endIndex) type=Int ref=CustomCharSequence.subSequence.$2.endIndex
+expr e@8:9#1 memberCall recv=e@8:9 callee=substring args=[_:e@8:25,_:e@8:37] type=String call=kotlin.text.substring#1
+expr e@12:5 name(value) type=kotlin.CharSequence ref=charSequenceCommonPrefix.$3.value
+expr e@12:28 name(other) type=kotlin.CharSequence ref=charSequenceCommonPrefix.$3.other
+expr e@12:5#1 memberCall recv=e@12:5 callee=commonPrefixWith args=[_:e@12:28] type=String call=kotlin.text.commonPrefixWith#1
+expr e@15:5 name(value) type=kotlin.CharSequence ref=charSequenceCommonPrefixIgnoreCase.$4.value
+expr e@15:28 name(other) type=kotlin.CharSequence ref=charSequenceCommonPrefixIgnoreCase.$4.other
+expr e@15:35 bool(true) type=Boolean
+expr e@15:5#1 memberCall recv=e@15:5 callee=commonPrefixWith args=[_:e@15:28,_:e@15:35] type=String call=kotlin.text.commonPrefixWith#1
+expr e@18:5 name(value) type=kotlin.CharSequence ref=charSequenceCommonSuffix.$5.value
+expr e@18:28 name(other) type=kotlin.CharSequence ref=charSequenceCommonSuffix.$5.other
+expr e@18:5#1 memberCall recv=e@18:5 callee=commonSuffixWith args=[_:e@18:28] type=String call=kotlin.text.commonSuffixWith#1
+expr e@21:5 name(value) type=kotlin.CharSequence ref=charSequenceCommonSuffixIgnoreCase.$6.value
+expr e@21:28 name(other) type=kotlin.CharSequence ref=charSequenceCommonSuffixIgnoreCase.$6.other
+expr e@21:35 bool(true) type=Boolean
+expr e@21:5#1 memberCall recv=e@21:5 callee=commonSuffixWith args=[_:e@21:28,_:e@21:35] type=String call=kotlin.text.commonSuffixWith#1
+expr e@24:45 string(prefix-日本語) type=String
+expr e@24:31 call callee=e@24:31#1 args=[_:e@24:45] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#2
+expr e@24:5 localDecl value mutable=0 type=CharSequence init=e@24:31 type=Unit ref=__local_0.value
+expr e@25:12 name(value) type=kotlin.CharSequence ref=__local_0.value
+expr e@25:49 string(prefix-日本) type=String
+expr e@25:35 call callee=e@25:35#1 args=[_:e@25:49] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#2
+expr e@25:12#1 memberCall recv=e@25:12 callee=commonPrefixWith args=[_:e@25:35] type=String call=kotlin.text.commonPrefixWith#1
+expr e@25:5 return value=e@25:12#1 type=Nothing
+expr e@29:50 string(customValue) type=String
+expr e@29:31 call callee=e@29:31#1 args=[_:e@29:50] type=CustomCharSequence call=CustomCharSequence.<init>
+expr e@29:5 localDecl value mutable=0 type=CharSequence init=e@29:31 type=Unit ref=__local_1.value
+expr e@30:12 name(value) type=kotlin.CharSequence ref=__local_1.value
+expr e@30:54 string(otherVALUE) type=String
+expr e@30:35 call callee=e@30:35#1 args=[_:e@30:54] type=CustomCharSequence call=CustomCharSequence.<init>
+expr e@30:69 bool(true) type=Boolean
+expr e@30:12#1 memberCall recv=e@30:12 callee=commonSuffixWith args=[_:e@30:35,_:e@30:69] type=String call=kotlin.text.commonSuffixWith#1
+expr e@30:5 return value=e@30:12#1 type=Nothing

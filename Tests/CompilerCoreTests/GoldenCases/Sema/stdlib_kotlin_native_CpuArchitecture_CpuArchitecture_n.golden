@@ -1,0 +1,25 @@
+symbol fq=golden.sema.cpuArchitectureBitness kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.cpuArchitectureEntries kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.native.CpuArchitecture>
+symbol fq=golden.sema.cpuArchitectureValueOf kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.CpuArchitecture
+symbol fq=golden.sema.cpuArchitectureValues kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.native.CpuArchitecture>
+symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
+symbol fq=kotlin.native.CpuArchitecture.Companion.entries kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.native.CpuArchitecture>
+symbol fq=kotlin.native.CpuArchitecture.Companion.valueOf kind=function vis=public flags=synthetic|static sig=recv=kotlin.native.CpuArchitecture.Companion params=[String] ret=kotlin.native.CpuArchitecture
+symbol fq=kotlin.native.CpuArchitecture.Companion.valueOf.name kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.native.CpuArchitecture.values kind=function vis=public flags=synthetic|static sig=recv=_ params=[] ret=kotlin.Array<kotlin.native.CpuArchitecture>
+file fstdlib_kotlin_native_CpuArchitecture_CpuArchitecture_n package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)]
+  decl golden.sema.cpuArchitectureEntries fun cpuArchitectureEntries sym=golden.sema.cpuArchitectureEntries
+  decl golden.sema.cpuArchitectureBitness fun cpuArchitectureBitness sym=golden.sema.cpuArchitectureBitness
+  decl golden.sema.cpuArchitectureValueOf fun cpuArchitectureValueOf sym=golden.sema.cpuArchitectureValueOf
+  decl golden.sema.cpuArchitectureValues fun cpuArchitectureValues sym=golden.sema.cpuArchitectureValues
+expr e@7:75 name(CpuArchitecture) type=kotlin.native.CpuArchitecture.Companion ref=kotlin.native.CpuArchitecture
+expr e@7:75#1 memberCall recv=e@7:75 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.native.CpuArchitecture> ref=kotlin.native.CpuArchitecture.Companion.entries
+expr e@8:37 name(CpuArchitecture) type=kotlin.native.CpuArchitecture ref=kotlin.native.CpuArchitecture
+expr e@8:37#1 memberCall recv=e@8:37 callee=ARM64 args=[] type=kotlin.native.CpuArchitecture ref=kotlin.native.CpuArchitecture.ARM64
+expr e@8:37#2 memberCall recv=e@8:37#1 callee=bitness args=[] type=Int ref=kotlin.native.CpuArchitecture.bitness
+expr e@9:49 name(CpuArchitecture) type=kotlin.native.CpuArchitecture.Companion ref=kotlin.native.CpuArchitecture
+expr e@9:73 string(WASM32) type=String
+expr e@9:49#1 memberCall recv=e@9:49 callee=valueOf args=[_:e@9:73] type=kotlin.native.CpuArchitecture call=kotlin.native.CpuArchitecture.Companion.valueOf
+expr e@10:55 name(CpuArchitecture) type=kotlin.native.CpuArchitecture ref=kotlin.native.CpuArchitecture
+expr e@10:55#1 memberCall recv=e@10:55 callee=values args=[] type=kotlin.Array<kotlin.native.CpuArchitecture> ref=kotlin.native.CpuArchitecture.values call=kotlin.native.CpuArchitecture.values

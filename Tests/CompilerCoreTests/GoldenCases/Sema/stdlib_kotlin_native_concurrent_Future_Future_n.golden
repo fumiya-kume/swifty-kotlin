@@ -1,0 +1,42 @@
+symbol fq=futureConsume kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=Int
+symbol fq=futureConsume.$0.future kind=valueParameter vis=private flags=_
+symbol fq=futureEquals kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>,Any?] ret=Boolean
+symbol fq=futureEquals.$1.future kind=valueParameter vis=private flags=_
+symbol fq=futureEquals.$1.other kind=valueParameter vis=private flags=_
+symbol fq=futureHashCode kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=Int
+symbol fq=futureHashCode.$2.future kind=valueParameter vis=private flags=_
+symbol fq=futureId kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=Int
+symbol fq=futureId.$3.future kind=valueParameter vis=private flags=_
+symbol fq=futureResult kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=Int
+symbol fq=futureResult.$4.future kind=valueParameter vis=private flags=_
+symbol fq=futureState kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=kotlin.native.concurrent.FutureState
+symbol fq=futureState.$5.future kind=valueParameter vis=private flags=_
+symbol fq=futureToString kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Future<Int>] ret=String
+symbol fq=futureToString.$6.future kind=valueParameter vis=private flags=_
+symbol fq=kotlin.native.concurrent.Future.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.native.concurrent.FutureState kind=enumClass vis=public flags=_
+file fstdlib_kotlin_native_concurrent_Future_Future_n package=_ annotations=[@file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class)]
+  decl futureId fun futureId sym=futureId
+  decl futureResult fun futureResult sym=futureResult
+  decl futureState fun futureState sym=futureState
+  decl futureEquals fun futureEquals sym=futureEquals
+  decl futureHashCode fun futureHashCode sym=futureHashCode
+  decl futureToString fun futureToString sym=futureToString
+  decl futureConsume fun futureConsume sym=futureConsume
+expr e@6:42 name(future) type=kotlin.native.concurrent.Future<Int> ref=futureId.$3.future
+expr e@6:42#1 memberCall recv=e@6:42 callee=id args=[] type=Int ref=kotlin.native.concurrent.Future.id
+expr e@7:46 name(future) type=kotlin.native.concurrent.Future<Int> ref=futureResult.$4.future
+expr e@7:46#1 memberCall recv=e@7:46 callee=result args=[] type=Int ref=kotlin.native.concurrent.Future.result
+expr e@8:53 name(future) type=kotlin.native.concurrent.Future<Int> ref=futureState.$5.future
+expr e@8:53#1 memberCall recv=e@8:53 callee=state args=[] type=kotlin.native.concurrent.FutureState ref=kotlin.native.concurrent.Future.state
+expr e@9:63 name(future) type=kotlin.native.concurrent.Future<Int> ref=futureEquals.$1.future
+expr e@9:77 name(other) type=Any? ref=futureEquals.$1.other
+expr e@9:63#1 memberCall recv=e@9:63 callee=equals args=[_:e@9:77] type=Boolean call=kotlin.native.concurrent.Future.equals targs=[Int]
+expr e@10:48 name(future) type=kotlin.native.concurrent.Future<Int> ref=futureHashCode.$2.future
+expr e@10:48#1 memberCall recv=e@10:48 callee=hashCode args=[] type=Int call=kotlin.native.concurrent.Future.hashCode targs=[Int]
+expr e@11:51 name(future) type=kotlin.native.concurrent.Future<Int> ref=futureToString.$6.future
+expr e@11:51#1 memberCall recv=e@11:51 callee=toString args=[] type=String call=kotlin.native.concurrent.Future.toString targs=[Int]
+expr e@12:47 name(future) type=kotlin.native.concurrent.Future<Int> ref=futureConsume.$0.future
+expr e@12:73 name(value) type=Int ref=s-0
+expr e@12:62 lambda params=[value] body=e@12:73 label=consume type=(Int) -> Int
+expr e@12:47#1 memberCall recv=e@12:47 callee=consume args=[_:e@12:62] type=Int call=kotlin.native.concurrent.Future.consume targs=[Int,Int]

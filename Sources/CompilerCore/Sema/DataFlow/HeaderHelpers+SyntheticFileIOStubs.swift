@@ -202,26 +202,6 @@ extension DataFlowSemaPhase {
 
     }
 
-    private func makeFileListOfStringType(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner
-    ) -> TypeID {
-        let listFQName: [InternedString] = [
-            interner.intern("kotlin"),
-            interner.intern("collections"),
-            interner.intern("List"),
-        ]
-        guard let listSymbol = symbols.lookup(fqName: listFQName) else {
-            return types.anyType
-        }
-        return types.make(.classType(ClassType(
-            classSymbol: listSymbol,
-            args: [.out(types.stringType)],
-            nullability: .nonNull
-        )))
-    }
-
     private func registerSyntheticConstructor(
         ownerSymbol: SymbolID,
         ownerType: TypeID,

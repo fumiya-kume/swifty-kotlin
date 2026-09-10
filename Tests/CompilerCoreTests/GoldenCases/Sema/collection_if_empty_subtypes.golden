@@ -26,7 +26,7 @@ file fcollection_if_empty_subtypes package=_
   decl isEmptyViaInterface fun isEmptyViaInterface sym=isEmptyViaInterface
 expr e@8:36 int(1) type=Int
 expr e@9:50 call callee=e@9:50#1 args=[] type=kotlin.collections.List<out String?> call=kotlin.collections.emptyList targs=[String?]
-expr e@9:50#2 memberCall recv=e@9:50 callee=iterator args=[] type=kotlin.collections.Iterator<out String?> call=kotlin.collections.Collection.iterator
+expr e@9:50#2 memberCall recv=e@9:50 callee=iterator args=[] type=kotlin.collections.Iterator<String?> call=kotlin.collections.Collection.iterator targs=[String?]
 expr e@13:36 int(1) type=Int
 expr e@12:62 string(key) type=String
 expr e@12:71 int(1) type=Int
