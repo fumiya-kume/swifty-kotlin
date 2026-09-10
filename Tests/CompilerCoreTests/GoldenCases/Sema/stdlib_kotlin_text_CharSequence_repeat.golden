@@ -1,0 +1,26 @@
+symbol fq=golden.sema.charSequenceRepeat.$0.count[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceRepeat.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceRepeatBuilder.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceRepeatBuilder[kind=fun;params=kotlin.text.StringBuilder] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder] ret=String
+symbol fq=golden.sema.charSequenceRepeatEmpty.$2.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceRepeatEmpty[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=String
+symbol fq=golden.sema.charSequenceRepeat[kind=fun;params=kotlin.CharSequence,Int] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=String
+symbol fq=golden.sema.stringRepeat[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
+file fstdlib_kotlin_text_CharSequence_repeat package=golden.sema
+  decl golden.sema.charSequenceRepeat[kind=fun;params=kotlin.CharSequence,Int] fun charSequenceRepeat sym=golden.sema.charSequenceRepeat[kind=fun;params=kotlin.CharSequence,Int]
+  decl golden.sema.charSequenceRepeatBuilder[kind=fun;params=kotlin.text.StringBuilder] fun charSequenceRepeatBuilder sym=golden.sema.charSequenceRepeatBuilder[kind=fun;params=kotlin.text.StringBuilder]
+  decl golden.sema.charSequenceRepeatEmpty[kind=fun;params=kotlin.CharSequence] fun charSequenceRepeatEmpty sym=golden.sema.charSequenceRepeatEmpty[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.stringRepeat[kind=fun;params=] fun stringRepeat sym=golden.sema.stringRepeat[kind=fun;params=]
+expr e@3:68 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceRepeat.$0.source[kind=vparam]
+expr e@3:82 name(count) type=Int ref=golden.sema.charSequenceRepeat.$0.count[kind=vparam]
+expr e@3:68#1 memberCall recv=e@3:68 callee=repeat args=[_:e@3:82] type=String call=kotlin.text.repeat[kind=fun;recv=kotlin.CharSequence;params=Int]
+expr e@5:64 name(source) type=kotlin.text.StringBuilder ref=golden.sema.charSequenceRepeatBuilder.$1.source[kind=vparam]
+expr e@5:78 int(2) type=Int
+expr e@5:64#1 memberCall recv=e@5:64 callee=repeat args=[_:e@5:78] type=String call=kotlin.text.repeat[kind=fun;recv=kotlin.CharSequence;params=Int]
+expr e@7:61 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceRepeatEmpty.$2.source[kind=vparam]
+expr e@7:75 int(0) type=Int
+expr e@7:61#1 memberCall recv=e@7:61 callee=repeat args=[_:e@7:75] type=String call=kotlin.text.repeat[kind=fun;recv=kotlin.CharSequence;params=Int]
+expr e@9:30 string(x) type=String
+expr e@9:41 int(2) type=Int
+expr e@9:30#1 memberCall recv=e@9:30 callee=repeat args=[_:e@9:41] type=String call=kotlin.text.repeat[kind=fun;recv=String;params=Int]

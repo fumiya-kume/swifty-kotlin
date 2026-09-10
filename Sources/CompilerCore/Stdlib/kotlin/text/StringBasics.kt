@@ -8,6 +8,39 @@ public fun String.repeat(count: Int): String {
     return sb.toString()
 }
 
+public fun CharSequence.repeat(n: Int): String {
+    if (n < 0) throw IllegalArgumentException("Count 'n' must be non-negative, but was $n.")
+
+    return when (n) {
+        0 -> ""
+        1 -> this.toString()
+        else -> {
+            when (length) {
+                0 -> ""
+                1 -> {
+                    val char = this[0]
+                    val sb = StringBuilder(n)
+                    var i = 0
+                    while (i < n) {
+                        sb.append(char)
+                        i += 1
+                    }
+                    sb.toString()
+                }
+                else -> {
+                    val sb = StringBuilder(n * length)
+                    var i = 1
+                    while (i <= n) {
+                        sb.append(this)
+                        i += 1
+                    }
+                    sb.toString()
+                }
+            }
+        }
+    }
+}
+
 public fun String.reversed(): String {
     val len = this.length
     val sb = StringBuilder()
