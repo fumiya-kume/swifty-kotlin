@@ -813,8 +813,18 @@ extension CallLowerer {
         }
 
         // Lower arguments only on the non-null path.
-        let loweredArgIDs = args.map { argument in
-            driver.lowerExpr(
+        let loweredArgIDs = args.enumerated().map { argumentIndex, argument in
+            let previousAllowance = driver.ctx.pendingLambdaNonLocalReturnAllowance
+            driver.ctx.pendingLambdaNonLocalReturnAllowance = allowsNonLocalReturn(
+                argumentExpr: argument.expr,
+                argumentIndex: argumentIndex,
+                ast: ast,
+                sema: sema,
+                callBinding: callBinding,
+                chosen: chosen
+            )
+            defer { driver.ctx.pendingLambdaNonLocalReturnAllowance = previousAllowance }
+            return driver.lowerExpr(
                 argument.expr,
                 shared: shared, emit: &instructions
             )
@@ -842,7 +852,7 @@ extension CallLowerer {
         // Safe-call collection fallback can resolve the source-backed
         // joinToString declaration without retaining its default-value flags.
         // In that case normalizedCallArguments leaves zero sentinels for the
-        // omitted String parameters, which become literal `null` at runtime.
+        // omitted parameters, including the limit and truncation marker.
         // Recover the mask from the source call labels and materialize the
         // Kotlin defaults before emitting the direct source-backed call.
         let sourceBackedJoinToStringMask: Int64 = {

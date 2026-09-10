@@ -13,6 +13,15 @@ struct TypeInferenceContext: CustomStringConvertible {
     /// Stack of labels attached to enclosing lambda literals.
     /// Used by `return@label` to verify that the label references a valid lambda.
     var lambdaLabelStack: [InternedString]
+    /// Number of lambda bodies enclosing the expression currently being inferred.
+    /// An unlabeled return inside such a body is a non-local return and is checked
+    /// against the surrounding named function's return type rather than the
+    /// lambda's predicate/result type.
+    var lambdaDepth: Int = 0
+    /// Return type of the nearest named function body. This remains unchanged
+    /// while entering lambda literals so non-local return values are checked
+    /// against the actual return target.
+    var enclosingFunctionReturnType: TypeID?
     /// When set, the specified block expression exports its local bindings to
     /// the outer locals map. Used for do-while body-to-condition visibility.
     var exportBlockLocalsForExpr: ExprID?
@@ -85,6 +94,12 @@ struct TypeInferenceContext: CustomStringConvertible {
         return copy
     }
 
+    func enteringLambdaBody() -> TypeInferenceContext {
+        var copy = self
+        copy.lambdaDepth += 1
+        return copy
+    }
+
     func hasLambdaLabel(_ label: InternedString) -> Bool {
         lambdaLabelStack.contains(label)
     }
@@ -103,6 +118,8 @@ struct TypeInferenceContext: CustomStringConvertible {
         loopDepth: Int? = nil,
         loopLabelStack: [InternedString]? = nil,
         lambdaLabelStack: [InternedString]? = nil,
+        lambdaDepth: Int? = nil,
+        enclosingFunctionReturnType: TypeID?? = nil,
         exportBlockLocalsForExpr: ExprID?? = nil,
         flowState: DataFlowState? = nil,
         currentDeclSymbol: SymbolID?? = nil,
@@ -124,6 +141,10 @@ struct TypeInferenceContext: CustomStringConvertible {
         if let loopDepth { copy.loopDepth = loopDepth }
         if let loopLabelStack { copy.loopLabelStack = loopLabelStack }
         if let lambdaLabelStack { copy.lambdaLabelStack = lambdaLabelStack }
+        if let lambdaDepth { copy.lambdaDepth = lambdaDepth }
+        if let enclosingFunctionReturnType {
+            copy.enclosingFunctionReturnType = enclosingFunctionReturnType
+        }
         if let exportBlockLocalsForExpr { copy.exportBlockLocalsForExpr = exportBlockLocalsForExpr }
         if let flowState { copy.flowState = flowState }
         if let currentDeclSymbol { copy.currentDeclSymbol = currentDeclSymbol }

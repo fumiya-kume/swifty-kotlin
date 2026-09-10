@@ -2,7 +2,7 @@
 
 /// Default-argument materialization and runtime callee resolution helpers.
 extension CallLowerer {
-    /// Returns the default mask for the three string parameters of the
+    /// Returns the default mask for the five optional parameters of the
     /// source-backed Iterable.joinToString overload.
     ///
     /// Safe-call collection fallback can lose the declaration's default-value
@@ -13,7 +13,7 @@ extension CallLowerer {
         sourceArguments: [CallArgument],
         interner: StringInterner
     ) -> Int64 {
-        let parameterNames = ["separator", "prefix", "postfix"]
+        let parameterNames = ["separator", "prefix", "postfix", "limit", "truncated"]
         var suppliedParameters = Set<Int>()
         var nextPositionalParameter = 0
 
@@ -51,17 +51,23 @@ extension CallLowerer {
         instructions: inout [KIRInstruction],
         arguments: inout [KIRExprID]
     ) {
-        let defaults = [", ", "", ""]
         let stringType = sema.types.stringType
-        for (offset, defaultValue) in defaults.enumerated() {
+        let defaults: [(KIRExprKind, TypeID)] = [
+            (.stringLiteral(interner.intern(", ")), stringType),
+            (.stringLiteral(interner.intern("")), stringType),
+            (.stringLiteral(interner.intern("")), stringType),
+            (.intLiteral(-1), sema.types.intType),
+            (.stringLiteral(interner.intern("...")), stringType),
+        ]
+        for (offset, entry) in defaults.enumerated() {
             let paramIndex = firstDefaultParameterIndex + offset
             let maskBit = Int64(1) << paramIndex
             guard (defaultMask & maskBit) != 0 else { continue }
             let argumentIndex = paramIndex + 1
             guard argumentIndex < arguments.count else { continue }
-            let interned = interner.intern(defaultValue)
-            let exprID = arena.appendExpr(.stringLiteral(interned), type: stringType)
-            instructions.append(.constValue(result: exprID, value: .stringLiteral(interned)))
+            let (defaultValue, type) = entry
+            let exprID = arena.appendExpr(defaultValue, type: type)
+            instructions.append(.constValue(result: exprID, value: defaultValue))
             arguments[argumentIndex] = exprID
         }
     }
