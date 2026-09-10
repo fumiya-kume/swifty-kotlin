@@ -1,10 +1,10 @@
-symbol fq=golden.sema.threeArgMaxByte kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte,Byte] ret=Byte
-symbol fq=golden.sema.threeArgMaxByte.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxByte.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxByte.$0.c kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxByte.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxByte.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxByte.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxByte[kind=fun;params=Byte,Byte,Byte] kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte,Byte] ret=Byte
 file fmaxof_byte_3args package=golden.sema
-  decl golden.sema.threeArgMaxByte fun threeArgMaxByte sym=golden.sema.threeArgMaxByte
-expr e@3:62 name(a) type=Byte ref=golden.sema.threeArgMaxByte.$0.a
-expr e@3:65 name(b) type=Byte ref=golden.sema.threeArgMaxByte.$0.b
-expr e@3:68 name(c) type=Byte ref=golden.sema.threeArgMaxByte.$0.c
-expr e@3:56 call callee=e@3:56#1 args=[_:e@3:62,_:e@3:65,_:e@3:68] type=Byte call=kotlin.comparisons.maxOf#2
+  decl golden.sema.threeArgMaxByte[kind=fun;params=Byte,Byte,Byte] fun threeArgMaxByte sym=golden.sema.threeArgMaxByte[kind=fun;params=Byte,Byte,Byte]
+expr e@3:62 name(a) type=Byte ref=golden.sema.threeArgMaxByte.$0.a[kind=vparam]
+expr e@3:65 name(b) type=Byte ref=golden.sema.threeArgMaxByte.$0.b[kind=vparam]
+expr e@3:68 name(c) type=Byte ref=golden.sema.threeArgMaxByte.$0.c[kind=vparam]
+expr e@3:56 call callee=e@3:56#1 args=[_:e@3:62,_:e@3:65,_:e@3:68] type=Byte call=kotlin.comparisons.maxOf[kind=fun;params=Byte,Byte,Byte]

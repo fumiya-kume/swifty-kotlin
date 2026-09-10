@@ -5,6 +5,8 @@ class CustomMutableListIterator : MutableListIterator<Int> {
     override fun next(): Int = 0
     override fun hasPrevious(): Boolean = false
     override fun previous(): Int = 0
+    override fun nextIndex(): Int = 0
+    override fun previousIndex(): Int = 0
     override fun add(element: Int) {}
     override fun set(element: Int) {}
     override fun remove() {}

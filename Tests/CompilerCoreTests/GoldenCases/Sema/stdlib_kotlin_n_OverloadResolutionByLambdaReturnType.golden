@@ -1,14 +1,14 @@
-symbol fq=golden.sema.foo#0 kind=function vis=public flags=_ sig=recv=_ params=[() -> Int] ret=Int
-symbol fq=golden.sema.foo#1 kind=function vis=public flags=_ sig=recv=_ params=[() -> String] ret=String
-symbol fq=golden.sema.foo.$0.block kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.foo.$1.block kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.test kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.foo.$0.block[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.foo.$1.block[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.foo[kind=fun;params=fn{p=;ret=Int}] kind=function vis=public flags=_ sig=recv=_ params=[() -> Int] ret=Int
+symbol fq=golden.sema.foo[kind=fun;params=fn{p=;ret=String}] kind=function vis=public flags=_ sig=recv=_ params=[() -> String] ret=String
+symbol fq=golden.sema.test[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_n_OverloadResolutionByLambdaReturnType package=golden.sema
-  decl golden.sema.foo#0 fun foo sym=golden.sema.foo#0
-  decl golden.sema.foo#1 fun foo sym=golden.sema.foo#1
-  decl golden.sema.test fun test sym=golden.sema.test
+  decl golden.sema.foo[kind=fun;params=fn{p=;ret=Int}] fun foo sym=golden.sema.foo[kind=fun;params=fn{p=;ret=Int}]
+  decl golden.sema.foo[kind=fun;params=fn{p=;ret=String}] fun foo sym=golden.sema.foo[kind=fun;params=fn{p=;ret=String}]
+  decl golden.sema.test[kind=fun;params=] fun test sym=golden.sema.test[kind=fun;params=]
 expr e@9:34 int(1) type=Int
 expr e@11:40 string(s) type=String
 expr e@13:25 int(42) type=Int
 expr e@13:23 lambda params=[] body=e@13:25 label=foo type=() -> Any
-expr e@13:19 call callee=e@13:19#1 args=[_:e@13:23] type=Int call=golden.sema.foo#0
+expr e@13:19 call callee=e@13:19#1 args=[_:e@13:23] type=Int call=golden.sema.foo[kind=fun;params=fn{p=;ret=Int}]

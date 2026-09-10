@@ -1,0 +1,24 @@
+symbol fq=__local_0.flattened[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<out Int>
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
+symbol fq=__local_2.flattened[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<out Int>
+symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
+symbol fq=flattenIterableParams.$0.lists[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=flattenIterableParams[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.Iterable<Int>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<kotlin.collections.Iterable<Int>>] ret=Unit
+symbol fq=flattenIterables.$1.lists[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=flattenIterables[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.List<Int>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<kotlin.collections.List<Int>>] ret=Unit
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
+file fflatten_sequence_iterable package=_
+  decl flattenIterables[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.List<Int>>] fun flattenIterables sym=flattenIterables[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.List<Int>>]
+  decl flattenIterableParams[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.Iterable<Int>>] fun flattenIterableParams sym=flattenIterableParams[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.Iterable<Int>>]
+expr e@5:21 name(lists) type=kotlin.sequences.Sequence<kotlin.collections.List<Int>> ref=flattenIterables.$1.lists[kind=vparam]
+expr e@5:21#1 memberCall recv=e@5:21 callee=flatten args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.flatten[kind=fun;recv=kotlin.sequences.Sequence<kotlin.sequences.Sequence<T0>>;params=;gen=1] targs=[Int]
+expr e@5:5 localDecl flattened mutable=0 type=_ init=e@5:21#1 type=Unit ref=__local_0.flattened[kind=local]
+expr e@6:34 name(flattened) type=kotlin.sequences.Sequence<out Int> ref=__local_0.flattened[kind=local]
+expr e@6:5 localDecl checked mutable=0 type=Sequence<Int> init=e@6:34 type=Unit ref=__local_1.checked[kind=local]
+expr e@10:21 name(lists) type=kotlin.sequences.Sequence<kotlin.collections.Iterable<Int>> ref=flattenIterableParams.$0.lists[kind=vparam]
+expr e@10:21#1 memberCall recv=e@10:21 callee=flatten args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.flatten[kind=fun;recv=kotlin.sequences.Sequence<kotlin.sequences.Sequence<T0>>;params=;gen=1] targs=[Int]
+expr e@10:5 localDecl flattened mutable=0 type=_ init=e@10:21#1 type=Unit ref=__local_2.flattened[kind=local]
+expr e@11:34 name(flattened) type=kotlin.sequences.Sequence<out Int> ref=__local_2.flattened[kind=local]
+expr e@11:5 localDecl checked mutable=0 type=Sequence<Int> init=e@11:34 type=Unit ref=__local_3.checked[kind=local]

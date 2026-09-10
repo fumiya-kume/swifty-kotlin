@@ -62,10 +62,69 @@ extension OverloadResolver {
             ))
         }
         guard !constraints.isEmpty else { return [:] }
-        let varsToSolve = usedTypeVariables(from: constraints)
-        guard !varsToSolve.isEmpty else { return [:] }
-        let solution = ConstraintSolver().solve(vars: varsToSolve, constraints: constraints, typeSystem: typeSystem)
+        guard !usedTypeVariables(from: constraints).isEmpty else { return [:] }
+
+        // A known argument can determine a type parameter indirectly through
+        // another parameter's dependent upper bound. For example, a destination
+        // argument can infer `M` in `M : MutableMap<in K, S>`, which in turn
+        // determines `S` before the operation lambda is type-checked. Expand
+        // those bounds while the probe still has concrete argument types; the
+        // full call resolver performs the authoritative bound check later.
+        var solution = ConstraintSolver().solve(
+            vars: usedTypeVariables(from: constraints),
+            constraints: constraints,
+            typeSystem: typeSystem
+        )
         guard solution.isSuccess else { return [:] }
+        let symbolTable = typeSystem.symbolTable
+        for _ in 0 ... max(1, signature.typeParameterSymbols.count) {
+            var addedDependentConstraint = false
+            for (index, typeParamSymbol) in signature.typeParameterSymbols.enumerated() {
+                guard let typeVar = typeVarBySymbol[typeParamSymbol],
+                      let substitutedType = solution.substitution[typeVar]
+                else {
+                    continue
+                }
+                let signatureBounds = index < signature.typeParameterUpperBoundsList.count
+                    ? signature.typeParameterUpperBoundsList[index]
+                    : []
+                let symbolBounds = symbolTable?.typeParameterUpperBounds(for: typeParamSymbol) ?? []
+                let upperBounds = signatureBounds + symbolBounds.filter { !signatureBounds.contains($0) }
+                for upperBound in upperBounds {
+                    let substitutedBound = typeSystem.substituteTypeParameters(
+                        in: upperBound,
+                        substitution: solution.substitution,
+                        typeVarBySymbol: typeVarBySymbol
+                    )
+                    guard containsTypeVariable(
+                        substitutedBound,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem
+                    ) else {
+                        continue
+                    }
+                    let dependentConstraints = decomposeSubtypeConstraint(
+                        subtype: substitutedType,
+                        supertype: substitutedBound,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange
+                    )
+                    guard !usedTypeVariables(from: dependentConstraints).isEmpty else {
+                        continue
+                    }
+                    constraints.append(contentsOf: dependentConstraints)
+                    addedDependentConstraint = true
+                }
+            }
+            guard addedDependentConstraint else { break }
+            solution = ConstraintSolver().solve(
+                vars: usedTypeVariables(from: constraints),
+                constraints: constraints,
+                typeSystem: typeSystem
+            )
+            guard solution.isSuccess else { return [:] }
+        }
 
         // An upper bound alone is not a usable lambda context. For example,
         // Comparator<Any> passed to Comparator<in R> only establishes R <: Any;

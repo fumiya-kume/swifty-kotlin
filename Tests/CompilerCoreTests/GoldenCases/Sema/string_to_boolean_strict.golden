@@ -1,6 +1,6 @@
-symbol fq=golden.sema.parseStrict kind=function vis=public flags=_ sig=recv=_ params=[String] ret=Boolean
-symbol fq=golden.sema.parseStrict.$0.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.parseStrict.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.parseStrict[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=Boolean
 file fstring_to_boolean_strict package=golden.sema
-  decl golden.sema.parseStrict fun parseStrict sym=golden.sema.parseStrict
-expr e@3:43 name(value) type=String ref=golden.sema.parseStrict.$0.value
-expr e@3:43#1 memberCall recv=e@3:43 callee=toBooleanStrict args=[] type=Boolean call=kotlin.text.toBooleanStrict
+  decl golden.sema.parseStrict[kind=fun;params=String] fun parseStrict sym=golden.sema.parseStrict[kind=fun;params=String]
+expr e@3:43 name(value) type=String ref=golden.sema.parseStrict.$0.value[kind=vparam]
+expr e@3:43#1 memberCall recv=e@3:43 callee=toBooleanStrict args=[] type=Boolean call=kotlin.text.toBooleanStrict[kind=fun;recv=String;params=]

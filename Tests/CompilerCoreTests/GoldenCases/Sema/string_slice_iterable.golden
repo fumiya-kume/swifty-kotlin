@@ -1,34 +1,35 @@
-symbol fq=golden.sema.useListOfExplicitTypeArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
-symbol fq=golden.sema.useListSliceEmptyExplicitType kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
-symbol fq=golden.sema.useListSliceListOf kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
-symbol fq=golden.sema.useListSliceRange kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=golden.sema.useListOfExplicitTypeArg[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
+symbol fq=golden.sema.useListSliceEmptyExplicitType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
+symbol fq=golden.sema.useListSliceListOf[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
+symbol fq=golden.sema.useListSliceRange[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
 file fstring_slice_iterable package=golden.sema
-  decl golden.sema.useListSliceEmptyExplicitType fun useListSliceEmptyExplicitType sym=golden.sema.useListSliceEmptyExplicitType
-  decl golden.sema.useListSliceListOf fun useListSliceListOf sym=golden.sema.useListSliceListOf
-  decl golden.sema.useListSliceRange fun useListSliceRange sym=golden.sema.useListSliceRange
-  decl golden.sema.useListOfExplicitTypeArg fun useListOfExplicitTypeArg sym=golden.sema.useListOfExplicitTypeArg
+  decl golden.sema.useListSliceEmptyExplicitType[kind=fun;params=] fun useListSliceEmptyExplicitType sym=golden.sema.useListSliceEmptyExplicitType[kind=fun;params=]
+  decl golden.sema.useListSliceListOf[kind=fun;params=] fun useListSliceListOf sym=golden.sema.useListSliceListOf[kind=fun;params=]
+  decl golden.sema.useListSliceRange[kind=fun;params=] fun useListSliceRange sym=golden.sema.useListSliceRange[kind=fun;params=]
+  decl golden.sema.useListOfExplicitTypeArg[kind=fun;params=] fun useListOfExplicitTypeArg sym=golden.sema.useListOfExplicitTypeArg[kind=fun;params=]
 expr e@5:57 int(1) type=Int
 expr e@5:60 int(2) type=Int
 expr e@5:63 int(3) type=Int
-expr e@5:50 call callee=e@5:50#1 args=[_:e@5:57,_:e@5:60,_:e@5:63] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@5:72 call callee=e@5:72#1 args=[] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#0 targs=[Int]
-expr e@5:50#2 memberCall recv=e@5:50 callee=slice args=[_:e@5:72] type=kotlin.collections.List<Int> call=kotlin.collections.slice
+expr e@5:50 call callee=e@5:50#1 args=[_:e@5:57,_:e@5:60,_:e@5:63] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@5:72 call callee=e@5:72#1 args=[] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=;gen=1] targs=[Int]
+expr e@5:50#2 memberCall recv=e@5:50 callee=slice args=[_:e@5:72] type=kotlin.collections.List<Int> call=kotlin.collections.slice[kind=fun;recv=kotlin.collections.List<T0>;params=kotlin.collections.Iterable<Int>;gen=1]
 expr e@7:46 int(10) type=Int
 expr e@7:50 int(20) type=Int
 expr e@7:54 int(30) type=Int
-expr e@7:39 call callee=e@7:39#1 args=[_:e@7:46,_:e@7:50,_:e@7:54] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@7:39 call callee=e@7:39#1 args=[_:e@7:46,_:e@7:50,_:e@7:54] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
 expr e@7:71 int(2) type=Int
 expr e@7:74 int(0) type=Int
-expr e@7:64 call callee=e@7:64#1 args=[_:e@7:71,_:e@7:74] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@7:39#2 memberCall recv=e@7:39 callee=slice args=[_:e@7:64] type=kotlin.collections.List<Int> call=kotlin.collections.slice
+expr e@7:64 call callee=e@7:64#1 args=[_:e@7:71,_:e@7:74] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@7:39#2 memberCall recv=e@7:39 callee=slice args=[_:e@7:64] type=kotlin.collections.List<Int> call=kotlin.collections.slice[kind=fun;recv=kotlin.collections.List<T0>;params=kotlin.collections.Iterable<Int>;gen=1]
 expr e@9:45 int(10) type=Int
 expr e@9:49 int(20) type=Int
 expr e@9:53 int(30) type=Int
-expr e@9:38 call callee=e@9:38#1 args=[_:e@9:45,_:e@9:49,_:e@9:53] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@9:38 call callee=e@9:38#1 args=[_:e@9:45,_:e@9:49,_:e@9:53] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
 expr e@9:63 int(1) type=Int
 expr e@9:66 int(2) type=Int
 expr e@9:63#1 binary(rangeTo) lhs=e@9:63 rhs=e@9:66 type=Int
-expr e@9:38#2 memberCall recv=e@9:38 callee=slice args=[_:e@9:63#1] type=kotlin.collections.List<Int> call=kotlin.collections.slice
-expr e@11:45 call callee=e@11:45#1 args=[] type=kotlin.collections.List<Int> call=kotlin.collections.listOf#0 targs=[Int]
+expr e@9:38#2 memberCall recv=e@9:38 callee=slice args=[_:e@9:63#1] type=kotlin.collections.List<Int> call=kotlin.collections.slice[kind=fun;recv=kotlin.collections.List<T0>;params=kotlin.ranges.IntRange;gen=1]
+expr e@11:45 call callee=e@11:45#1 args=[] type=kotlin.collections.List<Int> call=kotlin.collections.listOf[kind=fun;params=;gen=1] targs=[Int]

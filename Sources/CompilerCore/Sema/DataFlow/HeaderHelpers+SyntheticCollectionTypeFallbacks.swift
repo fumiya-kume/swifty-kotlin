@@ -816,12 +816,11 @@ extension DataFlowSemaPhase {
 
     /// Register `kotlin.collections.MutableIterable<T>` surface (STDLIB-COL-TYPE-005).
     ///
-    /// KSP-633: the nominal declaration is source-backed by
-    /// `Stdlib/kotlin/collections/MutableIterable.kt`, which reuses this shell on bundle
-    /// load (the `.synthetic` flag is cleared then); the shell also stays as the
-    /// fallback for non-bundled contexts. The covariant `iterator(): MutableIterator<T>`
-
-    /// override stays compiler-side here — see the note in the `.kt` file.
+    /// KSP-633/KSP-1070: the nominal declaration and its covariant
+    /// `iterator(): MutableIterator<T>` member are source-backed by
+    /// `Stdlib/kotlin/collections/MutableIterable.kt`, which reuses this shell on
+    /// bundle load (the `.synthetic` flag is cleared then); the shell also stays as
+    /// the fallback for non-bundled contexts.
     func registerSyntheticMutableIterableStub(
         symbols: SymbolTable,
         types: TypeSystem,
