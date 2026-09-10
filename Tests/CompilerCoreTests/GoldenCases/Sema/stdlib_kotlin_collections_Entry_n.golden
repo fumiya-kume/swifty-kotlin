@@ -13,15 +13,17 @@ symbol fq=golden.sema.destructureMapEntryInValDecl.$1.values kind=valueParameter
 symbol fq=golden.sema.exerciseMapEntryMembers kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=kotlin.Pair<String, Int>
 symbol fq=golden.sema.exerciseMapEntryMembers.$2.values kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Entry_n package=golden.sema
   decl golden.sema.exerciseMapEntryMembers fun exerciseMapEntryMembers sym=golden.sema.exerciseMapEntryMembers
   decl golden.sema.destructureMapEntryInValDecl fun destructureMapEntryInValDecl sym=golden.sema.destructureMapEntryInValDecl
   decl golden.sema.destructureMapEntryInForLoop fun destructureMapEntryInForLoop sym=golden.sema.destructureMapEntryInForLoop
 expr e@4:17 name(values) type=kotlin.collections.Map<String, Int> ref=golden.sema.exerciseMapEntryMembers.$2.values
-expr e@4:17#1 memberCall recv=e@4:17 callee=entries args=[] type=kotlin.collections.Set<kotlin.collections.Map.Entry<String, Int>> call=kotlin.collections.entries targs=[String,Int]
+expr e@4:17#1 memberCall recv=e@4:17 callee=entries args=[] type=kotlin.collections.Set<kotlin.collections.Map.Entry<String, Int>> ref=kotlin.collections.Map.entries
 expr e@4:17#2 memberCall recv=e@4:17#1 callee=first args=[] type=kotlin.collections.Map.Entry<String, Int> call=kotlin.collections.first#30 targs=[kotlin.collections.Map.Entry<String, Int>]
 expr e@4:5 localDecl entry mutable=0 type=_ init=e@4:17#2 type=Unit ref=__local_0.entry
 expr e@5:15 name(entry) type=kotlin.collections.Map.Entry<String, Int> ref=__local_0.entry
@@ -34,7 +36,7 @@ expr e@7:12 name(entry) type=kotlin.collections.Map.Entry<String, Int> ref=__loc
 expr e@7:12#1 memberCall recv=e@7:12 callee=toPair args=[] type=kotlin.Pair<String, Int> call=kotlin.collections.toPair targs=[String,Int]
 expr e@7:5 return value=e@7:12#1 type=Nothing
 expr e@11:24 name(values) type=kotlin.collections.Map<String, Int> ref=golden.sema.destructureMapEntryInValDecl.$1.values
-expr e@11:24#1 memberCall recv=e@11:24 callee=entries args=[] type=kotlin.collections.Set<kotlin.collections.Map.Entry<String, Int>> call=kotlin.collections.entries targs=[String,Int]
+expr e@11:24#1 memberCall recv=e@11:24 callee=entries args=[] type=kotlin.collections.Set<kotlin.collections.Map.Entry<String, Int>> ref=kotlin.collections.Map.entries
 expr e@11:24#2 memberCall recv=e@11:24#1 callee=first args=[] type=kotlin.collections.Map.Entry<String, Int> call=kotlin.collections.first#30 targs=[kotlin.collections.Map.Entry<String, Int>]
 expr e@11:5 destructuringDecl names=[key,value] mutable=0 init=e@11:24#2 type=Unit
 expr e@12:14 name(key) type=String ref=__destructuring_0.key
