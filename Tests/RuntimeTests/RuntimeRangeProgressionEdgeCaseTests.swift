@@ -467,12 +467,12 @@ struct RuntimeRangeProgressionEdgeCaseTests {
     // MARK: - UIntRange edge cases
 
     @Test func uIntRange_emptyWhenFromGtTo() {
-        let empty = kk_uint_rangeTo(10, 1) // unsigned: 10u > 1u, empty
+        let empty = __kk_uint_rangeTo(10, 1) // unsigned: 10u > 1u, empty
         #expect(kk_uint_range_isEmpty(empty) == 1)
     }
 
     @Test func uIntRange_singleElement() {
-        let r = kk_uint_rangeTo(5, 5)
+        let r = __kk_uint_rangeTo(5, 5)
         #expect(kk_uint_range_isEmpty(r) == 0)
         #expect(kk_uint_range_contains(r, 5) == 1)
         #expect(kk_uint_range_contains(r, 4) == 0)
@@ -480,7 +480,7 @@ struct RuntimeRangeProgressionEdgeCaseTests {
 
     @Test func uIntRange_step2_lastAligned() {
         // (1u..10u step 2) -> 1,3,5,7,9; last aligned to 9
-        let p = __kk_uint_step(kk_uint_rangeTo(1, 10), 2)
+        let p = __kk_uint_step(__kk_uint_rangeTo(1, 10), 2)
         #expect(kk_range_first(p) == 1)
         #expect(kk_range_last(p) == 9)
         #expect(kk_range_count(p) == 5)
@@ -513,7 +513,7 @@ struct RuntimeRangeProgressionEdgeCaseTests {
     }
 
     @Test func uIntRange_reversed() {
-        let r = kk_uint_rangeTo(1, 5)
+        let r = __kk_uint_rangeTo(1, 5)
         let rev = kk_uint_range_reversed(r)
         #expect(kk_range_first(rev) == 5)
         #expect(kk_range_last(rev) == 1)
@@ -530,7 +530,7 @@ struct RuntimeRangeProgressionEdgeCaseTests {
         // Values near UInt.max stored as negative Int bit patterns
         let uintMax = Int(bitPattern: UInt.max)
         let uintMaxMinus1 = Int(bitPattern: UInt.max - 1)
-        let r = kk_uint_rangeTo(uintMaxMinus1, uintMax)
+        let r = __kk_uint_rangeTo(uintMaxMinus1, uintMax)
         #expect(kk_uint_range_contains(r, uintMaxMinus1) == 1)
         #expect(kk_uint_range_contains(r, uintMax) == 1)
         #expect(kk_range_count(r) == 2)

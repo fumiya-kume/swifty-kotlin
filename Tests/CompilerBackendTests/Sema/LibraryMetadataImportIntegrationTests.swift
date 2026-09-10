@@ -191,6 +191,79 @@ struct LibraryMetadataImportIntegrationTests {
     }
 
     @Test
+    func testImportedEnumApisUseDeclarationOrderFromLibraryMetadata() throws {
+        let librarySource = """
+        package extdemo
+        enum class ExternalOsFamily {
+            UNKNOWN, MACOSX, IOS, LINUX, WINDOWS, ANDROID, WASM, TVOS, WATCHOS
+        }
+        """
+
+        try withCompiledLibrary(source: librarySource, moduleName: "ExtEnumOrder") { libraryPath in
+            let metadataText = try String(contentsOfFile: libraryPath + "/metadata.bin", encoding: .utf8)
+            let records = MetadataDecoder().decode(metadataText)
+            let enumRecord = try #require(records.first { $0.fqName == "extdemo.ExternalOsFamily" })
+            #expect(enumRecord.kind == .enumClass)
+
+            let appSource = """
+            import extdemo.ExternalOsFamily
+
+            fun main() {
+                println(ExternalOsFamily.entries[7])
+                println(ExternalOsFamily.valueOf("TVOS").ordinal)
+            }
+            """
+            try withTemporaryFile(contents: appSource) { appPath in
+                let appCtx = makeCompilationContext(
+                    inputs: [appPath],
+                    moduleName: "ImportedEnumOrderApp",
+                    emit: .kirDump,
+                    searchPaths: [libraryPath]
+                )
+                try runToKIR(appCtx)
+                try LoweringPhase().run(appCtx)
+
+                #expect(!appCtx.diagnostics.hasError, "Unexpected errors: \(appCtx.diagnostics.diagnostics.map(\.message).joined(separator: "\n"))")
+
+                let sema = try #require(appCtx.sema)
+                let enumSymbol = try #require(sema.symbols.allSymbols().first(where: { symbol in
+                    appCtx.interner.resolve(symbol.name) == "ExternalOsFamily" && symbol.kind == .enumClass
+                }))
+                let nominalLayout = try #require(sema.symbols.nominalLayout(for: enumSymbol.id))
+
+                let entrySymbols = sema.symbols.children(ofFQName: enumSymbol.fqName)
+                    .compactMap { sema.symbols.symbol($0) }
+                    .filter { $0.kind == .field }
+                    .sorted { lhs, rhs in
+                        let lhsOffset = nominalLayout.fieldOffsets[lhs.id] ?? Int.max
+                        let rhsOffset = nominalLayout.fieldOffsets[rhs.id] ?? Int.max
+                        if lhsOffset != rhsOffset {
+                            return lhsOffset < rhsOffset
+                        }
+                        return lhs.id.rawValue < rhs.id.rawValue
+                    }
+                let orderedNames = entrySymbols.map { appCtx.interner.resolve($0.name) }
+                let expectedEntryNames = [
+                    "UNKNOWN", "MACOSX", "IOS", "LINUX", "WINDOWS",
+                    "ANDROID", "WASM", "TVOS", "WATCHOS",
+                ]
+                #expect(orderedNames == expectedEntryNames)
+
+                let kir = try #require(appCtx.kir)
+                let mainFunction = try #require(
+                    findAllKIRFunctions(in: kir).first { function in
+                        appCtx.interner.resolve(function.name) == "main"
+                    },
+                    "Expected lowered main function"
+                )
+                let calls = extractCallees(from: mainFunction.body, interner: appCtx.interner)
+                #expect(calls.contains { $0.contains("entries") })
+                #expect(calls.contains { $0.contains("valueOf") })
+            }
+        }
+    }
+
+    @Test
     func testSemaAllocatesVtableSlotsFromImportedNominalMetadata() throws {
         let records = [
             MetadataRecord(kind: .class, mangledName: "_", fqName: "ext.C"),

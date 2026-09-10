@@ -210,6 +210,7 @@ package struct KnownCompilerNames {
     let mutableList: InternedString
     let set: InternedString
     let mutableSet: InternedString
+    let hashSet: InternedString
     let linkedHashSet: InternedString
     let collection: InternedString
     let mutableCollection: InternedString
@@ -349,6 +350,7 @@ package struct KnownCompilerNames {
     let kotlinCollectionsMutableListFQName: [InternedString]
     let kotlinCollectionsSetFQName: [InternedString]
     let kotlinCollectionsMutableSetFQName: [InternedString]
+    let kotlinCollectionsHashSetFQName: [InternedString]
     let kotlinCollectionsLinkedHashSetFQName: [InternedString]
     let kotlinCollectionsMapFQName: [InternedString]
     let kotlinCollectionsMutableMapFQName: [InternedString]
@@ -371,7 +373,12 @@ package struct KnownCompilerNames {
     let atomicScalarFactoryFQNames: Set<[InternedString]>
 
     package init(interner: StringInterner) {
+        self = interner.cachedCompilerNames {
+            Self(uncachedInterner: interner)
+        }
+    }
 
+    private init(uncachedInterner interner: StringInterner) {
         byte = interner.intern("Byte")
         short = interner.intern("Short")
         int = interner.intern("Int")
@@ -395,6 +402,7 @@ package struct KnownCompilerNames {
         mutableList = interner.intern("MutableList")
         set = interner.intern("Set")
         mutableSet = interner.intern("MutableSet")
+        hashSet = interner.intern("HashSet")
         linkedHashSet = interner.intern("LinkedHashSet")
         collection = interner.intern("Collection")
         mutableCollection = interner.intern("MutableCollection")
@@ -544,6 +552,7 @@ package struct KnownCompilerNames {
         kotlinCollectionsMutableListFQName = [kotlin, kotlinCollections, mutableList]
         kotlinCollectionsSetFQName = [kotlin, kotlinCollections, set]
         kotlinCollectionsMutableSetFQName = [kotlin, kotlinCollections, mutableSet]
+        kotlinCollectionsHashSetFQName = [kotlin, kotlinCollections, hashSet]
         kotlinCollectionsLinkedHashSetFQName = [kotlin, kotlinCollections, linkedHashSet]
         kotlinCollectionsMapFQName = [kotlin, kotlinCollections, map]
         kotlinCollectionsMutableMapFQName = [kotlin, kotlinCollections, mutableMap]
@@ -572,6 +581,9 @@ package struct KnownCompilerNames {
         let atomicLongName = interner.intern("AtomicLong")
         let atomicBooleanName = interner.intern("AtomicBoolean")
         let atomicReferenceName = interner.intern("AtomicReference")
+        let atomicIntArrayName = interner.intern("AtomicIntArray")
+        let atomicLongArrayName = interner.intern("AtomicLongArray")
+        let atomicArrayName = interner.intern("AtomicArray")
         let javaAtomicIntegerName = interner.intern("AtomicInteger")
         let java = interner.intern("java")
         let util = interner.intern("util")
@@ -582,10 +594,16 @@ package struct KnownCompilerNames {
             [kotlin, kotlinConcurrent, atomicLongName],
             [kotlin, kotlinConcurrent, atomicBooleanName],
             [kotlin, kotlinConcurrent, atomicReferenceName],
+            [kotlin, kotlinConcurrent, atomicIntArrayName],
+            [kotlin, kotlinConcurrent, atomicLongArrayName],
+            [kotlin, kotlinConcurrent, atomicArrayName],
             [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicIntName],
             [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicLongName],
             [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicBooleanName],
             [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicReferenceName],
+            [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicIntArrayName],
+            [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicLongArrayName],
+            [kotlin, kotlinConcurrent, kotlinConcurrentAtomics, atomicArrayName],
             [java, util, javaConcurrent, javaAtomic, javaAtomicIntegerName],
         ]
     }
@@ -645,10 +663,14 @@ package struct KnownCompilerNames {
         return symbol.name == stringBuilder && symbol.fqName.isEmpty
     }
 
-    /// True for synthetic runtime-backed atomic scalar classes whose constructors
-    /// are factory functions (e.g. `kk_atomic_int_create`) rather than
-    /// `(this, value)` initializers. These classes must not allocate a generic
-    /// `kk_object_new` instance before calling the constructor.
+    /// True for runtime-backed atomic box classes whose constructors are
+    /// factory functions (e.g. `kk_atomic_int_create`, `kk_atomic_int_array_create`)
+    /// rather than `(this, value)` initializers. These classes must not allocate
+    /// a generic `kk_object_new` instance before calling the constructor.
+    ///
+    /// Includes the source-backed `kotlin.concurrent` shells: claiming the
+    /// synthetic class drops `.synthetic`, so constructor lowering has to
+    /// recognize them by FQN rather than by the old special-call path.
     func isAtomicScalarFactorySymbol(_ symbol: SemanticSymbol) -> Bool {
         atomicScalarFactoryFQNames.contains(symbol.fqName)
     }
@@ -764,20 +786,26 @@ package struct KnownCompilerNames {
     }
 
     func isMutableSetSymbol(_ symbol: SemanticSymbol) -> Bool {
-        symbol.name == mutableSet || symbol.name == linkedHashSet
+        symbol.name == mutableSet || symbol.name == hashSet || symbol.name == linkedHashSet
             || symbolMatches(symbol, fqName: kotlinCollectionsMutableSetFQName)
+            || symbolMatches(symbol, fqName: kotlinCollectionsHashSetFQName)
             || symbolMatches(symbol, fqName: kotlinCollectionsLinkedHashSetFQName)
     }
 
     func isSetLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
         if symbolMatches(symbol, fqName: kotlinCollectionsSetFQName)
             || symbolMatches(symbol, fqName: kotlinCollectionsMutableSetFQName)
+            || symbolMatches(symbol, fqName: kotlinCollectionsHashSetFQName)
             || symbolMatches(symbol, fqName: kotlinCollectionsLinkedHashSetFQName)
         {
             return true
         }
         // Fall back to simple name match only for synthetic symbols (no FQN)
-        return (symbol.name == set || symbol.name == mutableSet || symbol.name == linkedHashSet) && symbol.fqName.isEmpty
+        return (symbol.name == set
+            || symbol.name == mutableSet
+            || symbol.name == hashSet
+            || symbol.name == linkedHashSet)
+            && symbol.fqName.isEmpty
     }
 
     func isCollectionLikeSymbol(_ symbol: SemanticSymbol) -> Bool {

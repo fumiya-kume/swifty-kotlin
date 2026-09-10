@@ -10,7 +10,6 @@ symbol fq=combineNullable.$2.secondary kind=valueParameter vis=private flags=_
 symbol fq=combineNullableDescending kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String?>,kotlin.Comparator<Any?>] ret=kotlin.Comparator<String?>
 symbol fq=combineNullableDescending.$3.primary kind=valueParameter vis=private flags=_
 symbol fq=combineNullableDescending.$3.secondary kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
 file fstdlib_kotlin_comparisons_Comparator_n package=_
   decl combine fun combine sym=combine
   decl combineDescending fun combineDescending sym=combineDescending

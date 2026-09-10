@@ -44,20 +44,6 @@ extension CollectionLiteralConstructionLoweringPass {
         }
     }
 
-    // foldIndexed: args = [receiver, initial, lambda, closureRaw?]
-    if callee == lookup.foldIndexedName || callee == lookup.kkSequenceFoldIndexedName, arguments.count == 3 || arguments.count == 4 {
-        let receiverID = arguments[0]
-        if state.sequenceExprIDs.contains(receiverID.rawValue) {
-            let initialID = arguments[1]
-            let lambdaID = arguments[2]
-            let closureRawID: KIRExprID
-            if arguments.count == 4 { closureRawID = arguments[3] } else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
-            let kkName = lookup.kkSequenceFoldIndexedName
-            let callResult = result ?? module.arena.appendTemporary(type: nil)
-            loweredBody.append(.call(symbol: nil, callee: kkName, arguments: [receiverID, initialID, lambdaID, closureRawID], result: callResult, canThrow: canThrow, thrownResult: thrownResult))
-            return true
-        }
-    }
     // reduceIndexed: args = [receiver, lambda, closureRaw?]
     if callee == lookup.reduceIndexedName || callee == lookup.kkSequenceReduceIndexedName, arguments.count == 2 || arguments.count == 3 {
         let receiverID = arguments[0]

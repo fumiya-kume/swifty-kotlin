@@ -815,6 +815,12 @@ extension CallTypeChecker {
                 sema: sema,
                 interner: interner
             )
+            let arrayConversionSourceCandidates = collectArraySourceConversionCandidates(
+                named: calleeName,
+                receiverType: memberLookupType,
+                sema: sema,
+                interner: interner
+            )
             var mutableMapPutAllSourceCandidates: [SymbolID] = []
             if interner.resolve(calleeName) == "putAll",
                ReceiverClassifier(sema: sema, interner: interner).isMutableMapType(memberLookupType),
@@ -876,7 +882,9 @@ extension CallTypeChecker {
                 }
             }
             let memberCandidates: [SymbolID]
-            if !mutableMapPutAllSourceCandidates.isEmpty {
+            if !arrayConversionSourceCandidates.isEmpty {
+                memberCandidates = arrayConversionSourceCandidates
+            } else if !mutableMapPutAllSourceCandidates.isEmpty {
                 memberCandidates = mutableMapPutAllSourceCandidates
             } else if !primitiveArraySourceCandidates.isEmpty {
                 // Primitive-array HOFs are bundled Kotlin extensions. Prefer the
@@ -946,7 +954,15 @@ extension CallTypeChecker {
                         sema: sema,
                         interner: interner
                     )
-                    if !primitiveArraySourceCandidates.isEmpty {
+                    let arrayConversionSourceCandidates = collectArraySourceConversionCandidates(
+                        named: calleeName,
+                        receiverType: nonNullReceiverForScope,
+                        sema: sema,
+                        interner: interner
+                    )
+                    if !arrayConversionSourceCandidates.isEmpty {
+                        scopeCandidates = arrayConversionSourceCandidates
+                    } else if !primitiveArraySourceCandidates.isEmpty {
                         scopeCandidates = primitiveArraySourceCandidates
                     }
                     // Extension functions are excluded from scope by the scope
@@ -1413,11 +1429,15 @@ extension CallTypeChecker {
         // STDLIB-pipeline §5 / KSP-441: Source-backed Sequence transforms
         // (map, filter, etc.) must bind to the real Kotlin declaration so the
         // object-expression pipeline runs instead of a `kk_*` runtime shortcut.
-        let sourceBackedCollectionMemberNames: Set<String> = ["take", "drop", "chunked", "windowed", "asSequence", "constrainOnce", "orEmpty", "distinct", "flatten", "filterNotNull", "withIndex", "toList", "toMutableList", "toSet", "toMutableSet", "toHashSet", "toSortedSet", "toCollection", "toMap", "unzip", "union", "intersect", "subtract", "plus", "plusElement", "minus", "minusElement", "average"]
+        let sourceBackedCollectionMemberNames: Set<String> = ["take", "drop", "chunked", "windowed", "asSequence", "constrainOnce", "orEmpty", "distinct", "flatten", "filterNotNull", "withIndex", "toList", "toMutableList", "toSet", "toMutableSet", "toHashSet", "toSortedSet", "toCollection", "toMap", "unzip", "union", "intersect", "subtract", "plus", "plusElement", "minus", "minusElement", "average", "sliceArray", "reversedArray", "asList", "toTypedArray", "putAll", "remove", "clear"]
         let sourceBackedTrailingLambdaMemberNames: Set<String> = ["map", "filter", "filterNot", "mapIndexed", "mapNotNull", "filterIndexed", "onEach", "onEachIndexed", "ifEmpty", "flatMap", "flatMapIndexed", "joinTo", "joinToString", "isNotEmpty"]
         let memberNameText = interner.resolve(calleeName)
         let isMutableMapIteratorSource = memberNameText == "iterator"
             && ReceiverClassifier(sema: sema, interner: interner).isMutableMapType(memberLookupType)
+        // MutableSet inherits independent Set.iterator and MutableIterable.iterator
+        // candidates. Keep the mutable-aware collection fallback when lookup is
+        // ambiguous, while a unique source member retains normal dispatch.
+        let isUniqueIteratorSource = memberNameText == "iterator" && candidates.count == 1
         // KSP-687 resolves Array.joinToString through the dedicated primitive
         // and generic-array source candidates. KSP-429's broad trailing-lambda
         // gate is for List/Iterable source calls; applying it to Array receivers
@@ -1427,6 +1447,7 @@ extension CallTypeChecker {
         let isSourceBackedMemberName = sourceBackedCollectionMemberNames.contains(memberNameText)
             || (sourceBackedTrailingLambdaMemberNames.contains(memberNameText) && !isArrayJoinToString)
             || isMutableMapIteratorSource
+            || isUniqueIteratorSource
         let hasSourceBackedCandidate = isSourceBackedMemberName
             && (!sourceBackedCollectionMemberNames.contains(memberNameText) || !hasTrailingLambdaArg)
             && candidates.contains { candidateID in
@@ -2049,7 +2070,8 @@ extension CallTypeChecker {
         case "contains", "isEmpty", "iterator",
              "toList", "forEach", "map", "mapIndexed", "mapNotNull",
              "filter", "filterIndexed", "filterNot",
-             "take", "drop", "sorted", "average", "random", "randomOrNull":
+             "take", "drop", "chunked", "windowed", "sorted", "average",
+             "random", "randomOrNull", "step":
             return true
         default:
             return false
@@ -2183,12 +2205,22 @@ extension CallTypeChecker {
             return []
         }
         let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        let isUIntRangeReceiver: Bool = {
+            guard let (_, symbol) = resolveClassTypeSymbol(nonNullReceiver, sema: sema) else {
+                return false
+            }
+            return ["UIntRange", "UIntProgression"].contains(interner.resolve(symbol.name))
+        }()
+        let isUIntRangeMigrationMember = isUIntRangeReceiver
+            && ["iterator", "step", "take", "drop", "chunked", "windowed"]
+                .contains(interner.resolve(calleeName))
         return sema.symbols.lookupAll(fqName: rangesFQName + [calleeName])
             .filter { candidate in
                 guard let symbol = sema.symbols.symbol(candidate),
                       symbol.kind == .function,
-                      !symbol.flags.contains(.synthetic),
-                      sema.symbols.parentSymbol(for: candidate) == rangesPackageSymbol,
+                      (!symbol.flags.contains(.synthetic) || sema.symbols.isSourceBackedSymbol(candidate)),
+                      (sema.symbols.parentSymbol(for: candidate) == rangesPackageSymbol
+                          || (isUIntRangeMigrationMember && sema.symbols.isSourceBackedSymbol(candidate))),
                       let signature = sema.symbols.functionSignature(for: candidate),
                       let declaredReceiver = signature.receiverType
                 else {
@@ -2213,7 +2245,7 @@ extension CallTypeChecker {
         interner: StringInterner
     ) -> Bool {
         switch interner.resolve(calleeName) {
-        case "getAndUpdate", "updateAndGet", "fetchAndUpdate", "updateAndFetch",
+        case "compareAndExchange", "getAndUpdate", "updateAndGet", "fetchAndUpdate", "updateAndFetch",
              "fetchAndUpdateAt", "updateAt", "updateAndFetchAt", "compareAndSet":
             return true
         default:

@@ -311,7 +311,8 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         kotlinCollectionsPkg: [InternedString],
-        collectionInterfaceSymbol: SymbolID
+        collectionInterfaceSymbol: SymbolID,
+        mutableIterableInterfaceSymbol: SymbolID
     ) -> SymbolID {
         let mutableCollectionName = interner.intern("MutableCollection")
         let mutableCollectionFQName = kotlinCollectionsPkg + [mutableCollectionName]
@@ -348,10 +349,26 @@ extension DataFlowSemaPhase {
         )))
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: mutableCollectionSymbol)
         types.setNominalTypeParameterVariances([.invariant], for: mutableCollectionSymbol)
-        symbols.setDirectSupertypes([collectionInterfaceSymbol], for: mutableCollectionSymbol)
-        types.setNominalDirectSupertypes([collectionInterfaceSymbol], for: mutableCollectionSymbol)
+        symbols.setDirectSupertypes(
+            [collectionInterfaceSymbol, mutableIterableInterfaceSymbol],
+            for: mutableCollectionSymbol
+        )
+        types.setNominalDirectSupertypes(
+            [collectionInterfaceSymbol, mutableIterableInterfaceSymbol],
+            for: mutableCollectionSymbol
+        )
         symbols.setSupertypeTypeArgs([.out(typeParamType)], for: mutableCollectionSymbol, supertype: collectionInterfaceSymbol)
         types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: mutableCollectionSymbol, supertype: collectionInterfaceSymbol)
+        symbols.setSupertypeTypeArgs(
+            [.invariant(typeParamType)],
+            for: mutableCollectionSymbol,
+            supertype: mutableIterableInterfaceSymbol
+        )
+        types.setNominalSupertypeTypeArgs(
+            [.invariant(typeParamType)],
+            for: mutableCollectionSymbol,
+            supertype: mutableIterableInterfaceSymbol
+        )
 
         let mutableCollectionType = types.make(.classType(ClassType(
             classSymbol: mutableCollectionSymbol,
@@ -799,12 +816,11 @@ extension DataFlowSemaPhase {
 
     /// Register `kotlin.collections.MutableIterable<T>` surface (STDLIB-COL-TYPE-005).
     ///
-    /// KSP-633: the nominal declaration is source-backed by
-    /// `Stdlib/kotlin/collections/MutableIterable.kt`, which reuses this shell on bundle
-    /// load (the `.synthetic` flag is cleared then); the shell also stays as the
-    /// fallback for non-bundled contexts. The covariant `iterator(): MutableIterator<T>`
-
-    /// override stays compiler-side here — see the note in the `.kt` file.
+    /// KSP-633/KSP-1070: the nominal declaration and its covariant
+    /// `iterator(): MutableIterator<T>` member are source-backed by
+    /// `Stdlib/kotlin/collections/MutableIterable.kt`, which reuses this shell on
+    /// bundle load (the `.synthetic` flag is cleared then); the shell also stays as
+    /// the fallback for non-bundled contexts.
     func registerSyntheticMutableIterableStub(
         symbols: SymbolTable,
         types: TypeSystem,

@@ -2,7 +2,7 @@
 
 /// `List<E>.maxBy` / `minBy` / `maxOf` / `minOf` / `sumOf` / `count` /
 /// `fold` / `reduce` and the comparator-based aggregate family
-/// extracted from `HeaderHelpers+SyntheticListStubs.swift`.
+/// extracted from the KSP-697 list residual registry.
 extension DataFlowSemaPhase {
     func registerListAggregateMembers(
         symbols: SymbolTable,

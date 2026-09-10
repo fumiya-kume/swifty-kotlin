@@ -487,26 +487,12 @@ extension CallTypeChecker {
     ) -> (TypeID, KIRExprKind)? {
         let types = sema.types
         switch (typeName, memberName) {
-        // Byte
-        case ("Byte", "MAX_VALUE"): return (types.intType, .intLiteral(Int64(Int8.max)))
-        case ("Byte", "MIN_VALUE"): return (types.intType, .intLiteral(Int64(Int8.min)))
-        // UInt (32-bit unsigned)
-        case ("UInt", "MAX_VALUE"): return (types.uintType, .uintLiteral(UInt64(UInt32.max)))
-        case ("UInt", "MIN_VALUE"): return (types.uintType, .uintLiteral(0))
-        case ("UInt", "SIZE_BITS"): return (types.intType, .intLiteral(32))
-        case ("UInt", "SIZE_BYTES"): return (types.intType, .intLiteral(4))
         // Float
         case ("Float", "MAX_VALUE"): return (types.floatType, .floatLiteral(Double(Float.greatestFiniteMagnitude)))
         case ("Float", "MIN_VALUE"): return (types.floatType, .floatLiteral(Double(Float.leastNonzeroMagnitude)))
         case ("Float", "NaN"): return (types.floatType, .floatLiteral(Double(Float.nan)))
         case ("Float", "POSITIVE_INFINITY"): return (types.floatType, .floatLiteral(Double(Float.infinity)))
         case ("Float", "NEGATIVE_INFINITY"): return (types.floatType, .floatLiteral(Double(-Float.infinity)))
-        // Double
-        case ("Double", "MAX_VALUE"): return (types.doubleType, .doubleLiteral(Double.greatestFiniteMagnitude))
-        case ("Double", "MIN_VALUE"): return (types.doubleType, .doubleLiteral(Double.leastNonzeroMagnitude))
-        case ("Double", "NaN"): return (types.doubleType, .doubleLiteral(Double.nan))
-        case ("Double", "POSITIVE_INFINITY"): return (types.doubleType, .doubleLiteral(Double.infinity))
-        case ("Double", "NEGATIVE_INFINITY"): return (types.doubleType, .doubleLiteral(-Double.infinity))
         default: return nil
         }
     }

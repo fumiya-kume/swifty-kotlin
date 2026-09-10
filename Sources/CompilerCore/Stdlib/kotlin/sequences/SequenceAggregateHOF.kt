@@ -14,7 +14,7 @@ import kotlin.internal.__valuesEqual
 //   Sources/Runtime/RuntimeSequenceAssociation.swift
 //   Sources/Runtime/RuntimeSequenceFoldScan.swift
 //
-// Migrated: fold, foldIndexed, reduce, reduceOrNull, reduceIndexed, reduceIndexedOrNull,
+// Migrated: reduce, reduceOrNull, reduceIndexed, reduceIndexedOrNull,
 //           reduceRight, reduceRightOrNull, reduceRightIndexed, reduceRightIndexedOrNull,
 //           scan, scanIndexed, runningFold, runningFoldIndexed, runningReduce,
 //           runningReduceIndexed, sumOf, maxByOrNull, minByOrNull, associate, associateBy,
@@ -25,28 +25,6 @@ import kotlin.internal.__valuesEqual
 //
 // Implementations materialize through toList() before looping so they reuse the
 // stable list indexing path instead of the still-limited Sequence for-loop path.
-
-public fun <T, R> Sequence<T>.fold(initial: R, operation: (R, T) -> R): R {
-    val elements = this.toList()
-    var accumulator = initial
-    var i = 0
-    while (i < elements.size) {
-        accumulator = operation(accumulator, elements[i])
-        i += 1
-    }
-    return accumulator
-}
-
-public fun <T, R> Sequence<T>.foldIndexed(initial: R, operation: (Int, R, T) -> R): R {
-    val elements = this.toList()
-    var accumulator = initial
-    var i = 0
-    while (i < elements.size) {
-        accumulator = operation(i, accumulator, elements[i])
-        i += 1
-    }
-    return accumulator
-}
 
 public fun <T> Sequence<T>.reduce(operation: (T, T) -> T): T {
     val elements = this.toList()

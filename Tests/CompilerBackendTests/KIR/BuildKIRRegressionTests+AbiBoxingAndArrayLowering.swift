@@ -500,10 +500,10 @@ struct BuildKIRCodegenRegressionTests {
     @Test
     func testABILoweringMarksAtomicRuntimeHelpersAsNonThrowing() {
         expectNonThrowingCallees([
-            "kk_atomic_int_load",
-            "kk_atomic_int_store",
-            "kk_atomic_long_compareAndExchange",
-            "kk_atomic_ref_exchange",
+            "__kk_atomic_int_load",
+            "__kk_atomic_int_store",
+            "__kk_atomic_long_compareAndExchange",
+            "__kk_atomic_ref_exchange",
         ])
     }
 
@@ -803,7 +803,10 @@ struct BuildKIRCodegenRegressionTests {
 
             let makeBody = try findKIRFunctionBody(named: "make", in: module, interner: ctx.interner)
             let makeCallNames = extractCallees(from: makeBody, interner: ctx.interner)
-            #expect(makeCallNames.contains("kk_array_of"))
+            #expect(makeCallNames.contains("kk_array_new"))
+            #expect(makeCallNames.filter { $0 == "kk_array_set" }.count == 2)
+            #expect(!makeCallNames.contains("kk_array_of"))
+            #expect(!makeCallNames.contains("uintArrayOf"))
         }
     }
 

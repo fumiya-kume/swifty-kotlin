@@ -2,12 +2,13 @@ package kotlin.text
 
 // CharSequence.chunked(size, transform) / .windowed(size, step, partialWindows, transform) —
 // the List<R>-returning overloads, as opposed to the already-migrated chunkedSequence /
-// windowedSequence — had no registered overload at all, so the trailing transform lambda's
-// implicit `it` never bound (KSWIFTK-SEMA-0022 "Unresolved reference 'it'"). Implemented here
-// directly rather than via a new native ABI bridge, mirroring this codebase's existing
-// Iterable<T> migration (Stdlib/kotlin/collections/ListWindowChunk.kt). Indices use the
-// CharSequence.length interface property so that String and other CharSequence
-// implementations observe their character count without materializing the receiver.
+// windowedSequence — are bundled Kotlin source rather than native ABI bridges. The public
+// chunked overload is self-contained because forwarding its function parameter to another
+// generic bundled-source function currently has a KIR reachability gap. The windowed trailing-
+// lambda path retains a uniquely named helper while that legacy route remains.
+// Indices use the CharSequence.length interface property so that String and other
+// CharSequence implementations observe their character count without materializing the
+// receiver.
 //
 // Unlike ListWindowChunk.kt, `chunked` does NOT delegate to `windowed` here (real kotlinc's
 // own stdlib does: `chunked(size, transform) = windowed(size, size, true, transform)`) — a
@@ -46,23 +47,6 @@ internal fun <R> CharSequence.kswiftkWindowedTransform(
     return result
 }
 
-internal fun <R> CharSequence.kswiftkChunkedTransform(size: Int, transform: (CharSequence) -> R): List<R> {
-    require(size > 0) { "size must be positive, but was $size" }
-    val length = this.length
-    val result = ArrayList<R>()
-    var index = 0
-    while (index < length) {
-        val end = index + size
-        if (end > length) {
-            result.add(transform(this.subSequence(index, length)))
-        } else {
-            result.add(transform(this.subSequence(index, end)))
-        }
-        index += size
-    }
-    return result
-}
-
 // CharSequence chunked/windowed/zip APIs are implemented in bundled Kotlin
 // source. Character indices use the receiver's length and indexed access so
 // that UTF-8 storage details do not leak into the public Kotlin behavior.
@@ -78,6 +62,20 @@ public fun CharSequence.chunked(size: Int): List<String> {
     while (index < length) {
         val end = if (index + size < length) index + size else length
         result.add(charSequenceWindow(this, index, end))
+        index += size
+    }
+    return result
+}
+
+public fun <R> CharSequence.chunked(size: Int, transform: (CharSequence) -> R): List<R> {
+    require(size > 0) { "size $size must be greater than zero." }
+    val length = this.length
+    val result = ArrayList<R>()
+    var index = 0
+    while (index < length) {
+        val end = index + size
+        val coercedEnd = if (end < 0 || end > length) length else end
+        result.add(transform(this.subSequence(index, coercedEnd)))
         index += size
     }
     return result
