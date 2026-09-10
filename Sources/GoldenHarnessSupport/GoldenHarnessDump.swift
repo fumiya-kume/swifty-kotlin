@@ -149,7 +149,17 @@ enum GoldenHarnessDump {
         let requiredSymbols = sema.symbols.allSymbols()
             .filter { ctx.requiredSymbols.contains($0.id.rawValue) }
             .filter { !isExcludedBundledSymbol($0, excludedFileIDs: excludedFileIDs) }
-            .sorted { ctx.stableKey(for: $0.id).compare(ctx.stableKey(for: $1.id), options: .numeric) == .orderedAscending }
+            .sorted { lhs, rhs in
+                let lhsKey = ctx.stableKey(for: lhs.id)
+                let rhsKey = ctx.stableKey(for: rhs.id)
+                if lhsKey != rhsKey {
+                    return lhsKey.compare(rhsKey, options: .numeric) == .orderedAscending
+                }
+                // Meaning-identical declarations can still collide (e.g. a
+                // source declaration and its synthetic stub twin); order them
+                // by the rendered line so the dump stays deterministic.
+                return renderSymbol(lhs, ctx: ctx).compare(renderSymbol(rhs, ctx: ctx), options: .numeric) == .orderedAscending
+            }
 
         var symbolLines: [String] = []
         for symbol in requiredSymbols {

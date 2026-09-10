@@ -1,21 +1,21 @@
-symbol fq=__local_0.doubleValue kind=local vis=private flags=_ type=Double
-symbol fq=__local_1.floatValue kind=local vis=private flags=_ type=Float
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.doubleValue[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_1.floatValue[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_n_from package=golden.sema
-  decl golden.sema.main fun main sym=golden.sema.main
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:32 long(4607182418800017408) type=Long
-expr e@4:23 call callee=e@4:23#1 args=[_:e@4:32] type=Double call=kotlin.fromBits#1
-expr e@4:5 localDecl doubleValue mutable=0 type=_ init=e@4:23 type=Unit ref=__local_0.doubleValue
+expr e@4:23 call callee=e@4:23#1 args=[_:e@4:32] type=Double call=kotlin.fromBits[kind=fun;params=Long]
+expr e@4:5 localDecl doubleValue mutable=0 type=_ init=e@4:23 type=Unit ref=__local_0.doubleValue[kind=local]
 expr e@5:31 int(1065353216) type=Int
-expr e@5:22 call callee=e@5:22#1 args=[_:e@5:31] type=Float call=kotlin.fromBits#0
-expr e@5:5 localDecl floatValue mutable=0 type=_ init=e@5:22 type=Unit ref=__local_1.floatValue
-expr e@6:13 name(doubleValue) type=Double ref=__local_0.doubleValue
-expr e@6:13#1 memberCall recv=e@6:13 callee=toRawBits args=[] type=Long call=kotlin.toRawBits#0
+expr e@5:22 call callee=e@5:22#1 args=[_:e@5:31] type=Float call=kotlin.fromBits[kind=fun;params=Int]
+expr e@5:5 localDecl floatValue mutable=0 type=_ init=e@5:22 type=Unit ref=__local_1.floatValue[kind=local]
+expr e@6:13 name(doubleValue) type=Double ref=__local_0.doubleValue[kind=local]
+expr e@6:13#1 memberCall recv=e@6:13 callee=toRawBits args=[] type=Long call=kotlin.toRawBits[kind=fun;recv=Double;params=]
 expr e@6:40 long(4607182418800017408) type=Long
 expr e@6:13#2 binary(equal) lhs=e@6:13#1 rhs=e@6:40 type=Boolean
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#2] type=Unit call=kotlin.io.println#1
-expr e@7:13 name(floatValue) type=Float ref=__local_1.floatValue
-expr e@7:13#1 memberCall recv=e@7:13 callee=toRawBits args=[] type=Int call=kotlin.toRawBits#1
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@7:13 name(floatValue) type=Float ref=__local_1.floatValue[kind=local]
+expr e@7:13#1 memberCall recv=e@7:13 callee=toRawBits args=[] type=Int call=kotlin.toRawBits[kind=fun;recv=Float;params=]
 expr e@7:39 int(1065353216) type=Int
 expr e@7:13#2 binary(equal) lhs=e@7:13#1 rhs=e@7:39 type=Boolean
-expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#2] type=Unit call=kotlin.io.println#1
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

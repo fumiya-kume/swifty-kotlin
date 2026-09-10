@@ -1,42 +1,42 @@
-symbol fq=__local_0.direct kind=local vis=private flags=_ type=Unit
-symbol fq=__local_1.erased kind=local vis=private flags=_ type=Any
-symbol fq=golden.sema.exerciseUnitToString kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.returnUnit kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.unitIdentityAndType kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=__local_0.direct[kind=local] kind=local vis=private flags=_ type=Unit
+symbol fq=__local_1.erased[kind=local] kind=local vis=private flags=_ type=Any
+symbol fq=golden.sema.exerciseUnitToString[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.returnUnit[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.unitIdentityAndType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 file fstdlib_kotlin_Unit_Unit_n package=golden.sema
-  decl golden.sema.returnUnit fun returnUnit sym=golden.sema.returnUnit
-  decl golden.sema.exerciseUnitToString fun exerciseUnitToString sym=golden.sema.exerciseUnitToString
-  decl golden.sema.unitIdentityAndType fun unitIdentityAndType sym=golden.sema.unitIdentityAndType
-expr e@3:26 name(Unit) type=Unit ref=kotlin.Unit
-expr e@6:24 name(Unit) type=Unit ref=kotlin.Unit
-expr e@6:5 localDecl direct mutable=0 type=Unit init=e@6:24 type=Unit ref=__local_0.direct
-expr e@7:23 name(direct) type=Unit ref=__local_0.direct
-expr e@7:5 localDecl erased mutable=0 type=Any init=e@7:23 type=Unit ref=__local_1.erased
-expr e@8:12 name(direct) type=Unit ref=__local_0.direct
-expr e@8:12#1 memberCall recv=e@8:12 callee=toString args=[] type=String call=kotlin.Unit.toString
+  decl golden.sema.returnUnit[kind=fun;params=] fun returnUnit sym=golden.sema.returnUnit[kind=fun;params=]
+  decl golden.sema.exerciseUnitToString[kind=fun;params=] fun exerciseUnitToString sym=golden.sema.exerciseUnitToString[kind=fun;params=]
+  decl golden.sema.unitIdentityAndType[kind=fun;params=] fun unitIdentityAndType sym=golden.sema.unitIdentityAndType[kind=fun;params=]
+expr e@3:26 name(Unit) type=Unit ref=kotlin.Unit[kind=obj]
+expr e@6:24 name(Unit) type=Unit ref=kotlin.Unit[kind=obj]
+expr e@6:5 localDecl direct mutable=0 type=Unit init=e@6:24 type=Unit ref=__local_0.direct[kind=local]
+expr e@7:23 name(direct) type=Unit ref=__local_0.direct[kind=local]
+expr e@7:5 localDecl erased mutable=0 type=Any init=e@7:23 type=Unit ref=__local_1.erased[kind=local]
+expr e@8:12 name(direct) type=Unit ref=__local_0.direct[kind=local]
+expr e@8:12#1 memberCall recv=e@8:12 callee=toString args=[] type=String call=kotlin.Unit.toString[kind=fun;recv=Unit;params=]
 expr e@8:32 string(|) type=String
 expr e@8:12#2 binary(add) lhs=e@8:12#1 rhs=e@8:32 type=String
-expr e@9:9 name(erased) type=Any ref=__local_1.erased
+expr e@9:9 name(erased) type=Any ref=__local_1.erased[kind=local]
 expr e@9:9#1 memberCall recv=e@9:9 callee=toString args=[] type=String
 expr e@8:12#3 binary(add) lhs=e@8:12#2 rhs=e@9:9#1 type=String
 expr e@9:29 string(|) type=String
 expr e@8:12#4 binary(add) lhs=e@8:12#3 rhs=e@9:29 type=String
-expr e@10:11 name(direct) type=Unit ref=__local_0.direct
+expr e@10:11 name(direct) type=Unit ref=__local_0.direct[kind=local]
 expr e@10:9 stringTemplate[expr(e@10:11)] type=String
 expr e@8:12#5 binary(add) lhs=e@8:12#4 rhs=e@10:9 type=String
 expr e@10:21 string(|) type=String
 expr e@8:12#6 binary(add) lhs=e@8:12#5 rhs=e@10:21 type=String
-expr e@11:9 call callee=e@11:9#1 args=[] type=Unit call=golden.sema.returnUnit
-expr e@11:9#2 memberCall recv=e@11:9 callee=toString args=[] type=String call=kotlin.Unit.toString
+expr e@11:9 call callee=e@11:9#1 args=[] type=Unit call=golden.sema.returnUnit[kind=fun;params=]
+expr e@11:9#2 memberCall recv=e@11:9 callee=toString args=[] type=String call=kotlin.Unit.toString[kind=fun;recv=Unit;params=]
 expr e@8:12#7 binary(add) lhs=e@8:12#6 rhs=e@11:9#2 type=String
 expr e@8:5 return value=e@8:12#7 type=Nothing
-expr e@15:5 name(Unit) type=Unit ref=kotlin.Unit
-expr e@15:14 name(Unit) type=Unit ref=kotlin.Unit
+expr e@15:5 name(Unit) type=Unit ref=kotlin.Unit[kind=obj]
+expr e@15:14 name(Unit) type=Unit ref=kotlin.Unit[kind=obj]
 expr e@15:5#1 binary(identityEqual) lhs=e@15:5 rhs=e@15:14 type=Boolean
-expr e@15:22 call callee=e@15:22#1 args=[] type=Unit call=golden.sema.returnUnit
-expr e@15:39 name(Unit) type=Unit ref=kotlin.Unit
+expr e@15:22 call callee=e@15:22#1 args=[] type=Unit call=golden.sema.returnUnit[kind=fun;params=]
+expr e@15:39 name(Unit) type=Unit ref=kotlin.Unit[kind=obj]
 expr e@15:22#2 binary(identityEqual) lhs=e@15:22 rhs=e@15:39 type=Boolean
 expr e@15:5#2 binary(logicalAnd) lhs=e@15:5#1 rhs=e@15:22#2 type=Boolean
-expr e@15:48 call callee=e@15:48#1 args=[] type=Unit call=golden.sema.returnUnit
+expr e@15:48 call callee=e@15:48#1 args=[] type=Unit call=golden.sema.returnUnit[kind=fun;params=]
 expr e@15:48#2 isCheck expr=e@15:48 type=Unit type=Boolean
 expr e@15:5#3 binary(logicalAnd) lhs=e@15:5#2 rhs=e@15:48#2 type=Boolean

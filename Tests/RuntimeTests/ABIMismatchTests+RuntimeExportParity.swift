@@ -109,7 +109,6 @@ struct ABIMismatchRuntimeExportParityTests {
             "kk_native_alloc_bytes",
             "kk_char_sequence_length",
             "kk_dynamic_iterator",
-            "kk_future_getState",
             "kk_int_to_int",
             "kk_kclass_has_annotation",
             "kk_kclass_js",

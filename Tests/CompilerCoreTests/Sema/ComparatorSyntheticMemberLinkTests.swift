@@ -70,7 +70,7 @@ struct ComparatorSyntheticMemberLinkTests {
         return result
     }
 
-    // MARK: - Consolidated synthetic comparator member link tests
+    // MARK: - Consolidated source-backed comparator member link tests
 
     @Test
     func testComparatorSyntheticMemberLinks() throws {
@@ -240,7 +240,7 @@ struct ComparatorSyntheticMemberLinkTests {
 
                 let chosenCallee = try #require(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
                 let symbol = try #require(sema.symbols.symbol(chosenCallee))
-                #expect(symbol.fqName.map { interner.resolve($0) } == ["kotlin", "Comparator", "compare"], "Expected Comparator.compare to resolve to the synthetic Comparator member")
+                #expect(symbol.fqName.map { interner.resolve($0) } == ["kotlin", "Comparator", "compare"], "Expected Comparator.compare to resolve to the source-backed Comparator member")
 
             }
 
@@ -274,6 +274,50 @@ struct ComparatorSyntheticMemberLinkTests {
 
             }
 
+        }
+    }
+
+    @Test
+    func testExplicitComparatorImplementationUsesSourceBackedInterface() throws {
+        let source = """
+        class ReverseComparator : Comparator<Int> {
+            override fun compare(a: Int, b: Int): Int = b - a
+        }
+
+        fun useExplicitComparator(): Int {
+            val comparator: Comparator<Int> = ReverseComparator()
+            return comparator.compare(3, 5)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let context = makeCompilationContext(
+                inputs: [path],
+                allowDefaultStdlibLibrary: false
+            )
+            try runSema(context)
+            #expect(!context.diagnostics.hasError)
+
+            let sema = try #require(context.sema)
+            let comparator = try #require(
+                sema.symbols.lookup(fqName: [
+                    context.interner.intern("kotlin"),
+                    context.interner.intern("Comparator")
+                ])
+            )
+            let comparatorInfo = try #require(sema.symbols.symbol(comparator))
+            #expect(!comparatorInfo.flags.contains(.synthetic))
+            let comparatorFileID = try #require(sema.symbols.sourceFileID(for: comparator))
+            #expect(context.sourceManager.path(of: comparatorFileID) == "__bundled_kotlin/Comparator.kt")
+
+            let compare = try #require(
+                sema.symbols.lookup(fqName: [
+                    context.interner.intern("kotlin"),
+                    context.interner.intern("Comparator"),
+                    context.interner.intern("compare")
+                ])
+            )
+            let compareInfo = try #require(sema.symbols.symbol(compare))
+            #expect(!compareInfo.flags.contains(.synthetic))
         }
     }
 }

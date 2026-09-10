@@ -43,6 +43,40 @@ func computeAnyFallbackTag(for type: TypeID, sema: SemaModule) -> Int64 {
     }
 }
 
+/// Boxes a statically non-null Long, ULong, or Double before generic hash
+/// dispatch. Their raw 64-bit representations can equal the runtime null
+/// sentinel, so passing them directly to `kk_any_hashCode` would turn a
+/// legitimate value into the null hash. `boxValueForAnySlot` selects the
+/// `_nonnull` callee variants for these types while leaving nullable sources
+/// on their existing sentinel-preserving path.
+func boxSentinelProneHashCodeReceiver(
+    _ value: KIRExprID,
+    sourceType: TypeID,
+    sema: SemaModule,
+    interner: StringInterner,
+    arena: KIRArena,
+    into instructions: inout [KIRInstruction]
+) -> KIRExprID {
+    switch sema.types.kind(of: sourceType) {
+    case .primitive(.long, .nonNull),
+         .primitive(.ulong, .nonNull),
+         .primitive(.double, .nonNull):
+        return boxValueForAnySlot(
+            value,
+            sourceType: sourceType,
+            types: sema.types,
+            symbols: sema.symbols,
+            interner: interner,
+            arena: arena,
+            resultType: sema.types.anyType,
+            requireNonNull: true,
+            into: &instructions
+        )
+    default:
+        return value
+    }
+}
+
 /// The `$enumOrdinalToName$<encodedFqName>(ordinal): String` helper for `type`,
 /// when `type` is a non-null enum class that has one.
 ///

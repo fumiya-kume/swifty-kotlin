@@ -260,6 +260,15 @@ extension CoroutineLoweringPass {
                 continue
             }
 
+            if let producerFlowCreateInstructions = rewriteProducerFlowCreateCall(
+                call: call,
+                functionValueInfoByExprRaw: functionValueInfoByExprRaw,
+                using: rewrite
+            ) {
+                loweredBody.append(contentsOf: producerFlowCreateInstructions)
+                continue
+            }
+
             if let flowCreateInstructions = rewriteFlowCreateCall(
                 call: call,
                 symbolByExprRaw: symbolByExprRaw,
@@ -657,6 +666,93 @@ extension CoroutineLoweringPass {
             symbol: call.symbol,
             callee: call.callee,
             arguments: [thunkRefExpr, continuationExpr],
+            result: call.result,
+            canThrow: call.canThrow,
+            thrownResult: call.thrownResult,
+            isSuperCall: call.isSuperCall
+        ))
+        return rewritten
+    }
+
+    /// Threads the producer receiver and captured values into a real channel
+    /// builder. The runtime bridge uses the same launcher-continuation layout
+    /// as `produce { }`, but stores the channel handle in slot zero so the
+    /// lowered `ProducerScope` receiver is reconstructed by the launcher thunk.
+    func rewriteProducerFlowCreateCall(
+        call: CallRewriteInput,
+        functionValueInfoByExprRaw: [Int32: KIRCallableValueInfo],
+        using rewrite: SuspendRewriteContext
+    ) -> [KIRInstruction]? {
+        let interner = rewrite.ctx.interner
+        guard call.callee == interner.intern("kk_channel_flow_create")
+            || call.callee == interner.intern("kk_callback_flow_create"),
+            call.arguments.count == 2
+        else {
+            return nil
+        }
+
+        guard let callableInfo = rewrite.module.arena.callableValueInfo(for: call.arguments[0])
+            ?? functionValueInfoByExprRaw[call.arguments[0].rawValue],
+            let loweredTarget = rewrite.loweredBySymbol[callableInfo.symbol]
+        else {
+            return nil
+        }
+        let originalSymbol = callableInfo.symbol
+        let captureArguments = callableInfo.captureArguments
+        let entryPointSymbol: SymbolID
+        let targetArity = rewrite.suspendFunctionArityBySymbol[loweredTarget.symbol] ?? 0
+        if targetArity == 0 {
+            entryPointSymbol = loweredTarget.symbol
+        } else {
+            guard let thunk = rewrite.launcherThunkByOriginalSymbol[originalSymbol] else {
+                return nil
+            }
+            entryPointSymbol = thunk.symbol
+        }
+
+        let continuationFunctionID = rewrite.module.arena.appendExpr(
+            .intLiteral(Int64(loweredTarget.symbol.rawValue)),
+            type: rewrite.intType
+        )
+        let continuationExpr = rewrite.module.arena.appendTemporary(
+            type: rewrite.continuationTypeByLoweredSymbol[loweredTarget.symbol] ?? rewrite.anyType
+        )
+        var rewritten: [KIRInstruction] = [
+            .call(
+                symbol: nil,
+                callee: rewrite.continuationFactory,
+                arguments: [continuationFunctionID],
+                result: continuationExpr,
+                canThrow: false,
+                thrownResult: nil
+            ),
+        ]
+
+        // Slot zero is reserved for the runtime-created channel and becomes
+        // the ProducerScope receiver. Lexical captures follow it.
+        for (index, argExpr) in captureArguments.enumerated() {
+            let slotExpr = rewrite.module.arena.appendExpr(
+                .intLiteral(Int64(index + 1)),
+                type: rewrite.intType
+            )
+            rewritten.append(.call(
+                symbol: nil,
+                callee: rewrite.launcherArgSetCallee,
+                arguments: [continuationExpr, slotExpr, argExpr],
+                result: nil,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+
+        let entryPointExpr = rewrite.module.arena.appendExpr(
+            .symbolRef(entryPointSymbol),
+            type: rewrite.intType
+        )
+        rewritten.append(.call(
+            symbol: call.symbol,
+            callee: call.callee,
+            arguments: [entryPointExpr, continuationExpr],
             result: call.result,
             canThrow: call.canThrow,
             thrownResult: call.thrownResult,

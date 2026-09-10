@@ -1,12 +1,12 @@
-symbol fq=__ObjectLiteral_0_74_110 kind=class vis=private flags=synthetic
-symbol fq=__ObjectLiteral_0_74_110.value kind=property vis=public flags=synthetic type=Int
-symbol fq=__local_0.local kind=local vis=private flags=_ type=__ObjectLiteral_0_74_110
-symbol fq=golden.sema.useAnonymousObjectLocal kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=__ObjectLiteral_0_74_110.value[kind=prop] kind=property vis=public flags=synthetic type=Int
+symbol fq=__ObjectLiteral_0_74_110[kind=class] kind=class vis=private flags=synthetic
+symbol fq=__local_0.local[kind=local] kind=local vis=private flags=_ type=__ObjectLiteral_0_74_110
+symbol fq=golden.sema.useAnonymousObjectLocal[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fanonymous_object_local package=golden.sema
-  decl golden.sema.useAnonymousObjectLocal fun useAnonymousObjectLocal sym=golden.sema.useAnonymousObjectLocal
+  decl golden.sema.useAnonymousObjectLocal[kind=fun;params=] fun useAnonymousObjectLocal sym=golden.sema.useAnonymousObjectLocal[kind=fun;params=]
 expr e@5:21 int(7) type=Int
 expr e@4:17 objectLiteral supers=[] type=__ObjectLiteral_0_74_110
-expr e@4:5 localDecl local mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.local
-expr e@7:12 name(local) type=__ObjectLiteral_0_74_110 ref=__local_0.local
-expr e@7:12#1 memberCall recv=e@7:12 callee=value args=[] type=Int ref=__ObjectLiteral_0_74_110.value
+expr e@4:5 localDecl local mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.local[kind=local]
+expr e@7:12 name(local) type=__ObjectLiteral_0_74_110 ref=__local_0.local[kind=local]
+expr e@7:12#1 memberCall recv=e@7:12 callee=value args=[] type=Int ref=__ObjectLiteral_0_74_110.value[kind=prop]
 expr e@7:5 return value=e@7:12#1 type=Nothing
