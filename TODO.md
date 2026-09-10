@@ -1033,7 +1033,7 @@
     - `kotlin.ByteArray.<init>` — constructor (Int)  -- `constructor <init>(kotlin/Int)`
     - `kotlin.ByteArray.<init>` — constructor (Int, Function1)  -- `constructor <init>(kotlin/Int, kotlin/Function1<kotlin/Int, kotlin/Byte>)`
 
-- [ ] KSP-815: kotlin.Char.Companion.Companion の未実装 stdlib API を実装する（15 件）
+- [x] KSP-815: kotlin.Char.Companion.Companion の未実装 stdlib API を実装する（15 件）
   - 対象: `kotlin.Char.Companion` / receiver `Companion`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/Char/Companion/Companion.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1056,6 +1056,8 @@
     - `kotlin.Char.Companion.MIN_VALUE` — val Companion.MIN_VALUE: Char  -- `final const val MIN_VALUE`
     - `kotlin.Char.Companion.SIZE_BITS` — val Companion.SIZE_BITS: Int  -- `final const val SIZE_BITS`
     - `kotlin.Char.Companion.SIZE_BYTES` — val Companion.SIZE_BYTES: Int  -- `final const val SIZE_BYTES`
+  - 完了確認（2026-09-04）：`Sources/CompilerCore/Stdlib/kotlin/Char/Companion/Companion.kt` に15 APIをsource-backed `public val` getterとして実装。Char は compiler primitive のため、既存の companion anchor を再利用し、runtime/ABI bridge と Sema name-string 特例は追加していない。共通10 APIは JVM kotlinc diff、Native-only 5 API（code-point/radix）は Sema golden で型と値を固定。
+  - 検証：focused Char companion Sema、Sema Golden、`stdlib_kotlin_Char_Companion_Companion_n.kt` の `diff_kotlinc`、`check_todo_ids.sh`、`validate_runtime_abi_links.sh` がpass。
 
 - [x] KSP-819: kotlin.Comparable.Comparable の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.Comparable` / receiver `Comparable`
