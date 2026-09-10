@@ -1,36 +1,36 @@
-symbol fq=__destructuring_0.matching kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=__destructuring_0.rest kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=__local_0.grouped kind=local vis=private flags=_ type=kotlin.collections.Map<Int, kotlin.collections.List<String>>
-symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.collections.Map<Int, kotlin.collections.List<String>>
-symbol fq=__local_2.checkedMatching kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=__local_3.checkedRest kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=group kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
-symbol fq=group.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=split kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
-symbol fq=split.$1.values kind=valueParameter vis=private flags=_
+symbol fq=__destructuring_0.matching[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__destructuring_0.rest[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_0.grouped[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map<Int, kotlin.collections.List<String>>
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map<Int, kotlin.collections.List<String>>
+symbol fq=__local_2.checkedMatching[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_3.checkedRest[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=group.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=group[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
+symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=split.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=split[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
 file flist_group_partition package=_
-  decl group fun group sym=group
-  decl split fun split sym=split
-expr e@5:19 name(values) type=kotlin.collections.List<String> ref=group.$0.values
+  decl group[kind=fun;params=kotlin.collections.List<String>] fun group sym=group[kind=fun;params=kotlin.collections.List<String>]
+  decl split[kind=fun;params=kotlin.collections.List<String>] fun split sym=split[kind=fun;params=kotlin.collections.List<String>]
+expr e@5:19 name(values) type=kotlin.collections.List<String> ref=group.$0.values[kind=vparam]
 expr e@5:36 name(it) type=String ref=s-0
-expr e@5:36#1 memberCall recv=e@5:36 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@5:36#1 memberCall recv=e@5:36 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@5:34 lambda params=[] body=e@5:36#1 label=groupBy type=(String) -> Any
-expr e@5:19#1 memberCall recv=e@5:19 callee=groupBy args=[_:e@5:34] type=kotlin.collections.Map<Int, kotlin.collections.List<String>> call=kotlin.collections.groupBy#2 targs=[String,Int]
-expr e@5:5 localDecl grouped mutable=0 type=_ init=e@5:19#1 type=Unit ref=__local_0.grouped
-expr e@6:43 name(grouped) type=kotlin.collections.Map<Int, kotlin.collections.List<String>> ref=__local_0.grouped
-expr e@6:5 localDecl checked mutable=0 type=Map<Int,List<String>> init=e@6:43 type=Unit ref=__local_1.checked
-expr e@10:28 name(values) type=kotlin.collections.List<String> ref=split.$1.values
+expr e@5:19#1 memberCall recv=e@5:19 callee=groupBy args=[_:e@5:34] type=kotlin.collections.Map<Int, kotlin.collections.List<String>> call=kotlin.collections.groupBy[kind=fun;recv=kotlin.collections.List<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[String,Int]
+expr e@5:5 localDecl grouped mutable=0 type=_ init=e@5:19#1 type=Unit ref=__local_0.grouped[kind=local]
+expr e@6:43 name(grouped) type=kotlin.collections.Map<Int, kotlin.collections.List<String>> ref=__local_0.grouped[kind=local]
+expr e@6:5 localDecl checked mutable=0 type=Map<Int,List<String>> init=e@6:43 type=Unit ref=__local_1.checked[kind=local]
+expr e@10:28 name(values) type=kotlin.collections.List<String> ref=split.$1.values[kind=vparam]
 expr e@10:47 name(it) type=String ref=s-1
-expr e@10:47#1 memberCall recv=e@10:47 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@10:47#1 memberCall recv=e@10:47 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@10:59 int(3) type=Int
 expr e@10:47#2 binary(greaterThan) lhs=e@10:47#1 rhs=e@10:59 type=Boolean
 expr e@10:45 lambda params=[] body=e@10:47#2 label=partition type=(String) -> Boolean
-expr e@10:28#1 memberCall recv=e@10:28 callee=partition args=[_:e@10:45] type=kotlin.Pair<kotlin.collections.List<String>, kotlin.collections.List<String>> call=kotlin.collections.partition#1 targs=[String]
+expr e@10:28#1 memberCall recv=e@10:28 callee=partition args=[_:e@10:45] type=kotlin.Pair<kotlin.collections.List<String>, kotlin.collections.List<String>> call=kotlin.collections.partition[kind=fun;recv=kotlin.collections.List<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[String]
 expr e@10:5 destructuringDecl names=[matching,rest] mutable=0 init=e@10:28#1 type=Unit
-expr e@11:41 name(matching) type=kotlin.collections.List<String> ref=__destructuring_0.matching
-expr e@11:5 localDecl checkedMatching mutable=0 type=List<String> init=e@11:41 type=Unit ref=__local_2.checkedMatching
-expr e@12:37 name(rest) type=kotlin.collections.List<String> ref=__destructuring_0.rest
-expr e@12:5 localDecl checkedRest mutable=0 type=List<String> init=e@12:37 type=Unit ref=__local_3.checkedRest
+expr e@11:41 name(matching) type=kotlin.collections.List<String> ref=__destructuring_0.matching[kind=local]
+expr e@11:5 localDecl checkedMatching mutable=0 type=List<String> init=e@11:41 type=Unit ref=__local_2.checkedMatching[kind=local]
+expr e@12:37 name(rest) type=kotlin.collections.List<String> ref=__destructuring_0.rest[kind=local]
+expr e@12:5 localDecl checkedRest mutable=0 type=List<String> init=e@12:37 type=Unit ref=__local_3.checkedRest[kind=local]

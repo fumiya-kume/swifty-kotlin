@@ -1,17 +1,17 @@
-symbol fq=golden.sema.usePrependIndent kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useReplaceIndent kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useTrim kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.usePrependIndent[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplaceIndent[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useTrim[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstring_trim_indent package=golden.sema
-  decl golden.sema.useTrim fun useTrim sym=golden.sema.useTrim
-  decl golden.sema.usePrependIndent fun usePrependIndent sym=golden.sema.usePrependIndent
-  decl golden.sema.useReplaceIndent fun useReplaceIndent sym=golden.sema.useReplaceIndent
+  decl golden.sema.useTrim[kind=fun;params=] fun useTrim sym=golden.sema.useTrim[kind=fun;params=]
+  decl golden.sema.usePrependIndent[kind=fun;params=] fun usePrependIndent sym=golden.sema.usePrependIndent[kind=fun;params=]
+  decl golden.sema.useReplaceIndent[kind=fun;params=] fun useReplaceIndent sym=golden.sema.useReplaceIndent[kind=fun;params=]
 expr e@4:25 string(  hi  ) type=String
-expr e@4:25#1 memberCall recv=e@4:25 callee=trim args=[] type=String call=kotlin.text.trim#0
+expr e@4:25#1 memberCall recv=e@4:25 callee=trim args=[] type=String call=kotlin.text.trim[kind=fun;recv=String;params=]
 expr e@6:34 string(abc
 def) type=String
 expr e@6:59 string(  ) type=String
-expr e@6:34#1 memberCall recv=e@6:34 callee=prependIndent args=[_:e@6:59] type=String call=kotlin.text.prependIndent
+expr e@6:34#1 memberCall recv=e@6:34 callee=prependIndent args=[_:e@6:59] type=String call=kotlin.text.prependIndent[kind=fun;recv=String;params=String]
 expr e@8:34 string(  abc
   def) type=String
 expr e@8:63 string() type=String
-expr e@8:34#1 memberCall recv=e@8:34 callee=replaceIndent args=[_:e@8:63] type=String call=kotlin.text.replaceIndent
+expr e@8:34#1 memberCall recv=e@8:34 callee=replaceIndent args=[_:e@8:63] type=String call=kotlin.text.replaceIndent[kind=fun;recv=String;params=String]

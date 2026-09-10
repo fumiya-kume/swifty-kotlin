@@ -1,16 +1,16 @@
-symbol fq=Add kind=class vis=public flags=_
-symbol fq=Expr kind=interface vis=public flags=sealedType
-symbol fq=Literal kind=class vis=public flags=_
-symbol fq=Multiply kind=class vis=public flags=_
-symbol fq=eval kind=function vis=public flags=_ sig=recv=_ params=[Expr] ret=String
-symbol fq=eval.$0.e kind=valueParameter vis=private flags=_
+symbol fq=Add[kind=class] kind=class vis=public flags=_
+symbol fq=Expr[kind=iface] kind=interface vis=public flags=sealedType
+symbol fq=Literal[kind=class] kind=class vis=public flags=_
+symbol fq=Multiply[kind=class] kind=class vis=public flags=_
+symbol fq=eval.$0.e[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=eval[kind=fun;params=Expr] kind=function vis=public flags=_ sig=recv=_ params=[Expr] ret=String
 file fsealed_interface_when package=_
-  decl Expr interface Expr sym=Expr
-  decl Literal class Literal sym=Literal
-  decl Add class Add sym=Add
-  decl Multiply class Multiply sym=Multiply
-  decl eval fun eval sym=eval
-expr e@7:18 name(e) type=Expr ref=eval.$0.e
+  decl Expr[kind=iface] interface Expr sym=Expr[kind=iface]
+  decl Literal[kind=class] class Literal sym=Literal[kind=class]
+  decl Add[kind=class] class Add sym=Add[kind=class]
+  decl Multiply[kind=class] class Multiply sym=Multiply[kind=class]
+  decl eval[kind=fun;params=Expr] fun eval sym=eval[kind=fun;params=Expr]
+expr e@7:18 name(e) type=Expr ref=eval.$0.e[kind=vparam]
 expr e@7:18#1 isCheck expr=e@7:18 type=Literal type=Boolean
 expr e@8:23 string(literal) type=String
 expr e@7:18#2 isCheck expr=e@7:18 type=Add type=Boolean

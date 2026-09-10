@@ -1,123 +1,123 @@
-symbol fq=__local_0.mutable kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
-symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
-symbol fq=__local_2.booleanArray kind=local vis=private flags=_ type=kotlin.BooleanArray
-symbol fq=__local_3.checkedBoolean kind=local vis=private flags=_ type=kotlin.BooleanArray
-symbol fq=__local_4.byteArray kind=local vis=private flags=_ type=kotlin.ByteArray
-symbol fq=__local_5.checkedByte kind=local vis=private flags=_ type=kotlin.ByteArray
-symbol fq=__local_6.charArray kind=local vis=private flags=_ type=kotlin.CharArray
-symbol fq=__local_7.checkedChar kind=local vis=private flags=_ type=kotlin.CharArray
-symbol fq=__local_8.doubleArray kind=local vis=private flags=_ type=kotlin.DoubleArray
-symbol fq=__local_9.checkedDouble kind=local vis=private flags=_ type=kotlin.DoubleArray
-symbol fq=__local_10.floatArray kind=local vis=private flags=_ type=kotlin.FloatArray
-symbol fq=__local_11.checkedFloat kind=local vis=private flags=_ type=kotlin.FloatArray
-symbol fq=__local_12.intArray kind=local vis=private flags=_ type=kotlin.IntArray
-symbol fq=__local_13.checkedInt kind=local vis=private flags=_ type=kotlin.IntArray
-symbol fq=__local_14.longArray kind=local vis=private flags=_ type=kotlin.LongArray
-symbol fq=__local_15.checkedLong kind=local vis=private flags=_ type=kotlin.LongArray
-symbol fq=__local_16.shortArray kind=local vis=private flags=_ type=kotlin.ShortArray
-symbol fq=__local_17.checkedShort kind=local vis=private flags=_ type=kotlin.ShortArray
-symbol fq=__local_18.ubyteArray kind=local vis=private flags=_ type=kotlin.UByteArray
-symbol fq=__local_19.checkedUByte kind=local vis=private flags=_ type=kotlin.UByteArray
-symbol fq=__local_20.ushortArray kind=local vis=private flags=_ type=kotlin.UShortArray
-symbol fq=__local_21.checkedUShort kind=local vis=private flags=_ type=kotlin.UShortArray
-symbol fq=__local_22.uintArray kind=local vis=private flags=_ type=kotlin.UIntArray
-symbol fq=__local_23.checkedUInt kind=local vis=private flags=_ type=kotlin.UIntArray
-symbol fq=__local_24.ulongArray kind=local vis=private flags=_ type=kotlin.ULongArray
-symbol fq=__local_25.checkedULong kind=local vis=private flags=_ type=kotlin.ULongArray
-symbol fq=golden.sema.collectionToArrays kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Boolean>,kotlin.collections.Collection<Byte>,kotlin.collections.Collection<Char>,kotlin.collections.Collection<Double>,kotlin.collections.Collection<Float>,kotlin.collections.Collection<Int>,kotlin.collections.Collection<Long>,kotlin.collections.Collection<Short>,kotlin.collections.Collection<UByte>,kotlin.collections.Collection<UShort>,kotlin.collections.Collection<UInt>,kotlin.collections.Collection<ULong>] ret=Unit
-symbol fq=golden.sema.collectionToArrays.$0.booleans kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToArrays.$0.bytes kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToArrays.$0.chars kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToArrays.$0.doubles kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToArrays.$0.floats kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToArrays.$0.ints kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToArrays.$0.longs kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToArrays.$0.shorts kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToArrays.$0.ubytes kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToArrays.$0.uints kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToArrays.$0.ulongs kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToArrays.$0.ushorts kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.collectionToMutable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>] ret=Unit
-symbol fq=golden.sema.collectionToMutable.$1.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.BooleanArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.ByteArray kind=class vis=public flags=synthetic type=kotlin.ByteArray
-symbol fq=kotlin.CharArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.DoubleArray kind=class vis=public flags=synthetic
-symbol fq=kotlin.FloatArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.IntArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.LongArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.ShortArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.UByteArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.UIntArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.ULongArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.UShortArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
+symbol fq=__local_0.mutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_2.booleanArray[kind=local] kind=local vis=private flags=_ type=kotlin.BooleanArray
+symbol fq=__local_3.checkedBoolean[kind=local] kind=local vis=private flags=_ type=kotlin.BooleanArray
+symbol fq=__local_4.byteArray[kind=local] kind=local vis=private flags=_ type=kotlin.ByteArray
+symbol fq=__local_5.checkedByte[kind=local] kind=local vis=private flags=_ type=kotlin.ByteArray
+symbol fq=__local_6.charArray[kind=local] kind=local vis=private flags=_ type=kotlin.CharArray
+symbol fq=__local_7.checkedChar[kind=local] kind=local vis=private flags=_ type=kotlin.CharArray
+symbol fq=__local_8.doubleArray[kind=local] kind=local vis=private flags=_ type=kotlin.DoubleArray
+symbol fq=__local_9.checkedDouble[kind=local] kind=local vis=private flags=_ type=kotlin.DoubleArray
+symbol fq=__local_10.floatArray[kind=local] kind=local vis=private flags=_ type=kotlin.FloatArray
+symbol fq=__local_11.checkedFloat[kind=local] kind=local vis=private flags=_ type=kotlin.FloatArray
+symbol fq=__local_12.intArray[kind=local] kind=local vis=private flags=_ type=kotlin.IntArray
+symbol fq=__local_13.checkedInt[kind=local] kind=local vis=private flags=_ type=kotlin.IntArray
+symbol fq=__local_14.longArray[kind=local] kind=local vis=private flags=_ type=kotlin.LongArray
+symbol fq=__local_15.checkedLong[kind=local] kind=local vis=private flags=_ type=kotlin.LongArray
+symbol fq=__local_16.shortArray[kind=local] kind=local vis=private flags=_ type=kotlin.ShortArray
+symbol fq=__local_17.checkedShort[kind=local] kind=local vis=private flags=_ type=kotlin.ShortArray
+symbol fq=__local_18.ubyteArray[kind=local] kind=local vis=private flags=_ type=kotlin.UByteArray
+symbol fq=__local_19.checkedUByte[kind=local] kind=local vis=private flags=_ type=kotlin.UByteArray
+symbol fq=__local_20.ushortArray[kind=local] kind=local vis=private flags=_ type=kotlin.UShortArray
+symbol fq=__local_21.checkedUShort[kind=local] kind=local vis=private flags=_ type=kotlin.UShortArray
+symbol fq=__local_22.uintArray[kind=local] kind=local vis=private flags=_ type=kotlin.UIntArray
+symbol fq=__local_23.checkedUInt[kind=local] kind=local vis=private flags=_ type=kotlin.UIntArray
+symbol fq=__local_24.ulongArray[kind=local] kind=local vis=private flags=_ type=kotlin.ULongArray
+symbol fq=__local_25.checkedULong[kind=local] kind=local vis=private flags=_ type=kotlin.ULongArray
+symbol fq=golden.sema.collectionToArrays.$0.booleans[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays.$0.bytes[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays.$0.chars[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays.$0.doubles[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays.$0.floats[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays.$0.ints[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays.$0.longs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays.$0.shorts[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays.$0.ubytes[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays.$0.uints[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays.$0.ulongs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays.$0.ushorts[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToArrays[kind=fun;params=kotlin.collections.Collection<Boolean>,kotlin.collections.Collection<Byte>,kotlin.collections.Collection<Char>,kotlin.collections.Collection<Double>,kotlin.collections.Collection<Float>,kotlin.collections.Collection<Int>,kotlin.collections.Collection<Long>,kotlin.collections.Collection<Short>,kotlin.collections.Collection<UByte>,kotlin.collections.Collection<UShort>,kotlin.collections.Collection<UInt>,kotlin.collections.Collection<ULong>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Boolean>,kotlin.collections.Collection<Byte>,kotlin.collections.Collection<Char>,kotlin.collections.Collection<Double>,kotlin.collections.Collection<Float>,kotlin.collections.Collection<Int>,kotlin.collections.Collection<Long>,kotlin.collections.Collection<Short>,kotlin.collections.Collection<UByte>,kotlin.collections.Collection<UShort>,kotlin.collections.Collection<UInt>,kotlin.collections.Collection<ULong>] ret=Unit
+symbol fq=golden.sema.collectionToMutable.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionToMutable[kind=fun;params=kotlin.collections.Collection<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>] ret=Unit
+symbol fq=kotlin.BooleanArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.ByteArray[kind=class] kind=class vis=public flags=synthetic type=kotlin.ByteArray
+symbol fq=kotlin.CharArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.DoubleArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.FloatArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.IntArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.LongArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.ShortArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.UByteArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.UIntArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.ULongArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.UShortArray[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fcollection_to_arrays package=golden.sema annotations=[@file:OptIn(kotlin.ExperimentalUnsignedTypes::class)]
-  decl golden.sema.collectionToMutable fun collectionToMutable sym=golden.sema.collectionToMutable
-  decl golden.sema.collectionToArrays fun collectionToArrays sym=golden.sema.collectionToArrays
-expr e@9:19 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionToMutable.$1.values
-expr e@9:19#1 memberCall recv=e@9:19 callee=toMutableList args=[] type=kotlin.collections.MutableList<Int> call=kotlin.collections.toMutableList#0 targs=[Int]
-expr e@9:5 localDecl mutable mutable=0 type=_ init=e@9:19#1 type=Unit ref=__local_0.mutable
-expr e@10:37 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
-expr e@10:5 localDecl checked mutable=0 type=MutableList<Int> init=e@10:37 type=Unit ref=__local_1.checked
-expr e@27:24 name(booleans) type=kotlin.collections.Collection<Boolean> ref=golden.sema.collectionToArrays.$0.booleans
-expr e@27:24#1 memberCall recv=e@27:24 callee=toBooleanArray args=[] type=kotlin.BooleanArray call=kotlin.collections.toBooleanArray#0
-expr e@27:5 localDecl booleanArray mutable=0 type=_ init=e@27:24#1 type=Unit ref=__local_2.booleanArray
-expr e@28:40 name(booleanArray) type=kotlin.BooleanArray ref=__local_2.booleanArray
-expr e@28:5 localDecl checkedBoolean mutable=0 type=BooleanArray init=e@28:40 type=Unit ref=__local_3.checkedBoolean
-expr e@29:21 name(bytes) type=kotlin.collections.Collection<Byte> ref=golden.sema.collectionToArrays.$0.bytes
-expr e@29:21#1 memberCall recv=e@29:21 callee=toByteArray args=[] type=kotlin.ByteArray call=kotlin.collections.toByteArray#0
-expr e@29:5 localDecl byteArray mutable=0 type=_ init=e@29:21#1 type=Unit ref=__local_4.byteArray
-expr e@30:34 name(byteArray) type=kotlin.ByteArray ref=__local_4.byteArray
-expr e@30:5 localDecl checkedByte mutable=0 type=ByteArray init=e@30:34 type=Unit ref=__local_5.checkedByte
-expr e@31:21 name(chars) type=kotlin.collections.Collection<Char> ref=golden.sema.collectionToArrays.$0.chars
-expr e@31:21#1 memberCall recv=e@31:21 callee=toCharArray args=[] type=kotlin.CharArray call=kotlin.collections.toCharArray#0
-expr e@31:5 localDecl charArray mutable=0 type=_ init=e@31:21#1 type=Unit ref=__local_6.charArray
-expr e@32:34 name(charArray) type=kotlin.CharArray ref=__local_6.charArray
-expr e@32:5 localDecl checkedChar mutable=0 type=CharArray init=e@32:34 type=Unit ref=__local_7.checkedChar
-expr e@33:23 name(doubles) type=kotlin.collections.Collection<Double> ref=golden.sema.collectionToArrays.$0.doubles
-expr e@33:23#1 memberCall recv=e@33:23 callee=toDoubleArray args=[] type=kotlin.DoubleArray call=kotlin.collections.toDoubleArray#0
-expr e@33:5 localDecl doubleArray mutable=0 type=_ init=e@33:23#1 type=Unit ref=__local_8.doubleArray
-expr e@34:38 name(doubleArray) type=kotlin.DoubleArray ref=__local_8.doubleArray
-expr e@34:5 localDecl checkedDouble mutable=0 type=DoubleArray init=e@34:38 type=Unit ref=__local_9.checkedDouble
-expr e@35:22 name(floats) type=kotlin.collections.Collection<Float> ref=golden.sema.collectionToArrays.$0.floats
-expr e@35:22#1 memberCall recv=e@35:22 callee=toFloatArray args=[] type=kotlin.FloatArray call=kotlin.collections.toFloatArray#0
-expr e@35:5 localDecl floatArray mutable=0 type=_ init=e@35:22#1 type=Unit ref=__local_10.floatArray
-expr e@36:36 name(floatArray) type=kotlin.FloatArray ref=__local_10.floatArray
-expr e@36:5 localDecl checkedFloat mutable=0 type=FloatArray init=e@36:36 type=Unit ref=__local_11.checkedFloat
-expr e@37:20 name(ints) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionToArrays.$0.ints
-expr e@37:20#1 memberCall recv=e@37:20 callee=toIntArray args=[] type=kotlin.IntArray call=kotlin.collections.toIntArray#0
-expr e@37:5 localDecl intArray mutable=0 type=_ init=e@37:20#1 type=Unit ref=__local_12.intArray
-expr e@38:32 name(intArray) type=kotlin.IntArray ref=__local_12.intArray
-expr e@38:5 localDecl checkedInt mutable=0 type=IntArray init=e@38:32 type=Unit ref=__local_13.checkedInt
-expr e@39:21 name(longs) type=kotlin.collections.Collection<Long> ref=golden.sema.collectionToArrays.$0.longs
-expr e@39:21#1 memberCall recv=e@39:21 callee=toLongArray args=[] type=kotlin.LongArray call=kotlin.collections.toLongArray#0
-expr e@39:5 localDecl longArray mutable=0 type=_ init=e@39:21#1 type=Unit ref=__local_14.longArray
-expr e@40:34 name(longArray) type=kotlin.LongArray ref=__local_14.longArray
-expr e@40:5 localDecl checkedLong mutable=0 type=LongArray init=e@40:34 type=Unit ref=__local_15.checkedLong
-expr e@41:22 name(shorts) type=kotlin.collections.Collection<Short> ref=golden.sema.collectionToArrays.$0.shorts
-expr e@41:22#1 memberCall recv=e@41:22 callee=toShortArray args=[] type=kotlin.ShortArray call=kotlin.collections.toShortArray#0
-expr e@41:5 localDecl shortArray mutable=0 type=_ init=e@41:22#1 type=Unit ref=__local_16.shortArray
-expr e@42:36 name(shortArray) type=kotlin.ShortArray ref=__local_16.shortArray
-expr e@42:5 localDecl checkedShort mutable=0 type=ShortArray init=e@42:36 type=Unit ref=__local_17.checkedShort
-expr e@43:22 name(ubytes) type=kotlin.collections.Collection<UByte> ref=golden.sema.collectionToArrays.$0.ubytes
-expr e@43:22#1 memberCall recv=e@43:22 callee=toUByteArray args=[] type=kotlin.UByteArray call=kotlin.collections.toUByteArray#0
-expr e@43:5 localDecl ubyteArray mutable=0 type=_ init=e@43:22#1 type=Unit ref=__local_18.ubyteArray
-expr e@44:36 name(ubyteArray) type=kotlin.UByteArray ref=__local_18.ubyteArray
-expr e@44:5 localDecl checkedUByte mutable=0 type=UByteArray init=e@44:36 type=Unit ref=__local_19.checkedUByte
-expr e@45:23 name(ushorts) type=kotlin.collections.Collection<UShort> ref=golden.sema.collectionToArrays.$0.ushorts
-expr e@45:23#1 memberCall recv=e@45:23 callee=toUShortArray args=[] type=kotlin.UShortArray call=kotlin.collections.toUShortArray#0
-expr e@45:5 localDecl ushortArray mutable=0 type=_ init=e@45:23#1 type=Unit ref=__local_20.ushortArray
-expr e@46:38 name(ushortArray) type=kotlin.UShortArray ref=__local_20.ushortArray
-expr e@46:5 localDecl checkedUShort mutable=0 type=UShortArray init=e@46:38 type=Unit ref=__local_21.checkedUShort
-expr e@47:21 name(uints) type=kotlin.collections.Collection<UInt> ref=golden.sema.collectionToArrays.$0.uints
-expr e@47:21#1 memberCall recv=e@47:21 callee=toUIntArray args=[] type=kotlin.UIntArray call=kotlin.collections.toUIntArray#0
-expr e@47:5 localDecl uintArray mutable=0 type=_ init=e@47:21#1 type=Unit ref=__local_22.uintArray
-expr e@48:34 name(uintArray) type=kotlin.UIntArray ref=__local_22.uintArray
-expr e@48:5 localDecl checkedUInt mutable=0 type=UIntArray init=e@48:34 type=Unit ref=__local_23.checkedUInt
-expr e@49:22 name(ulongs) type=kotlin.collections.Collection<ULong> ref=golden.sema.collectionToArrays.$0.ulongs
-expr e@49:22#1 memberCall recv=e@49:22 callee=toULongArray args=[] type=kotlin.ULongArray call=kotlin.collections.toULongArray#0
-expr e@49:5 localDecl ulongArray mutable=0 type=_ init=e@49:22#1 type=Unit ref=__local_24.ulongArray
-expr e@50:36 name(ulongArray) type=kotlin.ULongArray ref=__local_24.ulongArray
-expr e@50:5 localDecl checkedULong mutable=0 type=ULongArray init=e@50:36 type=Unit ref=__local_25.checkedULong
+  decl golden.sema.collectionToMutable[kind=fun;params=kotlin.collections.Collection<Int>] fun collectionToMutable sym=golden.sema.collectionToMutable[kind=fun;params=kotlin.collections.Collection<Int>]
+  decl golden.sema.collectionToArrays[kind=fun;params=kotlin.collections.Collection<Boolean>,kotlin.collections.Collection<Byte>,kotlin.collections.Collection<Char>,kotlin.collections.Collection<Double>,kotlin.collections.Collection<Float>,kotlin.collections.Collection<Int>,kotlin.collections.Collection<Long>,kotlin.collections.Collection<Short>,kotlin.collections.Collection<UByte>,kotlin.collections.Collection<UShort>,kotlin.collections.Collection<UInt>,kotlin.collections.Collection<ULong>] fun collectionToArrays sym=golden.sema.collectionToArrays[kind=fun;params=kotlin.collections.Collection<Boolean>,kotlin.collections.Collection<Byte>,kotlin.collections.Collection<Char>,kotlin.collections.Collection<Double>,kotlin.collections.Collection<Float>,kotlin.collections.Collection<Int>,kotlin.collections.Collection<Long>,kotlin.collections.Collection<Short>,kotlin.collections.Collection<UByte>,kotlin.collections.Collection<UShort>,kotlin.collections.Collection<UInt>,kotlin.collections.Collection<ULong>]
+expr e@9:19 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionToMutable.$1.values[kind=vparam]
+expr e@9:19#1 memberCall recv=e@9:19 callee=toMutableList args=[] type=kotlin.collections.MutableList<Int> call=kotlin.collections.toMutableList[kind=fun;recv=kotlin.collections.Collection<T0>;params=;gen=1] targs=[Int]
+expr e@9:5 localDecl mutable mutable=0 type=_ init=e@9:19#1 type=Unit ref=__local_0.mutable[kind=local]
+expr e@10:37 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
+expr e@10:5 localDecl checked mutable=0 type=MutableList<Int> init=e@10:37 type=Unit ref=__local_1.checked[kind=local]
+expr e@27:24 name(booleans) type=kotlin.collections.Collection<Boolean> ref=golden.sema.collectionToArrays.$0.booleans[kind=vparam]
+expr e@27:24#1 memberCall recv=e@27:24 callee=toBooleanArray args=[] type=kotlin.BooleanArray call=kotlin.collections.toBooleanArray[kind=fun;recv=kotlin.collections.Collection<Boolean>;params=]
+expr e@27:5 localDecl booleanArray mutable=0 type=_ init=e@27:24#1 type=Unit ref=__local_2.booleanArray[kind=local]
+expr e@28:40 name(booleanArray) type=kotlin.BooleanArray ref=__local_2.booleanArray[kind=local]
+expr e@28:5 localDecl checkedBoolean mutable=0 type=BooleanArray init=e@28:40 type=Unit ref=__local_3.checkedBoolean[kind=local]
+expr e@29:21 name(bytes) type=kotlin.collections.Collection<Byte> ref=golden.sema.collectionToArrays.$0.bytes[kind=vparam]
+expr e@29:21#1 memberCall recv=e@29:21 callee=toByteArray args=[] type=kotlin.ByteArray call=kotlin.collections.toByteArray[kind=fun;recv=kotlin.collections.Collection<Byte>;params=]
+expr e@29:5 localDecl byteArray mutable=0 type=_ init=e@29:21#1 type=Unit ref=__local_4.byteArray[kind=local]
+expr e@30:34 name(byteArray) type=kotlin.ByteArray ref=__local_4.byteArray[kind=local]
+expr e@30:5 localDecl checkedByte mutable=0 type=ByteArray init=e@30:34 type=Unit ref=__local_5.checkedByte[kind=local]
+expr e@31:21 name(chars) type=kotlin.collections.Collection<Char> ref=golden.sema.collectionToArrays.$0.chars[kind=vparam]
+expr e@31:21#1 memberCall recv=e@31:21 callee=toCharArray args=[] type=kotlin.CharArray call=kotlin.collections.toCharArray[kind=fun;recv=kotlin.collections.Collection<Char>;params=]
+expr e@31:5 localDecl charArray mutable=0 type=_ init=e@31:21#1 type=Unit ref=__local_6.charArray[kind=local]
+expr e@32:34 name(charArray) type=kotlin.CharArray ref=__local_6.charArray[kind=local]
+expr e@32:5 localDecl checkedChar mutable=0 type=CharArray init=e@32:34 type=Unit ref=__local_7.checkedChar[kind=local]
+expr e@33:23 name(doubles) type=kotlin.collections.Collection<Double> ref=golden.sema.collectionToArrays.$0.doubles[kind=vparam]
+expr e@33:23#1 memberCall recv=e@33:23 callee=toDoubleArray args=[] type=kotlin.DoubleArray call=kotlin.collections.toDoubleArray[kind=fun;recv=kotlin.collections.Collection<Double>;params=]
+expr e@33:5 localDecl doubleArray mutable=0 type=_ init=e@33:23#1 type=Unit ref=__local_8.doubleArray[kind=local]
+expr e@34:38 name(doubleArray) type=kotlin.DoubleArray ref=__local_8.doubleArray[kind=local]
+expr e@34:5 localDecl checkedDouble mutable=0 type=DoubleArray init=e@34:38 type=Unit ref=__local_9.checkedDouble[kind=local]
+expr e@35:22 name(floats) type=kotlin.collections.Collection<Float> ref=golden.sema.collectionToArrays.$0.floats[kind=vparam]
+expr e@35:22#1 memberCall recv=e@35:22 callee=toFloatArray args=[] type=kotlin.FloatArray call=kotlin.collections.toFloatArray[kind=fun;recv=kotlin.collections.Collection<Float>;params=]
+expr e@35:5 localDecl floatArray mutable=0 type=_ init=e@35:22#1 type=Unit ref=__local_10.floatArray[kind=local]
+expr e@36:36 name(floatArray) type=kotlin.FloatArray ref=__local_10.floatArray[kind=local]
+expr e@36:5 localDecl checkedFloat mutable=0 type=FloatArray init=e@36:36 type=Unit ref=__local_11.checkedFloat[kind=local]
+expr e@37:20 name(ints) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionToArrays.$0.ints[kind=vparam]
+expr e@37:20#1 memberCall recv=e@37:20 callee=toIntArray args=[] type=kotlin.IntArray call=kotlin.collections.toIntArray[kind=fun;recv=kotlin.collections.Collection<Int>;params=]
+expr e@37:5 localDecl intArray mutable=0 type=_ init=e@37:20#1 type=Unit ref=__local_12.intArray[kind=local]
+expr e@38:32 name(intArray) type=kotlin.IntArray ref=__local_12.intArray[kind=local]
+expr e@38:5 localDecl checkedInt mutable=0 type=IntArray init=e@38:32 type=Unit ref=__local_13.checkedInt[kind=local]
+expr e@39:21 name(longs) type=kotlin.collections.Collection<Long> ref=golden.sema.collectionToArrays.$0.longs[kind=vparam]
+expr e@39:21#1 memberCall recv=e@39:21 callee=toLongArray args=[] type=kotlin.LongArray call=kotlin.collections.toLongArray[kind=fun;recv=kotlin.collections.Collection<Long>;params=]
+expr e@39:5 localDecl longArray mutable=0 type=_ init=e@39:21#1 type=Unit ref=__local_14.longArray[kind=local]
+expr e@40:34 name(longArray) type=kotlin.LongArray ref=__local_14.longArray[kind=local]
+expr e@40:5 localDecl checkedLong mutable=0 type=LongArray init=e@40:34 type=Unit ref=__local_15.checkedLong[kind=local]
+expr e@41:22 name(shorts) type=kotlin.collections.Collection<Short> ref=golden.sema.collectionToArrays.$0.shorts[kind=vparam]
+expr e@41:22#1 memberCall recv=e@41:22 callee=toShortArray args=[] type=kotlin.ShortArray call=kotlin.collections.toShortArray[kind=fun;recv=kotlin.collections.Collection<Short>;params=]
+expr e@41:5 localDecl shortArray mutable=0 type=_ init=e@41:22#1 type=Unit ref=__local_16.shortArray[kind=local]
+expr e@42:36 name(shortArray) type=kotlin.ShortArray ref=__local_16.shortArray[kind=local]
+expr e@42:5 localDecl checkedShort mutable=0 type=ShortArray init=e@42:36 type=Unit ref=__local_17.checkedShort[kind=local]
+expr e@43:22 name(ubytes) type=kotlin.collections.Collection<UByte> ref=golden.sema.collectionToArrays.$0.ubytes[kind=vparam]
+expr e@43:22#1 memberCall recv=e@43:22 callee=toUByteArray args=[] type=kotlin.UByteArray call=kotlin.collections.toUByteArray[kind=fun;recv=kotlin.collections.Collection<UByte>;params=]
+expr e@43:5 localDecl ubyteArray mutable=0 type=_ init=e@43:22#1 type=Unit ref=__local_18.ubyteArray[kind=local]
+expr e@44:36 name(ubyteArray) type=kotlin.UByteArray ref=__local_18.ubyteArray[kind=local]
+expr e@44:5 localDecl checkedUByte mutable=0 type=UByteArray init=e@44:36 type=Unit ref=__local_19.checkedUByte[kind=local]
+expr e@45:23 name(ushorts) type=kotlin.collections.Collection<UShort> ref=golden.sema.collectionToArrays.$0.ushorts[kind=vparam]
+expr e@45:23#1 memberCall recv=e@45:23 callee=toUShortArray args=[] type=kotlin.UShortArray call=kotlin.collections.toUShortArray[kind=fun;recv=kotlin.collections.Collection<UShort>;params=]
+expr e@45:5 localDecl ushortArray mutable=0 type=_ init=e@45:23#1 type=Unit ref=__local_20.ushortArray[kind=local]
+expr e@46:38 name(ushortArray) type=kotlin.UShortArray ref=__local_20.ushortArray[kind=local]
+expr e@46:5 localDecl checkedUShort mutable=0 type=UShortArray init=e@46:38 type=Unit ref=__local_21.checkedUShort[kind=local]
+expr e@47:21 name(uints) type=kotlin.collections.Collection<UInt> ref=golden.sema.collectionToArrays.$0.uints[kind=vparam]
+expr e@47:21#1 memberCall recv=e@47:21 callee=toUIntArray args=[] type=kotlin.UIntArray call=kotlin.collections.toUIntArray[kind=fun;recv=kotlin.collections.Collection<UInt>;params=]
+expr e@47:5 localDecl uintArray mutable=0 type=_ init=e@47:21#1 type=Unit ref=__local_22.uintArray[kind=local]
+expr e@48:34 name(uintArray) type=kotlin.UIntArray ref=__local_22.uintArray[kind=local]
+expr e@48:5 localDecl checkedUInt mutable=0 type=UIntArray init=e@48:34 type=Unit ref=__local_23.checkedUInt[kind=local]
+expr e@49:22 name(ulongs) type=kotlin.collections.Collection<ULong> ref=golden.sema.collectionToArrays.$0.ulongs[kind=vparam]
+expr e@49:22#1 memberCall recv=e@49:22 callee=toULongArray args=[] type=kotlin.ULongArray call=kotlin.collections.toULongArray[kind=fun;recv=kotlin.collections.Collection<ULong>;params=]
+expr e@49:5 localDecl ulongArray mutable=0 type=_ init=e@49:22#1 type=Unit ref=__local_24.ulongArray[kind=local]
+expr e@50:36 name(ulongArray) type=kotlin.ULongArray ref=__local_24.ulongArray[kind=local]
+expr e@50:5 localDecl checkedULong mutable=0 type=ULongArray init=e@50:36 type=Unit ref=__local_25.checkedULong[kind=local]

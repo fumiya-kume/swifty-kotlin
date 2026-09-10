@@ -1,17 +1,17 @@
-symbol fq=golden.sema.useToDouble kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double
-symbol fq=golden.sema.useToDoubleOrNull kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double?
-symbol fq=golden.sema.useToInt kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useToIntOrNull kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int?
+symbol fq=golden.sema.useToDoubleOrNull[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double?
+symbol fq=golden.sema.useToDouble[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double
+symbol fq=golden.sema.useToIntOrNull[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int?
+symbol fq=golden.sema.useToInt[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstring_numeric_conversion package=golden.sema
-  decl golden.sema.useToInt fun useToInt sym=golden.sema.useToInt
-  decl golden.sema.useToDouble fun useToDouble sym=golden.sema.useToDouble
-  decl golden.sema.useToIntOrNull fun useToIntOrNull sym=golden.sema.useToIntOrNull
-  decl golden.sema.useToDoubleOrNull fun useToDoubleOrNull sym=golden.sema.useToDoubleOrNull
+  decl golden.sema.useToInt[kind=fun;params=] fun useToInt sym=golden.sema.useToInt[kind=fun;params=]
+  decl golden.sema.useToDouble[kind=fun;params=] fun useToDouble sym=golden.sema.useToDouble[kind=fun;params=]
+  decl golden.sema.useToIntOrNull[kind=fun;params=] fun useToIntOrNull sym=golden.sema.useToIntOrNull[kind=fun;params=]
+  decl golden.sema.useToDoubleOrNull[kind=fun;params=] fun useToDoubleOrNull sym=golden.sema.useToDoubleOrNull[kind=fun;params=]
 expr e@6:23 string(42) type=String
-expr e@6:23#1 memberCall recv=e@6:23 callee=toInt args=[] type=Int call=kotlin.text.toInt#0
+expr e@6:23#1 memberCall recv=e@6:23 callee=toInt args=[] type=Int call=kotlin.text.toInt[kind=fun;recv=String;params=]
 expr e@8:29 string(3.14) type=String
-expr e@8:29#1 memberCall recv=e@8:29 callee=toDouble args=[] type=Double call=kotlin.text.toDouble#1
+expr e@8:29#1 memberCall recv=e@8:29 callee=toDouble args=[] type=Double call=kotlin.text.toDouble[kind=fun;recv=String;params=]
 expr e@10:30 string(123) type=String
-expr e@10:30#1 memberCall recv=e@10:30 callee=toIntOrNull args=[] type=Int? call=kotlin.text.toIntOrNull#1
+expr e@10:30#1 memberCall recv=e@10:30 callee=toIntOrNull args=[] type=Int? call=kotlin.text.toIntOrNull[kind=fun;recv=String;params=]
 expr e@12:36 string( 3.14 ) type=String
-expr e@12:36#1 memberCall recv=e@12:36 callee=toDoubleOrNull args=[] type=Double? call=kotlin.text.toDoubleOrNull#1
+expr e@12:36#1 memberCall recv=e@12:36 callee=toDoubleOrNull args=[] type=Double? call=kotlin.text.toDoubleOrNull[kind=fun;recv=String;params=]

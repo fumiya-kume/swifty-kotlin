@@ -1,43 +1,43 @@
-symbol fq=__local_0.existing kind=local vis=private flags=_ type=Int?
-symbol fq=__local_1.checkedExisting kind=local vis=private flags=_ type=Int?
-symbol fq=__local_2.missing kind=local vis=private flags=_ type=Int?
-symbol fq=__local_3.checkedMissing kind=local vis=private flags=_ type=Int?
-symbol fq=__local_4.removed kind=local vis=private flags=_ type=Int?
-symbol fq=__local_5.checked kind=local vis=private flags=_ type=Int?
-symbol fq=getOrPutNullable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>,String] ret=Unit
-symbol fq=getOrPutNullable.$0.key kind=valueParameter vis=private flags=_
-symbol fq=getOrPutNullable.$0.map kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=setAndRemove kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>,String,Int?] ret=Unit
-symbol fq=setAndRemove.$1.key kind=valueParameter vis=private flags=_
-symbol fq=setAndRemove.$1.map kind=valueParameter vis=private flags=_
-symbol fq=setAndRemove.$1.value kind=valueParameter vis=private flags=_
+symbol fq=__local_0.existing[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_1.checkedExisting[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_2.missing[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_3.checkedMissing[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_4.removed[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_5.checked[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=getOrPutNullable.$0.key[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=getOrPutNullable.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=getOrPutNullable[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,String] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>,String] ret=Unit
+symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=setAndRemove.$1.key[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=setAndRemove.$1.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=setAndRemove.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=setAndRemove[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,String,Int?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>,String,Int?] ret=Unit
 file fmutable_map_get_or_put package=_
-  decl getOrPutNullable fun getOrPutNullable sym=getOrPutNullable
-  decl setAndRemove fun setAndRemove sym=setAndRemove
-expr e@6:20 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=getOrPutNullable.$0.map
-expr e@6:33 name(key) type=String ref=getOrPutNullable.$0.key
+  decl getOrPutNullable[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,String] fun getOrPutNullable sym=getOrPutNullable[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,String]
+  decl setAndRemove[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,String,Int?] fun setAndRemove sym=setAndRemove[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,String,Int?]
+expr e@6:20 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=getOrPutNullable.$0.map[kind=vparam]
+expr e@6:33 name(key) type=String ref=getOrPutNullable.$0.key[kind=vparam]
 expr e@6:40 int(2) type=Int
 expr e@6:38 lambda params=[] body=e@6:40 label=getOrPut type=() -> Int?
-expr e@6:20#1 memberCall recv=e@6:20 callee=getOrPut args=[_:e@6:33,_:e@6:38] type=Int? call=kotlin.collections.getOrPut
-expr e@6:5 localDecl existing mutable=0 type=_ init=e@6:20#1 type=Unit ref=__local_0.existing
-expr e@7:33 name(existing) type=Int? ref=__local_0.existing
-expr e@7:5 localDecl checkedExisting mutable=0 type=Int? init=e@7:33 type=Unit ref=__local_1.checkedExisting
-expr e@8:19 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=getOrPutNullable.$0.map
+expr e@6:20#1 memberCall recv=e@6:20 callee=getOrPut args=[_:e@6:33,_:e@6:38] type=Int? call=kotlin.collections.getOrPut[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=T0,fn{p=;ret=T1};gen=2]
+expr e@6:5 localDecl existing mutable=0 type=_ init=e@6:20#1 type=Unit ref=__local_0.existing[kind=local]
+expr e@7:33 name(existing) type=Int? ref=__local_0.existing[kind=local]
+expr e@7:5 localDecl checkedExisting mutable=0 type=Int? init=e@7:33 type=Unit ref=__local_1.checkedExisting[kind=local]
+expr e@8:19 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=getOrPutNullable.$0.map[kind=vparam]
 expr e@8:32 string(missing) type=String
 expr e@8:45 name(null) type=Nothing?
 expr e@8:43 lambda params=[] body=e@8:45 label=getOrPut type=() -> Int?
-expr e@8:19#1 memberCall recv=e@8:19 callee=getOrPut args=[_:e@8:32,_:e@8:43] type=Int? call=kotlin.collections.getOrPut
-expr e@8:5 localDecl missing mutable=0 type=_ init=e@8:19#1 type=Unit ref=__local_2.missing
-expr e@9:32 name(missing) type=Int? ref=__local_2.missing
-expr e@9:5 localDecl checkedMissing mutable=0 type=Int? init=e@9:32 type=Unit ref=__local_3.checkedMissing
-expr e@13:5 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=setAndRemove.$1.map
-expr e@13:9 name(key) type=String ref=setAndRemove.$1.key
-expr e@13:16 name(value) type=Int? ref=setAndRemove.$1.value
-expr e@13:5#1 indexedAssign receiver=e@13:5 indices=[e@13:9] value=e@13:16 type=Unit call=kotlin.collections.set targs=[String,Int?]
-expr e@14:19 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=setAndRemove.$1.map
-expr e@14:30 name(key) type=String ref=setAndRemove.$1.key
-expr e@14:19#1 memberCall recv=e@14:19 callee=remove args=[_:e@14:30] type=Int? call=kotlin.collections.remove#2 targs=[String,Int?]
-expr e@14:5 localDecl removed mutable=0 type=_ init=e@14:19#1 type=Unit ref=__local_4.removed
-expr e@15:25 name(removed) type=Int? ref=__local_4.removed
-expr e@15:5 localDecl checked mutable=0 type=Int? init=e@15:25 type=Unit ref=__local_5.checked
+expr e@8:19#1 memberCall recv=e@8:19 callee=getOrPut args=[_:e@8:32,_:e@8:43] type=Int? call=kotlin.collections.getOrPut[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=T0,fn{p=;ret=T1};gen=2]
+expr e@8:5 localDecl missing mutable=0 type=_ init=e@8:19#1 type=Unit ref=__local_2.missing[kind=local]
+expr e@9:32 name(missing) type=Int? ref=__local_2.missing[kind=local]
+expr e@9:5 localDecl checkedMissing mutable=0 type=Int? init=e@9:32 type=Unit ref=__local_3.checkedMissing[kind=local]
+expr e@13:5 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=setAndRemove.$1.map[kind=vparam]
+expr e@13:9 name(key) type=String ref=setAndRemove.$1.key[kind=vparam]
+expr e@13:16 name(value) type=Int? ref=setAndRemove.$1.value[kind=vparam]
+expr e@13:5#1 indexedAssign receiver=e@13:5 indices=[e@13:9] value=e@13:16 type=Unit call=kotlin.collections.set[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=T0,T1;gen=2] targs=[String,Int?]
+expr e@14:19 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=setAndRemove.$1.map[kind=vparam]
+expr e@14:30 name(key) type=String ref=setAndRemove.$1.key[kind=vparam]
+expr e@14:19#1 memberCall recv=e@14:19 callee=remove args=[_:e@14:30] type=Int? call=kotlin.collections.remove[kind=fun;recv=kotlin.collections.MutableMap<out T0,T1>;params=T0;gen=2] targs=[String,Int?]
+expr e@14:5 localDecl removed mutable=0 type=_ init=e@14:19#1 type=Unit ref=__local_4.removed[kind=local]
+expr e@15:25 name(removed) type=Int? ref=__local_4.removed[kind=local]
+expr e@15:5 localDecl checked mutable=0 type=Int? init=e@15:25 type=Unit ref=__local_5.checked[kind=local]

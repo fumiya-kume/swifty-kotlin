@@ -1,27 +1,27 @@
-symbol fq=__local_0.x kind=local vis=private flags=_ type=String
-symbol fq=__local_1.y kind=local vis=private flags=_ type=Int
-symbol fq=golden.sema.returnOrValue kind=function vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int
-symbol fq=golden.sema.returnOrValue.$0.flag kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.throwOrValue kind=function vis=public flags=_ sig=recv=_ params=[Boolean] ret=String
-symbol fq=golden.sema.throwOrValue.$1.flag kind=valueParameter vis=private flags=_
+symbol fq=__local_0.x[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_1.y[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=golden.sema.returnOrValue.$0.flag[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.returnOrValue[kind=fun;params=Boolean] kind=function vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int
+symbol fq=golden.sema.throwOrValue.$1.flag[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.throwOrValue[kind=fun;params=Boolean] kind=function vis=public flags=_ sig=recv=_ params=[Boolean] ret=String
 file fnothing_branch_narrowing package=golden.sema
-  decl golden.sema.throwOrValue fun throwOrValue sym=golden.sema.throwOrValue
-  decl golden.sema.returnOrValue fun returnOrValue sym=golden.sema.returnOrValue
-expr e@4:25 name(flag) type=Boolean ref=golden.sema.throwOrValue.$1.flag
+  decl golden.sema.throwOrValue[kind=fun;params=Boolean] fun throwOrValue sym=golden.sema.throwOrValue[kind=fun;params=Boolean]
+  decl golden.sema.returnOrValue[kind=fun;params=Boolean] fun returnOrValue sym=golden.sema.returnOrValue[kind=fun;params=Boolean]
+expr e@4:25 name(flag) type=Boolean ref=golden.sema.throwOrValue.$1.flag[kind=vparam]
 expr e@4:31 string(ok) type=String
 expr e@4:72 string(fail) type=String
-expr e@4:47 call callee=e@4:47#1 args=[_:e@4:72] type=kotlin.IllegalArgumentException call=kotlin.IllegalArgumentException.<init>#1
+expr e@4:47 call callee=e@4:47#1 args=[_:e@4:72] type=kotlin.IllegalArgumentException call=kotlin.IllegalArgumentException.<init>[kind=ctor;recv=kotlin.IllegalArgumentException;params=String?]
 expr e@4:41 throw value=e@4:47 type=Nothing
 expr e@4:21 if cond=e@4:25 then=e@4:31 else=e@4:41 type=String
-expr e@4:5 localDecl x mutable=0 type=String init=e@4:21 type=Unit ref=__local_0.x
-expr e@5:12 name(x) type=String ref=__local_0.x
+expr e@4:5 localDecl x mutable=0 type=String init=e@4:21 type=Unit ref=__local_0.x[kind=local]
+expr e@5:12 name(x) type=String ref=__local_0.x[kind=local]
 expr e@5:5 return value=e@5:12 type=Nothing
-expr e@9:22 name(flag) type=Boolean ref=golden.sema.returnOrValue.$0.flag
+expr e@9:22 name(flag) type=Boolean ref=golden.sema.returnOrValue.$0.flag[kind=vparam]
 expr e@9:28 int(42) type=Int
 expr e@9:44 int(1) type=Int
 expr e@9:43 unary(unaryMinus) operand=e@9:44 type=Int
 expr e@9:36 return value=e@9:43 type=Nothing
 expr e@9:18 if cond=e@9:22 then=e@9:28 else=e@9:36 type=Int
-expr e@9:5 localDecl y mutable=0 type=Int init=e@9:18 type=Unit ref=__local_1.y
-expr e@10:12 name(y) type=Int ref=__local_1.y
+expr e@9:5 localDecl y mutable=0 type=Int init=e@9:18 type=Unit ref=__local_1.y[kind=local]
+expr e@10:12 name(y) type=Int ref=__local_1.y[kind=local]
 expr e@10:5 return value=e@10:12 type=Nothing

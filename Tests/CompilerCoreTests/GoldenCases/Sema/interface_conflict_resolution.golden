@@ -1,36 +1,36 @@
-symbol fq=golden.sema.A kind=interface vis=public flags=_
-symbol fq=golden.sema.B kind=interface vis=public flags=_
-symbol fq=golden.sema.B.greet kind=function vis=public flags=overrideMember sig=recv=golden.sema.B params=[] ret=String
-symbol fq=golden.sema.Base kind=interface vis=public flags=_
-symbol fq=golden.sema.C kind=interface vis=public flags=_
-symbol fq=golden.sema.C.greet kind=function vis=public flags=overrideMember sig=recv=golden.sema.C params=[] ret=String
-symbol fq=golden.sema.D kind=class vis=public flags=_
-symbol fq=golden.sema.Left kind=interface vis=public flags=_
-symbol fq=golden.sema.Left.method kind=function vis=public flags=overrideMember sig=recv=golden.sema.Left params=[] ret=String
-symbol fq=golden.sema.Right kind=interface vis=public flags=_
-symbol fq=golden.sema.Right.method kind=function vis=public flags=overrideMember sig=recv=golden.sema.Right params=[] ret=String
-symbol fq=golden.sema.WithOverride kind=class vis=public flags=_
-symbol fq=golden.sema.WithSuperCall kind=class vis=public flags=_
+symbol fq=golden.sema.A[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.B.greet[kind=fun;recv=golden.sema.B;params=] kind=function vis=public flags=overrideMember sig=recv=golden.sema.B params=[] ret=String
+symbol fq=golden.sema.B[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.Base[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.C.greet[kind=fun;recv=golden.sema.C;params=] kind=function vis=public flags=overrideMember sig=recv=golden.sema.C params=[] ret=String
+symbol fq=golden.sema.C[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.D[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.Left.method[kind=fun;recv=golden.sema.Left;params=] kind=function vis=public flags=overrideMember sig=recv=golden.sema.Left params=[] ret=String
+symbol fq=golden.sema.Left[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.Right.method[kind=fun;recv=golden.sema.Right;params=] kind=function vis=public flags=overrideMember sig=recv=golden.sema.Right params=[] ret=String
+symbol fq=golden.sema.Right[kind=iface] kind=interface vis=public flags=_
+symbol fq=golden.sema.WithOverride[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.WithSuperCall[kind=class] kind=class vis=public flags=_
 file finterface_conflict_resolution package=golden.sema
-  decl golden.sema.Base interface Base sym=golden.sema.Base
-  decl golden.sema.Left interface Left sym=golden.sema.Left
-  decl golden.sema.Right interface Right sym=golden.sema.Right
-  decl golden.sema.WithOverride class WithOverride sym=golden.sema.WithOverride
-  decl golden.sema.WithSuperCall class WithSuperCall sym=golden.sema.WithSuperCall
-  decl golden.sema.A interface A sym=golden.sema.A
-  decl golden.sema.B interface B sym=golden.sema.B
-  decl golden.sema.C interface C sym=golden.sema.C
-  decl golden.sema.D class D sym=golden.sema.D
+  decl golden.sema.Base[kind=iface] interface Base sym=golden.sema.Base[kind=iface]
+  decl golden.sema.Left[kind=iface] interface Left sym=golden.sema.Left[kind=iface]
+  decl golden.sema.Right[kind=iface] interface Right sym=golden.sema.Right[kind=iface]
+  decl golden.sema.WithOverride[kind=class] class WithOverride sym=golden.sema.WithOverride[kind=class]
+  decl golden.sema.WithSuperCall[kind=class] class WithSuperCall sym=golden.sema.WithSuperCall[kind=class]
+  decl golden.sema.A[kind=iface] interface A sym=golden.sema.A[kind=iface]
+  decl golden.sema.B[kind=iface] interface B sym=golden.sema.B[kind=iface]
+  decl golden.sema.C[kind=iface] interface C sym=golden.sema.C[kind=iface]
+  decl golden.sema.D[kind=class] class D sym=golden.sema.D[kind=class]
 expr e@6:28 string(Base) type=String
 expr e@10:37 string(Left) type=String
 expr e@14:37 string(Right) type=String
 expr e@19:37 string(Override) type=String
 expr e@24:37 super<Left> type=golden.sema.Left
-expr e@24:37#1 memberCall recv=e@24:37 callee=method args=[] type=String call=golden.sema.Left.method
+expr e@24:37#1 memberCall recv=e@24:37 callee=method args=[] type=String call=golden.sema.Left.method[kind=fun;recv=golden.sema.Left;params=]
 expr e@24:60 string(+) type=String
 expr e@24:37#2 binary(add) lhs=e@24:37#1 rhs=e@24:60 type=String
 expr e@24:66 super<Right> type=golden.sema.Right
-expr e@24:66#1 memberCall recv=e@24:66 callee=method args=[] type=String call=golden.sema.Right.method
+expr e@24:66#1 memberCall recv=e@24:66 callee=method args=[] type=String call=golden.sema.Right.method[kind=fun;recv=golden.sema.Right;params=]
 expr e@24:37#3 binary(add) lhs=e@24:37#2 rhs=e@24:66#1 type=String
 expr e@29:27 string(A) type=String
 expr e@33:36 string(B) type=String
@@ -38,7 +38,7 @@ expr e@34:27 string(BOnly) type=String
 expr e@38:36 string(C) type=String
 expr e@39:27 string(COnly) type=String
 expr e@44:36 super<B> type=golden.sema.B
-expr e@44:36#1 memberCall recv=e@44:36 callee=greet args=[] type=String call=golden.sema.B.greet
+expr e@44:36#1 memberCall recv=e@44:36 callee=greet args=[] type=String call=golden.sema.B.greet[kind=fun;recv=golden.sema.B;params=]
 expr e@44:55 super<C> type=golden.sema.C
-expr e@44:55#1 memberCall recv=e@44:55 callee=greet args=[] type=String call=golden.sema.C.greet
+expr e@44:55#1 memberCall recv=e@44:55 callee=greet args=[] type=String call=golden.sema.C.greet[kind=fun;recv=golden.sema.C;params=]
 expr e@44:36#2 binary(add) lhs=e@44:36#1 rhs=e@44:55#1 type=String

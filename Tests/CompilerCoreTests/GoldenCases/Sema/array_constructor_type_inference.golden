@@ -1,31 +1,31 @@
-symbol fq=__local_0.doubled kind=local vis=private flags=_ type=kotlin.Array<Int>
-symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.Array<Int>
-symbol fq=__local_2.array kind=local vis=private flags=_ type=kotlin.Array<out Any>
-symbol fq=__local_3.array kind=local vis=private flags=_ type=kotlin.Array<String>
-symbol fq=arrayConstructorExpectedType kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=arrayConstructorExplicitTypeArgWinsOverExpectedType kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=arrayConstructorWithInit kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=__local_0.doubled[kind=local] kind=local vis=private flags=_ type=kotlin.Array<Int>
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.Array<Int>
+symbol fq=__local_2.array[kind=local] kind=local vis=private flags=_ type=kotlin.Array<out Any>
+symbol fq=__local_3.array[kind=local] kind=local vis=private flags=_ type=kotlin.Array<String>
+symbol fq=arrayConstructorExpectedType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=arrayConstructorExplicitTypeArgWinsOverExpectedType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=arrayConstructorWithInit[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
 file farray_constructor_type_inference package=_
-  decl arrayConstructorWithInit fun arrayConstructorWithInit sym=arrayConstructorWithInit
-  decl arrayConstructorExplicitTypeArgWinsOverExpectedType fun arrayConstructorExplicitTypeArgWinsOverExpectedType sym=arrayConstructorExplicitTypeArgWinsOverExpectedType
-  decl arrayConstructorExpectedType fun arrayConstructorExpectedType sym=arrayConstructorExpectedType
+  decl arrayConstructorWithInit[kind=fun;params=] fun arrayConstructorWithInit sym=arrayConstructorWithInit[kind=fun;params=]
+  decl arrayConstructorExplicitTypeArgWinsOverExpectedType[kind=fun;params=] fun arrayConstructorExplicitTypeArgWinsOverExpectedType sym=arrayConstructorExplicitTypeArgWinsOverExpectedType[kind=fun;params=]
+  decl arrayConstructorExpectedType[kind=fun;params=] fun arrayConstructorExpectedType sym=arrayConstructorExpectedType[kind=fun;params=]
 expr e@5:25 int(5) type=Int
 expr e@5:30 name(it) type=Int ref=s-0
 expr e@5:35 int(2) type=Int
 expr e@5:30#1 binary(multiply) lhs=e@5:30 rhs=e@5:35 type=Int
 expr e@5:28 lambda params=[] body=e@5:30#1 label=Array type=(Int) -> Int
 expr e@5:19 call callee=e@5:19#1 args=[_:e@5:25,_:e@5:28] type=kotlin.Array<Int>
-expr e@5:5 localDecl doubled mutable=0 type=_ init=e@5:19 type=Unit ref=__local_0.doubled
-expr e@6:31 name(doubled) type=kotlin.Array<Int> ref=__local_0.doubled
-expr e@6:5 localDecl checked mutable=0 type=Array<Int> init=e@6:31 type=Unit ref=__local_1.checked
+expr e@5:5 localDecl doubled mutable=0 type=_ init=e@5:19 type=Unit ref=__local_0.doubled[kind=local]
+expr e@6:31 name(doubled) type=kotlin.Array<Int> ref=__local_0.doubled[kind=local]
+expr e@6:5 localDecl checked mutable=0 type=Array<Int> init=e@6:31 type=Unit ref=__local_1.checked[kind=local]
 expr e@10:44 int(3) type=Int
 expr e@10:49 name(it) type=Int ref=s-1
 expr e@10:47 lambda params=[] body=e@10:49 label=Array type=(Int) -> Int
 expr e@10:33 call callee=e@10:33#1 args=[_:e@10:44,_:e@10:47] type=kotlin.Array<Int>
-expr e@10:5 localDecl array mutable=0 type=Array<out Any> init=e@10:33 type=Unit ref=__local_2.array
+expr e@10:5 localDecl array mutable=0 type=Array<out Any> init=e@10:33 type=Unit ref=__local_2.array[kind=local]
 expr e@14:38 int(3) type=Int
 expr e@14:43 string(x) type=String
 expr e@14:41 lambda params=[] body=e@14:43 label=Array type=(Int) -> String
 expr e@14:32 call callee=e@14:32#1 args=[_:e@14:38,_:e@14:41] type=kotlin.Array<String>
-expr e@14:5 localDecl array mutable=0 type=Array<String> init=e@14:32 type=Unit ref=__local_3.array
+expr e@14:5 localDecl array mutable=0 type=Array<String> init=e@14:32 type=Unit ref=__local_3.array[kind=local]

@@ -1,29 +1,29 @@
-symbol fq=combine kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String>,kotlin.Comparator<Any>] ret=kotlin.Comparator<String>
-symbol fq=combine.$0.primary kind=valueParameter vis=private flags=_
-symbol fq=combine.$0.secondary kind=valueParameter vis=private flags=_
-symbol fq=combineDescending kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String>,kotlin.Comparator<Any>] ret=kotlin.Comparator<String>
-symbol fq=combineDescending.$1.primary kind=valueParameter vis=private flags=_
-symbol fq=combineDescending.$1.secondary kind=valueParameter vis=private flags=_
-symbol fq=combineNullable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String?>,kotlin.Comparator<Any?>] ret=kotlin.Comparator<String?>
-symbol fq=combineNullable.$2.primary kind=valueParameter vis=private flags=_
-symbol fq=combineNullable.$2.secondary kind=valueParameter vis=private flags=_
-symbol fq=combineNullableDescending kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String?>,kotlin.Comparator<Any?>] ret=kotlin.Comparator<String?>
-symbol fq=combineNullableDescending.$3.primary kind=valueParameter vis=private flags=_
-symbol fq=combineNullableDescending.$3.secondary kind=valueParameter vis=private flags=_
+symbol fq=combine.$0.primary[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=combine.$0.secondary[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=combineDescending.$1.primary[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=combineDescending.$1.secondary[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=combineDescending[kind=fun;params=kotlin.Comparator<String>,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String>,kotlin.Comparator<Any>] ret=kotlin.Comparator<String>
+symbol fq=combineNullable.$2.primary[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=combineNullable.$2.secondary[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=combineNullableDescending.$3.primary[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=combineNullableDescending.$3.secondary[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=combineNullableDescending[kind=fun;params=kotlin.Comparator<String?>,kotlin.Comparator<Any?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String?>,kotlin.Comparator<Any?>] ret=kotlin.Comparator<String?>
+symbol fq=combineNullable[kind=fun;params=kotlin.Comparator<String?>,kotlin.Comparator<Any?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String?>,kotlin.Comparator<Any?>] ret=kotlin.Comparator<String?>
+symbol fq=combine[kind=fun;params=kotlin.Comparator<String>,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Comparator<String>,kotlin.Comparator<Any>] ret=kotlin.Comparator<String>
 file fstdlib_kotlin_comparisons_Comparator_n package=_
-  decl combine fun combine sym=combine
-  decl combineDescending fun combineDescending sym=combineDescending
-  decl combineNullable fun combineNullable sym=combineNullable
-  decl combineNullableDescending fun combineNullableDescending sym=combineNullableDescending
-expr e@5:5 name(primary) type=kotlin.Comparator<String> ref=combine.$0.primary
-expr e@5:18 name(secondary) type=kotlin.Comparator<Any> ref=combine.$0.secondary
-expr e@5:5#1 memberCall recv=e@5:5 callee=then args=[_:e@5:18] type=kotlin.Comparator<String> call=kotlin.comparisons.then targs=[String]
-expr e@8:5 name(primary) type=kotlin.Comparator<String> ref=combineDescending.$1.primary
-expr e@8:28 name(secondary) type=kotlin.Comparator<Any> ref=combineDescending.$1.secondary
-expr e@8:5#1 memberCall recv=e@8:5 callee=thenDescending args=[_:e@8:28] type=kotlin.Comparator<String> call=kotlin.comparisons.thenDescending#1 targs=[String]
-expr e@11:5 name(primary) type=kotlin.Comparator<String?> ref=combineNullable.$2.primary
-expr e@11:18 name(secondary) type=kotlin.Comparator<Any?> ref=combineNullable.$2.secondary
-expr e@11:5#1 memberCall recv=e@11:5 callee=then args=[_:e@11:18] type=kotlin.Comparator<String?> call=kotlin.comparisons.then targs=[String?]
-expr e@16:26 name(primary) type=kotlin.Comparator<String?> ref=combineNullableDescending.$3.primary
-expr e@16:49 name(secondary) type=kotlin.Comparator<Any?> ref=combineNullableDescending.$3.secondary
-expr e@16:26#1 memberCall recv=e@16:26 callee=thenDescending args=[_:e@16:49] type=kotlin.Comparator<String?> call=kotlin.comparisons.thenDescending#1 targs=[String?]
+  decl combine[kind=fun;params=kotlin.Comparator<String>,kotlin.Comparator<Any>] fun combine sym=combine[kind=fun;params=kotlin.Comparator<String>,kotlin.Comparator<Any>]
+  decl combineDescending[kind=fun;params=kotlin.Comparator<String>,kotlin.Comparator<Any>] fun combineDescending sym=combineDescending[kind=fun;params=kotlin.Comparator<String>,kotlin.Comparator<Any>]
+  decl combineNullable[kind=fun;params=kotlin.Comparator<String?>,kotlin.Comparator<Any?>] fun combineNullable sym=combineNullable[kind=fun;params=kotlin.Comparator<String?>,kotlin.Comparator<Any?>]
+  decl combineNullableDescending[kind=fun;params=kotlin.Comparator<String?>,kotlin.Comparator<Any?>] fun combineNullableDescending sym=combineNullableDescending[kind=fun;params=kotlin.Comparator<String?>,kotlin.Comparator<Any?>]
+expr e@5:5 name(primary) type=kotlin.Comparator<String> ref=combine.$0.primary[kind=vparam]
+expr e@5:18 name(secondary) type=kotlin.Comparator<Any> ref=combine.$0.secondary[kind=vparam]
+expr e@5:5#1 memberCall recv=e@5:5 callee=then args=[_:e@5:18] type=kotlin.Comparator<String> call=kotlin.comparisons.then[kind=fun;recv=kotlin.Comparator<T0>;params=kotlin.Comparator<in T0>;gen=1] targs=[String]
+expr e@8:5 name(primary) type=kotlin.Comparator<String> ref=combineDescending.$1.primary[kind=vparam]
+expr e@8:28 name(secondary) type=kotlin.Comparator<Any> ref=combineDescending.$1.secondary[kind=vparam]
+expr e@8:5#1 memberCall recv=e@8:5 callee=thenDescending args=[_:e@8:28] type=kotlin.Comparator<String> call=kotlin.comparisons.thenDescending[kind=fun;recv=kotlin.Comparator<T0>;params=kotlin.Comparator<in T0>;gen=1] targs=[String]
+expr e@11:5 name(primary) type=kotlin.Comparator<String?> ref=combineNullable.$2.primary[kind=vparam]
+expr e@11:18 name(secondary) type=kotlin.Comparator<Any?> ref=combineNullable.$2.secondary[kind=vparam]
+expr e@11:5#1 memberCall recv=e@11:5 callee=then args=[_:e@11:18] type=kotlin.Comparator<String?> call=kotlin.comparisons.then[kind=fun;recv=kotlin.Comparator<T0>;params=kotlin.Comparator<in T0>;gen=1] targs=[String?]
+expr e@16:26 name(primary) type=kotlin.Comparator<String?> ref=combineNullableDescending.$3.primary[kind=vparam]
+expr e@16:49 name(secondary) type=kotlin.Comparator<Any?> ref=combineNullableDescending.$3.secondary[kind=vparam]
+expr e@16:26#1 memberCall recv=e@16:26 callee=thenDescending args=[_:e@16:49] type=kotlin.Comparator<String?> call=kotlin.comparisons.thenDescending[kind=fun;recv=kotlin.Comparator<T0>;params=kotlin.Comparator<in T0>;gen=1] targs=[String?]

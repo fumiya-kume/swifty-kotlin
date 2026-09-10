@@ -1,22 +1,22 @@
-symbol fq=__local_0.e kind=local vis=private flags=_ type=kotlin.OutOfMemoryError
-symbol fq=__local_1.e kind=local vis=private flags=_ type=kotlin.OutOfMemoryError
-symbol fq=golden.sema.outOfMemoryErrorDefault kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.outOfMemoryErrorMessage kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=__local_0.e[kind=local] kind=local vis=private flags=_ type=kotlin.OutOfMemoryError
+symbol fq=__local_1.e[kind=local] kind=local vis=private flags=_ type=kotlin.OutOfMemoryError
+symbol fq=golden.sema.outOfMemoryErrorDefault[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.outOfMemoryErrorMessage[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstdlib_kotlin_n_OutOfMemoryError package=golden.sema
-  decl golden.sema.outOfMemoryErrorDefault fun outOfMemoryErrorDefault sym=golden.sema.outOfMemoryErrorDefault
-  decl golden.sema.outOfMemoryErrorMessage fun outOfMemoryErrorMessage sym=golden.sema.outOfMemoryErrorMessage
-expr e@4:13 call callee=e@4:13#1 args=[] type=kotlin.OutOfMemoryError call=kotlin.OutOfMemoryError.<init>#0
-expr e@4:5 localDecl e mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.e
-expr e@5:12 name(e) type=kotlin.OutOfMemoryError ref=__local_0.e
-expr e@5:12#1 memberCall recv=e@5:12 callee=message args=[] type=String? ref=kotlin.Throwable.message
+  decl golden.sema.outOfMemoryErrorDefault[kind=fun;params=] fun outOfMemoryErrorDefault sym=golden.sema.outOfMemoryErrorDefault[kind=fun;params=]
+  decl golden.sema.outOfMemoryErrorMessage[kind=fun;params=] fun outOfMemoryErrorMessage sym=golden.sema.outOfMemoryErrorMessage[kind=fun;params=]
+expr e@4:13 call callee=e@4:13#1 args=[] type=kotlin.OutOfMemoryError call=kotlin.OutOfMemoryError.<init>[kind=ctor;recv=kotlin.OutOfMemoryError;params=]
+expr e@4:5 localDecl e mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.e[kind=local]
+expr e@5:12 name(e) type=kotlin.OutOfMemoryError ref=__local_0.e[kind=local]
+expr e@5:12#1 memberCall recv=e@5:12 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@5:25 string(null) type=String
 expr e@5:12#2 binary(elvis) lhs=e@5:12#1 rhs=e@5:25 type=String
 expr e@5:5 return value=e@5:12#2 type=Nothing
 expr e@9:30 string(out of memory) type=String
-expr e@9:13 call callee=e@9:13#1 args=[_:e@9:30] type=kotlin.OutOfMemoryError call=kotlin.OutOfMemoryError.<init>#1
-expr e@9:5 localDecl e mutable=0 type=_ init=e@9:13 type=Unit ref=__local_1.e
-expr e@10:12 name(e) type=kotlin.OutOfMemoryError ref=__local_1.e
-expr e@10:12#1 memberCall recv=e@10:12 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@9:13 call callee=e@9:13#1 args=[_:e@9:30] type=kotlin.OutOfMemoryError call=kotlin.OutOfMemoryError.<init>[kind=ctor;recv=kotlin.OutOfMemoryError;params=String?]
+expr e@9:5 localDecl e mutable=0 type=_ init=e@9:13 type=Unit ref=__local_1.e[kind=local]
+expr e@10:12 name(e) type=kotlin.OutOfMemoryError ref=__local_1.e[kind=local]
+expr e@10:12#1 memberCall recv=e@10:12 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@10:25 string(null) type=String
 expr e@10:12#2 binary(elvis) lhs=e@10:12#1 rhs=e@10:25 type=String
 expr e@10:5 return value=e@10:12#2 type=Nothing

@@ -1,19 +1,19 @@
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.readLazy kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Lazy<Int>] ret=Int
-symbol fq=golden.sema.readLazy.$0.lazy kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.readLazy.$0.lazy[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.readLazy[kind=fun;params=kotlin.Lazy<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Lazy<Int>] ret=Int
 file fstdlib_kotlin_Lazy_Lazy_n package=golden.sema
-  decl golden.sema.readLazy fun readLazy sym=golden.sema.readLazy
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@4:9 name(lazy) type=kotlin.Lazy<Int> ref=golden.sema.readLazy.$0.lazy
-expr e@4:9#1 memberCall recv=e@4:9 callee=isInitialized args=[] type=Boolean call=kotlin.Lazy.isInitialized targs=[Int]
-expr e@5:16 name(lazy) type=kotlin.Lazy<Int> ref=golden.sema.readLazy.$0.lazy
-expr e@5:16#1 memberCall recv=e@5:16 callee=value args=[] type=Int ref=kotlin.Lazy.value
+  decl golden.sema.readLazy[kind=fun;params=kotlin.Lazy<Int>] fun readLazy sym=golden.sema.readLazy[kind=fun;params=kotlin.Lazy<Int>]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@4:9 name(lazy) type=kotlin.Lazy<Int> ref=golden.sema.readLazy.$0.lazy[kind=vparam]
+expr e@4:9#1 memberCall recv=e@4:9 callee=isInitialized args=[] type=Boolean call=kotlin.Lazy.isInitialized[kind=fun;recv=kotlin.Lazy<T0>;params=;gen=1] targs=[Int]
+expr e@5:16 name(lazy) type=kotlin.Lazy<Int> ref=golden.sema.readLazy.$0.lazy[kind=vparam]
+expr e@5:16#1 memberCall recv=e@5:16 callee=value args=[] type=Int ref=kotlin.Lazy.value[kind=prop]
 expr e@5:9 return value=e@5:16#1 type=Nothing
 expr e@4:31 blockExpr stmts=[] trailing=e@5:9 type=Nothing
 expr e@4:5 if cond=e@4:9#1 then=e@4:31 else=_ type=Unit
 expr e@7:12 int(0) type=Int
 expr e@7:5 return value=e@7:12 type=Nothing
 expr e@11:29 int(42) type=Int
-expr e@11:22 call callee=e@11:22#1 args=[_:e@11:29] type=kotlin.Lazy<Int> call=kotlin.lazyOf targs=[Int]
-expr e@11:13 call callee=e@11:13#1 args=[_:e@11:22] type=Int call=golden.sema.readLazy
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13] type=Unit call=kotlin.io.println#1
+expr e@11:22 call callee=e@11:22#1 args=[_:e@11:29] type=kotlin.Lazy<Int> call=kotlin.lazyOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@11:13 call callee=e@11:13#1 args=[_:e@11:22] type=Int call=golden.sema.readLazy[kind=fun;params=kotlin.Lazy<Int>]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

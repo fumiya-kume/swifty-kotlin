@@ -1,21 +1,21 @@
-symbol fq=__local_0.checkedIndex kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.checkedItem kind=local vis=private flags=_ type=String
-symbol fq=__local_2.result kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=__local_3.checked kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=indexed kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
-symbol fq=indexed.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=__local_0.checkedIndex[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.checkedItem[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_2.result[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=indexed.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=indexed[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file flist_map_indexed package=_
-  decl indexed fun indexed sym=indexed
-expr e@5:18 name(values) type=kotlin.collections.List<String> ref=indexed.$0.values
+  decl indexed[kind=fun;params=kotlin.collections.List<String>] fun indexed sym=indexed[kind=fun;params=kotlin.collections.List<String>]
+expr e@5:18 name(values) type=kotlin.collections.List<String> ref=indexed.$0.values[kind=vparam]
 expr e@6:33 name(index) type=Int ref=s-0
-expr e@6:9 localDecl checkedIndex mutable=0 type=Int init=e@6:33 type=Unit ref=__local_0.checkedIndex
+expr e@6:9 localDecl checkedIndex mutable=0 type=Int init=e@6:33 type=Unit ref=__local_0.checkedIndex[kind=local]
 expr e@7:35 name(item) type=String ref=s-1
-expr e@7:9 localDecl checkedItem mutable=0 type=String init=e@7:35 type=Unit ref=__local_1.checkedItem
+expr e@7:9 localDecl checkedItem mutable=0 type=String init=e@7:35 type=Unit ref=__local_1.checkedItem[kind=local]
 expr e@8:9 name(index) type=Int ref=s-0
 expr e@6:9#1 blockExpr stmts=[e@6:9,e@7:9] trailing=e@8:9 type=Int
 expr e@5:36 lambda params=[index,item] body=e@6:9#1 label=mapIndexed type=(Int, String) -> Any
-expr e@5:18#1 memberCall recv=e@5:18 callee=mapIndexed args=[_:e@5:36] type=kotlin.collections.List<Int> call=kotlin.collections.mapIndexed#14 targs=[String,Int]
-expr e@5:5 localDecl result mutable=0 type=_ init=e@5:18#1 type=Unit ref=__local_2.result
-expr e@10:30 name(result) type=kotlin.collections.List<Int> ref=__local_2.result
-expr e@10:5 localDecl checked mutable=0 type=List<Int> init=e@10:30 type=Unit ref=__local_3.checked
+expr e@5:18#1 memberCall recv=e@5:18 callee=mapIndexed args=[_:e@5:36] type=kotlin.collections.List<Int> call=kotlin.collections.mapIndexed[kind=fun;recv=kotlin.collections.List<T0>;params=fn{p=Int,T0;ret=T1};gen=2] targs=[String,Int]
+expr e@5:5 localDecl result mutable=0 type=_ init=e@5:18#1 type=Unit ref=__local_2.result[kind=local]
+expr e@10:30 name(result) type=kotlin.collections.List<Int> ref=__local_2.result[kind=local]
+expr e@10:5 localDecl checked mutable=0 type=List<Int> init=e@10:30 type=Unit ref=__local_3.checked[kind=local]
