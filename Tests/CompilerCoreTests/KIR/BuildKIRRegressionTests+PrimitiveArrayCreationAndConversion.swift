@@ -119,7 +119,23 @@ extension BuildKIRRegressionTests {
             """,
             """
             package sample13
-            fun make13() = uintArrayOf(1u, 4000000000u)
+            fun make13() = DoubleArray(4) { it.toDouble() + 0.5 }
+            fun main13(): Int {
+                val arr = make13()
+                return arr.size
+            }
+            """,
+            """
+            package sample14
+            fun make14() = DoubleArray(3)
+            fun main14(): Int {
+                val arr = make14()
+                return arr.size
+            }
+            """,
+            """
+            package sample15
+            fun make15() = uintArrayOf(1u, 4000000000u)
             """
         ]
         var result: CompilationContext?
@@ -352,10 +368,52 @@ extension BuildKIRRegressionTests {
     }
 
     @Test
-    func testUIntArrayOfFactoryLowersToSourceBackedPrimitiveArrayPath() throws {
+    func testDoubleArrayLambdaConstructorLowersToArrayNewAndArraySet() throws {
         let ctx = try sharedPrimitiveArrayCtx()
         let module = try #require(ctx.kir)
         let makeBody = try findKIRFunctionBody(named: "make13", in: module, interner: ctx.interner)
+        let callNames = extractCallees(from: makeBody, interner: ctx.interner)
+
+        #expect(
+            callNames.contains("kk_array_new_checked"),
+            "DoubleArray(n) { init } must emit kk_array_new_checked; got: \(callNames)"
+        )
+        #expect(
+            callNames.contains("kk_array_set"),
+            "DoubleArray(n) { init } must emit kk_array_set; got: \(callNames)"
+        )
+        #expect(
+            !callNames.contains("DoubleArray"),
+            "source-backed DoubleArray(n) { init } must not remain an unresolved call; got: \(callNames)"
+        )
+    }
+
+    @Test
+    func testDoubleArraySizeOnlyConstructorLowersToArrayNewWithoutLoop() throws {
+        let ctx = try sharedPrimitiveArrayCtx()
+        let module = try #require(ctx.kir)
+        let makeBody = try findKIRFunctionBody(named: "make14", in: module, interner: ctx.interner)
+        let callNames = extractCallees(from: makeBody, interner: ctx.interner)
+
+        #expect(
+            callNames.contains("kk_array_new_checked"),
+            "DoubleArray(n) (size-only) must emit kk_array_new_checked; got: \(callNames)"
+        )
+        #expect(
+            !callNames.contains("kk_array_set"),
+            "DoubleArray(n) (size-only) must not emit a fill loop; got: \(callNames)"
+        )
+        #expect(
+            !callNames.contains("DoubleArray"),
+            "DoubleArray(n) (size-only) must not fall through to an unresolved call; got: \(callNames)"
+        )
+    }
+
+    @Test
+    func testUIntArrayOfFactoryLowersToSourceBackedPrimitiveArrayPath() throws {
+        let ctx = try sharedPrimitiveArrayCtx()
+        let module = try #require(ctx.kir)
+        let makeBody = try findKIRFunctionBody(named: "make15", in: module, interner: ctx.interner)
         let callNames = extractCallees(from: makeBody, interner: ctx.interner)
 
         #expect(callNames.contains("kk_array_new"), "source-backed uintArrayOf must allocate a primitive array; got: \(callNames)")

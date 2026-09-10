@@ -543,6 +543,35 @@ struct CodegenBackendPrimitiveArrayEdgeCasesTests {
     }
 
     @Test
+    func testDoubleArrayConstructorsPreserveZeroInitAndInitializerSemantics() throws {
+        let source = """
+        fun main() {
+            try {
+                DoubleArray(-1)
+                println("no throw")
+            } catch (e: NegativeArraySizeException) {
+                println("negative: ${e.message}")
+            }
+
+            val empty = DoubleArray(0)
+            val zeros = DoubleArray(3)
+            val values = DoubleArray(4) { it.toDouble() + 0.5 }
+            println(empty.size)
+            println(zeros[0])
+            println(values.size)
+            println(values[0])
+            println(values[3])
+        }
+        """
+
+        try assertKotlinOutput(
+            source,
+            moduleName: "DoubleArrayConstructors",
+            expected: "negative: -1\n0\n0.0\n4\n0.5\n3.5\n"
+        )
+    }
+
+    @Test
     func testUnsignedCollectionToPrimitiveArrayConversions() throws {
         let source = """
         fun main() {

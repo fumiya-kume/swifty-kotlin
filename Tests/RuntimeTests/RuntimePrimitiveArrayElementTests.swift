@@ -121,6 +121,36 @@ struct RuntimePrimitiveArrayElementTests {
         #expect(gotE == eInt)
     }
 
+    @Test
+    func testCheckedDoubleArrayAllocationPreservesConstructorContract() throws {
+        var thrown = 0
+        let array = kk_array_new_checked(3, &thrown)
+
+        #expect(thrown == 0)
+        for index in 0 ..< 3 {
+            #expect(kk_array_get(array, index, &thrown) == 0)
+            #expect(thrown == 0)
+        }
+
+        var negativeThrown = 0
+        let negative = kk_array_new_checked(-1, &negativeThrown)
+
+        #expect(negative == 0)
+        #expect(negativeThrown != 0)
+        let ptr = try #require(
+            UnsafeMutableRawPointer(bitPattern: negativeThrown),
+            "negative allocation must return a throwable"
+        )
+        let box = try #require(
+            tryCast(ptr, to: RuntimeThrowableBox.self),
+            "negative allocation must return a RuntimeThrowableBox"
+        )
+        #expect(
+            box.exceptionHierarchyFQNames.contains("kotlin.NegativeArraySizeException"),
+            "negative allocation must throw NegativeArraySizeException"
+        )
+    }
+
     // MARK: - Long elements
 
     @Test

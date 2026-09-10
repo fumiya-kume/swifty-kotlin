@@ -1095,7 +1095,7 @@
     - `kotlin.Double.Companion.SIZE_BITS` — val Companion.SIZE_BITS: Int  -- `final const val SIZE_BITS`
     - `kotlin.Double.Companion.SIZE_BYTES` — val Companion.SIZE_BYTES: Int  -- `final const val SIZE_BYTES`
 
-- [ ] KSP-834: kotlin.DoubleArray top-level の未実装 stdlib API を実装する（2 件）
+- [x] KSP-834: kotlin.DoubleArray top-level の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.DoubleArray` / top-level
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/DoubleArray/Stdlib.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1105,6 +1105,7 @@
   - 未実装シンボル一覧:
     - `kotlin.DoubleArray.<init>` — constructor (Int)  -- `constructor <init>(kotlin/Int)`
     - `kotlin.DoubleArray.<init>` — constructor (Int, Function1)  -- `constructor <init>(kotlin/Int, kotlin/Function1<kotlin/Int, kotlin/Double>)`
+  - 完了根拠 (2026-09-04): Kotlin 2.3.10 の `DoubleArray(Int)` は compiler-provided の zero-initialized allocation（負サイズは `NegativeArraySizeException`）として保持し、`DoubleArray(Int, (Int) -> Double)` のみを bundled Kotlin source に移行した。DoubleArray 固有の synthetic constructor stub、Runtime `kk_*`/`__kk_*` bridge、RuntimeABI 登録、name-string 特例は存在せず、既存の共通 array-constructor lowering を再利用した。focused Sema Golden/KIR/backend、`diff_kotlinc`、TODO ID、Runtime ABI link の回帰を追加・確認した。
 
 - [ ] KSP-847: kotlin.Float.Companion.Companion の未実装 stdlib API を実装する（7 件）
   - 対象: `kotlin.Float.Companion` / receiver `Companion`

@@ -1,0 +1,31 @@
+symbol fq=__local_0.empty[kind=local] kind=local vis=private flags=_ type=kotlin.DoubleArray
+symbol fq=__local_1.zeros[kind=local] kind=local vis=private flags=_ type=kotlin.DoubleArray
+symbol fq=__local_2.values[kind=local] kind=local vis=private flags=_ type=kotlin.DoubleArray
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+file fstdlib_kotlin_DoubleArray_n_n package=golden.sema
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@4:29 int(0) type=Int
+expr e@4:17 call callee=e@4:17#1 args=[_:e@4:29] type=kotlin.DoubleArray
+expr e@4:5 localDecl empty mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.empty[kind=local]
+expr e@5:29 int(3) type=Int
+expr e@5:17 call callee=e@5:17#1 args=[_:e@5:29] type=kotlin.DoubleArray
+expr e@5:5 localDecl zeros mutable=0 type=_ init=e@5:17 type=Unit ref=__local_1.zeros[kind=local]
+expr e@6:30 int(4) type=Int
+expr e@6:35 name(it) type=Int ref=s-0
+expr e@6:35#1 memberCall recv=e@6:35 callee=toDouble args=[] type=Double call=kotlin.toDouble[kind=fun;recv=Int;params=]
+expr e@6:51 double(0.5) type=Double
+expr e@6:35#2 binary(add) lhs=e@6:35#1 rhs=e@6:51 type=Double
+expr e@6:33 lambda params=[] body=e@6:35#2 label=DoubleArray type=(Int) -> Double
+expr e@6:18 call callee=e@6:18#1 args=[_:e@6:30,_:e@6:33] type=kotlin.DoubleArray call=kotlin.DoubleArray[kind=fun;params=Int,fn{p=Int;ret=Double}]
+expr e@6:5 localDecl values mutable=0 type=_ init=e@6:18 type=Unit ref=__local_2.values[kind=local]
+expr e@7:13 name(empty) type=kotlin.DoubleArray ref=__local_0.empty[kind=local]
+expr e@7:13#1 memberCall recv=e@7:13 callee=size args=[] type=Int call=kotlin.collections.size.$get[kind=fun;recv=kotlin.DoubleArray;params=]
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@8:13 name(zeros) type=kotlin.DoubleArray ref=__local_1.zeros[kind=local]
+expr e@8:19 int(0) type=Int
+expr e@8:13#1 indexedAccess receiver=e@8:13 indices=[e@8:19] type=Double
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@9:13 name(values) type=kotlin.DoubleArray ref=__local_2.values[kind=local]
+expr e@9:20 int(3) type=Int
+expr e@9:13#1 indexedAccess receiver=e@9:13 indices=[e@9:20] type=Double
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
