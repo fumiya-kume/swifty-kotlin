@@ -39,7 +39,7 @@ struct ImportedInlineKIRRegressionTests {
         return artifactPath
     }
 
-    @Test(.disabled("BUG-240: ImportedInlineKIRMaterializer.materialize() is disabled in LoweringPhase because it corrupts unrelated imported-inline KIR (dozens of unaffiliated Iterable/Set/Map/Sequence/Range HOFs panicked at runtime); re-enable once TODO.md BUG-240 is fixed"))
+    @Test(.disabled("BUG-241: ImportedInlineKIRMaterializer.materialize() is disabled in LoweringPhase because it corrupts unrelated imported-inline KIR (dozens of unaffiliated Iterable/Set/Map/Sequence/Range HOFs panicked at runtime); re-enable once TODO.md BUG-241 is fixed"))
     func importedFirstPredicateFalseBranchRunsThroughArtifact() throws {
         let artifactPath = try Self.buildStdlibArtifact()
         let source = """
