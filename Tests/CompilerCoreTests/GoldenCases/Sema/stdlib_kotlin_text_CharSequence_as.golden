@@ -1,0 +1,14 @@
+symbol fq=golden.sema.charSequenceAsIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.Iterable<Char>
+symbol fq=golden.sema.charSequenceAsIterable.$0.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceAsSequence kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.sequences.Sequence<Char>
+symbol fq=golden.sema.charSequenceAsSequence.$1.value kind=valueParameter vis=private flags=_
+symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
+symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+file fstdlib_kotlin_text_CharSequence_as package=golden.sema
+  decl golden.sema.charSequenceAsIterable fun charSequenceAsIterable sym=golden.sema.charSequenceAsIterable
+  decl golden.sema.charSequenceAsSequence fun charSequenceAsSequence sym=golden.sema.charSequenceAsSequence
+expr e@3:67 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceAsIterable.$0.value
+expr e@3:67#1 memberCall recv=e@3:67 callee=asIterable args=[] type=kotlin.collections.Iterable<Char> call=kotlin.text.asIterable
+expr e@5:67 name(value) type=kotlin.CharSequence ref=golden.sema.charSequenceAsSequence.$1.value
+expr e@5:67#1 memberCall recv=e@5:67 callee=asSequence args=[] type=kotlin.sequences.Sequence<Char> call=kotlin.text.asSequence

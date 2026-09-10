@@ -8,9 +8,11 @@ import kotlin.collections.List
 import kotlin.collections.MutableCollection
 import kotlin.collections.MutableList
 import kotlin.collections.MutableSet
+import kotlin.collections.emptyList
 import kotlin.collections.mutableListOf
 import kotlin.collections.mutableSetOf
 import kotlin.sequences.Sequence
+import kotlin.sequences.emptySequence
 
 // Collection conversions and iterator helpers migrated from the string runtime
 // bridges. String is covered by these CharSequence extensions through the
@@ -21,7 +23,7 @@ private class CharSequenceCharIterator(
 ) : CharIterator() {
     private var index = 0
 
-    override fun hasNext(): Boolean = index < __kk_string_struct_get_length(source)
+    override fun hasNext(): Boolean = index < source.length
 
     override fun nextChar(): Char {
         if (!hasNext()) throw NoSuchElementException()
@@ -110,6 +112,7 @@ public fun CharSequence.toSortedSet(): MutableSet<Char> {
 public operator fun CharSequence.iterator(): CharIterator = CharSequenceCharIterator(this)
 
 public fun CharSequence.asIterable(): Iterable<Char> {
+    if (this is String && isEmpty()) return emptyList()
     val source = this
     return object : Iterable<Char> {
         override fun iterator(): Iterator<Char> = source.iterator()
@@ -117,6 +120,7 @@ public fun CharSequence.asIterable(): Iterable<Char> {
 }
 
 public fun CharSequence.asSequence(): Sequence<Char> {
+    if (this is String && isEmpty()) return emptySequence<Char>()
     val source = this
     return object : Sequence<Char> {
         override fun iterator(): Iterator<Char> = source.iterator()

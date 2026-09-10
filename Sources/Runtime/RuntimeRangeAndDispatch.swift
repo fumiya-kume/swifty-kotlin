@@ -870,6 +870,15 @@ public func kk_iterator_next(_ iterRaw: Int, _ outThrown: UnsafeMutablePointer<I
         return kk_indexing_iterable_next(iterRaw)
     }
     if let objectResult = runtimeObjectIteratorMethodCall(iterRaw, methodSlot: 1, outThrown: outThrown) {
+        if let outThrown, outThrown.pointee != 0 {
+            return objectResult
+        }
+        // Iterator<T>.next() crosses an erased generic boundary. Source-backed
+        // CharIterator implementations return the raw Char scalar from their
+        // concrete method, so box it before generic consumers store the value.
+        if runtimeSourceIteratorValue(objectResult, iteratorRaw: iterRaw).tag == RuntimeValue.charTag {
+            return kk_box_char(objectResult)
+        }
         return objectResult
     }
     return 0
