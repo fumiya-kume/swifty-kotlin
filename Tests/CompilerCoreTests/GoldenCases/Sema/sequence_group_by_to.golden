@@ -3,8 +3,7 @@ symbol fq=__local_1.dest[kind=local] kind=local vis=private flags=_ type=kotlin.
 symbol fq=__local_2.result[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>>
 symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
@@ -29,13 +28,13 @@ expr e@5:18#1 memberCall recv=e@5:18 callee=groupByTo args=[_:e@5:32,_:e@5:38] t
 expr e@5:5 localDecl result mutable=0 type=_ init=e@5:18#1 type=Unit ref=__local_2.result[kind=local]
 expr e@6:13 name(result) type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>> ref=__local_2.result[kind=local]
 expr e@6:20 int(1) type=Int
-expr e@6:13#1 indexedAccess receiver=e@6:13 indices=[e@6:20] type=kotlin.collections.MutableList<String>? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] targs=[Int,kotlin.collections.MutableList<String>]
+expr e@6:13#1 indexedAccess receiver=e@6:13 indices=[e@6:20] type=kotlin.collections.MutableList<String>? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=T0;gen=2] targs=[Int,kotlin.collections.MutableList<String>]
 expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@7:13 name(result) type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>> ref=__local_2.result[kind=local]
 expr e@7:20 int(2) type=Int
-expr e@7:13#1 indexedAccess receiver=e@7:13 indices=[e@7:20] type=kotlin.collections.MutableList<String>? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] targs=[Int,kotlin.collections.MutableList<String>]
+expr e@7:13#1 indexedAccess receiver=e@7:13 indices=[e@7:20] type=kotlin.collections.MutableList<String>? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=T0;gen=2] targs=[Int,kotlin.collections.MutableList<String>]
 expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@8:13 name(result) type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>> ref=__local_2.result[kind=local]
 expr e@8:20 int(3) type=Int
-expr e@8:13#1 indexedAccess receiver=e@8:13 indices=[e@8:20] type=kotlin.collections.MutableList<String>? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] targs=[Int,kotlin.collections.MutableList<String>]
+expr e@8:13#1 indexedAccess receiver=e@8:13 indices=[e@8:20] type=kotlin.collections.MutableList<String>? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=T0;gen=2] targs=[Int,kotlin.collections.MutableList<String>]
 expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

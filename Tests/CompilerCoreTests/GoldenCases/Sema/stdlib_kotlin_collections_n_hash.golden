@@ -44,10 +44,10 @@ expr e@8:5 localDecl spreadSet mutable=0 type=_ init=e@8:21 type=Unit ref=__loca
 expr e@10:13 name(emptyMap) type=kotlin.collections.HashMap<String?, Int?> ref=__local_0.emptyMap[kind=local]
 expr e@10:13#1 memberCall recv=e@10:13 callee=size args=[] type=Int ref=kotlin.collections.HashMap.size[kind=prop]
 expr e@10:29 name(map) type=kotlin.collections.MutableMap<String?, Int?> ref=__local_1.map[kind=local]
-expr e@10:29#1 memberCall recv=e@10:29 callee=size args=[] type=Int
+expr e@10:29#1 memberCall recv=e@10:29 callee=size args=[] type=Int ref=kotlin.collections.Map.size[kind=prop]
 expr e@10:13#2 binary(add) lhs=e@10:13#1 rhs=e@10:29#1 type=Int
 expr e@10:40 name(spreadMap) type=kotlin.collections.MutableMap<String, Int> ref=__local_2.spreadMap[kind=local]
-expr e@10:40#1 memberCall recv=e@10:40 callee=size args=[] type=Int
+expr e@10:40#1 memberCall recv=e@10:40 callee=size args=[] type=Int ref=kotlin.collections.Map.size[kind=prop]
 expr e@10:13#3 binary(add) lhs=e@10:13#2 rhs=e@10:40#1 type=Int
 expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#3] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@11:13 name(emptySet) type=kotlin.collections.HashSet<String?> ref=__local_3.emptySet[kind=local]

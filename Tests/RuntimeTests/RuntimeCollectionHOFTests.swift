@@ -1062,6 +1062,26 @@ struct RuntimeCollectionHOFTests {
     }
 
     @Test
+    func testMapKeysAndValuesMaterializeCollections() {
+        let keys = makeArray([1, 2, 1])
+        let values = makeArray([10, 21, 32])
+        let map = kk_map_of(keys, values, 3)
+
+        #expect(setElements(kk_map_keys(map)) == [1, 2])
+        #expect(listElements(kk_map_values(map)) == [32, 21])
+    }
+
+    @Test
+    func testHashMapIsEmptyReflectsMutations() {
+        let map = kk_hash_map_of(0, 0, 0)
+        var thrown = 0
+        _ = kk_mutable_map_put(map, 1, 10, &thrown)
+
+        #expect(thrown == 0)
+        #expect(kk_unbox_bool(kk_map_is_empty(map)) == 0)
+    }
+
+    @Test
     func testMapOfPairsNormalizesLinkedFactorySpreadEntries() {
         // KSP-954: linkedMapOf(*pairs) lowers to __kk_map_of_pairs with the
         // spread varargs packed into a single Pair array.

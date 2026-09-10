@@ -319,6 +319,102 @@ extension DataFlowSemaPhase {
         let mutableMapSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [interner.intern("MutableMap")])
             ?? symbols.lookupByShortName(interner.intern("MutableMap")).first
 
+        // Keep runtime-backed placeholders for Map's six abstract members so
+        // the bundled Map declaration can claim the existing symbols while
+        // preserving their ABI links. The source declaration intentionally
+        // remains abstract; these links are used for runtime map boxes when a
+        // call is made through a Map-typed receiver.
+        func registerPropertyMember(
+            name: String,
+            propertyType: TypeID,
+            externalLinkName: String
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = mapFQName + [memberName]
+            if let existing = symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                guard let symbol = symbols.symbol(symbolID) else { return false }
+                return symbol.kind == .property
+                    && symbols.parentSymbol(for: symbolID) == mapInterfaceSymbol
+            }) {
+                symbols.setPropertyType(propertyType, for: existing)
+                symbols.setExternalLinkName(externalLinkName, for: existing)
+                return
+            }
+            let memberSymbol = symbols.define(
+                kind: .property,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(mapInterfaceSymbol, for: memberSymbol)
+            symbols.setPropertyType(propertyType, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+        }
+
+        if let setSymbol {
+            let entriesType = types.make(.classType(ClassType(
+                classSymbol: setSymbol,
+                args: [.out(entryType)],
+                nullability: .nonNull
+            )))
+            let keysType = types.make(.classType(ClassType(
+                classSymbol: setSymbol,
+                args: [.out(keyType)],
+                nullability: .nonNull
+            )))
+            registerPropertyMember(
+                name: "entries",
+                propertyType: entriesType,
+                externalLinkName: "__kk_map_entries"
+            )
+            registerPropertyMember(
+                name: "keys",
+                propertyType: keysType,
+                externalLinkName: "__kk_map_keys"
+            )
+        }
+        let valuesType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(valueType)],
+            nullability: .nonNull
+        )))
+        registerPropertyMember(
+            name: "size",
+            propertyType: types.intType,
+            externalLinkName: "kk_map_size"
+        )
+        registerPropertyMember(
+            name: "values",
+            propertyType: valuesType,
+            externalLinkName: "__kk_map_values"
+        )
+        let isEmptyName = interner.intern("isEmpty")
+        let isEmptyFQName = mapFQName + [isEmptyName]
+        if symbols.lookup(fqName: isEmptyFQName) == nil {
+            let isEmptySymbol = symbols.define(
+                kind: .function,
+                name: isEmptyName,
+                fqName: isEmptyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(mapInterfaceSymbol, for: isEmptySymbol)
+            symbols.setExternalLinkName("kk_map_is_empty", for: isEmptySymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: selfMapType,
+                    parameterTypes: [],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+                    classTypeParameterCount: 2
+                ),
+                for: isEmptySymbol
+            )
+        }
+
         func registerMember(
             name: String,
             externalLinkName: String,

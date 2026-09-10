@@ -1,0 +1,38 @@
+symbol fq=golden.sema.mapEntries.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapEntries[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
+symbol fq=golden.sema.mapGet.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapGet[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Int?
+symbol fq=golden.sema.mapIsEmpty.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapIsEmpty[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Boolean
+symbol fq=golden.sema.mapKeys.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapKeys[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=kotlin.collections.Set<String>
+symbol fq=golden.sema.mapSize.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapSize[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Int
+symbol fq=golden.sema.mapValues.$5.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapValues[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=kotlin.collections.Collection<Int>
+symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
+file fstdlib_kotlin_collections_Map_Map_n package=golden.sema
+  decl golden.sema.mapSize[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapSize sym=golden.sema.mapSize[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapKeys[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapKeys sym=golden.sema.mapKeys[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapValues[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapValues sym=golden.sema.mapValues[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapEntries[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapEntries sym=golden.sema.mapEntries[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapIsEmpty[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapIsEmpty sym=golden.sema.mapIsEmpty[kind=fun;params=kotlin.collections.Map<String,Int>]
+  decl golden.sema.mapGet[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapGet sym=golden.sema.mapGet[kind=fun;params=kotlin.collections.Map<String,Int>]
+expr e@3:46 name(values) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapSize.$4.values[kind=vparam]
+expr e@3:46#1 memberCall recv=e@3:46 callee=size args=[] type=Int ref=kotlin.collections.Map.size[kind=prop]
+expr e@5:54 name(values) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapKeys.$3.values[kind=vparam]
+expr e@5:54#1 memberCall recv=e@5:54 callee=keys args=[] type=kotlin.collections.Set<String> ref=kotlin.collections.Map.keys[kind=prop]
+expr e@7:60 name(values) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapValues.$5.values[kind=vparam]
+expr e@7:60#1 memberCall recv=e@7:60 callee=values args=[] type=kotlin.collections.Collection<Int> ref=kotlin.collections.Map.values[kind=prop]
+expr e@10:5 name(values) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapEntries.$0.values[kind=vparam]
+expr e@10:5#1 memberCall recv=e@10:5 callee=entries args=[] type=kotlin.collections.Set<kotlin.collections.Map.Entry<String, Int>> ref=kotlin.collections.Map.entries[kind=prop]
+expr e@13:53 name(values) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapIsEmpty.$2.values[kind=vparam]
+expr e@13:53#1 memberCall recv=e@13:53 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Map.isEmpty[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=;gen=2]
+expr e@15:46 name(values) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapGet.$1.values[kind=vparam]
+expr e@15:53 string(key) type=String
+expr e@15:46#1 indexedAccess receiver=e@15:46 indices=[e@15:53] type=Int? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=T0;gen=2] targs=[String,Int]

@@ -104,5 +104,108 @@ struct MapAsSourceMigrationTests {
             }
         }
     }
+
+    @Test
+    func testMapAbstractSurfaceUsesBundledSourceAndRuntimeLinks() throws {
+        let source = """
+        fun use(values: Map<String, Int?>): Boolean {
+            val entries: Set<Map.Entry<String, Int?>> = values.entries
+            val keys: Set<String> = values.keys
+            val valueCollection: Collection<Int?> = values.values
+            val size: Int = values.size
+            val value: Int? = values["key"]
+            return values.isEmpty() && entries.isNotEmpty() && keys.isNotEmpty()
+                && valueCollection.isNotEmpty() && size >= 0 && value == null
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            #expect(
+                !ctx.diagnostics.hasError,
+                "Map's six abstract members must type-check: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let sema = try #require(ctx.sema)
+            let interner = ctx.interner
+            let mapFQName = ["kotlin", "collections", "Map"].map(interner.intern)
+            let mapSymbol = try #require(sema.symbols.lookup(fqName: mapFQName))
+            let mapInfo = try #require(sema.symbols.symbol(mapSymbol))
+            // Keep the nominal Map anchor's metadata-free shape stable; its
+            // members are the source-backed declarations under test.
+            #expect(mapInfo.kind == .interface)
+            #expect(!mapInfo.flags.contains(.synthetic))
+
+            let propertyCases: [(name: String, link: String)] = [
+                ("size", "kk_map_size"),
+                ("keys", "__kk_map_keys"),
+                ("values", "__kk_map_values"),
+                ("entries", "__kk_map_entries"),
+            ]
+            for testCase in propertyCases {
+                let fqName = mapFQName + [interner.intern(testCase.name)]
+                let candidates = sema.symbols.lookupAll(fqName: fqName).filter { symbolID in
+                    guard let symbol = sema.symbols.symbol(symbolID) else { return false }
+                    return symbol.kind == .property
+                        && sema.symbols.parentSymbol(for: symbolID) == mapSymbol
+                        && sema.symbols.isSourceBackedSymbol(symbolID)
+                }
+                #expect(
+                    candidates.count == 1,
+                    "Expected one source-backed Map.\(testCase.name) property"
+                )
+                guard let propertySymbol = candidates.first,
+                      let propertyInfo = sema.symbols.symbol(propertySymbol)
+                else { continue }
+                #expect(!propertyInfo.flags.contains(.synthetic))
+                #expect(propertyInfo.flags.contains(.abstractType))
+                #expect(sema.symbols.externalLinkName(for: propertySymbol) == testCase.link)
+                #expect(
+                    ctx.sourceManager.path(of: try #require(sema.symbols.sourceFileID(for: propertySymbol)))
+                        == "__bundled_kotlin/collections/Map/Map.kt"
+                )
+            }
+
+            let functionCases: [(name: String, arity: Int, link: String)] = [
+                ("isEmpty", 0, "kk_map_is_empty"),
+                ("get", 1, "__kk_map_get"),
+            ]
+            for testCase in functionCases {
+                let fqName = mapFQName + [interner.intern(testCase.name)]
+                let candidates = sema.symbols.lookupAll(fqName: fqName).filter { symbolID in
+                    guard let symbol = sema.symbols.symbol(symbolID),
+                          let signature = sema.symbols.functionSignature(for: symbolID)
+                    else { return false }
+                    return symbol.kind == .function
+                        && sema.symbols.parentSymbol(for: symbolID) == mapSymbol
+                        && sema.symbols.isSourceBackedSymbol(symbolID)
+                        && signature.parameterTypes.count == testCase.arity
+                }
+                #expect(
+                    candidates.count == 1,
+                    "Expected one source-backed Map.\(testCase.name) function"
+                )
+                guard let functionSymbol = candidates.first,
+                      let functionInfo = sema.symbols.symbol(functionSymbol),
+                      let signature = sema.symbols.functionSignature(for: functionSymbol)
+                else { continue }
+                #expect(!functionInfo.flags.contains(.synthetic))
+                #expect(functionInfo.flags.contains(.abstractType))
+                #expect(sema.symbols.externalLinkName(for: functionSymbol) == testCase.link)
+                #expect(signature.receiverType != nil)
+                #expect(
+                    ctx.sourceManager.path(of: try #require(sema.symbols.sourceFileID(for: functionSymbol)))
+                        == "__bundled_kotlin/collections/Map/Map.kt"
+                )
+                if testCase.name == "isEmpty" {
+                    #expect(signature.returnType == sema.types.booleanType)
+                } else {
+                    #expect(sema.types.nullability(of: signature.returnType) != .nonNull)
+                }
+            }
+        }
+    }
 }
 #endif

@@ -26,7 +26,7 @@ symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Ma
 symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Map_min package=golden.sema
   decl golden.sema.mapMinBy[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinBy sym=golden.sema.mapMinBy[kind=fun;params=kotlin.collections.Map<String,Int>]
   decl golden.sema.mapMinOfComparable[kind=fun;params=kotlin.collections.Map<String,Int>] fun mapMinOfComparable sym=golden.sema.mapMinOfComparable[kind=fun;params=kotlin.collections.Map<String,Int>]

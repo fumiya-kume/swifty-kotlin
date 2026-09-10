@@ -15,7 +15,7 @@ symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Ma
 symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fmap_flat_map_to_iterable package=_

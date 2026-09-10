@@ -15,7 +15,9 @@ symbol fq=kotlin.collections.Collection.E[kind=tparam] kind=typeParameter vis=pr
 symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 symbol fq=subtypeResolution.$1.collection[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=subtypeResolution.$1.map[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=subtypeResolution[kind=fun;params=CustomCollection,CustomMap] kind=function vis=public flags=_ sig=recv=_ params=[CustomCollection,CustomMap] ret=Unit
@@ -48,7 +50,7 @@ expr e@19:5 localDecl collectionEmpty mutable=0 type=_ init=e@19:27#1 type=Unit 
 expr e@20:38 name(collectionEmpty) type=Boolean ref=__local_2.collectionEmpty[kind=local]
 expr e@20:5 localDecl checkedCollection mutable=0 type=Boolean init=e@20:38 type=Unit ref=__local_3.checkedCollection[kind=local]
 expr e@24:17 name(map) type=kotlin.collections.Map<String?, Int?> ref=isEmptyViaInterface.$0.map[kind=vparam]
-expr e@24:17#1 memberCall recv=e@24:17 callee=isEmpty args=[] type=Boolean
+expr e@24:17#1 memberCall recv=e@24:17 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Map.isEmpty[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=;gen=2]
 expr e@24:5 localDecl empty mutable=0 type=_ init=e@24:17#1 type=Unit ref=__local_4.empty[kind=local]
 expr e@25:28 name(empty) type=Boolean ref=__local_4.empty[kind=local]
 expr e@25:5 localDecl checked mutable=0 type=Boolean init=e@25:28 type=Unit ref=__local_5.checked[kind=local]

@@ -14,7 +14,7 @@ symbol fq=golden.sema.copyMap.$1.source[kind=vparam] kind=valueParameter vis=pri
 symbol fq=golden.sema.copyMap[kind=fun;params=kotlin.collections.Map<out T0,T1>;gen=2] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<out golden.sema.copyMap.$1.K, golden.sema.copyMap.$1.V>] ret=kotlin.collections.Map<golden.sema.copyMap.$1.K, golden.sema.copyMap.$1.V>
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_collections_Map_to package=golden.sema
   decl golden.sema.copyMap[kind=fun;params=kotlin.collections.Map<out T0,T1>;gen=2] fun copyMap sym=golden.sema.copyMap[kind=fun;params=kotlin.collections.Map<out T0,T1>;gen=2]

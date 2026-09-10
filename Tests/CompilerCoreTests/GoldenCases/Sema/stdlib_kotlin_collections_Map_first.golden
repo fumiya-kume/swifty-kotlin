@@ -3,7 +3,7 @@ symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Ma
 symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 symbol fq=mapFirst.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=mapFirstOrNull.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=mapFirstOrNull[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=String?

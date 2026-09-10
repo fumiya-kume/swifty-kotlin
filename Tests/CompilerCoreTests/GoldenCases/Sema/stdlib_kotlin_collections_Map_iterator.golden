@@ -14,7 +14,7 @@ symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Ma
 symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Map_iterator package=_
   decl inspect[kind=fun;params=kotlin.collections.Map<String?,Int?>] fun inspect sym=inspect[kind=fun;params=kotlin.collections.Map<String?,Int?>]
 expr e@2:20 name(map) type=kotlin.collections.Map<String?, Int?> ref=inspect.$0.map[kind=vparam]

@@ -5,7 +5,7 @@ symbol fq=__local_1.checkedValue[kind=local] kind=local vis=private flags=_ type
 symbol fq=forEachDestructured.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=forEachDestructured[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
 symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 file fmap_foreach_destructuring package=_
   decl forEachDestructured[kind=fun;params=kotlin.collections.Map<String,Int>] fun forEachDestructured sym=forEachDestructured[kind=fun;params=kotlin.collections.Map<String,Int>]
 expr e@4:5 name(values) type=kotlin.collections.Map<String, Int> ref=forEachDestructured.$0.values[kind=vparam]

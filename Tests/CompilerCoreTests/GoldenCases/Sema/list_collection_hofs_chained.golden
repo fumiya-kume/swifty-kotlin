@@ -7,7 +7,7 @@ symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Ma
 symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 file flist_collection_hofs_chained package=_
   decl chained[kind=fun;params=kotlin.collections.List<Int>] fun chained sym=chained[kind=fun;params=kotlin.collections.List<Int>]
 expr e@2:18 name(values) type=kotlin.collections.List<Int> ref=chained.$0.values[kind=vparam]

@@ -19,8 +19,7 @@ symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=pub
 symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap.K[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableMap.V[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableMap.putAll[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=kotlin.collections.Map<out T0,out T1>;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableMap<kotlin.collections.MutableMap.K, kotlin.collections.MutableMap.V> params=[kotlin.collections.Map<out kotlin.collections.MutableMap.K, out kotlin.collections.MutableMap.V>] ret=Unit
@@ -37,7 +36,7 @@ expr e@15:44 name(values) type=golden.sema.ProbeMutableMap ref=golden.sema.inher
 expr e@15:5 localDecl mutable mutable=0 type=MutableMap<String,Int> init=e@15:44 type=Unit ref=__local_1.mutable[kind=local]
 expr e@16:24 name(readonly) type=kotlin.collections.Map<String, Int> ref=__local_0.readonly[kind=local]
 expr e@16:33 name(missing) type=String ref=golden.sema.inheritedMapSurface.$2.missing[kind=vparam]
-expr e@16:24#1 indexedAccess receiver=e@16:24 indices=[e@16:33] type=Int? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] targs=[String,Int]
+expr e@16:24#1 indexedAccess receiver=e@16:24 indices=[e@16:33] type=Int? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=T0;gen=2] targs=[String,Int]
 expr e@16:5 localDecl missingValue mutable=0 type=_ init=e@16:24#1 type=Unit ref=__local_2.missingValue[kind=local]
 expr e@17:5 name(mutable) type=kotlin.collections.MutableMap<String, Int> ref=__local_1.mutable[kind=local]
 expr e@17:20 call callee=e@17:20#1 args=[] type=kotlin.collections.Map<String, out Int> call=kotlin.collections.emptyMap[kind=fun;params=;gen=2] targs=[String,Int]
@@ -46,13 +45,13 @@ expr e@18:5 name(mutable) type=kotlin.collections.MutableMap<String, Int> ref=__
 expr e@18:20 name(missing) type=String ref=golden.sema.inheritedMapSurface.$2.missing[kind=vparam]
 expr e@18:5#1 memberCall recv=e@18:5 callee=remove args=[_:e@18:20] type=Int? call=kotlin.collections.remove[kind=fun;recv=kotlin.collections.MutableMap<out T0,T1>;params=T0;gen=2] targs=[String,Int]
 expr e@19:19 name(mutable) type=kotlin.collections.MutableMap<String, Int> ref=__local_1.mutable[kind=local]
-expr e@19:19#1 memberCall recv=e@19:19 callee=keys args=[] type=kotlin.collections.Set<String> call=kotlin.collections.keys[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=;gen=2] targs=[String,Int]
+expr e@19:19#1 memberCall recv=e@19:19 callee=keys args=[] type=kotlin.collections.Set<String> ref=kotlin.collections.Map.keys[kind=prop]
 expr e@19:5 localDecl keyView mutable=0 type=_ init=e@19:19#1 type=Unit ref=__local_3.keyView[kind=local]
 expr e@20:21 name(mutable) type=kotlin.collections.MutableMap<String, Int> ref=__local_1.mutable[kind=local]
-expr e@20:21#1 memberCall recv=e@20:21 callee=values args=[] type=kotlin.collections.Collection<Int> call=kotlin.collections.values[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=;gen=2] targs=[String,Int]
+expr e@20:21#1 memberCall recv=e@20:21 callee=values args=[] type=kotlin.collections.Collection<Int> ref=kotlin.collections.Map.values[kind=prop]
 expr e@20:5 localDecl valueView mutable=0 type=_ init=e@20:21#1 type=Unit ref=__local_4.valueView[kind=local]
 expr e@21:21 name(readonly) type=kotlin.collections.Map<String, Int> ref=__local_0.readonly[kind=local]
-expr e@21:21#1 memberCall recv=e@21:21 callee=entries args=[] type=kotlin.collections.Set<kotlin.collections.Map.Entry<String, Int>> call=kotlin.collections.entries[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=;gen=2] targs=[String,Int]
+expr e@21:21#1 memberCall recv=e@21:21 callee=entries args=[] type=kotlin.collections.Set<kotlin.collections.Map.Entry<String, Int>> ref=kotlin.collections.Map.entries[kind=prop]
 expr e@21:5 localDecl entryView mutable=0 type=_ init=e@21:21#1 type=Unit ref=__local_5.entryView[kind=local]
 expr e@22:5 name(values) type=golden.sema.ProbeMutableMap ref=golden.sema.inheritedMapSurface.$2.values[kind=vparam]
 expr e@22:19 name(readonly) type=kotlin.collections.Map<String, Int> ref=__local_0.readonly[kind=local]

@@ -12,7 +12,7 @@ symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Ma
 symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_n_on package=golden.sema
   decl golden.sema.iterableOnEach[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableOnEach sym=golden.sema.iterableOnEach[kind=fun;params=kotlin.collections.Iterable<Int>]
   decl golden.sema.iterableOnEachIndexed[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableOnEachIndexed sym=golden.sema.iterableOnEachIndexed[kind=fun;params=kotlin.collections.Iterable<Int>]

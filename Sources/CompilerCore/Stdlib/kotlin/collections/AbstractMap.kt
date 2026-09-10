@@ -36,7 +36,9 @@ private external fun abstractMapEntries(map: Any?): Set<Map.Entry<Any?, Any?>>
  * Provides a skeletal implementation of the read-only [Map] interface.
  */
 public abstract class AbstractMap<K, out V> protected constructor() : Map<K, V> {
-    protected abstract val entries: Set<Map.Entry<K, V>>
+    // Map.entries is declared in bundled source (KSP-1067), so this must be a
+    // public abstract override like AbstractMutableMap.entries.
+    abstract override val entries: Set<Map.Entry<K, V>>
 
     override fun containsKey(key: K): Boolean {
         for (entry in entries) {

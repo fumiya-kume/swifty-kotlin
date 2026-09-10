@@ -12,8 +12,7 @@ symbol fq=golden.sema.mapGetValue[kind=fun;params=kotlin.collections.Map<String,
 symbol fq=golden.sema.mapGet[kind=fun;params=kotlin.collections.Map<out String,Int?>,String] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<out String, Int?>,String] ret=Int?
 symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Map_get package=golden.sema
   decl golden.sema.mapGet[kind=fun;params=kotlin.collections.Map<out String,Int?>,String] fun mapGet sym=golden.sema.mapGet[kind=fun;params=kotlin.collections.Map<out String,Int?>,String]
   decl golden.sema.mapGetOrElse[kind=fun;params=kotlin.collections.Map<String,Int?>,String] fun mapGetOrElse sym=golden.sema.mapGetOrElse[kind=fun;params=kotlin.collections.Map<String,Int?>,String]
@@ -21,7 +20,7 @@ file fstdlib_kotlin_collections_Map_get package=golden.sema
   decl golden.sema.mapDelegate[kind=fun;params=kotlin.collections.Map<in String,Int>] fun mapDelegate sym=golden.sema.mapDelegate[kind=fun;params=kotlin.collections.Map<in String,Int>]
 expr e@5:61 name(map) type=kotlin.collections.Map<out String, Int?> ref=golden.sema.mapGet.$1.map[kind=vparam]
 expr e@5:65 name(key) type=String ref=golden.sema.mapGet.$1.key[kind=vparam]
-expr e@5:61#1 indexedAccess receiver=e@5:61 indices=[e@5:65] type=Int? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] targs=[String,Int?]
+expr e@5:61#1 indexedAccess receiver=e@5:61 indices=[e@5:65] type=Int? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=T0;gen=2] targs=[String,Int?]
 expr e@7:63 name(map) type=kotlin.collections.Map<String, Int?> ref=golden.sema.mapGetOrElse.$2.map[kind=vparam]
 expr e@7:77 name(key) type=String ref=golden.sema.mapGetOrElse.$2.key[kind=vparam]
 expr e@7:84 name(null) type=Nothing?

@@ -502,6 +502,22 @@ public func kk_map_entries(_ mapRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: entries))
 }
 
+@_cdecl("__kk_map_keys")
+public func kk_map_keys(_ mapRaw: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(map.keys)))
+}
+
+@_cdecl("__kk_map_values")
+public func kk_map_values(_ mapRaw: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: map.values))
+}
+
 @_cdecl("__kk_map_iterator")
 public func kk_map_iterator(_ mapRaw: Int) -> Int {
     let (keys, values): ([Int], [Int]) = if let map = runtimeMapBox(from: mapRaw) {

@@ -22,7 +22,7 @@ symbol fq=golden.sema.useMapIsFamily.$4.nullable[kind=vparam] kind=valueParamete
 symbol fq=golden.sema.useMapIsFamily.$4.projected[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.useMapIsFamily[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.Map<String?,Int?>?,kotlin.collections.Map<String,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.collections.Map<String?, Int?>?,kotlin.collections.Map<String, Int?>] ret=Boolean
 symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Map_is package=golden.sema
   decl golden.sema.mapIsNotEmpty[kind=fun;params=kotlin.collections.Map<out T0,T1>;gen=2] fun mapIsNotEmpty sym=golden.sema.mapIsNotEmpty[kind=fun;params=kotlin.collections.Map<out T0,T1>;gen=2]
   decl golden.sema.mapIsNullOrEmpty[kind=fun;params=kotlin.collections.Map<out T0,T1>?;gen=2] fun mapIsNullOrEmpty sym=golden.sema.mapIsNullOrEmpty[kind=fun;params=kotlin.collections.Map<out T0,T1>?;gen=2]

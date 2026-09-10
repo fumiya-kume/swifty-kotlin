@@ -1,7 +1,7 @@
 symbol fq=golden.sema.hashMapReceiverMembers.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.hashMapReceiverMembers.$0.other[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.hashMapReceiverMembers[kind=fun;params=kotlin.collections.HashMap<String,Int?>,kotlin.collections.Map<String,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.HashMap<String, Int?>,kotlin.collections.Map<String, Int?>] ret=Any?
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap.MutableEntry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic

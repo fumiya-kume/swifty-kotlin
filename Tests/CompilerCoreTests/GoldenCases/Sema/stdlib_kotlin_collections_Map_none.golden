@@ -11,7 +11,7 @@ symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Ma
 symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=listNone.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=listNone[kind=fun;params=kotlin.collections.List<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int?>] ret=Boolean
@@ -55,7 +55,7 @@ expr e@12:12 name(values) type=kotlin.collections.Map<Any?, kotlin.Number> ref=p
 expr e@12:12#1 memberCall recv=e@12:12 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=;gen=2] targs=[Any?,kotlin.Number]
 expr e@12:5 return value=e@12:12#1 type=Nothing
 expr e@16:12 name(values) type=kotlin.collections.Map<String?, Int?> ref=memberIsEmpty.$3.values[kind=vparam]
-expr e@16:12#1 memberCall recv=e@16:12 callee=isEmpty args=[] type=Boolean
+expr e@16:12#1 memberCall recv=e@16:12 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Map.isEmpty[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=;gen=2]
 expr e@16:5 return value=e@16:12#1 type=Nothing
 expr e@20:12 name(values) type=kotlin.collections.List<Int?> ref=listNone.$2.values[kind=vparam]
 expr e@20:12#1 memberCall recv=e@20:12 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.List<T0>;params=;gen=1] targs=[Int?]

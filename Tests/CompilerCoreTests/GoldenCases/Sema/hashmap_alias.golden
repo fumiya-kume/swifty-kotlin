@@ -8,7 +8,7 @@ symbol fq=__local_3.empty[kind=local] kind=local vis=private flags=_ type=kotlin
 symbol fq=__local_4.created[kind=local] kind=local vis=private flags=_ type=kotlin.collections.HashMap<Int, String>
 symbol fq=__local_5.holder[kind=local] kind=local vis=private flags=_ type=MapHolder
 symbol fq=createMap[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.HashMap<Int, String>
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=processMap.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
@@ -42,7 +42,7 @@ expr e@19:8 string(w) type=String
 expr e@19:15 int(40) type=Int
 expr e@19:5#1 indexedAssign receiver=e@19:5 indices=[e@19:8] value=e@19:15 type=Unit call=kotlin.collections.set[kind=fun;recv=kotlin.collections.MutableMap<T0,T1>;params=T0,T1;gen=2] targs=[String,Int]
 expr e@20:13 name(mm) type=kotlin.collections.MutableMap<String, Int> ref=__local_1.mm[kind=local]
-expr e@20:13#1 memberCall recv=e@20:13 callee=size args=[] type=Int
+expr e@20:13#1 memberCall recv=e@20:13 callee=size args=[] type=Int ref=kotlin.collections.Map.size[kind=prop]
 expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@21:24 name(hm) type=kotlin.collections.HashMap<String, Int> ref=__local_0.hm[kind=local]
 expr e@21:16 call callee=e@21:16#1 args=[_:e@21:24] type=kotlin.collections.HashMap<String, Int>
