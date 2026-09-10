@@ -1,24 +1,24 @@
-symbol fq=golden.sema.genericAsIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=kotlin.collections.Iterable<String>
-symbol fq=golden.sema.genericAsIterable.$0.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.iterableAsIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>] ret=kotlin.collections.Iterable<String?>
-symbol fq=golden.sema.iterableAsIterable.$1.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.listAsIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=kotlin.collections.Iterable<Int>
-symbol fq=golden.sema.listAsIterable.$2.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.setAsIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int?>] ret=kotlin.collections.Iterable<Int?>
-symbol fq=golden.sema.setAsIterable.$3.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
+symbol fq=golden.sema.genericAsIterable.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.genericAsIterable[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=kotlin.collections.Iterable<String>
+symbol fq=golden.sema.iterableAsIterable.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.iterableAsIterable[kind=fun;params=kotlin.collections.Iterable<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>] ret=kotlin.collections.Iterable<String?>
+symbol fq=golden.sema.listAsIterable.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.listAsIterable[kind=fun;params=kotlin.collections.List<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=kotlin.collections.Iterable<Int>
+symbol fq=golden.sema.setAsIterable.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.setAsIterable[kind=fun;params=kotlin.collections.Set<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int?>] ret=kotlin.collections.Iterable<Int?>
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_as package=golden.sema
-  decl golden.sema.iterableAsIterable fun iterableAsIterable sym=golden.sema.iterableAsIterable
-  decl golden.sema.listAsIterable fun listAsIterable sym=golden.sema.listAsIterable
-  decl golden.sema.setAsIterable fun setAsIterable sym=golden.sema.setAsIterable
-  decl golden.sema.genericAsIterable fun genericAsIterable sym=golden.sema.genericAsIterable
-expr e@3:72 name(values) type=kotlin.collections.Iterable<String?> ref=golden.sema.iterableAsIterable.$1.values
-expr e@3:72#1 memberCall recv=e@3:72 callee=asIterable args=[] type=kotlin.collections.Iterable<String?> call=kotlin.collections.asIterable#0 targs=[String?]
-expr e@5:56 name(values) type=kotlin.collections.List<Int> ref=golden.sema.listAsIterable.$2.values
-expr e@5:56#1 memberCall recv=e@5:56 callee=asIterable args=[] type=kotlin.collections.Iterable<out Int> call=kotlin.collections.asIterable#0
-expr e@7:56 name(values) type=kotlin.collections.Set<Int?> ref=golden.sema.setAsIterable.$3.values
-expr e@7:56#1 memberCall recv=e@7:56 callee=asIterable args=[] type=kotlin.collections.Iterable<out Int?> call=kotlin.collections.asIterable#0
-expr e@9:65 name(values) type=kotlin.collections.List<String> ref=golden.sema.genericAsIterable.$0.values
-expr e@9:65#1 memberCall recv=e@9:65 callee=asIterable args=[] type=kotlin.collections.Iterable<out String> call=kotlin.collections.asIterable#0
+  decl golden.sema.iterableAsIterable[kind=fun;params=kotlin.collections.Iterable<String?>] fun iterableAsIterable sym=golden.sema.iterableAsIterable[kind=fun;params=kotlin.collections.Iterable<String?>]
+  decl golden.sema.listAsIterable[kind=fun;params=kotlin.collections.List<Int>] fun listAsIterable sym=golden.sema.listAsIterable[kind=fun;params=kotlin.collections.List<Int>]
+  decl golden.sema.setAsIterable[kind=fun;params=kotlin.collections.Set<Int?>] fun setAsIterable sym=golden.sema.setAsIterable[kind=fun;params=kotlin.collections.Set<Int?>]
+  decl golden.sema.genericAsIterable[kind=fun;params=kotlin.collections.List<String>] fun genericAsIterable sym=golden.sema.genericAsIterable[kind=fun;params=kotlin.collections.List<String>]
+expr e@3:72 name(values) type=kotlin.collections.Iterable<String?> ref=golden.sema.iterableAsIterable.$1.values[kind=vparam]
+expr e@3:72#1 memberCall recv=e@3:72 callee=asIterable args=[] type=kotlin.collections.Iterable<String?> call=kotlin.collections.asIterable[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[String?]
+expr e@5:56 name(values) type=kotlin.collections.List<Int> ref=golden.sema.listAsIterable.$2.values[kind=vparam]
+expr e@5:56#1 memberCall recv=e@5:56 callee=asIterable args=[] type=kotlin.collections.Iterable<out Int> call=kotlin.collections.asIterable[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1]
+expr e@7:56 name(values) type=kotlin.collections.Set<Int?> ref=golden.sema.setAsIterable.$3.values[kind=vparam]
+expr e@7:56#1 memberCall recv=e@7:56 callee=asIterable args=[] type=kotlin.collections.Iterable<out Int?> call=kotlin.collections.asIterable[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1]
+expr e@9:65 name(values) type=kotlin.collections.List<String> ref=golden.sema.genericAsIterable.$0.values[kind=vparam]
+expr e@9:65#1 memberCall recv=e@9:65 callee=asIterable args=[] type=kotlin.collections.Iterable<out String> call=kotlin.collections.asIterable[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1]

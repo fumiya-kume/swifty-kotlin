@@ -668,11 +668,11 @@ func appendObjectItableMethodRegistrations(
 
 /// Returns the interface methods that must be registered for dynamic itable dispatch.
 ///
-/// BUG-200: bundled library metadata currently omits the compiler-residual
+/// BUG-200/KSP-1070: legacy or precompiled library metadata may omit the
 /// covariant `MutableIterable.iterator(): MutableIterator<T>` entry from the
-/// `MutableIterable` vtable layout. The source class still advertises the
-/// interface and its implementation, so add that exact method at slot zero
-/// until the shared residual layout can carry the covariant member itself.
+/// `MutableIterable` vtable layout. Source-backed layouts include the member
+/// when available; add that exact method at slot zero for residual layouts so
+/// interface dispatch remains compatible across both paths.
 func kirItableMethodEntries(
     for interfaceSymbol: SymbolID,
     interfaceLayout: NominalLayout,

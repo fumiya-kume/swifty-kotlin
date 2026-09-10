@@ -1,49 +1,49 @@
-symbol fq=golden.sema.useAlso kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useApply kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useLet kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useRun kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useRunWithThis kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useWith kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useWithThis kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useAlso[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useApply[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useLet[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useRunWithThis[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useRun[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useWithThis[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useWith[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fscope_functions package=golden.sema
-  decl golden.sema.useLet fun useLet sym=golden.sema.useLet
-  decl golden.sema.useRun fun useRun sym=golden.sema.useRun
-  decl golden.sema.useRunWithThis fun useRunWithThis sym=golden.sema.useRunWithThis
-  decl golden.sema.useApply fun useApply sym=golden.sema.useApply
-  decl golden.sema.useAlso fun useAlso sym=golden.sema.useAlso
-  decl golden.sema.useWith fun useWith sym=golden.sema.useWith
-  decl golden.sema.useWithThis fun useWithThis sym=golden.sema.useWithThis
+  decl golden.sema.useLet[kind=fun;params=] fun useLet sym=golden.sema.useLet[kind=fun;params=]
+  decl golden.sema.useRun[kind=fun;params=] fun useRun sym=golden.sema.useRun[kind=fun;params=]
+  decl golden.sema.useRunWithThis[kind=fun;params=] fun useRunWithThis sym=golden.sema.useRunWithThis[kind=fun;params=]
+  decl golden.sema.useApply[kind=fun;params=] fun useApply sym=golden.sema.useApply[kind=fun;params=]
+  decl golden.sema.useAlso[kind=fun;params=] fun useAlso sym=golden.sema.useAlso[kind=fun;params=]
+  decl golden.sema.useWith[kind=fun;params=] fun useWith sym=golden.sema.useWith[kind=fun;params=]
+  decl golden.sema.useWithThis[kind=fun;params=] fun useWithThis sym=golden.sema.useWithThis[kind=fun;params=]
 expr e@3:21 string(hello) type=String
 expr e@3:35 name(it) type=String ref=s-0
-expr e@3:35#1 memberCall recv=e@3:35 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@3:35#1 memberCall recv=e@3:35 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@3:33 lambda params=[] body=e@3:35#1 label=let type=(String) -> Int
-expr e@3:21#1 memberCall recv=e@3:21 callee=let args=[_:e@3:33] type=Int call=kotlin.let targs=[String,Int]
+expr e@3:21#1 memberCall recv=e@3:21 callee=let args=[_:e@3:33] type=Int call=kotlin.let[kind=fun;recv=T0;params=fn{p=T0;ret=T1};gen=2] targs=[String,Int]
 expr e@4:21 string(hello) type=String
 expr e@4:35 name(length) type=Int
 expr e@4:33 lambda params=[] body=e@4:35 label=run type=String.() -> Int
-expr e@4:21#1 memberCall recv=e@4:21 callee=run args=[_:e@4:33] type=Int call=kotlin.run#1 targs=[String,Int]
+expr e@4:21#1 memberCall recv=e@4:21 callee=run args=[_:e@4:33] type=Int call=kotlin.run[kind=fun;recv=T0;params=fn{r=T0;p=;ret=T1};gen=2] targs=[String,Int]
 expr e@5:29 string(hello) type=String
 expr e@5:43 this type=String
-expr e@5:43#1 memberCall recv=e@5:43 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@5:43#1 memberCall recv=e@5:43 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@5:41 lambda params=[] body=e@5:43#1 label=run type=String.() -> Int
-expr e@5:29#1 memberCall recv=e@5:29 callee=run args=[_:e@5:41] type=Int call=kotlin.run#1 targs=[String,Int]
+expr e@5:29#1 memberCall recv=e@5:29 callee=run args=[_:e@5:41] type=Int call=kotlin.run[kind=fun;recv=T0;params=fn{r=T0;p=;ret=T1};gen=2] targs=[String,Int]
 expr e@6:26 string(hello) type=String
 expr e@6:50 this type=String
-expr e@6:50#1 memberCall recv=e@6:50 callee=length args=[] type=Int call=kotlin.length.$get
-expr e@6:42 call callee=e@6:42#1 args=[_:e@6:50#1] type=Unit call=kotlin.io.println#1
+expr e@6:50#1 memberCall recv=e@6:50 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
+expr e@6:42 call callee=e@6:42#1 args=[_:e@6:50#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@6:40 lambda params=[] body=e@6:42 label=apply type=String.() -> Unit
-expr e@6:26#1 memberCall recv=e@6:26 callee=apply args=[_:e@6:40] type=String call=kotlin.apply targs=[String]
+expr e@6:26#1 memberCall recv=e@6:26 callee=apply args=[_:e@6:40] type=String call=kotlin.apply[kind=fun;recv=T0;params=fn{r=T0;p=;ret=Unit};gen=1] targs=[String]
 expr e@7:25 string(hello) type=String
 expr e@7:48 name(it) type=String ref=s-1
-expr e@7:40 call callee=e@7:40#1 args=[_:e@7:48] type=Unit call=kotlin.io.println#2
+expr e@7:40 call callee=e@7:40#1 args=[_:e@7:48] type=Unit call=kotlin.io.println[kind=fun;params=String]
 expr e@7:38 lambda params=[] body=e@7:40 label=also type=(String) -> Unit
-expr e@7:25#1 memberCall recv=e@7:25 callee=also args=[_:e@7:38] type=String call=kotlin.also targs=[String]
+expr e@7:25#1 memberCall recv=e@7:25 callee=also args=[_:e@7:38] type=String call=kotlin.also[kind=fun;recv=T0;params=fn{p=T0;ret=Unit};gen=1] targs=[String]
 expr e@8:27 string(hello) type=String
 expr e@8:38 name(length) type=Int
 expr e@8:36 lambda params=[] body=e@8:38 label=with type=String.() -> Int
-expr e@8:22 call callee=e@8:22#1 args=[_:e@8:27,_:e@8:36] type=Int call=kotlin.with targs=[String,Int]
+expr e@8:22 call callee=e@8:22#1 args=[_:e@8:27,_:e@8:36] type=Int call=kotlin.with[kind=fun;params=T0,fn{r=T0;p=;ret=T1};gen=2] targs=[String,Int]
 expr e@9:31 string(hello) type=String
 expr e@9:42 this type=String
-expr e@9:42#1 memberCall recv=e@9:42 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@9:42#1 memberCall recv=e@9:42 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@9:40 lambda params=[] body=e@9:42#1 label=with type=String.() -> Int
-expr e@9:26 call callee=e@9:26#1 args=[_:e@9:31,_:e@9:40] type=Int call=kotlin.with targs=[String,Int]
+expr e@9:26 call callee=e@9:26#1 args=[_:e@9:31,_:e@9:40] type=Int call=kotlin.with[kind=fun;params=T0,fn{r=T0;p=;ret=T1};gen=2] targs=[String,Int]

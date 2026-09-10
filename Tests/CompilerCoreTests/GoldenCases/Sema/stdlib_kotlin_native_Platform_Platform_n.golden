@@ -1,82 +1,81 @@
-symbol fq=__local_0.unaligned kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_1.littleEndian kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_2.osFamily kind=local vis=private flags=_ type=kotlin.native.OsFamily
-symbol fq=__local_3.cpuArchitecture kind=local vis=private flags=_ type=kotlin.native.CpuArchitecture
-symbol fq=__local_4.memoryModel kind=local vis=private flags=_ type=kotlin.native.MemoryModel
-symbol fq=__local_5.debugBinary kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_6.freezingEnabled kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_7.programName kind=local vis=private flags=_ type=String?
-symbol fq=__local_8.leakChecker kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_9.cleanersChecker kind=local vis=private flags=_ type=Boolean
-symbol fq=kotlin.Enum kind=class vis=public flags=abstractType|openType
-symbol fq=kotlin.Enum.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.native.CpuArchitecture kind=enumClass vis=public flags=synthetic
-symbol fq=kotlin.native.MemoryModel kind=enumClass vis=public flags=synthetic
-symbol fq=platformContract kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=__local_0.unaligned[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_1.littleEndian[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_2.osFamily[kind=local] kind=local vis=private flags=_ type=kotlin.native.OsFamily
+symbol fq=__local_3.cpuArchitecture[kind=local] kind=local vis=private flags=_ type=kotlin.native.CpuArchitecture
+symbol fq=__local_4.memoryModel[kind=local] kind=local vis=private flags=_ type=kotlin.native.MemoryModel
+symbol fq=__local_5.debugBinary[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_6.freezingEnabled[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_7.programName[kind=local] kind=local vis=private flags=_ type=String?
+symbol fq=__local_8.leakChecker[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_9.cleanersChecker[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=kotlin.Enum.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.Enum[kind=class;gen=1] kind=class vis=public flags=abstractType|openType
+symbol fq=kotlin.native.MemoryModel[kind=enum] kind=enumClass vis=public flags=synthetic
+symbol fq=platformContract[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_native_Platform_Platform_n package=_ annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class),@file:Suppress("DEPRECATION")]
-  decl platformContract fun platformContract sym=platformContract
-expr e@7:30 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@7:30#1 memberCall recv=e@7:30 callee=canAccessUnaligned args=[] type=Boolean ref=kotlin.native.Platform.canAccessUnaligned
-expr e@7:5 localDecl unaligned mutable=0 type=Boolean init=e@7:30#1 type=Unit ref=__local_0.unaligned
-expr e@8:33 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@8:33#1 memberCall recv=e@8:33 callee=isLittleEndian args=[] type=Boolean ref=kotlin.native.Platform.isLittleEndian
-expr e@8:5 localDecl littleEndian mutable=0 type=Boolean init=e@8:33#1 type=Unit ref=__local_1.littleEndian
-expr e@9:20 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@9:20#1 memberCall recv=e@9:20 callee=osFamily args=[] type=kotlin.native.OsFamily ref=kotlin.native.Platform.osFamily
-expr e@9:5 localDecl osFamily mutable=0 type=_ init=e@9:20#1 type=Unit ref=__local_2.osFamily
-expr e@10:27 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@10:27#1 memberCall recv=e@10:27 callee=cpuArchitecture args=[] type=kotlin.native.CpuArchitecture ref=kotlin.native.Platform.cpuArchitecture
-expr e@10:5 localDecl cpuArchitecture mutable=0 type=_ init=e@10:27#1 type=Unit ref=__local_3.cpuArchitecture
-expr e@11:23 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@11:23#1 memberCall recv=e@11:23 callee=memoryModel args=[] type=kotlin.native.MemoryModel ref=kotlin.native.Platform.memoryModel
-expr e@11:5 localDecl memoryModel mutable=0 type=_ init=e@11:23#1 type=Unit ref=__local_4.memoryModel
-expr e@12:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@12:32#1 memberCall recv=e@12:32 callee=isDebugBinary args=[] type=Boolean ref=kotlin.native.Platform.isDebugBinary
-expr e@12:5 localDecl debugBinary mutable=0 type=Boolean init=e@12:32#1 type=Unit ref=__local_5.debugBinary
-expr e@13:36 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@13:36#1 memberCall recv=e@13:36 callee=isFreezingEnabled args=[] type=Boolean ref=kotlin.native.Platform.isFreezingEnabled
-expr e@13:5 localDecl freezingEnabled mutable=0 type=Boolean init=e@13:36#1 type=Unit ref=__local_6.freezingEnabled
-expr e@14:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@14:32#1 memberCall recv=e@14:32 callee=programName args=[] type=String? ref=kotlin.native.Platform.programName
-expr e@14:5 localDecl programName mutable=0 type=String? init=e@14:32#1 type=Unit ref=__local_7.programName
-expr e@15:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@15:32#1 memberCall recv=e@15:32 callee=isMemoryLeakCheckerActive args=[] type=Boolean ref=kotlin.native.Platform.isMemoryLeakCheckerActive
-expr e@15:5 localDecl leakChecker mutable=0 type=Boolean init=e@15:32#1 type=Unit ref=__local_8.leakChecker
-expr e@16:5 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@16:43 name(leakChecker) type=Boolean ref=__local_8.leakChecker
+  decl platformContract[kind=fun;params=] fun platformContract sym=platformContract[kind=fun;params=]
+expr e@7:30 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@7:30#1 memberCall recv=e@7:30 callee=canAccessUnaligned args=[] type=Boolean ref=kotlin.native.Platform.canAccessUnaligned[kind=prop]
+expr e@7:5 localDecl unaligned mutable=0 type=Boolean init=e@7:30#1 type=Unit ref=__local_0.unaligned[kind=local]
+expr e@8:33 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@8:33#1 memberCall recv=e@8:33 callee=isLittleEndian args=[] type=Boolean ref=kotlin.native.Platform.isLittleEndian[kind=prop]
+expr e@8:5 localDecl littleEndian mutable=0 type=Boolean init=e@8:33#1 type=Unit ref=__local_1.littleEndian[kind=local]
+expr e@9:20 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@9:20#1 memberCall recv=e@9:20 callee=osFamily args=[] type=kotlin.native.OsFamily ref=kotlin.native.Platform.osFamily[kind=prop]
+expr e@9:5 localDecl osFamily mutable=0 type=_ init=e@9:20#1 type=Unit ref=__local_2.osFamily[kind=local]
+expr e@10:27 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@10:27#1 memberCall recv=e@10:27 callee=cpuArchitecture args=[] type=kotlin.native.CpuArchitecture ref=kotlin.native.Platform.cpuArchitecture[kind=prop]
+expr e@10:5 localDecl cpuArchitecture mutable=0 type=_ init=e@10:27#1 type=Unit ref=__local_3.cpuArchitecture[kind=local]
+expr e@11:23 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@11:23#1 memberCall recv=e@11:23 callee=memoryModel args=[] type=kotlin.native.MemoryModel ref=kotlin.native.Platform.memoryModel[kind=prop]
+expr e@11:5 localDecl memoryModel mutable=0 type=_ init=e@11:23#1 type=Unit ref=__local_4.memoryModel[kind=local]
+expr e@12:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@12:32#1 memberCall recv=e@12:32 callee=isDebugBinary args=[] type=Boolean ref=kotlin.native.Platform.isDebugBinary[kind=prop]
+expr e@12:5 localDecl debugBinary mutable=0 type=Boolean init=e@12:32#1 type=Unit ref=__local_5.debugBinary[kind=local]
+expr e@13:36 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@13:36#1 memberCall recv=e@13:36 callee=isFreezingEnabled args=[] type=Boolean ref=kotlin.native.Platform.isFreezingEnabled[kind=prop]
+expr e@13:5 localDecl freezingEnabled mutable=0 type=Boolean init=e@13:36#1 type=Unit ref=__local_6.freezingEnabled[kind=local]
+expr e@14:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@14:32#1 memberCall recv=e@14:32 callee=programName args=[] type=String? ref=kotlin.native.Platform.programName[kind=prop]
+expr e@14:5 localDecl programName mutable=0 type=String? init=e@14:32#1 type=Unit ref=__local_7.programName[kind=local]
+expr e@15:32 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@15:32#1 memberCall recv=e@15:32 callee=isMemoryLeakCheckerActive args=[] type=Boolean ref=kotlin.native.Platform.isMemoryLeakCheckerActive[kind=prop]
+expr e@15:5 localDecl leakChecker mutable=0 type=Boolean init=e@15:32#1 type=Unit ref=__local_8.leakChecker[kind=local]
+expr e@16:5 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@16:43 name(leakChecker) type=Boolean ref=__local_8.leakChecker[kind=local]
 expr e@16:42 unary(not) operand=e@16:43 type=Boolean
-expr e@16:5#1 memberAssign recv=e@16:5 callee=isMemoryLeakCheckerActive value=e@16:42 type=Unit ref=kotlin.native.Platform.isMemoryLeakCheckerActive
-expr e@17:36 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@17:36#1 memberCall recv=e@17:36 callee=isCleanersLeakCheckerActive args=[] type=Boolean ref=kotlin.native.Platform.isCleanersLeakCheckerActive
-expr e@17:5 localDecl cleanersChecker mutable=0 type=Boolean init=e@17:36#1 type=Unit ref=__local_9.cleanersChecker
-expr e@18:5 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@18:45 name(cleanersChecker) type=Boolean ref=__local_9.cleanersChecker
+expr e@16:5#1 memberAssign recv=e@16:5 callee=isMemoryLeakCheckerActive value=e@16:42 type=Unit ref=kotlin.native.Platform.isMemoryLeakCheckerActive[kind=prop]
+expr e@17:36 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@17:36#1 memberCall recv=e@17:36 callee=isCleanersLeakCheckerActive args=[] type=Boolean ref=kotlin.native.Platform.isCleanersLeakCheckerActive[kind=prop]
+expr e@17:5 localDecl cleanersChecker mutable=0 type=Boolean init=e@17:36#1 type=Unit ref=__local_9.cleanersChecker[kind=local]
+expr e@18:5 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@18:45 name(cleanersChecker) type=Boolean ref=__local_9.cleanersChecker[kind=local]
 expr e@18:44 unary(not) operand=e@18:45 type=Boolean
-expr e@18:5#1 memberAssign recv=e@18:5 callee=isCleanersLeakCheckerActive value=e@18:44 type=Unit ref=kotlin.native.Platform.isCleanersLeakCheckerActive
-expr e@19:12 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform
-expr e@19:12#1 memberCall recv=e@19:12 callee=getAvailableProcessors args=[] type=Int call=kotlin.native.Platform.getAvailableProcessors
-expr e@20:13 name(unaligned) type=Boolean ref=__local_0.unaligned
-expr e@20:26 name(littleEndian) type=Boolean ref=__local_1.littleEndian
+expr e@18:5#1 memberAssign recv=e@18:5 callee=isCleanersLeakCheckerActive value=e@18:44 type=Unit ref=kotlin.native.Platform.isCleanersLeakCheckerActive[kind=prop]
+expr e@19:12 name(Platform) type=kotlin.native.Platform ref=kotlin.native.Platform[kind=obj]
+expr e@19:12#1 memberCall recv=e@19:12 callee=getAvailableProcessors args=[] type=Int call=kotlin.native.Platform.getAvailableProcessors[kind=fun;recv=kotlin.native.Platform;params=]
+expr e@20:13 name(unaligned) type=Boolean ref=__local_0.unaligned[kind=local]
+expr e@20:26 name(littleEndian) type=Boolean ref=__local_1.littleEndian[kind=local]
 expr e@20:13#1 binary(logicalOr) lhs=e@20:13 rhs=e@20:26 type=Boolean
-expr e@20:42 name(debugBinary) type=Boolean ref=__local_5.debugBinary
+expr e@20:42 name(debugBinary) type=Boolean ref=__local_5.debugBinary[kind=local]
 expr e@20:13#2 binary(logicalOr) lhs=e@20:13#1 rhs=e@20:42 type=Boolean
-expr e@20:57 name(freezingEnabled) type=Boolean ref=__local_6.freezingEnabled
+expr e@20:57 name(freezingEnabled) type=Boolean ref=__local_6.freezingEnabled[kind=local]
 expr e@20:13#3 binary(logicalOr) lhs=e@20:13#2 rhs=e@20:57 type=Boolean
-expr e@20:76 name(programName) type=String? ref=__local_7.programName
+expr e@20:76 name(programName) type=String? ref=__local_7.programName[kind=local]
 expr e@20:91 name(null) type=Nothing?
 expr e@20:76#1 binary(notEqual) lhs=e@20:76 rhs=e@20:91 type=Boolean
 expr e@20:13#4 binary(logicalOr) lhs=e@20:13#3 rhs=e@20:76#1 type=Boolean
 expr e@20:97 int(1) type=Int
 expr e@20:104 int(0) type=Int
-expr e@21:13 name(osFamily) type=kotlin.native.OsFamily ref=__local_2.osFamily
-expr e@21:25 name(osFamily) type=kotlin.native.OsFamily ref=__local_2.osFamily
-expr e@21:13#1 binary(equal) lhs=e@21:13 rhs=e@21:25 type=Boolean call=kotlin.Enum.equals targs=[kotlin.native.OsFamily]
-expr e@21:37 name(cpuArchitecture) type=kotlin.native.CpuArchitecture ref=__local_3.cpuArchitecture
-expr e@21:56 name(cpuArchitecture) type=kotlin.native.CpuArchitecture ref=__local_3.cpuArchitecture
-expr e@21:37#1 binary(equal) lhs=e@21:37 rhs=e@21:56 type=Boolean
+expr e@21:13 name(osFamily) type=kotlin.native.OsFamily ref=__local_2.osFamily[kind=local]
+expr e@21:25 name(osFamily) type=kotlin.native.OsFamily ref=__local_2.osFamily[kind=local]
+expr e@21:13#1 binary(equal) lhs=e@21:13 rhs=e@21:25 type=Boolean call=kotlin.Enum.equals[kind=fun;recv=kotlin.Enum<T0>;params=Any?;gen=1] targs=[kotlin.native.OsFamily]
+expr e@21:37 name(cpuArchitecture) type=kotlin.native.CpuArchitecture ref=__local_3.cpuArchitecture[kind=local]
+expr e@21:56 name(cpuArchitecture) type=kotlin.native.CpuArchitecture ref=__local_3.cpuArchitecture[kind=local]
+expr e@21:37#1 binary(equal) lhs=e@21:37 rhs=e@21:56 type=Boolean call=kotlin.Enum.equals[kind=fun;recv=kotlin.Enum<T0>;params=Any?;gen=1] targs=[kotlin.native.CpuArchitecture]
 expr e@21:13#2 binary(logicalAnd) lhs=e@21:13#1 rhs=e@21:37#1 type=Boolean
-expr e@21:75 name(memoryModel) type=kotlin.native.MemoryModel ref=__local_4.memoryModel
-expr e@21:90 name(memoryModel) type=kotlin.native.MemoryModel ref=__local_4.memoryModel
+expr e@21:75 name(memoryModel) type=kotlin.native.MemoryModel ref=__local_4.memoryModel[kind=local]
+expr e@21:90 name(memoryModel) type=kotlin.native.MemoryModel ref=__local_4.memoryModel[kind=local]
 expr e@21:75#1 binary(equal) lhs=e@21:75 rhs=e@21:90 type=Boolean
 expr e@21:13#3 binary(logicalAnd) lhs=e@21:13#2 rhs=e@21:75#1 type=Boolean
 expr e@21:103 int(1) type=Int

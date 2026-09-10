@@ -1,19 +1,19 @@
-symbol fq=golden.sema.Color kind=enumClass vis=public flags=_
-symbol fq=golden.sema.Color.Blue kind=field vis=public flags=_ type=golden.sema.Color
-symbol fq=golden.sema.Color.Green kind=field vis=public flags=_ type=golden.sema.Color
-symbol fq=golden.sema.Color.Red kind=field vis=public flags=_ type=golden.sema.Color
-symbol fq=golden.sema.classify kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=String
-symbol fq=golden.sema.classify.$0.x kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.classifyBool kind=function vis=public flags=_ sig=recv=_ params=[Boolean] ret=String
-symbol fq=golden.sema.classifyBool.$1.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.classifyColor kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Color] ret=String
-symbol fq=golden.sema.classifyColor.$2.c kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Color.Blue[kind=field] kind=field vis=public flags=_ type=golden.sema.Color
+symbol fq=golden.sema.Color.Green[kind=field] kind=field vis=public flags=_ type=golden.sema.Color
+symbol fq=golden.sema.Color.Red[kind=field] kind=field vis=public flags=_ type=golden.sema.Color
+symbol fq=golden.sema.Color[kind=enum] kind=enumClass vis=public flags=_
+symbol fq=golden.sema.classify.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.classifyBool.$1.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.classifyBool[kind=fun;params=Boolean] kind=function vis=public flags=_ sig=recv=_ params=[Boolean] ret=String
+symbol fq=golden.sema.classifyColor.$2.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.classifyColor[kind=fun;params=golden.sema.Color] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Color] ret=String
+symbol fq=golden.sema.classify[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=String
 file fwhen_multi_condition package=golden.sema
-  decl golden.sema.Color class Color sym=golden.sema.Color
-  decl golden.sema.classify fun classify sym=golden.sema.classify
-  decl golden.sema.classifyColor fun classifyColor sym=golden.sema.classifyColor
-  decl golden.sema.classifyBool fun classifyBool sym=golden.sema.classifyBool
-expr e@5:38 name(x) type=Int ref=golden.sema.classify.$0.x
+  decl golden.sema.Color[kind=enum] class Color sym=golden.sema.Color[kind=enum]
+  decl golden.sema.classify[kind=fun;params=Int] fun classify sym=golden.sema.classify[kind=fun;params=Int]
+  decl golden.sema.classifyColor[kind=fun;params=golden.sema.Color] fun classifyColor sym=golden.sema.classifyColor[kind=fun;params=golden.sema.Color]
+  decl golden.sema.classifyBool[kind=fun;params=Boolean] fun classifyBool sym=golden.sema.classifyBool[kind=fun;params=Boolean]
+expr e@5:38 name(x) type=Int ref=golden.sema.classify.$0.x[kind=vparam]
 expr e@6:5 int(1) type=Int
 expr e@6:8 int(2) type=Int
 expr e@6:11 int(3) type=Int
@@ -23,17 +23,17 @@ expr e@7:8 int(5) type=Int
 expr e@7:13 string(some) type=String
 expr e@8:13 string(many) type=String
 expr e@5:32 when subject=e@5:38 branches=[e@6:5,e@6:8,e@6:11->e@6:16,e@7:5,e@7:8->e@7:13] else=e@8:13 type=String
-expr e@11:45 name(c) type=golden.sema.Color ref=golden.sema.classifyColor.$2.c
-expr e@12:5 name(Color) type=golden.sema.Color ref=golden.sema.Color
-expr e@12:5#1 memberCall recv=e@12:5 callee=Red args=[] type=golden.sema.Color ref=golden.sema.Color.Red
-expr e@12:16 name(Color) type=golden.sema.Color ref=golden.sema.Color
-expr e@12:16#1 memberCall recv=e@12:16 callee=Green args=[] type=golden.sema.Color ref=golden.sema.Color.Green
+expr e@11:45 name(c) type=golden.sema.Color ref=golden.sema.classifyColor.$2.c[kind=vparam]
+expr e@12:5 name(Color) type=golden.sema.Color ref=golden.sema.Color[kind=enum]
+expr e@12:5#1 memberCall recv=e@12:5 callee=Red args=[] type=golden.sema.Color ref=golden.sema.Color.Red[kind=field]
+expr e@12:16 name(Color) type=golden.sema.Color ref=golden.sema.Color[kind=enum]
+expr e@12:16#1 memberCall recv=e@12:16 callee=Green args=[] type=golden.sema.Color ref=golden.sema.Color.Green[kind=field]
 expr e@12:31 string(warm) type=String
-expr e@13:5 name(Color) type=golden.sema.Color ref=golden.sema.Color
-expr e@13:5#1 memberCall recv=e@13:5 callee=Blue args=[] type=golden.sema.Color ref=golden.sema.Color.Blue
+expr e@13:5 name(Color) type=golden.sema.Color ref=golden.sema.Color[kind=enum]
+expr e@13:5#1 memberCall recv=e@13:5 callee=Blue args=[] type=golden.sema.Color ref=golden.sema.Color.Blue[kind=field]
 expr e@13:19 string(cold) type=String
 expr e@11:39 when subject=e@11:45 branches=[e@12:5#1,e@12:16#1->e@12:31,e@13:5#1->e@13:19] else=_ type=String
-expr e@16:46 name(b) type=Boolean ref=golden.sema.classifyBool.$1.b
+expr e@16:46 name(b) type=Boolean ref=golden.sema.classifyBool.$1.b[kind=vparam]
 expr e@17:5 bool(true) type=Boolean
 expr e@17:11 bool(false) type=Boolean
 expr e@17:20 string(always) type=String

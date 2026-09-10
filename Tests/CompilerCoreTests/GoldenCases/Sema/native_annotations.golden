@@ -1,34 +1,34 @@
-symbol fq=golden.sema.ExportEnumToObjC kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.NativeEnumBridge kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.NativeGreeter kind=class vis=public flags=_
-symbol fq=golden.sema.NativeGreeter.greet.$0.person kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.NativeStatus kind=enumClass vis=public flags=_
-symbol fq=golden.sema.SwiftFacade kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.SwiftRefined kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.nativeSum kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=golden.sema.nativeSum.$1.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.nativeSum.$1.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.takesPointer kind=function vis=public flags=_ sig=recv=_ params=[kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>?,kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>?,kotlinx.cinterop.CValuesRef<kotlinx.cinterop.IntVar>?] ret=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>?
-symbol fq=golden.sema.takesPointer.$2.ints kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.takesPointer.$2.opaque kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.takesPointer.$2.ptr kind=valueParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.CPointed kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CPointed
-symbol fq=kotlinx.cinterop.CPointer kind=class vis=public flags=synthetic type=kotlinx.cinterop.CPointer<kotlinx.cinterop.CPointer.T>
-symbol fq=kotlinx.cinterop.CPointer.T kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.CValuesRef kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CValuesRef<kotlinx.cinterop.CValuesRef.T>
-symbol fq=kotlinx.cinterop.CValuesRef.T kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.IntVar kind=class vis=public flags=synthetic type=kotlinx.cinterop.IntVar
+symbol fq=golden.sema.ExportEnumToObjC[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.NativeEnumBridge[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.NativeGreeter.greet.$0.person[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.NativeGreeter[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.NativeStatus[kind=enum] kind=enumClass vis=public flags=_
+symbol fq=golden.sema.SwiftFacade[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.SwiftRefined[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.nativeSum.$1.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.nativeSum.$1.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.nativeSum[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
+symbol fq=golden.sema.takesPointer.$2.ints[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.takesPointer.$2.opaque[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.takesPointer.$2.ptr[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.takesPointer[kind=fun;params=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>?,kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>?,kotlinx.cinterop.CValuesRef<kotlinx.cinterop.IntVar>?] kind=function vis=public flags=_ sig=recv=_ params=[kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>?,kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>?,kotlinx.cinterop.CValuesRef<kotlinx.cinterop.IntVar>?] ret=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>?
+symbol fq=kotlinx.cinterop.CPointed[kind=class] kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CPointed
+symbol fq=kotlinx.cinterop.CPointer.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlinx.cinterop.CPointer[kind=class;gen=1] kind=class vis=public flags=synthetic type=kotlinx.cinterop.CPointer<kotlinx.cinterop.CPointer.T>
+symbol fq=kotlinx.cinterop.CValuesRef.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlinx.cinterop.CValuesRef[kind=class;gen=1] kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CValuesRef<kotlinx.cinterop.CValuesRef.T>
+symbol fq=kotlinx.cinterop.IntVar[kind=class] kind=class vis=public flags=synthetic type=kotlinx.cinterop.IntVar
 file fnative_annotations package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class,kotlin.experimental.ExperimentalObjCEnum::class,kotlin.experimental.ExperimentalObjCName::class,kotlin.experimental.ExperimentalObjCRefinement::class)]
-  decl golden.sema.SwiftRefined class SwiftRefined sym=golden.sema.SwiftRefined
-  decl golden.sema.NativeEnumBridge class NativeEnumBridge sym=golden.sema.NativeEnumBridge
-  decl golden.sema.ExportEnumToObjC class ExportEnumToObjC sym=golden.sema.ExportEnumToObjC
-  decl golden.sema.NativeGreeter class NativeGreeter sym=golden.sema.NativeGreeter
-  decl golden.sema.SwiftFacade class SwiftFacade sym=golden.sema.SwiftFacade
-  decl golden.sema.NativeStatus class NativeStatus sym=golden.sema.NativeStatus
-  decl golden.sema.nativeSum fun nativeSum sym=golden.sema.nativeSum
-  decl golden.sema.takesPointer fun takesPointer sym=golden.sema.takesPointer
-expr e@40:90 name(person) type=String ref=golden.sema.NativeGreeter.greet.$0.person
-expr e@54:38 name(a) type=Int ref=golden.sema.nativeSum.$1.a
-expr e@54:42 name(b) type=Int ref=golden.sema.nativeSum.$1.b
+  decl golden.sema.SwiftRefined[kind=anno] class SwiftRefined sym=golden.sema.SwiftRefined[kind=anno]
+  decl golden.sema.NativeEnumBridge[kind=anno] class NativeEnumBridge sym=golden.sema.NativeEnumBridge[kind=anno]
+  decl golden.sema.ExportEnumToObjC[kind=anno] class ExportEnumToObjC sym=golden.sema.ExportEnumToObjC[kind=anno]
+  decl golden.sema.NativeGreeter[kind=class] class NativeGreeter sym=golden.sema.NativeGreeter[kind=class]
+  decl golden.sema.SwiftFacade[kind=anno] class SwiftFacade sym=golden.sema.SwiftFacade[kind=anno]
+  decl golden.sema.NativeStatus[kind=enum] class NativeStatus sym=golden.sema.NativeStatus[kind=enum]
+  decl golden.sema.nativeSum[kind=fun;params=Int,Int] fun nativeSum sym=golden.sema.nativeSum[kind=fun;params=Int,Int]
+  decl golden.sema.takesPointer[kind=fun;params=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>?,kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>?,kotlinx.cinterop.CValuesRef<kotlinx.cinterop.IntVar>?] fun takesPointer sym=golden.sema.takesPointer[kind=fun;params=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>?,kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>?,kotlinx.cinterop.CValuesRef<kotlinx.cinterop.IntVar>?]
+expr e@40:90 name(person) type=String ref=golden.sema.NativeGreeter.greet.$0.person[kind=vparam]
+expr e@54:38 name(a) type=Int ref=golden.sema.nativeSum.$1.a[kind=vparam]
+expr e@54:42 name(b) type=Int ref=golden.sema.nativeSum.$1.b[kind=vparam]
 expr e@54:38#1 binary(add) lhs=e@54:38 rhs=e@54:42 type=Int
-expr e@61:24 name(ptr) type=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>? ref=golden.sema.takesPointer.$2.ptr
+expr e@61:24 name(ptr) type=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>? ref=golden.sema.takesPointer.$2.ptr[kind=vparam]

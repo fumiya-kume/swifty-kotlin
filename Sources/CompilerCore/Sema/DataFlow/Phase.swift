@@ -50,6 +50,15 @@ final class DataFlowSemaPhase: CompilerPhase {
             sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
             interner: ctx.interner, into: &predeclaredEarlyHeaders
         )
+        // KSP-1520: `Comparator.kt` is source-backed, but comparator-typed
+        // synthetic signatures are registered before the normal bundled header
+        // collection pass. Predeclare its nominal so those signatures resolve
+        // without a synthetic Comparator anchor.
+        predeclareBundledComparatorHeaders(
+            ast: ast, fileScopes: fileScopes, symbols: symbols,
+            sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
+            interner: ctx.interner, into: &predeclaredEarlyHeaders
+        )
         // KSP-711: `StringEncoding.kt` owns `Charset`/`Charsets`, but FileIO
         // extension bridges need the source symbol before synthetic
         // registration constructs their signatures.
@@ -75,6 +84,13 @@ final class DataFlowSemaPhase: CompilerPhase {
             interner: ctx.interner, into: &predeclaredEarlyHeaders
         )
         predeclareBundledMemoryUsageHeaders(
+            ast: ast, fileScopes: fileScopes, symbols: symbols,
+            sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
+            interner: ctx.interner, into: &predeclaredEarlyHeaders
+        )
+        // KSP-1198: Platform.cpuArchitecture is typed against the
+        // source-backed CpuArchitecture enum before native platform stubs run.
+        predeclareBundledCpuArchitectureHeaders(
             ast: ast, fileScopes: fileScopes, symbols: symbols,
             sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
             interner: ctx.interner, into: &predeclaredEarlyHeaders
@@ -107,6 +123,11 @@ final class DataFlowSemaPhase: CompilerPhase {
             sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
             interner: ctx.interner, into: &predeclaredEarlyHeaders
         )
+        predeclareBundledGCInfoHeaders(
+            ast: ast, fileScopes: fileScopes, symbols: symbols,
+            sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
+            interner: ctx.interner, into: &predeclaredEarlyHeaders
+        )
 
         if let stdlibLibraryPath = ctx.options.stdlibLibraryPath {
             bundledIndex = mergeImportedStdlibSymbolsIntoBundledIndex(
@@ -135,9 +156,9 @@ final class DataFlowSemaPhase: CompilerPhase {
             bundledIndex: bundledIndex
         )
 
-        // Synthetic nominal anchors (e.g. kotlin.Comparator) register methods after
-        // library import. Apply imported class/interface layouts only after those
-        // synthetic methods exist, so vtable/itable slots can resolve.
+        // Apply imported class/interface layouts after synthetic bootstrap
+        // registration and before bundled source headers are collected, so
+        // imported vtable/itable slots can resolve against final symbols.
         applyImportedLibraryDeferredWork(
             importDeferredWork,
             symbols: symbols,

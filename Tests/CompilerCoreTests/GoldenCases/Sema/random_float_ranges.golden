@@ -1,14 +1,14 @@
-symbol fq=__local_0.a kind=local vis=private flags=_ type=Float
-symbol fq=__local_1.b kind=local vis=private flags=_ type=Float
-symbol fq=useRandomFloatRanges kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.a[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=__local_1.b[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=useRandomFloatRanges[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file frandom_float_ranges package=_
-  decl useRandomFloatRanges fun useRandomFloatRanges sym=useRandomFloatRanges
-expr e@4:13 name(Random) type=kotlin.random.Random.Default ref=kotlin.random.Random#0
+  decl useRandomFloatRanges[kind=fun;params=] fun useRandomFloatRanges sym=useRandomFloatRanges[kind=fun;params=]
+expr e@4:13 name(Random) type=kotlin.random.Random.Default ref=kotlin.random.Random[kind=class]
 expr e@4:30 float(10.0) type=Float
-expr e@4:13#1 memberCall recv=e@4:13 callee=nextFloat args=[_:e@4:30] type=Float call=kotlin.random.Random.Default.nextFloat#1
-expr e@4:5 localDecl a mutable=0 type=_ init=e@4:13#1 type=Unit ref=__local_0.a
-expr e@5:13 name(Random) type=kotlin.random.Random.Default ref=kotlin.random.Random#0
+expr e@4:13#1 memberCall recv=e@4:13 callee=nextFloat args=[_:e@4:30] type=Float call=kotlin.random.Random.Default.nextFloat[kind=fun;recv=kotlin.random.Random.Default;params=Float]
+expr e@4:5 localDecl a mutable=0 type=_ init=e@4:13#1 type=Unit ref=__local_0.a[kind=local]
+expr e@5:13 name(Random) type=kotlin.random.Random.Default ref=kotlin.random.Random[kind=class]
 expr e@5:30 float(1.0) type=Float
 expr e@5:36 float(10.0) type=Float
-expr e@5:13#1 memberCall recv=e@5:13 callee=nextFloat args=[_:e@5:30,_:e@5:36] type=Float call=kotlin.random.Random.Default.nextFloat#2
-expr e@5:5 localDecl b mutable=0 type=_ init=e@5:13#1 type=Unit ref=__local_1.b
+expr e@5:13#1 memberCall recv=e@5:13 callee=nextFloat args=[_:e@5:30,_:e@5:36] type=Float call=kotlin.random.Random.Default.nextFloat[kind=fun;recv=kotlin.random.Random.Default;params=Float,Float]
+expr e@5:5 localDecl b mutable=0 type=_ init=e@5:13#1 type=Unit ref=__local_1.b[kind=local]

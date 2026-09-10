@@ -1,3 +1,3 @@
-symbol fq=golden.sema.experimentalContractsUse kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.experimentalContractsUse[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_contracts_ExperimentalContracts_n_n package=golden.sema annotations=[@file:OptIn(kotlin.contracts.ExperimentalContracts::class)]
-  decl golden.sema.experimentalContractsUse fun experimentalContractsUse sym=golden.sema.experimentalContractsUse
+  decl golden.sema.experimentalContractsUse[kind=fun;params=] fun experimentalContractsUse sym=golden.sema.experimentalContractsUse[kind=fun;params=]

@@ -1,51 +1,51 @@
-symbol fq=OrderedMapHolder kind=class vis=public flags=_
-symbol fq=OrderedMapHolder.<init> kind=constructor vis=public flags=_ sig=recv=OrderedMapHolder params=[] ret=OrderedMapHolder
-symbol fq=OrderedMapHolder.labels kind=property vis=public flags=_ type=kotlin.collections.MutableMap<Int, String>
-symbol fq=OrderedMapHolder.scores kind=property vis=public flags=_ type=kotlin.collections.MutableMap<String, Int>
-symbol fq=__local_0.explicit kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
-symbol fq=__local_1.explicitAsMutable kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
-symbol fq=__local_2.fromAlias kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Double, Boolean>
-symbol fq=__local_3.fromMutable kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, String>
-symbol fq=__local_4.created kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, String>
-symbol fq=__local_5.createdAsMutable kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, String>
-symbol fq=__local_6.holder kind=local vis=private flags=_ type=OrderedMapHolder
-symbol fq=__local_7.scores kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
-symbol fq=__local_8.labels kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, String>
-symbol fq=createLinkedMap kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.MutableMap<Int, String>
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=processLinkedMap kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int>] ret=Unit
-symbol fq=processLinkedMap.$0.map kind=valueParameter vis=private flags=_
+symbol fq=OrderedMapHolder.<init>[kind=ctor;recv=OrderedMapHolder;params=] kind=constructor vis=public flags=_ sig=recv=OrderedMapHolder params=[] ret=OrderedMapHolder
+symbol fq=OrderedMapHolder.labels[kind=prop] kind=property vis=public flags=_ type=kotlin.collections.MutableMap<Int, String>
+symbol fq=OrderedMapHolder.scores[kind=prop] kind=property vis=public flags=_ type=kotlin.collections.MutableMap<String, Int>
+symbol fq=OrderedMapHolder[kind=class] kind=class vis=public flags=_
+symbol fq=__local_0.explicit[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
+symbol fq=__local_1.explicitAsMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
+symbol fq=__local_2.fromAlias[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Double, Boolean>
+symbol fq=__local_3.fromMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, String>
+symbol fq=__local_4.created[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, String>
+symbol fq=__local_5.createdAsMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, String>
+symbol fq=__local_6.holder[kind=local] kind=local vis=private flags=_ type=OrderedMapHolder
+symbol fq=__local_7.scores[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
+symbol fq=__local_8.labels[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, String>
+symbol fq=createLinkedMap[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.MutableMap<Int, String>
+symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=processLinkedMap.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=processLinkedMap[kind=fun;params=kotlin.collections.MutableMap<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int>] ret=Unit
 file flinkedhashmap_alias package=_
-  decl processLinkedMap fun processLinkedMap sym=processLinkedMap
-  decl createLinkedMap fun createLinkedMap sym=createLinkedMap
-  decl OrderedMapHolder class OrderedMapHolder sym=OrderedMapHolder
-  decl main fun main sym=main
+  decl processLinkedMap[kind=fun;params=kotlin.collections.MutableMap<String,Int>] fun processLinkedMap sym=processLinkedMap[kind=fun;params=kotlin.collections.MutableMap<String,Int>]
+  decl createLinkedMap[kind=fun;params=] fun createLinkedMap sym=createLinkedMap[kind=fun;params=]
+  decl OrderedMapHolder[kind=class] class OrderedMapHolder sym=OrderedMapHolder[kind=class]
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@11:12 call callee=e@11:12#1 args=[] type=kotlin.collections.MutableMap<Int, String>
 expr e@11:5 return value=e@11:12 type=Nothing
 expr e@15:46 call callee=e@15:46#1 args=[] type=kotlin.collections.MutableMap<String, Int>
 expr e@16:46 call callee=e@16:46#1 args=[] type=kotlin.collections.MutableMap<Int, String>
 expr e@23:20 call callee=e@23:20#1 args=[] type=kotlin.collections.MutableMap<String, Int>
-expr e@23:5 localDecl explicit mutable=0 type=_ init=e@23:20 type=Unit ref=__local_0.explicit
-expr e@24:54 name(explicit) type=kotlin.collections.MutableMap<String, Int> ref=__local_0.explicit
-expr e@24:5 localDecl explicitAsMutable mutable=0 type=MutableMap<String,Int> init=e@24:54 type=Unit ref=__local_1.explicitAsMutable
-expr e@25:22 name(explicit) type=kotlin.collections.MutableMap<String, Int> ref=__local_0.explicit
-expr e@25:5 call callee=e@25:5#1 args=[_:e@25:22] type=Unit call=processLinkedMap
+expr e@23:5 localDecl explicit mutable=0 type=_ init=e@23:20 type=Unit ref=__local_0.explicit[kind=local]
+expr e@24:54 name(explicit) type=kotlin.collections.MutableMap<String, Int> ref=__local_0.explicit[kind=local]
+expr e@24:5 localDecl explicitAsMutable mutable=0 type=MutableMap<String,Int> init=e@24:54 type=Unit ref=__local_1.explicitAsMutable[kind=local]
+expr e@25:22 name(explicit) type=kotlin.collections.MutableMap<String, Int> ref=__local_0.explicit[kind=local]
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:22] type=Unit call=processLinkedMap[kind=fun;params=kotlin.collections.MutableMap<String,Int>]
 expr e@29:53 call callee=e@29:53#1 args=[] type=kotlin.collections.MutableMap<Double, Boolean>
-expr e@29:5 localDecl fromAlias mutable=0 type=LinkedHashMap<Double,Boolean> init=e@29:53 type=Unit ref=__local_2.fromAlias
+expr e@29:5 localDecl fromAlias mutable=0 type=LinkedHashMap<Double,Boolean> init=e@29:53 type=Unit ref=__local_2.fromAlias[kind=local]
 expr e@30:48 call callee=e@30:48#1 args=[] type=kotlin.collections.MutableMap<Int, String>
-expr e@30:5 localDecl fromMutable mutable=0 type=MutableMap<Int,String> init=e@30:48 type=Unit ref=__local_3.fromMutable
-expr e@36:22 name(explicitAsMutable) type=kotlin.collections.MutableMap<String, Int> ref=__local_1.explicitAsMutable
-expr e@36:5 call callee=e@36:5#1 args=[_:e@36:22] type=Unit call=processLinkedMap
-expr e@39:19 call callee=e@39:19#1 args=[] type=kotlin.collections.MutableMap<Int, String> call=createLinkedMap
-expr e@39:5 localDecl created mutable=0 type=_ init=e@39:19 type=Unit ref=__local_4.created
-expr e@40:53 name(created) type=kotlin.collections.MutableMap<Int, String> ref=__local_4.created
-expr e@40:5 localDecl createdAsMutable mutable=0 type=MutableMap<Int,String> init=e@40:53 type=Unit ref=__local_5.createdAsMutable
-expr e@43:18 call callee=e@43:18#1 args=[] type=OrderedMapHolder call=OrderedMapHolder.<init>
-expr e@43:5 localDecl holder mutable=0 type=_ init=e@43:18 type=Unit ref=__local_6.holder
-expr e@44:43 name(holder) type=OrderedMapHolder ref=__local_6.holder
-expr e@44:43#1 memberCall recv=e@44:43 callee=scores args=[] type=kotlin.collections.MutableMap<String, Int> ref=OrderedMapHolder.scores
-expr e@44:5 localDecl scores mutable=0 type=MutableMap<String,Int> init=e@44:43#1 type=Unit ref=__local_7.scores
-expr e@45:46 name(holder) type=OrderedMapHolder ref=__local_6.holder
-expr e@45:46#1 memberCall recv=e@45:46 callee=labels args=[] type=kotlin.collections.MutableMap<Int, String> ref=OrderedMapHolder.labels
-expr e@45:5 localDecl labels mutable=0 type=LinkedHashMap<Int,String> init=e@45:46#1 type=Unit ref=__local_8.labels
+expr e@30:5 localDecl fromMutable mutable=0 type=MutableMap<Int,String> init=e@30:48 type=Unit ref=__local_3.fromMutable[kind=local]
+expr e@36:22 name(explicitAsMutable) type=kotlin.collections.MutableMap<String, Int> ref=__local_1.explicitAsMutable[kind=local]
+expr e@36:5 call callee=e@36:5#1 args=[_:e@36:22] type=Unit call=processLinkedMap[kind=fun;params=kotlin.collections.MutableMap<String,Int>]
+expr e@39:19 call callee=e@39:19#1 args=[] type=kotlin.collections.MutableMap<Int, String> call=createLinkedMap[kind=fun;params=]
+expr e@39:5 localDecl created mutable=0 type=_ init=e@39:19 type=Unit ref=__local_4.created[kind=local]
+expr e@40:53 name(created) type=kotlin.collections.MutableMap<Int, String> ref=__local_4.created[kind=local]
+expr e@40:5 localDecl createdAsMutable mutable=0 type=MutableMap<Int,String> init=e@40:53 type=Unit ref=__local_5.createdAsMutable[kind=local]
+expr e@43:18 call callee=e@43:18#1 args=[] type=OrderedMapHolder call=OrderedMapHolder.<init>[kind=ctor;recv=OrderedMapHolder;params=]
+expr e@43:5 localDecl holder mutable=0 type=_ init=e@43:18 type=Unit ref=__local_6.holder[kind=local]
+expr e@44:43 name(holder) type=OrderedMapHolder ref=__local_6.holder[kind=local]
+expr e@44:43#1 memberCall recv=e@44:43 callee=scores args=[] type=kotlin.collections.MutableMap<String, Int> ref=OrderedMapHolder.scores[kind=prop]
+expr e@44:5 localDecl scores mutable=0 type=MutableMap<String,Int> init=e@44:43#1 type=Unit ref=__local_7.scores[kind=local]
+expr e@45:46 name(holder) type=OrderedMapHolder ref=__local_6.holder[kind=local]
+expr e@45:46#1 memberCall recv=e@45:46 callee=labels args=[] type=kotlin.collections.MutableMap<Int, String> ref=OrderedMapHolder.labels[kind=prop]
+expr e@45:5 localDecl labels mutable=0 type=LinkedHashMap<Int,String> init=e@45:46#1 type=Unit ref=__local_8.labels[kind=local]

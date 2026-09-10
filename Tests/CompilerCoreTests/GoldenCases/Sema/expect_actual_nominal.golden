@@ -1,9 +1,9 @@
-symbol fq=golden.sema.Bar#0 kind=class vis=public flags=expectDeclaration
-symbol fq=golden.sema.Bar#1 kind=class vis=public flags=actualDeclaration
-symbol fq=golden.sema.Foo#0 kind=class vis=public flags=expectDeclaration
-symbol fq=golden.sema.Foo#1 kind=class vis=public flags=actualDeclaration
+symbol fq=golden.sema.Bar[kind=class;gen=1;scope=expect_actual_nominal@6.1] kind=class vis=public flags=expectDeclaration
+symbol fq=golden.sema.Bar[kind=class;gen=1;scope=expect_actual_nominal@7.1] kind=class vis=public flags=actualDeclaration
+symbol fq=golden.sema.Foo[kind=class;scope=expect_actual_nominal@3.1] kind=class vis=public flags=expectDeclaration
+symbol fq=golden.sema.Foo[kind=class;scope=expect_actual_nominal@4.1] kind=class vis=public flags=actualDeclaration
 file fexpect_actual_nominal package=golden.sema
-  decl golden.sema.Foo#0 class Foo sym=golden.sema.Foo#0
-  decl golden.sema.Foo#1 class Foo sym=golden.sema.Foo#1
-  decl golden.sema.Bar#0 class Bar sym=golden.sema.Bar#0
-  decl golden.sema.Bar#1 class Bar sym=golden.sema.Bar#1
+  decl golden.sema.Foo[kind=class;scope=expect_actual_nominal@3.1] class Foo sym=golden.sema.Foo[kind=class;scope=expect_actual_nominal@3.1]
+  decl golden.sema.Foo[kind=class;scope=expect_actual_nominal@4.1] class Foo sym=golden.sema.Foo[kind=class;scope=expect_actual_nominal@4.1]
+  decl golden.sema.Bar[kind=class;gen=1;scope=expect_actual_nominal@6.1] class Bar sym=golden.sema.Bar[kind=class;gen=1;scope=expect_actual_nominal@6.1]
+  decl golden.sema.Bar[kind=class;gen=1;scope=expect_actual_nominal@7.1] class Bar sym=golden.sema.Bar[kind=class;gen=1;scope=expect_actual_nominal@7.1]

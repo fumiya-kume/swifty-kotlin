@@ -1,5 +1,5 @@
-symbol fq=golden.sema.useContextFunctionTypeParams kind=function vis=public flags=_ sig=recv=_ params=[context(String, Int) Double.(Byte) -> Unit,context(String) (Byte) -> Unit] ret=Unit
-symbol fq=golden.sema.useContextFunctionTypeParams.$0.action kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.useContextFunctionTypeParams.$0.block kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useContextFunctionTypeParams.$0.action[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useContextFunctionTypeParams.$0.block[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useContextFunctionTypeParams[kind=fun;params=fn{ctx=String,Int;r=Double;p=Byte;ret=Unit},fn{ctx=String;p=Byte;ret=Unit}] kind=function vis=public flags=_ sig=recv=_ params=[context(String, Int) Double.(Byte) -> Unit,context(String) (Byte) -> Unit] ret=Unit
 file fstdlib_kotlin_n_ContextFunctionTypeParams package=golden.sema
-  decl golden.sema.useContextFunctionTypeParams fun useContextFunctionTypeParams sym=golden.sema.useContextFunctionTypeParams
+  decl golden.sema.useContextFunctionTypeParams[kind=fun;params=fn{ctx=String,Int;r=Double;p=Byte;ret=Unit},fn{ctx=String;p=Byte;ret=Unit}] fun useContextFunctionTypeParams sym=golden.sema.useContextFunctionTypeParams[kind=fun;params=fn{ctx=String,Int;r=Double;p=Byte;ret=Unit},fn{ctx=String;p=Byte;ret=Unit}]
