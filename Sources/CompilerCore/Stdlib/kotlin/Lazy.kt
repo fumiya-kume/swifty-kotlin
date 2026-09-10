@@ -8,21 +8,16 @@ import kotlin.reflect.KProperty
  * synthetic `HeaderHelpers+SyntheticPropertyDelegateStubs` shells and the
  * `kk_lazy_*` runtime bridge (RuntimeDelegates.swift/RuntimeTypes.swift).
  *
- * `getValue` is declared as an interface member here (not as the extension
- * function real kotlin-stdlib uses) because property-delegate resolution
- * (`DeclTypeChecker.typeCheckDelegate` -> `collectMemberFunctionCandidates`)
- * only walks members/supertypes, not extension functions in scope
- * (tracked separately as a compiler capability gap). It carries a default
- * body (`= value`) so a class implementing `Lazy<T>` directly -- without
- * using `by lazy { ... }` -- does not also have to implement `getValue`
- * itself, matching real kotlin-stdlib's extension-based shape where only
- * `value`/`isInitialized` are abstract.
+ * The `getValue` operator is declared below as the source-compatible
+ * extension used by kotlin-stdlib. Property-delegate resolution admits
+ * visible extension operators as well as members (KSP-CAP-020).
  */
 public interface Lazy<out T> {
     public val value: T
     public fun isInitialized(): Boolean
-    public operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 }
+
+public operator fun <T> Lazy<T>.getValue(thisRef: Any?, property: KProperty<*>): T = value
 
 @KsSymbolName("__kk_lazy_sync_lock")
 internal external fun __lazySyncLock(lock: Any): Unit
@@ -121,8 +116,6 @@ internal class LazyImpl<T>(
     override val value: T get() = computeValue()
 
     override fun isInitialized(): Boolean = computed
-
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 }
 
 public fun <T> lazy(initializer: () -> T): Lazy<T> =

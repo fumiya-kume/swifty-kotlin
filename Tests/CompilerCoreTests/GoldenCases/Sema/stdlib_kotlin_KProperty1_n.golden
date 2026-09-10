@@ -18,7 +18,7 @@ file fstdlib_kotlin_KProperty1_n package=golden.sema
 expr e@9:5 name(property) type=kotlin.reflect.KProperty1<golden.sema.read.$1.T, golden.sema.read.$1.V> ref=golden.sema.read.$1.property
 expr e@9:23 name(receiver) type=golden.sema.read.$1.T ref=golden.sema.read.$1.receiver
 expr e@9:33 name(metadata) type=kotlin.reflect.KProperty<*> ref=golden.sema.read.$1.metadata
-expr e@9:5#1 memberCall recv=e@9:5 callee=getValue args=[_:e@9:23,_:e@9:33] type=golden.sema.read.$1.V call=kotlin.getValue#1 targs=[golden.sema.read.$1.T,golden.sema.read.$1.V]
+expr e@9:5#1 memberCall recv=e@9:5 callee=getValue args=[_:e@9:23,_:e@9:33] type=golden.sema.read.$1.V call=kotlin.getValue#2 targs=[golden.sema.read.$1.T,golden.sema.read.$1.V]
 expr e@12:48 name(Person) type=Any ref=golden.sema.Person
 expr e@12:48#1 callableRef recv=e@12:48 member=name type=kotlin.reflect.KProperty1<golden.sema.Person, String> ref=golden.sema.Person.name
 expr e@12:5 localDecl property mutable=0 type=KProperty1<Person,String> init=e@12:48#1 type=Unit ref=__local_0.property

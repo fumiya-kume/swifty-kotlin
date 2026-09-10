@@ -16,7 +16,7 @@ expr e@8:5 localDecl property mutable=0 type=KProperty0<Int> init=e@8:37 type=Un
 expr e@9:13 name(property) type=kotlin.reflect.KProperty0<Int> ref=__local_0.property
 expr e@9:31 name(null) type=Nothing?
 expr e@9:37 name(property) type=kotlin.reflect.KProperty0<Int> ref=__local_0.property
-expr e@9:13#1 memberCall recv=e@9:13 callee=getValue args=[_:e@9:31,_:e@9:37] type=Int call=kotlin.getValue#0 targs=[Int]
+expr e@9:13#1 memberCall recv=e@9:13 callee=getValue args=[_:e@9:31,_:e@9:37] type=Int call=kotlin.getValue#1 targs=[Int]
 expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#1
 expr e@10:13 name(delegatedValue) type=Int ref=delegatedValue
 expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println#1

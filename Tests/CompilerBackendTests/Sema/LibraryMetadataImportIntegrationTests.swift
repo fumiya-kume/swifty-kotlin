@@ -89,9 +89,11 @@ struct LibraryMetadataImportIntegrationTests {
     }
 
     // KSP-472: インライン展開された本体がライブラリ側のプロパティ getter を呼ぶ場合、
-    // getter は consumer の symbol table に外部リンク名付きで復元されないため、
-    // 宣言名のままだとリンク時に undefined reference になる。mangle 済みリンク名へ
-    // フォールバックすることを固定する。
+    // 宣言名のままだとリンク時に undefined reference になりうる。KSP-803 以降、
+    // getter は consumer の symbol table に外部リンク名付きの accessor symbol として
+    // 復元されるため、KIR 上の callee 表記は宣言名のままでも良いが、その `symbol` が
+    // 指すシンボルの外部リンク名は必ず mangle 済みリンク名でなければならない
+    // (`symbol` が解決できない場合のみ、callee 自体が mangle 済み名にフォールバックする)。
     @Test
     func testImportedInlineBodyCallsLibraryPropertyGetterByLinkName() throws {
         let librarySource = """
@@ -115,6 +117,7 @@ struct LibraryMetadataImportIntegrationTests {
                 try runToKIR(appCtx)
                 try LoweringPhase().run(appCtx)
 
+                let sema = try #require(appCtx.sema)
                 let kir = try #require(appCtx.kir)
                 let mainFunction = try #require(
                     findAllKIRFunctions(in: kir).first { function in
@@ -122,14 +125,26 @@ struct LibraryMetadataImportIntegrationTests {
                     },
                     "Expected lowered main function"
                 )
-                let calls = extractCallees(from: mainFunction.body, interner: appCtx.interner)
-                #expect(
-                    !calls.contains("doubled"),
-                    "Inlined body must not call the getter by its declared name: \(calls)"
+                let getterCall = try #require(
+                    mainFunction.body.first { instruction in
+                        guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return false }
+                        let name = appCtx.interner.resolve(callee)
+                        return name == "doubled" || name.hasPrefix("kk_fn_get_")
+                    },
+                    "Expected the inlined body to call the imported getter"
                 )
+                guard case let .call(callSymbol, callee, _, _, _, _, _, _) = getterCall else {
+                    Issue.record("Expected a .call instruction")
+                    return
+                }
+                let calleeName = appCtx.interner.resolve(callee)
+                if calleeName.hasPrefix("kk_fn_get_") {
+                    return
+                }
+                let resolvedLinkName = callSymbol.flatMap { sema.symbols.externalLinkName(for: $0) }
                 #expect(
-                    calls.contains { $0.hasPrefix("kk_fn_get_") },
-                    "Inlined body must call the library's mangled getter link name: \(calls)"
+                    resolvedLinkName?.hasPrefix("kk_fn_get_") == true,
+                    "Inlined body must call the getter either by its mangled link name, or through a consumer accessor symbol whose external link name is the mangled getter link; got callee=\(calleeName), resolved symbol link=\(resolvedLinkName ?? "nil")"
                 )
             }
         }

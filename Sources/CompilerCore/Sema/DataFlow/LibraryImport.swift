@@ -175,7 +175,40 @@ extension DataFlowSemaPhase {
             }
         }
 
-        for binding in importedBindings {
+        // Property getter accessors are synthesized while applying their
+        // property records. Import those records before inline function bodies
+        // so a producer getter link (for example Lazy.value) resolves to the
+        // consumer-side accessor symbol when the inline virtual call is parsed.
+        let propertyBindingsWithGetter = importedBindings.filter { binding in
+            (binding.record.kind == .property || binding.record.kind == .field)
+                && binding.record.propertyGetterExternalLinkName?.isEmpty == false
+        }
+        for binding in propertyBindingsWithGetter {
+            applyImportedBinding(
+                binding,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner,
+                importedInlineFunctions: &importedInlineFunctions,
+                pendingSupertypeEdges: &pendingSupertypeEdges,
+                cache: cache,
+                isStdlibArtifact: binding.isStdlibArtifact,
+                externalLinkNameToSymbol: externalLinkNameToSymbol,
+                importedSymbolByFQName: importedSymbolByFQName
+            )
+        }
+        for binding in propertyBindingsWithGetter {
+            guard let getterLink = binding.record.propertyGetterExternalLinkName,
+                  let getterSymbol = symbols.extensionPropertyGetterAccessor(for: binding.symbol)
+            else {
+                continue
+            }
+            externalLinkNameToSymbol[getterLink] = getterSymbol
+        }
+
+        let preloadedGetterBindingSymbols = Set(propertyBindingsWithGetter.map(\.symbol))
+        for binding in importedBindings where !preloadedGetterBindingSymbols.contains(binding.symbol) {
             applyImportedBinding(
                 binding,
                 symbols: symbols,

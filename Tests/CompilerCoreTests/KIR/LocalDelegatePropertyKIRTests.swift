@@ -266,11 +266,10 @@ struct LocalDelegatePropertyKIRTests {
 
     /// BUG-052: a local `val x by lazy { ... }` kept the `kk_lazy_create` handle as
     /// the local's value, so reads observed the delegate object itself
-    /// (`println(x)` printed `<object 0x...>`). KSP-491: `lazy`'s `getValue` is
-    /// declared on the `Lazy<T>` interface (not `LazyImpl` directly, since Sema
-    /// resolves it against `lazy`'s declared -- interface -- return type), so
-    /// each read dispatches through `.virtualCall`'s itable path, not a plain
-    /// `.call`; see `extractVirtualCallees`.
+    /// (`println(x)` printed `<object 0x...>`). KSP-803: kotlin-stdlib declares
+    /// `lazy`'s `getValue` as an inline extension on `Lazy<T>`, so each read
+    /// lowers to a direct `.call` of the bundled extension rather than a
+    /// `.virtualCall` through the delegate interface.
     @Test func testLocalLazyDelegateReadsCallLazyGetValue() throws {
         let source = """
         fun main() {
@@ -288,15 +287,15 @@ struct LocalDelegatePropertyKIRTests {
 
             let module = try #require(ctx.kir)
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
-            let virtualCallees = extractVirtualCallees(from: mainBody, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
 
             // One getValue per read: reading through the delegate's own
             // getValue on every read (instead of caching one value at the
             // declaration) is what keeps the initializer deferred until the
             // first read, and lets a mutable delegate's reads observe writes.
             #expect(
-                virtualCallees.filter { $0 == "getValue" }.count == 2,
-                "each read of a local lazy delegate must call getValue, got virtual callees: \(virtualCallees)"
+                callees.filter { $0 == "getValue" }.count == 2,
+                "each read of a local lazy delegate must call getValue, got callees: \(callees)"
             )
 
             // println must consume getValue's result, not the delegate handle
@@ -304,19 +303,20 @@ struct LocalDelegatePropertyKIRTests {
             var derivedValues: Set<KIRExprID> = []
             var printCallArguments: [[KIRExprID]] = []
             for instruction in mainBody {
-                if case let .virtualCall(_, callee, _, arguments, result, _, _, _) = instruction,
-                   ctx.interner.resolve(callee) == "getValue", let result
-                {
-                    derivedValues.insert(result)
+                switch instruction {
+                case let .call(_, callee, arguments, result, _, _, _, _),
+                     let .virtualCall(_, callee, _, arguments, result, _, _, _):
+                    let calleeName = ctx.interner.resolve(callee)
+                    if calleeName == "getValue", let result {
+                        derivedValues.insert(result)
+                    } else if let result, arguments.contains(where: { derivedValues.contains($0) }) {
+                        derivedValues.insert(result)
+                    }
+                    if calleeName == "println" || calleeName == "__kk_print_raw" || calleeName.hasPrefix("kk_println") {
+                        printCallArguments.append(arguments)
+                    }
+                default:
                     continue
-                }
-                guard case let .call(_, callee, arguments, result, _, _, _, _) = instruction else { continue }
-                let calleeName = ctx.interner.resolve(callee)
-                if let result, arguments.contains(where: { derivedValues.contains($0) }) {
-                    derivedValues.insert(result)
-                }
-                if calleeName == "println" || calleeName == "__kk_print_raw" || calleeName.hasPrefix("kk_println") {
-                    printCallArguments.append(arguments)
                 }
             }
             #expect(!derivedValues.isEmpty, "expected a getValue call in main")
@@ -427,16 +427,18 @@ struct LocalDelegatePropertyKIRTests {
             var getValueIndex: Int?
             var firstPrintIndex: Int?
             for (index, instruction) in mainBody.enumerated() {
-                if case let .virtualCall(_, callee, _, _, _, _, _, _) = instruction,
-                   ctx.interner.resolve(callee) == "getValue", getValueIndex == nil
-                {
-                    getValueIndex = index
-                }
-                if case let .call(_, callee, _, _, _, _, _, _) = instruction {
+                switch instruction {
+                case let .call(_, callee, _, _, _, _, _, _),
+                     let .virtualCall(_, callee, _, _, _, _, _, _):
                     let name = ctx.interner.resolve(callee)
+                    if name == "getValue", getValueIndex == nil {
+                        getValueIndex = index
+                    }
                     if (name == "println" || name.hasPrefix("kk_println")), firstPrintIndex == nil {
                         firstPrintIndex = index
                     }
+                default:
+                    continue
                 }
             }
             let resolvedGetValueIndex = try #require(getValueIndex, "expected a getValue call, callees: \(callees), virtual: \(virtualCallees)")
@@ -471,8 +473,13 @@ struct LocalDelegatePropertyKIRTests {
             var sawGetValue = false
             module.arena.transformFunctions { function in
                 for instruction in function.body {
-                    guard case let .virtualCall(_, callee, _, _, _, _, _, _) = instruction else { continue }
-                    if ctx.interner.resolve(callee) == "getValue" { sawGetValue = true }
+                    switch instruction {
+                    case let .call(_, callee, _, _, _, _, _, _),
+                         let .virtualCall(_, callee, _, _, _, _, _, _):
+                        if ctx.interner.resolve(callee) == "getValue" { sawGetValue = true }
+                    default:
+                        continue
+                    }
                 }
                 return function
             }
