@@ -24,8 +24,23 @@ extension BuildKIRRegressionTests {
                 return dispatch
             }
 
+            let sema = try #require(ctx.sema)
+            let charSequenceFQName = ["kotlin", "CharSequence"].map { ctx.interner.intern($0) }
+            let charSequence = try #require(sema.symbols.lookup(fqName: charSequenceFQName))
+            let length = try #require(
+                sema.symbols.lookup(fqName: charSequenceFQName + [ctx.interner.intern("length")])
+            )
+            let expectedLengthSlot = try #require(
+                kirInterfacePropertyGetterSlot(
+                    interfaceProperty: length,
+                    interfaceSymbol: charSequence,
+                    sema: sema,
+                    interner: ctx.interner
+                )
+            )
+
             #expect(dispatches.contains { dispatch in
-                if case .itableDynamic(_, 1) = dispatch { return true }
+                if case .itableDynamic(_, expectedLengthSlot) = dispatch { return true }
                 return false
             })
         }
@@ -52,6 +67,32 @@ extension BuildKIRRegressionTests {
 
             #expect(dispatches.contains { dispatch in
                 if case .itableDynamic(_, 0) = dispatch { return true }
+                return false
+            })
+        }
+    }
+
+    // KSP-1390: CharSequence.subSequence must use the adjacent dynamic method slot.
+    @Test func testKsp1390CharSequenceSubSequenceUsesDynamicItableDispatch() throws {
+        let source = """
+        fun subSequenceOf(value: CharSequence): CharSequence = value.subSequence(0, 1)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try #require(ctx.kir)
+            let body = try findKIRFunctionBody(named: "subSequenceOf", in: module, interner: ctx.interner)
+            let dispatches = body.compactMap { instruction -> KIRDispatchKind? in
+                guard case let .virtualCall(_, _, _, _, _, _, _, dispatch) = instruction else {
+                    return nil
+                }
+                return dispatch
+            }
+
+            #expect(dispatches.contains { dispatch in
+                if case .itableDynamic(_, 1) = dispatch { return true }
                 return false
             })
         }

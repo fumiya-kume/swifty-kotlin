@@ -183,14 +183,26 @@ final class ExprTypeChecker {
                     range: range
                 )
             }
+            // An unlabeled return in a lambda targets the surrounding named
+            // function. Its value must therefore be inferred against that
+            // function's return type, not the lambda's expected Boolean/result
+            // type (e.g. a predicate passed to an inline HOF).
+            let returnExpectedType: TypeID? = if label == nil,
+                                                    ctx.lambdaDepth > 0,
+                                                    let enclosingFunctionReturnType = ctx.enclosingFunctionReturnType
+            {
+                enclosingFunctionReturnType
+            } else {
+                expectedType
+            }
             if let value {
-                let resolved = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: expectedType)
+                let resolved = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: returnExpectedType)
                 // Emit subtype constraint: return value must conform to expected (function) return type.
                 // Range expressions keep their runtime representation separate from the
                 // source-level range interface (they infer as the scalar element type),
                 // so `fun f(): IntRange = a..b` skips the nominal subtype check, matching
                 // the local-declaration rule in LocalDeclTypeChecker.
-                let returnsRangeExpr = expectedType.map {
+                let returnsRangeExpr = returnExpectedType.map {
                     driver.helpers.rangeExprMatchesDeclaredElementType(
                         bodyExprID: value,
                         bodyType: resolved,
@@ -199,10 +211,10 @@ final class ExprTypeChecker {
                         interner: interner
                     )
                 } ?? false
-                if let expectedType, !returnsRangeExpr {
+                if let returnExpectedType, !returnsRangeExpr {
                     driver.emitSubtypeConstraint(
                         left: resolved,
-                        right: expectedType,
+                        right: returnExpectedType,
                         range: range,
                         solver: ConstraintSolver(),
                         sema: sema,
@@ -210,11 +222,11 @@ final class ExprTypeChecker {
                         suppressPlatformWarning: ctx.suppressPlatformReturnWarning
                     )
                 }
-            } else if let expectedType {
+            } else if let returnExpectedType {
                 // Bare `return` is equivalent to `return Unit`; check Unit <: expectedType
                 driver.emitSubtypeConstraint(
                     left: sema.types.unitType,
-                    right: expectedType,
+                    right: returnExpectedType,
                     range: range,
                     solver: ConstraintSolver(),
                     sema: sema,

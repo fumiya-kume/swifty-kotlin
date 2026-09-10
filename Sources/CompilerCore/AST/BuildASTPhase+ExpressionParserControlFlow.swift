@@ -12,18 +12,44 @@ extension BuildASTPhase.ExpressionParser {
                statementStart == 0,
                statementEnd > statementStart
             {
-                let bodySlice = remaining[statementStart ..< statementEnd]
+                let bodyEnd = controlFlowStatementEnd(in: remaining, before: statementEnd)
+                let bodySlice = remaining[statementStart ..< bodyEnd]
                 if let localDecl = parseLocalDeclFromSlice(bodySlice[...]) {
-                    index = startIndex + statementEnd
+                    index = startIndex + bodyEnd
                     return localDecl
                 }
                 if let localAssign = parseLocalAssignFromSlice(bodySlice[...]) {
-                    index = startIndex + statementEnd
+                    index = startIndex + bodyEnd
                     return localAssign
                 }
             }
         }
         return parseExpression(minPrecedence: 0)
+    }
+
+    /// A single assignment body must leave its enclosing `else` for the if
+    /// parser. Statement splitting deliberately keeps if/else on one line;
+    /// consuming that whole slice here would silently discard the else body.
+    private func controlFlowStatementEnd(in tokens: [Token], before end: Int) -> Int {
+        var depth = BuildASTPhase.BracketDepth()
+        var nestedIfs = 0
+        for offset in 0 ..< end {
+            let token = tokens[offset]
+            if depth.isAtTopLevel {
+                if token.kind == .keyword(.if) {
+                    nestedIfs += 1
+                } else if token.kind == .keyword(.else) {
+                    if nestedIfs == 0 { return offset }
+                    nestedIfs -= 1
+                }
+            }
+            // Angle tokens can be comparison operators. Type arguments cannot
+            // contain an if/else branch, so only expression delimiters matter.
+            if token.kind != .symbol(.lessThan), token.kind != .symbol(.greaterThan) {
+                depth.track(token.kind)
+            }
+        }
+        return end
     }
 
     func parseWhenExpression() -> ExprID? {
