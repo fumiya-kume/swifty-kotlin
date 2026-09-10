@@ -1,0 +1,9 @@
+symbol fq=golden.sema.constructDefault kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.AtomicLong
+symbol fq=golden.sema.constructExplicit kind=function vis=public flags=_ sig=recv=_ params=[Long] ret=kotlin.native.concurrent.AtomicLong
+symbol fq=golden.sema.constructExplicit.$0.value kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_native_concurrent_AtomicLong_n_n package=golden.sema
+  decl golden.sema.constructDefault fun constructDefault sym=golden.sema.constructDefault
+  decl golden.sema.constructExplicit fun constructExplicit sym=golden.sema.constructExplicit
+expr e@5:5 memberCall recv=e@5:5#1 callee=AtomicLong args=[] type=kotlin.native.concurrent.AtomicLong call=kotlin.native.concurrent.AtomicLong.<init>
+expr e@9:41 name(value) type=Long ref=golden.sema.constructExplicit.$0.value
+expr e@9:5 memberCall recv=e@9:5#1 callee=AtomicLong args=[_:e@9:41] type=kotlin.native.concurrent.AtomicLong call=kotlin.native.concurrent.AtomicLong.<init>

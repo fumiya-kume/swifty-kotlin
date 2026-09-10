@@ -69,6 +69,68 @@ struct StdlibArtifactRegressionTests {
     }
     """
 
+    /// KSP-697: inferred mutable collection factories must preserve their
+    /// MutableIterable supertype when the stdlib is consumed as an artifact.
+    @Test
+    func testMutableFactoriesWidenThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        try withTemporaryFile(contents: """
+        fun main() {
+            val list = mutableListOf(1, 2, 3)
+            val listIterable: MutableIterable<Int> = list
+            val set = mutableSetOf(1, 2, 3)
+            val setIterable: MutableIterable<Int> = set
+        }
+        """) { userPath in
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "MutableCollectionFactoryArtifact",
+                emit: .kirDump,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            #expect(
+                !ctx.diagnostics.hasError,
+                "Mutable collection factories should widen through MutableIterable: \(ctx.diagnostics.diagnostics)"
+            )
+        }
+    }
+
+    /// KSP-1151: source-backed coroutine intrinsic fallbacks must not leave a
+    /// direct reference to the Kotlin parameter `function` in the stdlib
+    /// artifact. A trivial artifact consumer is enough to exercise the native
+    /// linker against every object emitted by the stdlib-only build.
+    @Test
+    func testCoroutineIntrinsicFallbackThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        fun main() {
+            println("ok")
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "CoroutineIntrinsicArtifact",
+                emit: .executable,
+                outputPath: outputBase,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            #expect(result.stdout.replacingOccurrences(of: "\r\n", with: "\n") == "ok\n")
+        }
+    }
+
     /// KSP-1165: a named companion object must remain an exact nested type when
     /// the stdlib is consumed through a precompiled artifact.
     @Test
@@ -94,6 +156,43 @@ struct StdlibArtifactRegressionTests {
             )
             try runToKIR(ctx)
             #expect(!ctx.diagnostics.hasError, "Unexpected diagnostics: \(ctx.diagnostics.diagnostics)")
+        }
+    }
+
+    /// KSP-1083: a generic kotlin.concurrent nominal must preserve its
+    /// source-backed type parameter while residual constructor/member links
+    /// remain usable through a precompiled stdlib artifact.
+    @Test
+    func testAtomicReferenceGenericThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        import kotlin.concurrent.AtomicReference
+
+        fun main() {
+            val reference = AtomicReference("source-plus-residual")
+            val loaded: String = reference.get()
+            println(loaded)
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "AtomicReferenceArtifact",
+                emit: .executable,
+                outputPath: outputBase,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            #expect(result.stdout.replacingOccurrences(of: "\r\n", with: "\n") == "source-plus-residual\n")
         }
     }
 

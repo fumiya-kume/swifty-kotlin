@@ -1,0 +1,24 @@
+symbol fq=__local_0.mutable kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_2.mutable kind=local vis=private flags=_ type=kotlin.collections.MutableList<String>
+symbol fq=__local_3.checked kind=local vis=private flags=_ type=kotlin.collections.MutableList<String>
+symbol fq=collectionToMutableList kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<String>] ret=Unit
+symbol fq=collectionToMutableList.$0.items kind=valueParameter vis=private flags=_
+symbol fq=iterableToMutableList kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
+symbol fq=iterableToMutableList.$1.items kind=valueParameter vis=private flags=_
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
+file fiterable_to_mutable_list package=_
+  decl iterableToMutableList fun iterableToMutableList sym=iterableToMutableList
+  decl collectionToMutableList fun collectionToMutableList sym=collectionToMutableList
+expr e@5:19 name(items) type=kotlin.collections.Iterable<Int> ref=iterableToMutableList.$1.items
+expr e@5:19#1 memberCall recv=e@5:19 callee=toMutableList args=[] type=kotlin.collections.MutableList<Int> call=kotlin.collections.toMutableList#1 targs=[Int]
+expr e@5:5 localDecl mutable mutable=0 type=_ init=e@5:19#1 type=Unit ref=__local_0.mutable
+expr e@6:37 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
+expr e@6:5 localDecl checked mutable=0 type=MutableList<Int> init=e@6:37 type=Unit ref=__local_1.checked
+expr e@10:19 name(items) type=kotlin.collections.Collection<String> ref=collectionToMutableList.$0.items
+expr e@10:19#1 memberCall recv=e@10:19 callee=toMutableList args=[] type=kotlin.collections.MutableList<String> call=kotlin.collections.toMutableList#0 targs=[String]
+expr e@10:5 localDecl mutable mutable=0 type=_ init=e@10:19#1 type=Unit ref=__local_2.mutable
+expr e@11:40 name(mutable) type=kotlin.collections.MutableList<String> ref=__local_2.mutable
+expr e@11:5 localDecl checked mutable=0 type=MutableList<String> init=e@11:40 type=Unit ref=__local_3.checked

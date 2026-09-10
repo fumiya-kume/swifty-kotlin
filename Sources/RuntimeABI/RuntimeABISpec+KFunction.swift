@@ -115,6 +115,15 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
+            name: "__kk_kcallable_get_return_type",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
             name: "__kk_kfunction_get_arity",
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),
@@ -243,6 +252,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "callable", type: .intptr),
                 RuntimeABIParameter(name: "name", type: .intptr),
+                RuntimeABIParameter(name: "returnType", type: .intptr),
                 RuntimeABIParameter(name: "arity", type: .intptr),
                 RuntimeABIParameter(name: "isSuspend", type: .intptr),
             ],
@@ -255,6 +265,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "callable", type: .intptr),
                 RuntimeABIParameter(name: "name", type: .intptr),
+                RuntimeABIParameter(name: "returnType", type: .intptr),
                 RuntimeABIParameter(name: "arity", type: .intptr),
             ],
             returnType: .intptr,

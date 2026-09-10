@@ -16,6 +16,8 @@ struct NativeConcurrentAPISurfaceInventoryTests {
         TopLevelEntry(name: "Continuation0", kind: .class, todo: nil),
         TopLevelEntry(name: "Continuation1", kind: .class, todo: nil),
         TopLevelEntry(name: "Continuation2", kind: .class, todo: nil),
+        TopLevelEntry(name: "AtomicLong", kind: .class, todo: nil),
+        TopLevelEntry(name: "FreezableAtomicReference", kind: .class, todo: nil),
         TopLevelEntry(name: "FreezingException", kind: .class, todo: nil),
         TopLevelEntry(name: "Future", kind: .class, todo: nil),
         TopLevelEntry(name: "FutureState", kind: .enumClass, todo: nil),
@@ -60,8 +62,8 @@ struct NativeConcurrentAPISurfaceInventoryTests {
 
         // Each TopLevelEntry must have a unique name (no two entries share a `name`).
         #expect(targetEntries.count == targetNames.count)
-        #expect(targetEntries.count == 16)
-        #expect(Self.implementedTopLevelEntries.count == 16)
+        #expect(targetEntries.count == 18)
+        #expect(Self.implementedTopLevelEntries.count == 18)
         #expect(Self.knownGapTopLevelEntries.count == 0)
     }
 
@@ -88,9 +90,12 @@ struct NativeConcurrentAPISurfaceInventoryTests {
         let package = Self.packagePath.map { interner.intern($0) }
         let targetNames = Set(Self.implementedTopLevelEntries.union(Self.knownGapTopLevelEntries).map(\.name))
         let currentNames = Set(sema.symbols.allSymbols().compactMap { symbol -> String? in
+            // Internal stdlib bridge helpers (e.g. __kkFutureGetState) are not part
+            // of the public kotlin.native.concurrent surface and should not be counted.
             guard symbol.fqName.count == package.count + 1,
                   Array(symbol.fqName.prefix(package.count)) == package,
-                  symbol.kind != .package
+                  symbol.kind != .package,
+                  symbol.visibility == .public
             else {
                 return nil
             }

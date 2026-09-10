@@ -1,0 +1,34 @@
+symbol fq=__local_0.ints kind=local vis=private flags=_ type=kotlin.Array<Int>
+symbol fq=__local_1.checked kind=local vis=private flags=_ type=kotlin.Array<Int>
+symbol fq=__local_2.strings kind=local vis=private flags=_ type=kotlin.Array<String>
+symbol fq=__local_3.checked kind=local vis=private flags=_ type=kotlin.Array<String>
+symbol fq=__local_4.mixed kind=local vis=private flags=_ type=kotlin.Array<Any>
+symbol fq=__local_5.checked kind=local vis=private flags=_ type=kotlin.Array<Any>
+symbol fq=arrayOfInts kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=arrayOfMixed kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=arrayOfStrings kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+file farrayof_element_type_inference package=_
+  decl arrayOfInts fun arrayOfInts sym=arrayOfInts
+  decl arrayOfStrings fun arrayOfStrings sym=arrayOfStrings
+  decl arrayOfMixed fun arrayOfMixed sym=arrayOfMixed
+expr e@4:24 int(1) type=Int
+expr e@4:27 int(2) type=Int
+expr e@4:30 int(3) type=Int
+expr e@4:16 call callee=e@4:16#1 args=[_:e@4:24,_:e@4:27,_:e@4:30] type=kotlin.Array<Int> call=kotlin.arrayOf targs=[Int]
+expr e@4:5 localDecl ints mutable=0 type=_ init=e@4:16 type=Unit ref=__local_0.ints
+expr e@5:31 name(ints) type=kotlin.Array<Int> ref=__local_0.ints
+expr e@5:5 localDecl checked mutable=0 type=Array<Int> init=e@5:31 type=Unit ref=__local_1.checked
+expr e@9:27 string(hello) type=String
+expr e@9:36 string(world) type=String
+expr e@9:19 call callee=e@9:19#1 args=[_:e@9:27,_:e@9:36] type=kotlin.Array<String> call=kotlin.arrayOf targs=[String]
+expr e@9:5 localDecl strings mutable=0 type=_ init=e@9:19 type=Unit ref=__local_2.strings
+expr e@10:34 name(strings) type=kotlin.Array<String> ref=__local_2.strings
+expr e@10:5 localDecl checked mutable=0 type=Array<String> init=e@10:34 type=Unit ref=__local_3.checked
+expr e@14:25 int(1) type=Int
+expr e@14:28 string(two) type=String
+expr e@14:35 double(3.0) type=Double
+expr e@14:17 call callee=e@14:17#1 args=[_:e@14:25,_:e@14:28,_:e@14:35] type=kotlin.Array<Any> call=kotlin.arrayOf targs=[Any]
+expr e@14:5 localDecl mixed mutable=0 type=_ init=e@14:17 type=Unit ref=__local_4.mixed
+expr e@15:31 name(mixed) type=kotlin.Array<Any> ref=__local_4.mixed
+expr e@15:5 localDecl checked mutable=0 type=Array<Any> init=e@15:31 type=Unit ref=__local_5.checked

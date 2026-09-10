@@ -1,0 +1,41 @@
+symbol fq=golden.sema.Direction kind=enumClass vis=public flags=_
+symbol fq=golden.sema.Direction.name kind=property vis=public flags=synthetic type=String
+symbol fq=golden.sema.Direction.ordinal kind=property vis=public flags=synthetic type=Int
+symbol fq=golden.sema.compare kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Direction,golden.sema.Direction] ret=Int
+symbol fq=golden.sema.compare.$0.a kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.compare.$0.b kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.equal kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Direction,Any?] ret=Boolean
+symbol fq=golden.sema.equal.$1.a kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.equal.$1.b kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.hash kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Direction] ret=Int
+symbol fq=golden.sema.hash.$2.a kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.name kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Direction] ret=String
+symbol fq=golden.sema.name.$3.a kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.ordinal kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Direction] ret=Int
+symbol fq=golden.sema.ordinal.$4.a kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.string kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Direction] ret=String
+symbol fq=golden.sema.string.$5.a kind=valueParameter vis=private flags=_
+symbol fq=kotlin.Enum kind=class vis=public flags=abstractType|openType
+symbol fq=kotlin.Enum.T kind=typeParameter vis=private flags=_
+file fstdlib_kotlin_Enum_Enum_n package=golden.sema
+  decl golden.sema.Direction class Direction sym=golden.sema.Direction
+  decl golden.sema.compare fun compare sym=golden.sema.compare
+  decl golden.sema.equal fun equal sym=golden.sema.equal
+  decl golden.sema.hash fun hash sym=golden.sema.hash
+  decl golden.sema.name fun name sym=golden.sema.name
+  decl golden.sema.ordinal fun ordinal sym=golden.sema.ordinal
+  decl golden.sema.string fun string sym=golden.sema.string
+expr e@5:48 name(a) type=golden.sema.Direction ref=golden.sema.compare.$0.a
+expr e@5:60 name(b) type=golden.sema.Direction ref=golden.sema.compare.$0.b
+expr e@5:48#1 memberCall recv=e@5:48 callee=compareTo args=[_:e@5:60] type=Int call=kotlin.Enum.compareTo targs=[golden.sema.Direction]
+expr e@6:45 name(a) type=golden.sema.Direction ref=golden.sema.equal.$1.a
+expr e@6:54 name(b) type=Any? ref=golden.sema.equal.$1.b
+expr e@6:45#1 memberCall recv=e@6:45 callee=equals args=[_:e@6:54] type=Boolean call=kotlin.Enum.equals targs=[golden.sema.Direction]
+expr e@7:31 name(a) type=golden.sema.Direction ref=golden.sema.hash.$2.a
+expr e@7:31#1 memberCall recv=e@7:31 callee=hashCode args=[] type=Int call=kotlin.Enum.hashCode targs=[golden.sema.Direction]
+expr e@8:34 name(a) type=golden.sema.Direction ref=golden.sema.name.$3.a
+expr e@8:34#1 memberCall recv=e@8:34 callee=name args=[] type=String ref=golden.sema.Direction.name
+expr e@9:34 name(a) type=golden.sema.Direction ref=golden.sema.ordinal.$4.a
+expr e@9:34#1 memberCall recv=e@9:34 callee=ordinal args=[] type=Int ref=golden.sema.Direction.ordinal
+expr e@10:36 name(a) type=golden.sema.Direction ref=golden.sema.string.$5.a
+expr e@10:36#1 memberCall recv=e@10:36 callee=toString args=[] type=String call=kotlin.Enum.toString targs=[golden.sema.Direction]

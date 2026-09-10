@@ -1272,7 +1272,6 @@ extension DataFlowSemaPhase {
         if types.comparableInterfaceSymbol == nil {
             registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
         }
-        registerSyntheticBuilderDSLStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStringStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCharStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMathStubs(symbols: symbols, types: types, interner: interner)
@@ -1282,24 +1281,16 @@ extension DataFlowSemaPhase {
         registerSyntheticInstantStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticClockStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalTimeStubs(symbols: symbols, types: types, interner: interner, bundledIndex: bundledIndex)
-        let stringBuilderOwner = [interner.intern("kotlin"), interner.intern("text"), interner.intern("StringBuilder")]
-        if bundledIndex.contains(ownerFQName: stringBuilderOwner, name: interner.intern("append"), arity: 1) {
-            patchSourceBackedStringBuilderSupertypes(symbols: symbols, types: types, interner: interner)
-        } else {
-            registerSyntheticStringBuilderStubs(symbols: symbols, types: types, interner: interner)
-        }
         registerSyntheticTODOAndIOStubs(
             symbols: symbols,
             types: types,
             interner: interner,
-            bundledIndex: bundledIndex,
-            skipStats: skipStats
+            bundledIndex: bundledIndex
         )
         patchKPropertyFunctionSupertypes(symbols: symbols, types: types, interner: interner)
         patchKMutableProperty0FunctionSupertype(symbols: symbols, types: types, interner: interner)
         patchKMutableProperty1FunctionSupertype(symbols: symbols, types: types, interner: interner)
         registerSyntheticFileIOStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticFilesUtilityStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticPathStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoercionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBucketedExtendedStdlibStubs(symbols: symbols, types: types, interner: interner)
@@ -1599,7 +1590,13 @@ extension DataFlowSemaPhase {
     ) -> SymbolID {
         let internedName = interner.intern(name)
         let fqName = pkg + [internedName]
-        if let existing = symbols.lookup(fqName: fqName) {
+        // A factory function may share the class FQName (for example,
+        // `kotlin.concurrent.AtomicIntArray(Int)` or a Kotlin `class Foo` +
+        // `fun Foo(...)` pair). Prefer an existing nominal class over the
+        // first callable that shadows it.
+        if let existing = symbols.lookupAll(fqName: fqName).first(where: { id in
+            symbols.symbol(id)?.kind == .class
+        }) {
             return existing
         }
         return symbols.define(

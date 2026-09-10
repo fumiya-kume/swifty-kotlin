@@ -123,19 +123,6 @@ public func component2(_ pairRaw: Int) -> Int {
     kk_pair_second(pairRaw)
 }
 
-@_cdecl("kk_map_entry_to_pair")
-public func kk_map_entry_to_pair(_ entryRaw: Int) -> Int {
-    if entryRaw == runtimeNullSentinelInt {
-        return runtimeNullSentinelInt
-    }
-    guard let pointer = UnsafeMutableRawPointer(bitPattern: entryRaw),
-          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
-    else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Map.Entry handle in kk_map_entry_to_pair")
-    }
-    return runtimePairNew(firstValue: pairBox.firstValue, secondValue: pairBox.secondValue)
-}
-
 // MARK: - Triple Functions (STDLIB-120)
 
 @_cdecl("__kk_triple_new")
@@ -371,6 +358,68 @@ private func kk_uarray_asList(_ arrayRaw: Int, functionName: String) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in \(functionName)")
     }
     return registerRuntimeObject(RuntimeListBox(arrayViewOf: array))
+}
+
+@inline(__always)
+private func kk_array_asList(_ arrayRaw: Int, functionName: String) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in \(functionName)")
+    }
+    return registerRuntimeObject(RuntimeListBox(arrayViewOf: array))
+}
+
+/// Array.asList(): List<T>
+@_cdecl("__kk_array_asList")
+public func kk_array_asList(_ arrayRaw: Int) -> Int {
+    kk_array_asList(arrayRaw, functionName: "__kk_array_asList")
+}
+
+/// IntArray.asList(): List<Int>
+@_cdecl("__kk_intArray_asList")
+public func kk_intArray_asList(_ arrayRaw: Int) -> Int {
+    kk_array_asList(arrayRaw, functionName: "__kk_intArray_asList")
+}
+
+/// LongArray.asList(): List<Long>
+@_cdecl("__kk_longArray_asList")
+public func kk_longArray_asList(_ arrayRaw: Int) -> Int {
+    kk_array_asList(arrayRaw, functionName: "__kk_longArray_asList")
+}
+
+/// ShortArray.asList(): List<Short>
+@_cdecl("__kk_shortArray_asList")
+public func kk_shortArray_asList(_ arrayRaw: Int) -> Int {
+    kk_array_asList(arrayRaw, functionName: "__kk_shortArray_asList")
+}
+
+/// ByteArray.asList(): List<Byte>
+@_cdecl("__kk_byteArray_asList")
+public func kk_byteArray_asList(_ arrayRaw: Int) -> Int {
+    kk_array_asList(arrayRaw, functionName: "__kk_byteArray_asList")
+}
+
+/// CharArray.asList(): List<Char>
+@_cdecl("__kk_charArray_asList")
+public func kk_charArray_asList(_ arrayRaw: Int) -> Int {
+    kk_array_asList(arrayRaw, functionName: "__kk_charArray_asList")
+}
+
+/// BooleanArray.asList(): List<Boolean>
+@_cdecl("__kk_booleanArray_asList")
+public func kk_booleanArray_asList(_ arrayRaw: Int) -> Int {
+    kk_array_asList(arrayRaw, functionName: "__kk_booleanArray_asList")
+}
+
+/// DoubleArray.asList(): List<Double>
+@_cdecl("__kk_doubleArray_asList")
+public func kk_doubleArray_asList(_ arrayRaw: Int) -> Int {
+    kk_array_asList(arrayRaw, functionName: "__kk_doubleArray_asList")
+}
+
+/// FloatArray.asList(): List<Float>
+@_cdecl("__kk_floatArray_asList")
+public func kk_floatArray_asList(_ arrayRaw: Int) -> Int {
+    kk_array_asList(arrayRaw, functionName: "__kk_floatArray_asList")
 }
 
 /// UByteArray.asList(): List<UByte>
