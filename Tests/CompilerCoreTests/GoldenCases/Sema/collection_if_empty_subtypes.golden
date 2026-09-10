@@ -8,14 +8,6 @@ symbol fq=__local_4.empty[kind=local] kind=local vis=private flags=_ type=Boolea
 symbol fq=__local_5.checked[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=isEmptyViaInterface.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=isEmptyViaInterface[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Unit
-symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
-symbol fq=kotlin.collections.AbstractCollection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.AbstractCollection[kind=class;gen=1] kind=class vis=public flags=abstractType|openType type=kotlin.collections.AbstractCollection<out kotlin.collections.AbstractCollection.E>
-symbol fq=kotlin.collections.Collection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=subtypeResolution.$1.collection[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=subtypeResolution.$1.map[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=subtypeResolution[kind=fun;params=CustomCollection,CustomMap] kind=function vis=public flags=_ sig=recv=_ params=[CustomCollection,CustomMap] ret=Unit
@@ -35,12 +27,12 @@ expr e@12:41 call callee=e@12:41#1 args=[_:e@12:62#1] type=kotlin.collections.Ma
 expr e@17:34 name(collection) type=CustomCollection ref=subtypeResolution.$1.collection[kind=vparam]
 expr e@17:55 string(fallback) type=String
 expr e@17:53 lambda params=[] body=e@17:55 label=ifEmpty type=() -> Any
-expr e@17:34#1 memberCall recv=e@17:34 callee=ifEmpty args=[_:e@17:53] type=Any call=kotlin.collections.ifEmpty[kind=fun;recv=T0;params=fn{p=;ret=T1};gen=2;scope=if@6.1] targs=[CustomCollection,Any]
+expr e@17:34#1 memberCall recv=e@17:34 callee=ifEmpty args=[_:e@17:53] type=Any call=kotlin.collections.ifEmpty[kind=fun;recv=T0;params=fn{p=;ret=T1};gen=2;scope=up:kotlin.collections[kind=pkg]] targs=[CustomCollection,Any]
 expr e@17:5 localDecl collectionResult mutable=0 type=Any? init=e@17:34#1 type=Unit ref=__local_0.collectionResult[kind=local]
 expr e@18:27 name(map) type=CustomMap ref=subtypeResolution.$1.map[kind=vparam]
 expr e@18:41 string(fallback) type=String
 expr e@18:39 lambda params=[] body=e@18:41 label=ifEmpty type=() -> Any
-expr e@18:27#1 memberCall recv=e@18:27 callee=ifEmpty args=[_:e@18:39] type=Any call=kotlin.collections.ifEmpty[kind=fun;recv=T0;params=fn{p=;ret=T1};gen=2;scope=if@10.1] targs=[CustomMap,Any]
+expr e@18:27#1 memberCall recv=e@18:27 callee=ifEmpty args=[_:e@18:39] type=Any call=kotlin.collections.ifEmpty[kind=fun;recv=T0;params=fn{p=;ret=T1};gen=2;scope=up:kotlin.collections[kind=pkg]] targs=[CustomMap,Any]
 expr e@18:5 localDecl mapResult mutable=0 type=Any? init=e@18:27#1 type=Unit ref=__local_1.mapResult[kind=local]
 expr e@19:27 name(collection) type=CustomCollection ref=subtypeResolution.$1.collection[kind=vparam]
 expr e@19:27#1 memberCall recv=e@19:27 callee=isEmpty args=[] type=Boolean call=kotlin.collections.AbstractCollection.isEmpty[kind=fun;recv=kotlin.collections.AbstractCollection<T0>;params=;gen=1] targs=[String?]

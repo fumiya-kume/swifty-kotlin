@@ -1,6 +1,5 @@
 symbol fq=__local_0.r[kind=local] kind=local vis=private flags=_ type=kotlin.random.Random
 symbol fq=__local_1.a[kind=local] kind=local vis=private flags=_ type=Long
-symbol fq=kotlin.ranges.LongRange[kind=class] kind=class vis=public flags=synthetic
 symbol fq=useRandomNextLongRange[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file frandom_nextlong_range package=_
   decl useRandomNextLongRange[kind=fun;params=] fun useRandomNextLongRange sym=useRandomNextLongRange[kind=fun;params=]

@@ -1,6 +1,5 @@
 symbol fq=__local_0.strings[kind=local] kind=local vis=private flags=_ type=kotlin.Array<String>
 symbol fq=arrayOfWithExpectedType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
 file farrayof_empty_expected_type package=_
   decl arrayOfWithExpectedType[kind=fun;params=] fun arrayOfWithExpectedType sym=arrayOfWithExpectedType[kind=fun;params=]
 expr e@4:34 call callee=e@4:34#1 args=[] type=kotlin.Array<String> call=kotlin.arrayOf[kind=fun;params=*T0;gen=1] targs=[String]

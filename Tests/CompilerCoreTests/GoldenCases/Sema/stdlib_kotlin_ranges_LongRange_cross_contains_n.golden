@@ -16,7 +16,6 @@ symbol fq=golden.sema.longRangeInInt[kind=fun;params=kotlin.ranges.LongRange,Int
 symbol fq=golden.sema.longRangeInShort.$5.range[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.longRangeInShort.$5.value[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.longRangeInShort[kind=fun;params=kotlin.ranges.LongRange,Short] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.LongRange,Short] ret=Boolean
-symbol fq=kotlin.ranges.LongRange[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_ranges_LongRange_cross_contains_n package=golden.sema
   decl golden.sema.longRangeContainsByte[kind=fun;params=kotlin.ranges.LongRange,Byte] fun longRangeContainsByte sym=golden.sema.longRangeContainsByte[kind=fun;params=kotlin.ranges.LongRange,Byte]
   decl golden.sema.longRangeContainsInt[kind=fun;params=kotlin.ranges.LongRange,Int] fun longRangeContainsInt sym=golden.sema.longRangeContainsInt[kind=fun;params=kotlin.ranges.LongRange,Int]

@@ -8,13 +8,6 @@ symbol fq=golden.sema.inspectOptional.$3.p[kind=vparam] kind=valueParameter vis=
 symbol fq=golden.sema.inspectOptional[kind=fun;params=kotlin.reflect.KParameter] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KParameter] ret=Boolean
 symbol fq=golden.sema.inspectType.$4.p[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.inspectType[kind=fun;params=kotlin.reflect.KParameter] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KParameter] ret=kotlin.reflect.KType
-symbol fq=kotlin.reflect.KParameter.index[kind=prop] kind=property vis=public flags=synthetic type=Int
-symbol fq=kotlin.reflect.KParameter.isOptional[kind=prop] kind=property vis=public flags=synthetic type=Boolean
-symbol fq=kotlin.reflect.KParameter.kind[kind=prop] kind=property vis=public flags=synthetic type=Int
-symbol fq=kotlin.reflect.KParameter.name[kind=prop] kind=property vis=public flags=synthetic type=String?
-symbol fq=kotlin.reflect.KParameter.type[kind=prop] kind=property vis=public flags=synthetic type=kotlin.reflect.KType
-symbol fq=kotlin.reflect.KParameter[kind=iface] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.reflect.KType[kind=iface] kind=interface vis=public flags=_
 file fkparameter_member_access package=golden.sema
   decl golden.sema.inspectIndex[kind=fun;params=kotlin.reflect.KParameter] fun inspectIndex sym=golden.sema.inspectIndex[kind=fun;params=kotlin.reflect.KParameter]
   decl golden.sema.inspectName[kind=fun;params=kotlin.reflect.KParameter] fun inspectName sym=golden.sema.inspectName[kind=fun;params=kotlin.reflect.KParameter]

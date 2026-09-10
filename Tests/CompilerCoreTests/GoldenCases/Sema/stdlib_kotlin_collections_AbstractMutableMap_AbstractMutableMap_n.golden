@@ -7,16 +7,6 @@ symbol fq=golden.sema.abstractMutableMapSurface.$0.key[kind=vparam] kind=valuePa
 symbol fq=golden.sema.abstractMutableMapSurface.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.abstractMutableMapSurface.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.abstractMutableMapSurface[kind=fun;params=kotlin.collections.AbstractMutableMap<String,Int>,kotlin.collections.Map<String,Int>,String,Int] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.AbstractMutableMap<String, Int>,kotlin.collections.Map<String, Int>,String,Int] ret=Int?
-symbol fq=kotlin.collections.AbstractMutableMap.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.AbstractMutableMap.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.AbstractMutableMap[kind=class;gen=2] kind=class vis=public flags=abstractType|openType type=kotlin.collections.AbstractMutableMap<kotlin.collections.AbstractMutableMap.K, kotlin.collections.AbstractMutableMap.V>
-symbol fq=kotlin.collections.Collection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableSet[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_AbstractMutableMap_AbstractMutableMap_n package=golden.sema
   decl golden.sema.ProbeMutableMap[kind=class] class ProbeMutableMap sym=golden.sema.ProbeMutableMap[kind=class]
   decl golden.sema.abstractMutableMapSurface[kind=fun;params=kotlin.collections.AbstractMutableMap<String,Int>,kotlin.collections.Map<String,Int>,String,Int] fun abstractMutableMapSurface sym=golden.sema.abstractMutableMapSurface[kind=fun;params=kotlin.collections.AbstractMutableMap<String,Int>,kotlin.collections.Map<String,Int>,String,Int]

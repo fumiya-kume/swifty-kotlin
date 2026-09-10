@@ -1,9 +1,5 @@
 symbol fq=golden.sema.decodeUtf32.$0.ptr[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.decodeUtf32[kind=fun;params=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>] kind=function vis=public flags=_ sig=recv=_ params=[kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>] ret=String
-symbol fq=kotlinx.cinterop.CPointer.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.CPointer[kind=class;gen=1] kind=class vis=public flags=synthetic type=kotlinx.cinterop.CPointer<kotlinx.cinterop.CPointer.T>
-symbol fq=kotlinx.cinterop.IntVar[kind=class] kind=class vis=public flags=synthetic type=kotlinx.cinterop.IntVar
-symbol fq=kotlinx.cinterop.toKStringFromUtf32[kind=fun;recv=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>;params=] kind=function vis=public flags=synthetic sig=recv=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar> params=[] ret=String
 file fcinterop_to_kstring_from_utf32 package=golden.sema
   decl golden.sema.decodeUtf32[kind=fun;params=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>] fun decodeUtf32 sym=golden.sema.decodeUtf32[kind=fun;params=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>]
 expr e@9:50 name(ptr) type=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar> ref=golden.sema.decodeUtf32.$0.ptr[kind=vparam]

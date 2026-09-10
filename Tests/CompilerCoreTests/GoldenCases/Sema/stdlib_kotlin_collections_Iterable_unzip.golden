@@ -14,10 +14,6 @@ symbol fq=golden.sema.unzipNullable[kind=fun;params=kotlin.collections.Iterable<
 symbol fq=golden.sema.unzipSequenceSpecific.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.unzipSequenceSpecific[kind=fun;params=kotlin.sequences.Sequence<kotlin.Pair<Int,String>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<kotlin.Pair<Int, String>>] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
 symbol fq=golden.sema.unzipSingle[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<String>>
-symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_unzip package=golden.sema
   decl golden.sema.unzipEmpty[kind=fun;params=] fun unzipEmpty sym=golden.sema.unzipEmpty[kind=fun;params=]
   decl golden.sema.unzipSingle[kind=fun;params=] fun unzipSingle sym=golden.sema.unzipSingle[kind=fun;params=]

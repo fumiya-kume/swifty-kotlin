@@ -1,10 +1,5 @@
 symbol fq=golden.sema.convertToNative.$0.uints[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.convertToNative[kind=fun;params=kotlin.UIntArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.UIntArray] ret=kotlinx.cinterop.CValues<kotlinx.cinterop.UIntVar>
-symbol fq=kotlin.UIntArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlinx.cinterop.CValues.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.CValues[kind=class;gen=1] kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CValues<kotlinx.cinterop.CValues.T>
-symbol fq=kotlinx.cinterop.UIntVar[kind=class] kind=class vis=public flags=synthetic type=kotlinx.cinterop.UIntVar
-symbol fq=kotlinx.cinterop.toCValues[kind=fun;recv=kotlin.UIntArray;params=] kind=function vis=public flags=synthetic sig=recv=kotlin.UIntArray params=[] ret=kotlinx.cinterop.CValues<kotlinx.cinterop.UIntVar>
 file fcinterop_uintarray_to_cvalues package=golden.sema
   decl golden.sema.convertToNative[kind=fun;params=kotlin.UIntArray] fun convertToNative sym=golden.sema.convertToNative[kind=fun;params=kotlin.UIntArray]
 expr e@9:59 name(uints) type=kotlin.UIntArray ref=golden.sema.convertToNative.$0.uints[kind=vparam]

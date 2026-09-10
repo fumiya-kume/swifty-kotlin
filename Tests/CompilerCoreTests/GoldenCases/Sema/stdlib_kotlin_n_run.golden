@@ -2,8 +2,6 @@ symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ si
 symbol fq=golden.sema.receiverRunCatching[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Result<Int>
 symbol fq=golden.sema.receiverRun[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.topLevelRun[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=kotlin.Result.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.Result[kind=class;gen=1] kind=class vis=public flags=_ type=kotlin.Result<kotlin.Result.T>
 file fstdlib_kotlin_n_run package=golden.sema
   decl golden.sema.topLevelRun[kind=fun;params=] fun topLevelRun sym=golden.sema.topLevelRun[kind=fun;params=]
   decl golden.sema.receiverRun[kind=fun;params=] fun receiverRun sym=golden.sema.receiverRun[kind=fun;params=]

@@ -1,6 +1,5 @@
 symbol fq=charCategory.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=charCategory[kind=fun;params=Char] kind=function vis=public flags=_ sig=recv=_ params=[Char] ret=kotlin.text.CharCategory
-symbol fq=kotlin.text.category[kind=fun;recv=Char;params=] kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=kotlin.text.CharCategory
 file fchar_category package=_
   decl charCategory[kind=fun;params=Char] fun charCategory sym=charCategory[kind=fun;params=Char]
 expr e@1:55 name(c) type=Char ref=charCategory.$0.c[kind=vparam]

@@ -1,15 +1,6 @@
 symbol fq=golden.sema.ProbeMap[kind=class] kind=class vis=public flags=_
 symbol fq=golden.sema.readMap.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.readMap[kind=fun;params=kotlin.collections.Map<String,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int?>] ret=Int?
-symbol fq=kotlin.Any.hashCode[kind=fun;recv=kotlin.Any;params=] kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=Int
-symbol fq=kotlin.Any[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_n_AbstractMap package=golden.sema
   decl golden.sema.ProbeMap[kind=class] class ProbeMap sym=golden.sema.ProbeMap[kind=class]
   decl golden.sema.readMap[kind=fun;params=kotlin.collections.Map<String,Int?>] fun readMap sym=golden.sema.readMap[kind=fun;params=kotlin.collections.Map<String,Int?>]

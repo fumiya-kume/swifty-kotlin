@@ -10,8 +10,6 @@ symbol fq=__local_3.equalKeys[kind=local] kind=local vis=private flags=_ type=ko
 symbol fq=__local_4.boxedKeys[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map<Int, String?>
 symbol fq=customMapContains.$2.custom[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=customMapContains[kind=fun;params=CustomMap] kind=function vis=private flags=_ sig=recv=_ params=[CustomMap] ret=Boolean
-symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_Map_contains package=_
   decl EqualKey[kind=class] class EqualKey sym=EqualKey[kind=class]

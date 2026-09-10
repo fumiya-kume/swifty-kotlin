@@ -6,9 +6,6 @@ symbol fq=golden.sema.listResidualProbe.$1.values[kind=vparam] kind=valueParamet
 symbol fq=golden.sema.listResidualProbe[kind=fun;params=kotlin.collections.List<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=Int
 symbol fq=golden.sema.listTypeProbe.$2.value[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.listTypeProbe[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
-symbol fq=kotlin.collections.List.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.List.get[kind=fun;recv=kotlin.collections.List<out T0>;params=Int;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[Int] ret=kotlin.collections.List.E
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_n_List_interface package=golden.sema
   decl golden.sema.CustomList[kind=class] class CustomList sym=golden.sema.CustomList[kind=class]
   decl golden.sema.listProbe[kind=fun;params=kotlin.collections.List<Int>] fun listProbe sym=golden.sema.listProbe[kind=fun;params=kotlin.collections.List<Int>]

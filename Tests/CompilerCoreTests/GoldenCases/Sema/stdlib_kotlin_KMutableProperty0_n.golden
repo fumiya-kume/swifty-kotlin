@@ -3,7 +3,6 @@ symbol fq=golden.sema.assignWithSetValue.$0.property[kind=vparam] kind=valuePara
 symbol fq=golden.sema.assignWithSetValue.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.assignWithSetValue[kind=fun;params=kotlin.reflect.KMutableProperty0<T0>,T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KMutableProperty0<golden.sema.assignWithSetValue.$0.V>,golden.sema.assignWithSetValue.$0.V] ret=Unit
 symbol fq=golden.sema.topLevel[kind=prop] kind=property vis=public flags=mutable type=Int
-symbol fq=kotlin.reflect.KProperty[kind=iface] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_KMutableProperty0_n package=golden.sema
   decl golden.sema.topLevel[kind=prop] property topLevel var=1 sym=golden.sema.topLevel[kind=prop]
   decl golden.sema.assignWithSetValue[kind=fun;params=kotlin.reflect.KMutableProperty0<T0>,T0;gen=1] fun assignWithSetValue sym=golden.sema.assignWithSetValue[kind=fun;params=kotlin.reflect.KMutableProperty0<T0>,T0;gen=1]

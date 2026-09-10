@@ -2,10 +2,6 @@ symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kot
 symbol fq=golden.sema.catchMessage[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.construct.$0.message[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.construct[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.RuntimeException
-symbol fq=kotlin.RuntimeException[kind=class] kind=class vis=public flags=openType
-symbol fq=kotlin.native.concurrent.InvalidMutabilityException.<init>.message[kind=vparam] kind=valueParameter vis=private flags=synthetic type=String
-symbol fq=kotlin.native.concurrent.InvalidMutabilityException.<init>[kind=ctor;params=String] kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=kotlin.native.concurrent.InvalidMutabilityException
-symbol fq=kotlin.native.concurrent.InvalidMutabilityException[kind=class] kind=class vis=public flags=synthetic type=kotlin.native.concurrent.InvalidMutabilityException
 file fstdlib_kotlin_native_concurrent_InvalidMutabilityException_n_n package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)]
   decl golden.sema.construct[kind=fun;params=String] fun construct sym=golden.sema.construct[kind=fun;params=String]
   decl golden.sema.catchMessage[kind=fun;params=] fun catchMessage sym=golden.sema.catchMessage[kind=fun;params=]

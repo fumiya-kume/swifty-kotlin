@@ -3,7 +3,6 @@ symbol fq=__local_1.count[kind=local] kind=local vis=private flags=_ type=Int
 symbol fq=__local_2.none[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=aggregate.$0.numbers[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=aggregate[kind=fun;params=kotlin.Array<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<Int>] ret=Unit
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
 file farray_hof_reduce package=_
   decl aggregate[kind=fun;params=kotlin.Array<Int>] fun aggregate sym=aggregate[kind=fun;params=kotlin.Array<Int>]
 expr e@2:15 name(numbers) type=kotlin.Array<Int> ref=aggregate.$0.numbers[kind=vparam]

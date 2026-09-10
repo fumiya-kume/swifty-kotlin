@@ -6,9 +6,6 @@ symbol fq=collectionToMutableList.$0.items[kind=vparam] kind=valueParameter vis=
 symbol fq=collectionToMutableList[kind=fun;params=kotlin.collections.Collection<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<String>] ret=Unit
 symbol fq=iterableToMutableList.$1.items[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=iterableToMutableList[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fiterable_to_mutable_list package=_
   decl iterableToMutableList[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableToMutableList sym=iterableToMutableList[kind=fun;params=kotlin.collections.Iterable<Int>]
   decl collectionToMutableList[kind=fun;params=kotlin.collections.Collection<String>] fun collectionToMutableList sym=collectionToMutableList[kind=fun;params=kotlin.collections.Collection<String>]

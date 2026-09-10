@@ -1,7 +1,4 @@
 symbol fq=__local_0.f[kind=local] kind=local vis=private flags=_ type=java.io.File
-symbol fq=java.io.File.<init>.path[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.File.<init>[kind=ctor;params=String] kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
-symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ffile_is_rooted package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

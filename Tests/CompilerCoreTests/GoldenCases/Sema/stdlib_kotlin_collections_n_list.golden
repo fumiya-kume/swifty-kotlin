@@ -6,7 +6,6 @@ symbol fq=golden.sema.listOfNotNullSingle[kind=fun;params=Int?] kind=function vi
 symbol fq=golden.sema.listOfNotNullValue[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
 symbol fq=golden.sema.listOfNullable[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<String?>
 symbol fq=golden.sema.listOfSingle[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_n_list package=golden.sema
   decl golden.sema.listOfSingle[kind=fun;params=] fun listOfSingle sym=golden.sema.listOfSingle[kind=fun;params=]
   decl golden.sema.listOfNullable[kind=fun;params=] fun listOfNullable sym=golden.sema.listOfNullable[kind=fun;params=]

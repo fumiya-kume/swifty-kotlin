@@ -4,9 +4,6 @@ symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kot
 symbol fq=__try_1_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.io.AccessDeniedException
 symbol fq=golden.sema.catchAccessDeniedWithReason[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.catchAccessDenied[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=java.io.File.<init>.path[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.File.<init>[kind=ctor;params=String] kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
-symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
 file faccess_denied_exception package=golden.sema
   decl golden.sema.catchAccessDenied[kind=fun;params=] fun catchAccessDenied sym=golden.sema.catchAccessDenied[kind=fun;params=]
   decl golden.sema.catchAccessDeniedWithReason[kind=fun;params=] fun catchAccessDeniedWithReason sym=golden.sema.catchAccessDeniedWithReason[kind=fun;params=]

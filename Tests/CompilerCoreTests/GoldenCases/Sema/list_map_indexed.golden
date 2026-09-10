@@ -4,7 +4,6 @@ symbol fq=__local_2.result[kind=local] kind=local vis=private flags=_ type=kotli
 symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
 symbol fq=indexed.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=indexed[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file flist_map_indexed package=_
   decl indexed[kind=fun;params=kotlin.collections.List<String>] fun indexed sym=indexed[kind=fun;params=kotlin.collections.List<String>]
 expr e@5:18 name(values) type=kotlin.collections.List<String> ref=indexed.$0.values[kind=vparam]

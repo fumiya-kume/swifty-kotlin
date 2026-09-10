@@ -7,7 +7,6 @@ symbol fq=__local_5.checked[kind=local] kind=local vis=private flags=_ type=Int?
 symbol fq=getOrPutNullable.$0.key[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=getOrPutNullable.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=getOrPutNullable[kind=fun;params=kotlin.collections.MutableMap<String,Int?>,String] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>,String] ret=Unit
-symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=setAndRemove.$1.key[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=setAndRemove.$1.map[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=setAndRemove.$1.value[kind=vparam] kind=valueParameter vis=private flags=_

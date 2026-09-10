@@ -2,9 +2,6 @@ symbol fq=golden.sema.collectLines.$0.file[kind=vparam] kind=valueParameter vis=
 symbol fq=golden.sema.collectLines[kind=fun;params=java.io.File] kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=kotlin.collections.List<String>
 symbol fq=golden.sema.countLines.$1.file[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.countLines[kind=fun;params=java.io.File] kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=Int
-symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file ffile_use_lines package=golden.sema
   decl golden.sema.collectLines[kind=fun;params=java.io.File] fun collectLines sym=golden.sema.collectLines[kind=fun;params=java.io.File]
   decl golden.sema.countLines[kind=fun;params=java.io.File] fun countLines sym=golden.sema.countLines[kind=fun;params=java.io.File]

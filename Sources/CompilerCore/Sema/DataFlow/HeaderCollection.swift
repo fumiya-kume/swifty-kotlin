@@ -308,10 +308,12 @@ extension DataFlowSemaPhase {
             let fqName = kotlinPkg + [name]
             if let existing = symbols.lookup(fqName: fqName) {
                 // Compatibility shells intentionally keep a nil declSite so bundled
-                // source declarations do not displace them in golden semantic dumps
-                // (`GoldenHarnessDump.isExcludedBundledSymbol` filters bundled-file
-                // declSites out; the pre-KSP-706 anchor never restored declSite for
-                // Pair/Triple either -- see `shouldRestoreDeclSiteForReusableSyntheticSymbol`).
+                // source declarations do not displace them: a nil declSite keeps the
+                // shell's symbol identity stable for `ref=`/`call=` resolution, and
+                // `GoldenHarnessDump.isExcludedLibrarySymbol` omits it from `symbol`
+                // lines in golden dumps (only case-file-local declSites are listed).
+                // The pre-KSP-706 anchor never restored declSite for Pair/Triple
+                // either -- see `shouldRestoreDeclSiteForReusableSyntheticSymbol`.
                 symbols.setDeclSite(nil, for: existing)
             } else {
                 _ = symbols.define(

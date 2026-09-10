@@ -4,7 +4,6 @@ symbol fq=__local_2.reducedOrNull[kind=local] kind=local vis=private flags=_ typ
 symbol fq=__local_3.indexedOrNull[kind=local] kind=local vis=private flags=_ type=kotlin.Number?
 symbol fq=inspectReduceFamily.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=inspectReduceFamily[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_reduce package=_
   decl inspectReduceFamily[kind=fun;params=kotlin.collections.Iterable<Int>] fun inspectReduceFamily sym=inspectReduceFamily[kind=fun;params=kotlin.collections.Iterable<Int>]
 expr e@2:27 name(values) type=kotlin.collections.Iterable<Int> ref=inspectReduceFamily.$0.values[kind=vparam]

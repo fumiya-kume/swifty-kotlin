@@ -22,8 +22,6 @@ symbol fq=constrainLinked.$0.T[kind=tparam] kind=typeParameter vis=private flags
 symbol fq=constrainLinked.$0.set[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=constrainLinked[kind=fun;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[constrainLinked.$0.T] ret=constrainLinked.$0.T bounds=[kotlin.collections.LinkedHashSet<String>]
 symbol fq=createLinkedSet[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.LinkedHashSet<Int>
-symbol fq=kotlin.collections.MutableSet[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=linkedExtension[kind=fun;recv=kotlin.collections.LinkedHashSet<String>;params=] kind=function vis=public flags=_ sig=recv=kotlin.collections.LinkedHashSet<String> params=[] ret=String
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=processLinkedSet.$1.set[kind=vparam] kind=valueParameter vis=private flags=_

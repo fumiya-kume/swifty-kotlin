@@ -4,9 +4,6 @@ symbol fq=golden.sema.identity.$0.T[kind=tparam] kind=typeParameter vis=private 
 symbol fq=golden.sema.identity.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.identity[kind=fun;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.identity.$0.T] ret=golden.sema.identity.$0.T bounds=[kotlin.Enum<golden.sema.identity.$0.T>]
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.Enum[kind=class;gen=1] kind=class vis=public flags=abstractType|openType
 file fstdlib_kotlin_n_Enum package=golden.sema
   decl golden.sema.identity[kind=fun;params=T0;gen=1] fun identity sym=golden.sema.identity[kind=fun;params=T0;gen=1]
   decl golden.sema.Direction[kind=enum] class Direction sym=golden.sema.Direction[kind=enum]

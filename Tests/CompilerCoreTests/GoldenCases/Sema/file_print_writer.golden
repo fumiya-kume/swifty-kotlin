@@ -1,17 +1,5 @@
 symbol fq=__local_0.f[kind=local] kind=local vis=private flags=_ type=java.io.File
 symbol fq=__local_1.pw[kind=local] kind=local vis=private flags=_ type=java.io.PrintWriter
-symbol fq=java.io.File.<init>.path[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.File.<init>[kind=ctor;params=String] kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
-symbol fq=java.io.File.printWriter[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=java.io.PrintWriter
-symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
-symbol fq=java.io.PrintWriter.close[kind=fun;recv=java.io.PrintWriter;params=] kind=function vis=public flags=synthetic sig=recv=java.io.PrintWriter params=[] ret=Unit
-symbol fq=java.io.PrintWriter.flush[kind=fun;recv=java.io.PrintWriter;params=] kind=function vis=public flags=synthetic sig=recv=java.io.PrintWriter params=[] ret=Unit
-symbol fq=java.io.PrintWriter.print.text[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.PrintWriter.print[kind=fun;recv=java.io.PrintWriter;params=String] kind=function vis=public flags=synthetic sig=recv=java.io.PrintWriter params=[String] ret=Unit
-symbol fq=java.io.PrintWriter.println.text[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.PrintWriter.println[kind=fun;recv=java.io.PrintWriter;params=String] kind=function vis=public flags=synthetic sig=recv=java.io.PrintWriter params=[String] ret=Unit
-symbol fq=java.io.PrintWriter.println[kind=fun;recv=java.io.PrintWriter;params=] kind=function vis=public flags=synthetic sig=recv=java.io.PrintWriter params=[] ret=Unit
-symbol fq=java.io.PrintWriter[kind=class] kind=class vis=public flags=synthetic type=java.io.PrintWriter
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ffile_print_writer package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

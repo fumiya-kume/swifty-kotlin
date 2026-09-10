@@ -5,7 +5,6 @@ symbol fq=golden.sema.max.$0.a[kind=vparam] kind=valueParameter vis=private flag
 symbol fq=golden.sema.max.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.max[kind=fun;params=T0,T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.max.$0.T,golden.sema.max.$0.T] ret=golden.sema.max.$0.T bounds=[kotlin.Comparable<golden.sema.max.$0.T>]
 symbol fq=golden.sema.useMax[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
 file ff_bound_generics package=golden.sema
   decl golden.sema.max[kind=fun;params=T0,T0;gen=1] fun max sym=golden.sema.max[kind=fun;params=T0,T0;gen=1]
   decl golden.sema.useMax[kind=fun;params=] fun useMax sym=golden.sema.useMax[kind=fun;params=]

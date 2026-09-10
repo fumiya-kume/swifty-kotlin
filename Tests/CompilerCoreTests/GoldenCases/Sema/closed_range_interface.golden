@@ -18,14 +18,6 @@ symbol fq=golden.sema.uintClosedRangeValue[kind=fun;params=] kind=function vis=p
 symbol fq=golden.sema.ulongClosedRangeStart.$5.range[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.ulongClosedRangeStart[kind=fun;params=kotlin.ranges.ClosedRange<ULong>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.ClosedRange<ULong>] ret=ULong
 symbol fq=golden.sema.ulongClosedRangeValue[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.ranges.ClosedRange<ULong>
-symbol fq=kotlin.ranges.ClosedRange.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.ranges.ClosedRange.contains.value[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.ranges.ClosedRange.contains[kind=fun;recv=kotlin.ranges.ClosedRange<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.ranges.ClosedRange<kotlin.ranges.ClosedRange.T> params=[kotlin.ranges.ClosedRange.T] ret=Boolean type=(kotlin.ranges.ClosedRange.T) -> Boolean
-symbol fq=kotlin.ranges.ClosedRange.endInclusive[kind=prop] kind=property vis=public flags=synthetic type=kotlin.ranges.ClosedRange.T
-symbol fq=kotlin.ranges.ClosedRange.isEmpty[kind=fun;recv=kotlin.ranges.ClosedRange<T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.ranges.ClosedRange<kotlin.ranges.ClosedRange.T> params=[] ret=Boolean type=() -> Boolean
-symbol fq=kotlin.ranges.ClosedRange.start[kind=prop] kind=property vis=public flags=synthetic type=kotlin.ranges.ClosedRange.T
-symbol fq=kotlin.ranges.ClosedRange[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.UIntRange[kind=class] kind=class vis=public flags=synthetic
 file fclosed_range_interface package=golden.sema
   decl golden.sema.intClosedRangeValue[kind=fun;params=] fun intClosedRangeValue sym=golden.sema.intClosedRangeValue[kind=fun;params=]
   decl golden.sema.longClosedRangeValue[kind=fun;params=] fun longClosedRangeValue sym=golden.sema.longClosedRangeValue[kind=fun;params=]

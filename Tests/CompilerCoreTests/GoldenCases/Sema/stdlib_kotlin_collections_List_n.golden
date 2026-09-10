@@ -1,6 +1,5 @@
 symbol fq=checked.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=checked[kind=fun;params=kotlin.collections.List<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String?>] ret=kotlin.collections.List<String>
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_List_n package=_
   decl checked[kind=fun;params=kotlin.collections.List<String?>] fun checked sym=checked[kind=fun;params=kotlin.collections.List<String?>]
 expr e@2:12 name(values) type=kotlin.collections.List<String?> ref=checked.$0.values[kind=vparam]

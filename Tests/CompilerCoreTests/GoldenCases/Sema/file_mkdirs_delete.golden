@@ -4,9 +4,6 @@ symbol fq=__local_2.result[kind=local] kind=local vis=private flags=_ type=Boole
 symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=deleteFile.$0.file[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=deleteFile[kind=fun;params=java.io.File] kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=Unit
-symbol fq=java.io.File.delete[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=Boolean
-symbol fq=java.io.File.mkdirs[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=Boolean
-symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
 symbol fq=makeDirectories.$1.dir[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=makeDirectories[kind=fun;params=java.io.File] kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=Unit
 file ffile_mkdirs_delete package=_

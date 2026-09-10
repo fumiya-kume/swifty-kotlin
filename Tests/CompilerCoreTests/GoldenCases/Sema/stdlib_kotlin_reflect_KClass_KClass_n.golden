@@ -9,7 +9,6 @@ symbol fq=golden.sema.hashMatches[kind=fun;params=kotlin.reflect.KClass<*>,kotli
 symbol fq=golden.sema.operatorMatches.$2.left[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.operatorMatches.$2.right[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.operatorMatches[kind=fun;params=kotlin.reflect.KClass<*>,kotlin.reflect.KClass<*>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KClass<*>,kotlin.reflect.KClass<*>] ret=Boolean
-symbol fq=kotlin.reflect.KClass[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_reflect_KClass_KClass_n package=golden.sema
   decl golden.sema.First[kind=class] class First sym=golden.sema.First[kind=class]
   decl golden.sema.Second[kind=class] class Second sym=golden.sema.Second[kind=class]

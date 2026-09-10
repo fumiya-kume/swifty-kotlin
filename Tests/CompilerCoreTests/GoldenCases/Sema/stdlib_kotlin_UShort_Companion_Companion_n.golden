@@ -16,8 +16,6 @@ symbol fq=__local_14.boxedMin[kind=local] kind=local vis=private flags=_ type=An
 symbol fq=__local_15.maxIsUShort[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_16.minIsUShort[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.UShort.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.UShort[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_UShort_Companion_Companion_n package=golden.sema
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:29 name(UShort) type=kotlin.UShort.Companion ref=kotlin.UShort[kind=class]
