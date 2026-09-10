@@ -1,7 +1,5 @@
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=golden.sema.probe[kind=fun;params=;susp] kind=function vis=public flags=suspendFunction sig=recv=_ params=[] ret=Any? suspend=1
-symbol fq=kotlin.coroutines.Continuation.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.coroutines.Continuation[kind=iface;gen=1] kind=interface vis=public flags=synthetic type=kotlin.coroutines.Continuation<kotlin.coroutines.Continuation.T>
 file fstdlib_kotlin_coroutines_intrinsics_n_n package=golden.sema
   decl golden.sema.probe[kind=fun;params=;susp] fun probe suspend=1 sym=golden.sema.probe[kind=fun;params=;susp]
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]

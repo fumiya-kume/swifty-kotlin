@@ -3,12 +3,6 @@ symbol fq=golden.sema.charCategoryContains[kind=fun;params=] kind=function vis=p
 symbol fq=golden.sema.charCategoryEntries[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.text.CharCategory>
 symbol fq=golden.sema.charCategoryValueOf[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.CharCategory
 symbol fq=golden.sema.charCategoryValues[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.text.CharCategory>
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.enums.EnumEntries[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.text.CharCategory.Companion.entries[kind=prop] kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.text.CharCategory>
-symbol fq=kotlin.text.CharCategory.Companion.valueOf.name[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.text.CharCategory.Companion.valueOf[kind=fun;recv=kotlin.text.CharCategory.Companion;params=String] kind=function vis=public flags=synthetic|static sig=recv=kotlin.text.CharCategory.Companion params=[String] ret=kotlin.text.CharCategory
-symbol fq=kotlin.text.CharCategory.values[kind=fun;params=] kind=function vis=public flags=synthetic|static sig=recv=_ params=[] ret=kotlin.Array<kotlin.text.CharCategory>
 file fstdlib_kotlin_text_CharCategory_CharCategory_n package=golden.sema
   decl golden.sema.charCategoryCode[kind=fun;params=] fun charCategoryCode sym=golden.sema.charCategoryCode[kind=fun;params=]
   decl golden.sema.charCategoryContains[kind=fun;params=] fun charCategoryContains sym=golden.sema.charCategoryContains[kind=fun;params=]

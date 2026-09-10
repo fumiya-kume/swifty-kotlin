@@ -2,12 +2,6 @@ symbol fq=golden.sema.varianceEntries[kind=fun;params=] kind=function vis=public
 symbol fq=golden.sema.varianceValueOf.$0.name[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.varianceValueOf[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.reflect.KVariance
 symbol fq=golden.sema.varianceValues[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.reflect.KVariance>
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.enums.EnumEntries[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.reflect.KVariance.Companion.entries[kind=prop] kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.reflect.KVariance>
-symbol fq=kotlin.reflect.KVariance.Companion.valueOf.name[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.reflect.KVariance.Companion.valueOf[kind=fun;recv=kotlin.reflect.KVariance.Companion;params=String] kind=function vis=public flags=synthetic|static sig=recv=kotlin.reflect.KVariance.Companion params=[String] ret=kotlin.reflect.KVariance
-symbol fq=kotlin.reflect.KVariance.values[kind=fun;params=] kind=function vis=public flags=synthetic|static sig=recv=_ params=[] ret=kotlin.Array<kotlin.reflect.KVariance>
 file fstdlib_kotlin_reflect_KVariance_KVariance_n package=golden.sema
   decl golden.sema.varianceEntries[kind=fun;params=] fun varianceEntries sym=golden.sema.varianceEntries[kind=fun;params=]
   decl golden.sema.varianceValues[kind=fun;params=] fun varianceValues sym=golden.sema.varianceValues[kind=fun;params=]

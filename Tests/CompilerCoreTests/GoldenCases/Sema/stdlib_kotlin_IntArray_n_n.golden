@@ -1,7 +1,6 @@
 symbol fq=__local_0.sized[kind=local] kind=local vis=private flags=_ type=kotlin.IntArray
 symbol fq=__local_1.initialized[kind=local] kind=local vis=private flags=_ type=kotlin.IntArray
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.IntArray[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_IntArray_n_n package=golden.sema
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:26 int(3) type=Int

@@ -1,5 +1,3 @@
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=shuffleIterableDefault.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=shuffleIterableDefault[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.List<Int>
 symbol fq=shuffleIterableWithRandom.$1.random[kind=vparam] kind=valueParameter vis=private flags=_

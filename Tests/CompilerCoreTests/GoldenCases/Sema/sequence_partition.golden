@@ -2,9 +2,6 @@ symbol fq=__destructuring_0.matching[kind=local] kind=local vis=private flags=_ 
 symbol fq=__destructuring_0.rest[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
 symbol fq=__local_0.checkedMatching[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
 symbol fq=__local_1.checkedRest[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=partitionSequence.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=partitionSequence[kind=fun;params=kotlin.sequences.Sequence<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int>] ret=Unit
 file fsequence_partition package=_

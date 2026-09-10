@@ -8,7 +8,6 @@ symbol fq=golden.sema.ThrowingResource[kind=class] kind=class vis=public flags=_
 symbol fq=golden.sema.useWithNullReceiver[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.useWithPrimary[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Throwable
 symbol fq=golden.sema.useWithoutPrimary[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.Throwable[kind=class] kind=class vis=public flags=openType
 file fstdlib_kotlin_AutoCloseable_n package=golden.sema
   decl golden.sema.ThrowingResource[kind=class] class ThrowingResource sym=golden.sema.ThrowingResource[kind=class]
   decl golden.sema.useWithoutPrimary[kind=fun;params=] fun useWithoutPrimary sym=golden.sema.useWithoutPrimary[kind=fun;params=]

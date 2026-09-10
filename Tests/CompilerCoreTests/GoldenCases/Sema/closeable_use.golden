@@ -6,8 +6,6 @@ symbol fq=golden.sema.MyResource[kind=class] kind=class vis=public flags=_
 symbol fq=golden.sema.useBasic[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=golden.sema.useReturnValue[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.useWithIt[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.Any.toString[kind=fun;recv=kotlin.Any;params=] kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=String
-symbol fq=kotlin.Any[kind=class] kind=class vis=public flags=synthetic
 file fcloseable_use package=golden.sema
   decl golden.sema.MyResource[kind=class] class MyResource sym=golden.sema.MyResource[kind=class]
   decl golden.sema.useBasic[kind=fun;params=] fun useBasic sym=golden.sema.useBasic[kind=fun;params=]

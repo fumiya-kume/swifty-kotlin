@@ -7,7 +7,6 @@ symbol fq=golden.sema.compareNullableInts[kind=fun;params=Int?,Int?] kind=functi
 symbol fq=golden.sema.compareStrings.$2.a[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.compareStrings.$2.b[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.compareStrings[kind=fun;params=String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=Int
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fcompare_values package=golden.sema
   decl golden.sema.compareInts[kind=fun;params=Int,Int] fun compareInts sym=golden.sema.compareInts[kind=fun;params=Int,Int]
   decl golden.sema.compareStrings[kind=fun;params=String,String] fun compareStrings sym=golden.sema.compareStrings[kind=fun;params=String,String]

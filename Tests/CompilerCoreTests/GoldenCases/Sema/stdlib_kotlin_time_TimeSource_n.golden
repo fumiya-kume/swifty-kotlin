@@ -1,4 +1,3 @@
-symbol fq=kotlin.time.TimeSource[kind=iface] kind=interface vis=public flags=_
 symbol fq=measureTimeReceiver.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=measureTimeReceiver[kind=fun;params=kotlin.time.TimeSource] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.time.TimeSource] ret=kotlin.time.Duration
 symbol fq=measureTimedValueReceiver.$1.source[kind=vparam] kind=valueParameter vis=private flags=_

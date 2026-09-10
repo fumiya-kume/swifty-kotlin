@@ -4,9 +4,6 @@ symbol fq=golden.sema.classifier.$1.type[kind=vparam] kind=valueParameter vis=pr
 symbol fq=golden.sema.classifier[kind=fun;params=kotlin.reflect.KType] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KType] ret=kotlin.reflect.KClassifier?
 symbol fq=golden.sema.markedNullable.$2.type[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.markedNullable[kind=fun;params=kotlin.reflect.KType] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KType] ret=Boolean
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.reflect.KClassifier[kind=iface] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.reflect.KType[kind=iface] kind=interface vis=public flags=_
 file fstdlib_kotlin_reflect_KType_KType_n package=golden.sema
   decl golden.sema.classifier[kind=fun;params=kotlin.reflect.KType] fun classifier sym=golden.sema.classifier[kind=fun;params=kotlin.reflect.KType]
   decl golden.sema.arguments[kind=fun;params=kotlin.reflect.KType] fun arguments sym=golden.sema.arguments[kind=fun;params=kotlin.reflect.KType]

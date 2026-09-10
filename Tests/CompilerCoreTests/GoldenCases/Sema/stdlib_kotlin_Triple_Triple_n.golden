@@ -14,7 +14,6 @@ symbol fq=golden.sema.copyTriple.$0.C[kind=tparam] kind=typeParameter vis=privat
 symbol fq=golden.sema.copyTriple.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.copyTriple[kind=fun;params=kotlin.Triple<T0,T1,T2>;gen=3] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Triple<golden.sema.copyTriple.$0.A, golden.sema.copyTriple.$0.B, golden.sema.copyTriple.$0.C>] ret=kotlin.Triple<golden.sema.copyTriple.$0.A, golden.sema.copyTriple.$0.B, golden.sema.copyTriple.$0.C>
 symbol fq=golden.sema.exerciseTripleMembers[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Triple<Int, String, Boolean>
-symbol fq=kotlin.Triple[kind=class;gen=3] kind=class vis=public flags=_
 file fstdlib_kotlin_Triple_Triple_n package=golden.sema
   decl golden.sema.copyTriple[kind=fun;params=kotlin.Triple<T0,T1,T2>;gen=3] fun copyTriple sym=golden.sema.copyTriple[kind=fun;params=kotlin.Triple<T0,T1,T2>;gen=3]
   decl golden.sema.exerciseTripleMembers[kind=fun;params=] fun exerciseTripleMembers sym=golden.sema.exerciseTripleMembers[kind=fun;params=]

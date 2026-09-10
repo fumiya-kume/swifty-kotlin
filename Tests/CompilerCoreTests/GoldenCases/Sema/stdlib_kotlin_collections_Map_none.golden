@@ -3,16 +3,6 @@ symbol fq=collectionNone.$0.values[kind=vparam] kind=valueParameter vis=private 
 symbol fq=collectionNone[kind=fun;params=kotlin.collections.Collection<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int?>] ret=Boolean
 symbol fq=customMap.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=customMap[kind=fun;params=ProbeMap] kind=function vis=public flags=_ sig=recv=_ params=[ProbeMap] ret=Boolean
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=listNone.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=listNone[kind=fun;params=kotlin.collections.List<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int?>] ret=Boolean
 symbol fq=memberIsEmpty.$3.values[kind=vparam] kind=valueParameter vis=private flags=_

@@ -5,7 +5,6 @@ symbol fq=__local_3.array[kind=local] kind=local vis=private flags=_ type=kotlin
 symbol fq=arrayConstructorExpectedType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=arrayConstructorExplicitTypeArgWinsOverExpectedType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=arrayConstructorWithInit[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
 file farray_constructor_type_inference package=_
   decl arrayConstructorWithInit[kind=fun;params=] fun arrayConstructorWithInit sym=arrayConstructorWithInit[kind=fun;params=]
   decl arrayConstructorExplicitTypeArgWinsOverExpectedType[kind=fun;params=] fun arrayConstructorExplicitTypeArgWinsOverExpectedType sym=arrayConstructorExplicitTypeArgWinsOverExpectedType[kind=fun;params=]

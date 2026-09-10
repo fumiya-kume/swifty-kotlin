@@ -1,5 +1,3 @@
-symbol fq=golden.sema.Direction.name[kind=prop] kind=property vis=public flags=synthetic type=String
-symbol fq=golden.sema.Direction.ordinal[kind=prop] kind=property vis=public flags=synthetic type=Int
 symbol fq=golden.sema.Direction[kind=enum] kind=enumClass vis=public flags=_
 symbol fq=golden.sema.compare.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.compare.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
@@ -15,8 +13,6 @@ symbol fq=golden.sema.ordinal.$4.a[kind=vparam] kind=valueParameter vis=private 
 symbol fq=golden.sema.ordinal[kind=fun;params=golden.sema.Direction] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Direction] ret=Int
 symbol fq=golden.sema.string.$5.a[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.string[kind=fun;params=golden.sema.Direction] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Direction] ret=String
-symbol fq=kotlin.Enum.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.Enum[kind=class;gen=1] kind=class vis=public flags=abstractType|openType
 file fstdlib_kotlin_Enum_Enum_n package=golden.sema
   decl golden.sema.Direction[kind=enum] class Direction sym=golden.sema.Direction[kind=enum]
   decl golden.sema.compare[kind=fun;params=golden.sema.Direction,golden.sema.Direction] fun compare sym=golden.sema.compare[kind=fun;params=golden.sema.Direction,golden.sema.Direction]

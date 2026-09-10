@@ -18,8 +18,6 @@ symbol fq=golden.sema.encodeToAppendableRange.$6.source[kind=vparam] kind=valueP
 symbol fq=golden.sema.encodeToAppendableRange[kind=fun;params=kotlin.ByteArray,kotlin.text.Appendable] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray,kotlin.text.Appendable] ret=kotlin.text.Appendable
 symbol fq=golden.sema.encodeToByteArrayRange.$7.source[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.encodeToByteArrayRange[kind=fun;params=kotlin.ByteArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray] ret=kotlin.ByteArray
-symbol fq=kotlin.ByteArray[kind=class] kind=class vis=public flags=synthetic type=kotlin.ByteArray
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_io_encoding_Base64_Base64_n_n package=golden.sema
   decl golden.sema.encodeRange[kind=fun;params=kotlin.ByteArray] fun encodeRange sym=golden.sema.encodeRange[kind=fun;params=kotlin.ByteArray]
   decl golden.sema.encodeToByteArrayRange[kind=fun;params=kotlin.ByteArray] fun encodeToByteArrayRange sym=golden.sema.encodeToByteArrayRange[kind=fun;params=kotlin.ByteArray]

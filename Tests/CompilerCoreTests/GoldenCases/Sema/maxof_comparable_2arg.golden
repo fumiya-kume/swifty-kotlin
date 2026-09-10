@@ -1,7 +1,6 @@
 symbol fq=golden.sema.pickLargerString.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.pickLargerString.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.pickLargerString[kind=fun;params=String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=String
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fmaxof_comparable_2arg package=golden.sema
   decl golden.sema.pickLargerString[kind=fun;params=String,String] fun pickLargerString sym=golden.sema.pickLargerString[kind=fun;params=String,String]
 expr e@4:60 name(a) type=String ref=golden.sema.pickLargerString.$0.a[kind=vparam]

@@ -9,7 +9,6 @@ symbol fq=flattenInts.$0.lists[kind=vparam] kind=valueParameter vis=private flag
 symbol fq=flattenInts[kind=fun;params=kotlin.collections.List<kotlin.collections.List<Int>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<kotlin.collections.List<Int>>] ret=Unit
 symbol fq=flattenStrings.$1.lists[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=flattenStrings[kind=fun;params=kotlin.collections.List<kotlin.collections.List<String>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<kotlin.collections.List<String>>] ret=Unit
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file fflatten_stdlib package=_
   decl flattenInts[kind=fun;params=kotlin.collections.List<kotlin.collections.List<Int>>] fun flattenInts sym=flattenInts[kind=fun;params=kotlin.collections.List<kotlin.collections.List<Int>>]
   decl flattenStrings[kind=fun;params=kotlin.collections.List<kotlin.collections.List<String>>] fun flattenStrings sym=flattenStrings[kind=fun;params=kotlin.collections.List<kotlin.collections.List<String>>]

@@ -3,8 +3,6 @@ symbol fq=Score.<init>[kind=ctor;recv=Score;params=Int] kind=constructor vis=pub
 symbol fq=Score.compareTo.$1.other[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=Score.value[kind=prop] kind=property vis=public flags=_ type=Int
 symbol fq=Score[kind=class] kind=class vis=public flags=_
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.ClosedFloatingPointRange[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fksp641_coerce_in package=_
   decl Score[kind=class] class Score sym=Score[kind=class]

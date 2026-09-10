@@ -991,9 +991,13 @@ package final class MetadataEncoder {
 
         let isDataClass = symbol.flags.contains(.dataType)
         let isOpenClass = symbol.flags.contains(.openType)
+        // Kotlin override members are implicitly open unless explicitly final;
+        // without this, an imported `override val` (e.g. AbstractMap.size)
+        // decodes as final and consumers reject valid overrides.
         let modality: MetadataModality = if symbol.flags.contains(.abstractType) {
             .abstract
-        } else if symbol.flags.contains(.openType) {
+        } else if symbol.flags.contains(.openType)
+                    || (symbol.flags.contains(.overrideMember) && !symbol.flags.contains(.finalMember)) {
             .open
         } else {
             .final

@@ -1,6 +1,5 @@
 symbol fq=golden.sema.makeUIntArray.$0.size[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.makeUIntArray[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=kotlin.UIntArray
-symbol fq=kotlin.UIntArray[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_n_UIntArray package=golden.sema
   decl golden.sema.makeUIntArray[kind=fun;params=Int] fun makeUIntArray sym=golden.sema.makeUIntArray[kind=fun;params=Int]
 expr e@3:53 name(size) type=Int ref=golden.sema.makeUIntArray.$0.size[kind=vparam]

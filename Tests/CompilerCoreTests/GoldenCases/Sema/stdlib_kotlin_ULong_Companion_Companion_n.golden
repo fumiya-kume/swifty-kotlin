@@ -13,8 +13,6 @@ symbol fq=__local_11.boxedHighBit[kind=local] kind=local vis=private flags=_ typ
 symbol fq=__local_12.maxIsULong[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_13.highBitIsULong[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.ULong.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.ULong[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_ULong_Companion_Companion_n package=golden.sema
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:28 name(ULong) type=kotlin.ULong.Companion ref=kotlin.ULong[kind=class]

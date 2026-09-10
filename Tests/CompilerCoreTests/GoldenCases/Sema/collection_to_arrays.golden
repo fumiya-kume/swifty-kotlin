@@ -39,20 +39,6 @@ symbol fq=golden.sema.collectionToArrays.$0.ushorts[kind=vparam] kind=valueParam
 symbol fq=golden.sema.collectionToArrays[kind=fun;params=kotlin.collections.Collection<Boolean>,kotlin.collections.Collection<Byte>,kotlin.collections.Collection<Char>,kotlin.collections.Collection<Double>,kotlin.collections.Collection<Float>,kotlin.collections.Collection<Int>,kotlin.collections.Collection<Long>,kotlin.collections.Collection<Short>,kotlin.collections.Collection<UByte>,kotlin.collections.Collection<UShort>,kotlin.collections.Collection<UInt>,kotlin.collections.Collection<ULong>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Boolean>,kotlin.collections.Collection<Byte>,kotlin.collections.Collection<Char>,kotlin.collections.Collection<Double>,kotlin.collections.Collection<Float>,kotlin.collections.Collection<Int>,kotlin.collections.Collection<Long>,kotlin.collections.Collection<Short>,kotlin.collections.Collection<UByte>,kotlin.collections.Collection<UShort>,kotlin.collections.Collection<UInt>,kotlin.collections.Collection<ULong>] ret=Unit
 symbol fq=golden.sema.collectionToMutable.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.collectionToMutable[kind=fun;params=kotlin.collections.Collection<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>] ret=Unit
-symbol fq=kotlin.BooleanArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ByteArray[kind=class] kind=class vis=public flags=synthetic type=kotlin.ByteArray
-symbol fq=kotlin.CharArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.DoubleArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.FloatArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.IntArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.LongArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ShortArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.UByteArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.UIntArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ULongArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.UShortArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fcollection_to_arrays package=golden.sema annotations=[@file:OptIn(kotlin.ExperimentalUnsignedTypes::class)]
   decl golden.sema.collectionToMutable[kind=fun;params=kotlin.collections.Collection<Int>] fun collectionToMutable sym=golden.sema.collectionToMutable[kind=fun;params=kotlin.collections.Collection<Int>]
   decl golden.sema.collectionToArrays[kind=fun;params=kotlin.collections.Collection<Boolean>,kotlin.collections.Collection<Byte>,kotlin.collections.Collection<Char>,kotlin.collections.Collection<Double>,kotlin.collections.Collection<Float>,kotlin.collections.Collection<Int>,kotlin.collections.Collection<Long>,kotlin.collections.Collection<Short>,kotlin.collections.Collection<UByte>,kotlin.collections.Collection<UShort>,kotlin.collections.Collection<UInt>,kotlin.collections.Collection<ULong>] fun collectionToArrays sym=golden.sema.collectionToArrays[kind=fun;params=kotlin.collections.Collection<Boolean>,kotlin.collections.Collection<Byte>,kotlin.collections.Collection<Char>,kotlin.collections.Collection<Double>,kotlin.collections.Collection<Float>,kotlin.collections.Collection<Int>,kotlin.collections.Collection<Long>,kotlin.collections.Collection<Short>,kotlin.collections.Collection<UByte>,kotlin.collections.Collection<UShort>,kotlin.collections.Collection<UInt>,kotlin.collections.Collection<ULong>]

@@ -6,7 +6,6 @@ symbol fq=golden.sema.charSequenceSubSequence.$2.cs[kind=vparam] kind=valueParam
 symbol fq=golden.sema.charSequenceSubSequence[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.CharSequence
 symbol fq=golden.sema.stringAsCharSequence[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharSequence
 symbol fq=golden.sema.stringBuilderAsCharSequence[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharSequence
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_n_CharSequence package=golden.sema
   decl golden.sema.charSequenceLength[kind=fun;params=kotlin.CharSequence] fun charSequenceLength sym=golden.sema.charSequenceLength[kind=fun;params=kotlin.CharSequence]
   decl golden.sema.charSequenceGet[kind=fun;params=kotlin.CharSequence] fun charSequenceGet sym=golden.sema.charSequenceGet[kind=fun;params=kotlin.CharSequence]

@@ -6,10 +6,6 @@ symbol fq=__local_4.destination[kind=local] kind=local vis=private flags=_ type=
 symbol fq=filterFamily.$0.nullable[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=filterFamily.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=filterFamily[kind=fun;params=kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>] ret=Unit
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_filter package=_
   decl filterFamily[kind=fun;params=kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>] fun filterFamily sym=filterFamily[kind=fun;params=kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>]
 expr e@2:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
@@ -43,7 +39,7 @@ expr e@9:31 call callee=e@9:31#1 args=[] type=kotlin.collections.MutableList<Str
 expr e@9:5 localDecl instanceDestination mutable=0 type=_ init=e@9:31 type=Unit ref=__local_1.instanceDestination[kind=local]
 expr e@10:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
 expr e@10:31 name(instanceDestination) type=kotlin.collections.MutableList<String> ref=__local_1.instanceDestination[kind=local]
-expr e@10:5#1 memberCall recv=e@10:5 callee=filterIsInstanceTo args=[_:e@10:31] type=kotlin.collections.MutableList<String> call=kotlin.collections.filterIsInstanceTo[kind=fun;recv=kotlin.collections.Iterable<*>;params=T1;gen=2] targs=[String,kotlin.collections.MutableList<String>]
+expr e@10:5#1 memberCall recv=e@10:5 callee=filterIsInstanceTo args=[_:e@10:31] type=kotlin.collections.MutableList<String> call=kotlin.collections.filterIsInstanceTo[kind=fun;recv=kotlin.collections.Iterable<*>;params=T0;gen=1] targs=[String,kotlin.collections.MutableList<String>]
 expr e@12:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
 expr e@12:24 name(it) type=Any? ref=s-3
 expr e@12:30 name(null) type=Nothing?

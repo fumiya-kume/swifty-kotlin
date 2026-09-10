@@ -6,9 +6,6 @@ symbol fq=flattenIterableParams.$0.lists[kind=vparam] kind=valueParameter vis=pr
 symbol fq=flattenIterableParams[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.Iterable<Int>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<kotlin.collections.Iterable<Int>>] ret=Unit
 symbol fq=flattenIterables.$1.lists[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=flattenIterables[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.List<Int>>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<kotlin.collections.List<Int>>] ret=Unit
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 file fflatten_sequence_iterable package=_
   decl flattenIterables[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.List<Int>>] fun flattenIterables sym=flattenIterables[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.List<Int>>]
   decl flattenIterableParams[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.Iterable<Int>>] fun flattenIterableParams sym=flattenIterableParams[kind=fun;params=kotlin.sequences.Sequence<kotlin.collections.Iterable<Int>>]

@@ -3,9 +3,6 @@ symbol fq=golden.sema.useReplaceFirst[kind=fun;params=] kind=function vis=public
 symbol fq=golden.sema.useReplaceRange[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.useReplace[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.useSplit[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<String>
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
 file fstring_replace_split package=golden.sema
   decl golden.sema.useReplace[kind=fun;params=] fun useReplace sym=golden.sema.useReplace[kind=fun;params=]
   decl golden.sema.useReplaceFirst[kind=fun;params=] fun useReplaceFirst sym=golden.sema.useReplaceFirst[kind=fun;params=]

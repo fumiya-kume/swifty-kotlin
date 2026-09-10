@@ -1,7 +1,5 @@
 symbol fq=__local_0.entry[kind=local] kind=local vis=private flags=_ type=kotlin.collections.IndexedValue<String>
 symbol fq=golden.sema.exerciseIndexedValueMembers[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.collections.IndexedValue.hashCode[kind=fun;recv=kotlin.collections.IndexedValue<T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.IndexedValue<kotlin.collections.IndexedValue.$class0.T> params=[] ret=Int
-symbol fq=kotlin.collections.IndexedValue.toString[kind=fun;recv=kotlin.collections.IndexedValue<T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.IndexedValue<kotlin.collections.IndexedValue.$class0.T> params=[] ret=String
 file fstdlib_kotlin_collections_IndexedValue_IndexedValue_n package=golden.sema
   decl golden.sema.exerciseIndexedValueMembers[kind=fun;params=] fun exerciseIndexedValueMembers sym=golden.sema.exerciseIndexedValueMembers[kind=fun;params=]
 expr e@4:52 int(7) type=Int

@@ -21,22 +21,6 @@ symbol fq=__local_15.retainInput[kind=local] kind=local vis=private flags=_ type
 symbol fq=__local_16.emptyRetain[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
 symbol fq=__local_17.nullable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int?>
 symbol fq=__local_18.set[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Collection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableCollection.remove.element[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.MutableCollection.removeAll.elements[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.MutableCollection.removeAll[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=kotlin.collections.Collection<out T0>;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.Collection<out kotlin.collections.MutableCollection.E>] ret=Boolean
-symbol fq=kotlin.collections.MutableCollection.remove[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.MutableCollection.E] ret=Boolean
-symbol fq=kotlin.collections.MutableCollection.retainAll.elements[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.MutableCollection.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=kotlin.collections.Collection<out T0>;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.Collection<out kotlin.collections.MutableCollection.E>] ret=Boolean
-symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_MutableCollection_n package=_
   decl StableIterable[kind=class] class StableIterable sym=StableIterable[kind=class]

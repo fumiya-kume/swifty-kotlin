@@ -6,11 +6,6 @@ symbol fq=__local_1.next[kind=local] kind=local vis=private flags=_ type=Int
 symbol fq=__local_2.iterator[kind=local] kind=local vis=private flags=_ type=kotlin.collections.ListIterator<Int>
 symbol fq=inspect.$0.iterator[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=inspect[kind=fun;params=kotlin.collections.ListIterator<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.ListIterator<Int>] ret=Int
-symbol fq=kotlin.collections.List.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.List.listIterator[kind=fun;recv=kotlin.collections.List<out T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[] ret=kotlin.collections.ListIterator<out kotlin.collections.List.E> type=() -> kotlin.collections.ListIterator<out kotlin.collections.List.E>
-symbol fq=kotlin.collections.ListIterator.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.ListIterator[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_n_ListIterator package=_
   decl ProbeListIterator[kind=class] class ProbeListIterator sym=ProbeListIterator[kind=class]

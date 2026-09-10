@@ -2,7 +2,6 @@ symbol fq=countIterable.$0.values[kind=vparam] kind=valueParameter vis=private f
 symbol fq=countIterablePredicate.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=countIterablePredicate[kind=fun;params=kotlin.collections.Iterable<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int?>] ret=Int
 symbol fq=countIterable[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_count package=_
   decl countIterable[kind=fun;params=kotlin.collections.Iterable<Int>] fun countIterable sym=countIterable[kind=fun;params=kotlin.collections.Iterable<Int>]
   decl countIterablePredicate[kind=fun;params=kotlin.collections.Iterable<Int?>] fun countIterablePredicate sym=countIterablePredicate[kind=fun;params=kotlin.collections.Iterable<Int?>]

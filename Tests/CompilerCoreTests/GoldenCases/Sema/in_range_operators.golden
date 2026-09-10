@@ -4,13 +4,6 @@ symbol fq=checkIn[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=
 symbol fq=checkNotIn.$1.x[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=checkNotIn.$1.y[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=checkNotIn[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.OpenEndRange.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.ranges.OpenEndRange.endExclusive[kind=prop] kind=property vis=public flags=synthetic type=kotlin.ranges.OpenEndRange.T
-symbol fq=kotlin.ranges.OpenEndRange[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.rangeUntil.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.ranges.rangeUntil.that[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.ranges.rangeUntil[kind=fun;recv=T0;params=T0;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.ranges.rangeUntil.T params=[kotlin.ranges.rangeUntil.T] ret=kotlin.ranges.OpenEndRange<kotlin.ranges.rangeUntil.T> bounds=[kotlin.Comparable<in kotlin.ranges.rangeUntil.T>]
 symbol fq=rangeUntilEndExclusive[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=rangeUntilExpr.$2.n[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=rangeUntilExpr[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean
@@ -32,9 +25,9 @@ expr e@3:43#1 notInExpr lhs=e@3:43 rhs=e@3:49#1 type=Boolean
 expr e@5:39 name(n) type=Int ref=rangeUntilExpr.$2.n[kind=vparam]
 expr e@5:44 int(0) type=Int
 expr e@5:48 int(10) type=Int
-expr e@5:44#1 binary(rangeUntil) lhs=e@5:44 rhs=e@5:48 type=kotlin.ranges.OpenEndRange<Int> call=kotlin.ranges.rangeUntil[kind=fun;recv=T0;params=T0;gen=1] targs=[Int]
-expr e@5:39#1 inExpr lhs=e@5:39 rhs=e@5:44#1 type=Boolean
+expr e@5:44#1 binary(rangeUntil) lhs=e@5:44 rhs=e@5:48 type=kotlin.ranges.IntRange call=kotlin.ranges.rangeUntil[kind=fun;recv=Int;params=Int]
+expr e@5:39#1 inExpr lhs=e@5:39 rhs=e@5:44#1 type=Boolean call=kotlin.ranges.contains[kind=fun;recv=kotlin.ranges.IntRange;params=Int]
 expr e@7:37 int(0) type=Int
 expr e@7:50 int(10) type=Int
-expr e@7:37#1 memberCall recv=e@7:37 callee=rangeUntil args=[_:e@7:50] type=kotlin.ranges.OpenEndRange<Int> call=kotlin.ranges.rangeUntil[kind=fun;recv=T0;params=T0;gen=1] targs=[Int]
-expr e@7:37#2 memberCall recv=e@7:37#1 callee=endExclusive args=[] type=Int ref=kotlin.ranges.OpenEndRange.endExclusive[kind=prop]
+expr e@7:37#1 memberCall recv=e@7:37 callee=rangeUntil args=[_:e@7:50] type=kotlin.ranges.IntRange call=kotlin.ranges.rangeUntil[kind=fun;recv=Int;params=Int]
+expr e@7:37#2 memberCall recv=e@7:37#1 callee=endExclusive args=[] type=Int ref=kotlin.ranges.IntRange.endExclusive[kind=prop]

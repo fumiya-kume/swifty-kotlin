@@ -6,8 +6,6 @@ symbol fq=iterableToHashSet.$0.items[kind=vparam] kind=valueParameter vis=privat
 symbol fq=iterableToHashSet[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
 symbol fq=iterableToMutableSet.$1.items[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=iterableToMutableSet[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableSet[kind=iface;gen=1] kind=interface vis=public flags=synthetic
 file fiterable_to_mutable_set package=_
   decl iterableToMutableSet[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableToMutableSet sym=iterableToMutableSet[kind=fun;params=kotlin.collections.Iterable<Int>]
   decl iterableToHashSet[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableToHashSet sym=iterableToHashSet[kind=fun;params=kotlin.collections.Iterable<Int>]

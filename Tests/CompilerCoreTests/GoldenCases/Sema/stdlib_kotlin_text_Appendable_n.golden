@@ -2,7 +2,6 @@ symbol fq=__local_0.builder[kind=local] kind=local vis=private flags=_ type=kotl
 symbol fq=golden.sema.appendLines.$0.target[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.appendLines[kind=fun;params=kotlin.text.Appendable] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.Appendable] ret=kotlin.text.Appendable
 symbol fq=golden.sema.appendToBuilder[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_Appendable_n package=golden.sema
   decl golden.sema.appendLines[kind=fun;params=kotlin.text.Appendable] fun appendLines sym=golden.sema.appendLines[kind=fun;params=kotlin.text.Appendable]
   decl golden.sema.appendToBuilder[kind=fun;params=] fun appendToBuilder sym=golden.sema.appendToBuilder[kind=fun;params=]
