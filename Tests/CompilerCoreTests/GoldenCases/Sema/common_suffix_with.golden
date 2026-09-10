@@ -1,26 +1,26 @@
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fcommon_suffix_with package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:13 string(abcdef) type=String
 expr e@2:39 string(xyzdef) type=String
-expr e@2:13#1 memberCall recv=e@2:13 callee=commonSuffixWith args=[_:e@2:39] type=String call=kotlin.text.commonSuffixWith
-expr e@2:5 call callee=e@2:5#1 args=[_:e@2:13#1] type=Unit call=kotlin.io.println#2
+expr e@2:13#1 memberCall recv=e@2:13 callee=commonSuffixWith args=[_:e@2:39] type=String call=kotlin.text.commonSuffixWith[kind=fun;recv=String;params=String,Boolean]
+expr e@2:5 call callee=e@2:5#1 args=[_:e@2:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]
 expr e@3:13 string(abcDEF) type=String
 expr e@3:39 string(xyzdef) type=String
 expr e@3:49 bool(true) type=Boolean
-expr e@3:13#1 memberCall recv=e@3:13 callee=commonSuffixWith args=[_:e@3:39,_:e@3:49] type=String call=kotlin.text.commonSuffixWith
-expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13#1] type=Unit call=kotlin.io.println#2
+expr e@3:13#1 memberCall recv=e@3:13 callee=commonSuffixWith args=[_:e@3:39,_:e@3:49] type=String call=kotlin.text.commonSuffixWith[kind=fun;recv=String;params=String,Boolean]
+expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]
 expr e@4:13 string(abcDEF) type=String
 expr e@4:39 string(xyzdef) type=String
 expr e@4:49 bool(false) type=Boolean
-expr e@4:13#1 memberCall recv=e@4:13 callee=commonSuffixWith args=[_:e@4:39,_:e@4:49] type=String call=kotlin.text.commonSuffixWith
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13#1] type=Unit call=kotlin.io.println#2
+expr e@4:13#1 memberCall recv=e@4:13 callee=commonSuffixWith args=[_:e@4:39,_:e@4:49] type=String call=kotlin.text.commonSuffixWith[kind=fun;recv=String;params=String,Boolean]
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]
 expr e@5:13 string(abcdef) type=String
 expr e@5:39 string(abcxyz) type=String
-expr e@5:13#1 memberCall recv=e@5:13 callee=commonPrefixWith args=[_:e@5:39] type=String call=kotlin.text.commonPrefixWith
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println#2
+expr e@5:13#1 memberCall recv=e@5:13 callee=commonPrefixWith args=[_:e@5:39] type=String call=kotlin.text.commonPrefixWith[kind=fun;recv=String;params=String,Boolean]
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]
 expr e@6:13 string(ABCdef) type=String
 expr e@6:39 string(abcxyz) type=String
 expr e@6:49 bool(true) type=Boolean
-expr e@6:13#1 memberCall recv=e@6:13 callee=commonPrefixWith args=[_:e@6:39,_:e@6:49] type=String call=kotlin.text.commonPrefixWith
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println#2
+expr e@6:13#1 memberCall recv=e@6:13 callee=commonPrefixWith args=[_:e@6:39,_:e@6:49] type=String call=kotlin.text.commonPrefixWith[kind=fun;recv=String;params=String,Boolean]
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]

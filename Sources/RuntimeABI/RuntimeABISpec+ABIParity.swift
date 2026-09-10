@@ -30,6 +30,12 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_future_getState", parameters: [
             p("futureRaw", .intptr),
         ]),
+        abiParitySpec("kk_future_invoke", parameters: [
+            p("fnPtr", .intptr),
+            p("closureRaw", .intptr),
+            p("valueRaw", .intptr),
+            p("outThrown", .nullableIntptrPointer),
+        ]),
         abiParitySpec("kk_int_to_int", parameters: [
             p("value", .intptr),
         ]),

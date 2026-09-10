@@ -1,9 +1,9 @@
-symbol fq=golden.sema.Base kind=class vis=public flags=openType
-symbol fq=golden.sema.Marker kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.useSubclassOptInRequired kind=function vis=public flags=_ sig=recv=_ params=[kotlin.SubclassOptInRequired?] ret=Int
-symbol fq=golden.sema.useSubclassOptInRequired.$0.x kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Base[kind=class] kind=class vis=public flags=openType
+symbol fq=golden.sema.Marker[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.useSubclassOptInRequired.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useSubclassOptInRequired[kind=fun;params=kotlin.SubclassOptInRequired?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.SubclassOptInRequired?] ret=Int
 file fstdlib_kotlin_n_SubclassOptInRequired package=golden.sema
-  decl golden.sema.Marker class Marker sym=golden.sema.Marker
-  decl golden.sema.Base class Base sym=golden.sema.Base
-  decl golden.sema.useSubclassOptInRequired fun useSubclassOptInRequired sym=golden.sema.useSubclassOptInRequired
+  decl golden.sema.Marker[kind=anno] class Marker sym=golden.sema.Marker[kind=anno]
+  decl golden.sema.Base[kind=class] class Base sym=golden.sema.Base[kind=class]
+  decl golden.sema.useSubclassOptInRequired[kind=fun;params=kotlin.SubclassOptInRequired?] fun useSubclassOptInRequired sym=golden.sema.useSubclassOptInRequired[kind=fun;params=kotlin.SubclassOptInRequired?]
 expr e@10:64 int(0) type=Int

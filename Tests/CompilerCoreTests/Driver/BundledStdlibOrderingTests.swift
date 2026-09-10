@@ -57,5 +57,21 @@ struct BundledStdlibOrderingTests {
             #expect(parseRecord.subRecords.contains { $0.name == "bundled-stdlib" })
         }
     }
+
+    @Test
+    func testRandomInteropUsesKotlinStdlibPlatformFilename() throws {
+        try withTemporaryFile(contents: "fun main() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+
+            try LoadSourcesPhase().run(ctx)
+
+            let bundledPaths = ctx.sourceManager.fileIDs()
+                .map { ctx.sourceManager.path(of: $0) }
+                .filter { $0.hasPrefix("__bundled_") }
+
+            #expect(bundledPaths.contains("__bundled_kotlin/random/PlatformRandom.kt"))
+            #expect(!bundledPaths.contains("__bundled_kotlin/random/JavaRandomInterop.kt"))
+        }
+    }
 }
 #endif

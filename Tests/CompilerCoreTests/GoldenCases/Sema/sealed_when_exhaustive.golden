@@ -1,16 +1,16 @@
-symbol fq=Circle kind=class vis=public flags=_
-symbol fq=Rectangle kind=class vis=public flags=_
-symbol fq=Shape kind=class vis=public flags=sealedType|abstractType|openType
-symbol fq=Triangle kind=class vis=public flags=_
-symbol fq=describeShape kind=function vis=public flags=_ sig=recv=_ params=[Shape] ret=String
-symbol fq=describeShape.$0.s kind=valueParameter vis=private flags=_
+symbol fq=Circle[kind=class] kind=class vis=public flags=_
+symbol fq=Rectangle[kind=class] kind=class vis=public flags=_
+symbol fq=Shape[kind=class] kind=class vis=public flags=sealedType|abstractType|openType
+symbol fq=Triangle[kind=class] kind=class vis=public flags=_
+symbol fq=describeShape.$0.s[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=describeShape[kind=fun;params=Shape] kind=function vis=public flags=_ sig=recv=_ params=[Shape] ret=String
 file fsealed_when_exhaustive package=_
-  decl Shape class Shape sym=Shape
-  decl Circle class Circle sym=Circle
-  decl Rectangle class Rectangle sym=Rectangle
-  decl Triangle class Triangle sym=Triangle
-  decl describeShape fun describeShape sym=describeShape
-expr e@7:18 name(s) type=Shape ref=describeShape.$0.s
+  decl Shape[kind=class] class Shape sym=Shape[kind=class]
+  decl Circle[kind=class] class Circle sym=Circle[kind=class]
+  decl Rectangle[kind=class] class Rectangle sym=Rectangle[kind=class]
+  decl Triangle[kind=class] class Triangle sym=Triangle[kind=class]
+  decl describeShape[kind=fun;params=Shape] fun describeShape sym=describeShape[kind=fun;params=Shape]
+expr e@7:18 name(s) type=Shape ref=describeShape.$0.s[kind=vparam]
 expr e@7:18#1 isCheck expr=e@7:18 type=Circle type=Boolean
 expr e@8:22 string(circle) type=String
 expr e@7:18#2 isCheck expr=e@7:18 type=Rectangle type=Boolean

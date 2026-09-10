@@ -1,11 +1,11 @@
-symbol fq=__try_0_catch_0.e kind=local vis=internal flags=_ type=kotlin.KotlinNothingValueException
-symbol fq=golden.sema.catchKotlinNothingValue kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.KotlinNothingValueException
+symbol fq=golden.sema.catchKotlinNothingValue[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstdlib_kotlin_n_KotlinNothingValueException package=golden.sema
-  decl golden.sema.catchKotlinNothingValue fun catchKotlinNothingValue sym=golden.sema.catchKotlinNothingValue
+  decl golden.sema.catchKotlinNothingValue[kind=fun;params=] fun catchKotlinNothingValue sym=golden.sema.catchKotlinNothingValue[kind=fun;params=]
 expr e@4:45 string(bad) type=String
-expr e@4:17 call callee=e@4:17#1 args=[_:e@4:45] type=kotlin.KotlinNothingValueException call=kotlin.KotlinNothingValueException.<init>#1
+expr e@4:17 call callee=e@4:17#1 args=[_:e@4:45] type=kotlin.KotlinNothingValueException call=kotlin.KotlinNothingValueException.<init>[kind=ctor;recv=kotlin.KotlinNothingValueException;params=String?]
 expr e@4:11 throw value=e@4:17 type=Nothing
 expr e@4:9 blockExpr stmts=[] trailing=e@4:11 type=Nothing
 expr e@5:46 string(caught) type=String
-expr e@5:44 blockExpr stmts=[] trailing=e@5:46 type=String ref=__try_0_catch_0.e
+expr e@5:44 blockExpr stmts=[] trailing=e@5:46 type=String ref=__try_0_catch_0.e[kind=local]
 expr e@4:5 try body=e@4:9 catches=[e@5:44] finally=_ type=String

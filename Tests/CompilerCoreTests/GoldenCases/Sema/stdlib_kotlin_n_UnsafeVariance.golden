@@ -1,13 +1,13 @@
-symbol fq=golden.sema.CovariantBox kind=class vis=public flags=_
-symbol fq=golden.sema.CovariantBox.$class0.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.CovariantBox.accept kind=function vis=public flags=_ sig=recv=golden.sema.CovariantBox<golden.sema.CovariantBox.$class0.T> params=[golden.sema.CovariantBox.$class0.T] ret=golden.sema.CovariantBox.$class0.T
-symbol fq=golden.sema.CovariantBox.accept.$0.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.useUnsafeVariance kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.CovariantBox<String>] ret=String
-symbol fq=golden.sema.useUnsafeVariance.$1.box kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.CovariantBox.$class0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.CovariantBox.accept.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.CovariantBox.accept[kind=fun;recv=golden.sema.CovariantBox<T0>;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=golden.sema.CovariantBox<golden.sema.CovariantBox.$class0.T> params=[golden.sema.CovariantBox.$class0.T] ret=golden.sema.CovariantBox.$class0.T
+symbol fq=golden.sema.CovariantBox[kind=class;gen=1] kind=class vis=public flags=_
+symbol fq=golden.sema.useUnsafeVariance.$1.box[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useUnsafeVariance[kind=fun;params=golden.sema.CovariantBox<String>] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.CovariantBox<String>] ret=String
 file fstdlib_kotlin_n_UnsafeVariance package=golden.sema
-  decl golden.sema.CovariantBox class CovariantBox sym=golden.sema.CovariantBox
-  decl golden.sema.useUnsafeVariance fun useUnsafeVariance sym=golden.sema.useUnsafeVariance
-expr e@4:47 name(value) type=golden.sema.CovariantBox.$class0.T ref=golden.sema.CovariantBox.accept.$0.value
-expr e@7:60 name(box) type=golden.sema.CovariantBox<String> ref=golden.sema.useUnsafeVariance.$1.box
+  decl golden.sema.CovariantBox[kind=class;gen=1] class CovariantBox sym=golden.sema.CovariantBox[kind=class;gen=1]
+  decl golden.sema.useUnsafeVariance[kind=fun;params=golden.sema.CovariantBox<String>] fun useUnsafeVariance sym=golden.sema.useUnsafeVariance[kind=fun;params=golden.sema.CovariantBox<String>]
+expr e@4:47 name(value) type=golden.sema.CovariantBox.$class0.T ref=golden.sema.CovariantBox.accept.$0.value[kind=vparam]
+expr e@7:60 name(box) type=golden.sema.CovariantBox<String> ref=golden.sema.useUnsafeVariance.$1.box[kind=vparam]
 expr e@7:71 string(accepted) type=String
-expr e@7:60#1 memberCall recv=e@7:60 callee=accept args=[_:e@7:71] type=String call=golden.sema.CovariantBox.accept targs=[String]
+expr e@7:60#1 memberCall recv=e@7:60 callee=accept args=[_:e@7:71] type=String call=golden.sema.CovariantBox.accept[kind=fun;recv=golden.sema.CovariantBox<T0>;params=T0;gen=1] targs=[String]

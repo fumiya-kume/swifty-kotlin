@@ -2442,9 +2442,15 @@ public func kk_produce(_ entryPointRaw: Int, _ capture0: Int) -> Int {
     return kk_kxmini_produce_with_cont(entryPointRaw, continuation)
 }
 
-@_cdecl("kk_kxmini_produce_with_cont")
-public func kk_kxmini_produce_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
-    let channelHandle = kk_channel_create(0)
+/// Launch a producer on a channel with the requested buffering policy.
+/// `channelFlow` and `callbackFlow` use the Kotlin buffered default, while
+/// `produce` retains its rendezvous behavior through the public wrapper below.
+func runtimeKxMiniProduceWithCont(
+    _ entryPointRaw: Int,
+    _ continuation: Int,
+    channelCapacity: Int
+) -> Int {
+    let channelHandle = kk_channel_create(channelCapacity)
     let job = RuntimeJobHandle()
     let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
     runtimeStorage.withGCLock { state in
@@ -2476,6 +2482,11 @@ public func kk_kxmini_produce_with_cont(_ entryPointRaw: Int, _ continuation: In
         _ = job.complete(with: result)
     }
     return channelHandle
+}
+
+@_cdecl("kk_kxmini_produce_with_cont")
+public func kk_kxmini_produce_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
+    runtimeKxMiniProduceWithCont(entryPointRaw, continuation, channelCapacity: 0)
 }
 
 // MARK: - Dispatcher-aware launch (STDLIB-CORO-072)

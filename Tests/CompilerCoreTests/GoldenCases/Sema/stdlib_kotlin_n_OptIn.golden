@@ -1,6 +1,6 @@
-symbol fq=golden.sema.MyMarker kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.useOptIn kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.MyMarker[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.useOptIn[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_n_OptIn package=golden.sema annotations=[@file:OptIn(kotlin.ExperimentalStdlibApi::class)]
-  decl golden.sema.MyMarker class MyMarker sym=golden.sema.MyMarker
-  decl golden.sema.useOptIn fun useOptIn sym=golden.sema.useOptIn
+  decl golden.sema.MyMarker[kind=anno] class MyMarker sym=golden.sema.MyMarker[kind=anno]
+  decl golden.sema.useOptIn[kind=fun;params=] fun useOptIn sym=golden.sema.useOptIn[kind=fun;params=]
 expr e@8:23 int(1) type=Int

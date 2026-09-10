@@ -1,4 +1,4 @@
-symbol fq=golden.sema.createMarker kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.OverloadResolutionByLambdaReturnType
+symbol fq=golden.sema.createMarker[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.OverloadResolutionByLambdaReturnType
 file fstdlib_kotlin_OverloadResolutionByLambdaReturnType_n_n package=golden.sema
-  decl golden.sema.createMarker fun createMarker sym=golden.sema.createMarker
-expr e@7:60 call callee=e@7:60#1 args=[] type=kotlin.OverloadResolutionByLambdaReturnType call=kotlin.OverloadResolutionByLambdaReturnType.<init>
+  decl golden.sema.createMarker[kind=fun;params=] fun createMarker sym=golden.sema.createMarker[kind=fun;params=]
+expr e@7:60 call callee=e@7:60#1 args=[] type=kotlin.OverloadResolutionByLambdaReturnType call=kotlin.OverloadResolutionByLambdaReturnType.<init>[kind=ctor;recv=kotlin.OverloadResolutionByLambdaReturnType;params=]

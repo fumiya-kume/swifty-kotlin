@@ -1,8 +1,8 @@
-symbol fq=golden.sema.minOfULongTwoArg kind=function vis=public flags=_ sig=recv=_ params=[ULong,ULong] ret=ULong
-symbol fq=golden.sema.minOfULongTwoArg.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.minOfULongTwoArg.$0.b kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfULongTwoArg.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfULongTwoArg.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfULongTwoArg[kind=fun;params=ULong,ULong] kind=function vis=public flags=_ sig=recv=_ params=[ULong,ULong] ret=ULong
 file fminof_ulong_2args package=golden.sema
-  decl golden.sema.minOfULongTwoArg fun minOfULongTwoArg sym=golden.sema.minOfULongTwoArg
-expr e@3:57 name(a) type=ULong ref=golden.sema.minOfULongTwoArg.$0.a
-expr e@3:60 name(b) type=ULong ref=golden.sema.minOfULongTwoArg.$0.b
-expr e@3:51 call callee=e@3:51#1 args=[_:e@3:57,_:e@3:60] type=ULong call=kotlin.comparisons.minOf#24
+  decl golden.sema.minOfULongTwoArg[kind=fun;params=ULong,ULong] fun minOfULongTwoArg sym=golden.sema.minOfULongTwoArg[kind=fun;params=ULong,ULong]
+expr e@3:57 name(a) type=ULong ref=golden.sema.minOfULongTwoArg.$0.a[kind=vparam]
+expr e@3:60 name(b) type=ULong ref=golden.sema.minOfULongTwoArg.$0.b[kind=vparam]
+expr e@3:51 call callee=e@3:51#1 args=[_:e@3:57,_:e@3:60] type=ULong call=kotlin.comparisons.minOf[kind=fun;params=ULong,ULong]

@@ -19,6 +19,29 @@ extension CoroutineLoweringPass {
             return expr
         }
 
+        let channelFlowName = ctx.interner.intern("channelFlow")
+        let callbackFlowName = ctx.interner.intern("callbackFlow")
+        let channelFlowBridgeName = ctx.interner.intern("kk_channel_flow_create")
+        let callbackFlowBridgeName = ctx.interner.intern("kk_callback_flow_create")
+
+        func producerFlowBridgeName(
+            for callee: InternedString,
+            symbol: SymbolID?
+        ) -> InternedString? {
+            if callee == channelFlowBridgeName || callee == callbackFlowBridgeName {
+                return callee
+            }
+            guard callee == channelFlowName || callee == callbackFlowName,
+                  let symbol,
+                  let sema = ctx.sema,
+                  sema.symbols.externalLinkName(for: symbol) ==
+                    (callee == channelFlowName ? "kk_channel_flow_create" : "kk_callback_flow_create")
+            else {
+                return nil
+            }
+            return callee == channelFlowName ? channelFlowBridgeName : callbackFlowBridgeName
+        }
+
         // KSP-CAP-010 / KSP-499 Stage 3: both `.call` and `.virtualCall`
         // branches now gate on `hasRealDeclaration(symbol, in: ctx)`. Calls
         // whose symbol is unresolved (`nil`) or synthetic are treated as flow
@@ -140,6 +163,25 @@ extension CoroutineLoweringPass {
         for instruction in originalBody {
             switch instruction {
             case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
+                if let producerBridge = producerFlowBridgeName(for: callee, symbol: symbol),
+                   arguments.count == 1
+                {
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: producerBridge,
+                        arguments: [arguments[0], appendIntConstantInBody(0)],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil,
+                        isSuperCall: isSuperCall,
+                        qualifiedSuperType: qualifiedSuperType
+                    ))
+                    if let result {
+                        flowExprIDs.insert(result.rawValue)
+                    }
+                    continue
+                }
+
                 if callee == names.flow, arguments.count == 1, !hasRealDeclaration(symbol, in: ctx) {
                     loweredBody.append(.call(
                         symbol: nil,

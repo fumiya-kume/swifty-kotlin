@@ -1,12 +1,12 @@
-symbol fq=golden.sema.varargMinUByte kind=function vis=public flags=_ sig=recv=_ params=[UByte,UByte,UByte,UByte] ret=UByte
-symbol fq=golden.sema.varargMinUByte.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinUByte.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinUByte.$0.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinUByte.$0.d kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUByte.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUByte.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUByte.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUByte.$0.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUByte[kind=fun;params=UByte,UByte,UByte,UByte] kind=function vis=public flags=_ sig=recv=_ params=[UByte,UByte,UByte,UByte] ret=UByte
 file fminof_ubyte_vararg package=golden.sema
-  decl golden.sema.varargMinUByte fun varargMinUByte sym=golden.sema.varargMinUByte
-expr e@3:75 name(a) type=UByte ref=golden.sema.varargMinUByte.$0.a
-expr e@3:78 name(b) type=UByte ref=golden.sema.varargMinUByte.$0.b
-expr e@3:81 name(c) type=UByte ref=golden.sema.varargMinUByte.$0.c
-expr e@3:84 name(d) type=UByte ref=golden.sema.varargMinUByte.$0.d
-expr e@3:69 call callee=e@3:69#1 args=[_:e@3:75,_:e@3:78,_:e@3:81,_:e@3:84] type=UByte call=kotlin.comparisons.minOf#19
+  decl golden.sema.varargMinUByte[kind=fun;params=UByte,UByte,UByte,UByte] fun varargMinUByte sym=golden.sema.varargMinUByte[kind=fun;params=UByte,UByte,UByte,UByte]
+expr e@3:75 name(a) type=UByte ref=golden.sema.varargMinUByte.$0.a[kind=vparam]
+expr e@3:78 name(b) type=UByte ref=golden.sema.varargMinUByte.$0.b[kind=vparam]
+expr e@3:81 name(c) type=UByte ref=golden.sema.varargMinUByte.$0.c[kind=vparam]
+expr e@3:84 name(d) type=UByte ref=golden.sema.varargMinUByte.$0.d[kind=vparam]
+expr e@3:69 call callee=e@3:69#1 args=[_:e@3:75,_:e@3:78,_:e@3:81,_:e@3:84] type=UByte call=kotlin.comparisons.minOf[kind=fun;params=UByte,*UByte]
