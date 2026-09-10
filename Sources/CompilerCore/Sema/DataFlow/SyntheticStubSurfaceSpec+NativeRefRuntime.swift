@@ -74,12 +74,7 @@ enum SyntheticNativeRefRuntimeSurfaceSpec {
     static let rootSetStatisticsConstructor = constructor(from: rootSetStatisticsProperties)
 
     static let sweepStatisticsType = nativeRuntimeClass("SweepStatistics")
-    static let sweepStatisticsProperties: [SyntheticPropertyStubSpec] = [
-        SyntheticPropertyStubSpec(name: "sweptCount", propertyType: .long),
-        SyntheticPropertyStubSpec(name: "keptCount", propertyType: .long),
-    ]
 
-    static let gcInfoType = nativeRuntimeClass("GCInfo")
     static let memoryUsageType = nativeRuntimeClass("MemoryUsage")
     static let gcInfoProperties: [SyntheticPropertyStubSpec] = [
         SyntheticPropertyStubSpec(name: "epoch", propertyType: .long),
@@ -98,8 +93,6 @@ enum SyntheticNativeRefRuntimeSurfaceSpec {
         SyntheticPropertyStubSpec(name: "memoryUsageBefore", propertyType: mapOfString(to: memoryUsageType)),
         SyntheticPropertyStubSpec(name: "memoryUsageAfter", propertyType: mapOfString(to: memoryUsageType)),
     ]
-    static let gcInfoConstructor = constructor(from: gcInfoProperties)
-
     static let memoryUsageProperties: [SyntheticPropertyStubSpec] = [
         SyntheticPropertyStubSpec(name: "totalObjectsSizeBytes", propertyType: .long),
     ]

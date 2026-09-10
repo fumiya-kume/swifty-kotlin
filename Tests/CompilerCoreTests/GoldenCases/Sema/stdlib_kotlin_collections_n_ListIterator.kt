@@ -17,7 +17,8 @@ private class ProbeListIterator : ListIterator<Int> {
 }
 
 fun inspect(iterator: ListIterator<Int>): Int {
-    return iterator.nextIndex() + iterator.previousIndex()
+    val next = if (iterator.hasNext()) iterator.next() else iterator.previous()
+    return next + iterator.nextIndex() + iterator.previousIndex()
 }
 
 fun main() {

@@ -1,0 +1,29 @@
+symbol fq=golden.sema.chunkedLengths.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.chunkedLengths[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.List<Int>
+symbol fq=golden.sema.chunkedStrings.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.chunkedStrings[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.collections.List<String>
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.Any.toString[kind=fun;recv=kotlin.Any;params=] kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=String
+symbol fq=kotlin.Any[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+file fstdlib_kotlin_text_CharSequence_chunked package=golden.sema
+  decl golden.sema.chunkedLengths[kind=fun;params=kotlin.CharSequence] fun chunkedLengths sym=golden.sema.chunkedLengths[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.chunkedStrings[kind=fun;params=String] fun chunkedStrings sym=golden.sema.chunkedStrings[kind=fun;params=String]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@3:54 name(value) type=kotlin.CharSequence ref=golden.sema.chunkedLengths.$0.value[kind=vparam]
+expr e@3:68 int(2) type=Int
+expr e@3:73 name(it) type=kotlin.CharSequence ref=s-0
+expr e@3:73#1 memberCall recv=e@3:73 callee=length args=[] type=Int ref=kotlin.CharSequence.length[kind=prop]
+expr e@3:71 lambda params=[] body=e@3:73#1 label=chunked type=(kotlin.CharSequence) -> Int
+expr e@3:54#1 memberCall recv=e@3:54 callee=chunked args=[_:e@3:68,_:e@3:71] type=kotlin.collections.List<Int> call=kotlin.text.chunked[kind=fun;recv=kotlin.CharSequence;params=Int,fn{p=kotlin.CharSequence;ret=T0};gen=1] targs=[Int]
+expr e@5:51 name(value) type=String ref=golden.sema.chunkedStrings.$1.value[kind=vparam]
+expr e@5:65 int(3) type=Int
+expr e@5:70 name(it) type=kotlin.CharSequence ref=s-1
+expr e@5:70#1 memberCall recv=e@5:70 callee=toString args=[] type=String call=kotlin.Any.toString[kind=fun;recv=kotlin.Any;params=]
+expr e@5:68 lambda params=[] body=e@5:70#1 label=chunked type=(kotlin.CharSequence) -> String
+expr e@5:51#1 memberCall recv=e@5:51 callee=chunked args=[_:e@5:65,_:e@5:68] type=kotlin.collections.List<String> call=kotlin.text.chunked[kind=fun;recv=kotlin.CharSequence;params=Int,fn{p=kotlin.CharSequence;ret=T0};gen=1] targs=[String]
+expr e@8:20 string(abcd) type=String
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:20] type=kotlin.collections.List<Int> call=golden.sema.chunkedLengths[kind=fun;params=kotlin.CharSequence]
+expr e@9:20 string(abcde) type=String
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:20] type=kotlin.collections.List<String> call=golden.sema.chunkedStrings[kind=fun;params=String]

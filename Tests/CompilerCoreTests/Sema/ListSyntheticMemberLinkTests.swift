@@ -2341,8 +2341,15 @@ struct ListSyntheticMemberLinkTests {
             for item in expected {
                 let fqName = (item.packagePath + [item.name]).map { ctx.interner.intern($0) }
                 let candidates = sema.symbols.lookupAll(fqName: fqName)
-                #expect(candidates.count == 1, "Expected one nominal symbol for \(item.packagePath.joined(separator: ".")).\(item.name), got \(candidates.count)")
-                let symbol = try #require(sema.symbols.lookup(fqName: fqName))
+                // KSP-939: `List` also owns a same-named `List(size, init)` factory
+                // function (like `MutableList`), so only nominal (interface/class)
+                // candidates are held to the one-declaration-per-name expectation here.
+                let nominalCandidates = candidates.filter { candidate in
+                    let kind = sema.symbols.symbol(candidate)?.kind
+                    return kind == .interface || kind == .class
+                }
+                #expect(nominalCandidates.count == 1, "Expected one nominal symbol for \(item.packagePath.joined(separator: ".")).\(item.name), got \(nominalCandidates.count) (of \(candidates.count) total candidates sharing the name)")
+                let symbol = try #require(nominalCandidates.first)
                 let info = try #require(sema.symbols.symbol(symbol))
                 #expect(!info.flags.contains(.synthetic))
                 #expect(sema.types.nominalTypeParameterVariances(for: symbol) == item.variances)
