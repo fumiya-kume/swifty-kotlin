@@ -2,6 +2,8 @@ symbol fq=__local_0.i[kind=local] kind=local vis=private flags=_ type=Int
 symbol fq=__local_1.l[kind=local] kind=local vis=private flags=_ type=Long
 symbol fq=__local_2.d[kind=local] kind=local vis=private flags=_ type=Double
 symbol fq=__local_3.f[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=kotlin.Double.Companion[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.Double[kind=class] kind=class vis=public flags=synthetic
 symbol fq=kotlin.Long.Companion[kind=obj] kind=object vis=public flags=synthetic|static
 symbol fq=kotlin.Long[kind=class] kind=class vis=public flags=synthetic
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
@@ -48,7 +50,8 @@ expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.pri
 expr e@16:13 name(Long) type=kotlin.Long.Companion ref=kotlin.Long[kind=class]
 expr e@16:13#1 memberCall recv=e@16:13 callee=MIN_VALUE args=[] type=Long call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.Long.Companion;params=]
 expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
-expr e@17:13 memberCall recv=e@17:13#1 callee=MAX_VALUE args=[] type=Double
-expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@17:13 name(Double) type=kotlin.Double.Companion ref=kotlin.Double[kind=class]
+expr e@17:13#1 memberCall recv=e@17:13 callee=MAX_VALUE args=[] type=Double call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.Double.Companion;params=]
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@18:13 memberCall recv=e@18:13#1 callee=MAX_VALUE args=[] type=Float
 expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

@@ -308,7 +308,9 @@ extension DataFlowSemaPhase {
         // hasNext(): Boolean (inherited from Iterator, registered for member resolution)
         let hasNextName = interner.intern("hasNext")
         let hasNextFQName = listIteratorFQName + [hasNextName]
-        if symbols.lookup(fqName: hasNextFQName) == nil {
+        if symbols.lookup(fqName: hasNextFQName) == nil,
+           !activeBundledIndex.contains(owner: listIteratorFQName, name: hasNextName, arity: 0)
+        {
             let hasNextSym = symbols.define(
                 kind: .function, name: hasNextName, fqName: hasNextFQName,
                 declSite: nil, visibility: .public, flags: [.synthetic]
@@ -333,7 +335,9 @@ extension DataFlowSemaPhase {
         // next(): T (inherited from Iterator, registered for member resolution)
         let nextName = interner.intern("next")
         let nextFQName = listIteratorFQName + [nextName]
-        if symbols.lookup(fqName: nextFQName) == nil {
+        if symbols.lookup(fqName: nextFQName) == nil,
+           !activeBundledIndex.contains(owner: listIteratorFQName, name: nextName, arity: 0)
+        {
             let nextSym = symbols.define(
                 kind: .function, name: nextName, fqName: nextFQName,
                 declSite: nil, visibility: .public, flags: [.synthetic]

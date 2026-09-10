@@ -34,7 +34,7 @@ import Testing
 @Suite("GoldenHarness.MetadataContract")
 struct GoldenHarnessMetadataContractTests {
     /// Checked-in Sema goldens keyed by the case's `.kt` basename
-    /// (e.g. `map_hofs.kt`).
+    /// (e.g. `stdlib_kotlin_collections_Map_map.kt`).
     private static func semaGoldenContents() throws -> [String: String] {
         let cases = try GoldenHarnessCaseDiscovery.loadCases(suite: .sema)
         var result: [String: String] = [:]
@@ -48,7 +48,7 @@ struct GoldenHarnessMetadataContractTests {
 
     /// Representative fixtures across the constructs named by RF-GOLDEN-001:
     /// a stdlib typealias user (`linkedhashmap_alias`), collection HOFs
-    /// (`map_hofs`), a generic nominal (`stdlib_kotlin_Pair_n_n`), user data
+    /// (`stdlib_kotlin_collections_Map_map`), a generic nominal (`stdlib_kotlin_Pair_n_n`), user data
     /// class (`data_class_copy_edge`), enum (`enum_class`), object literal
     /// (`object_literal_property_no_init`) and a custom accessor
     /// (`computed_property`). Each must still carry the full ordinary
@@ -59,7 +59,7 @@ struct GoldenHarnessMetadataContractTests {
 
         let expectations: [String: [String]] = [
             "linkedhashmap_alias.kt": ["symbol fq=", "kind=", "vis=", "flags=", "type=", "ref=", "call="],
-            "map_hofs.kt": ["call=", "targs=[", "fn{p="],
+            "stdlib_kotlin_collections_Map_map.kt": ["call=", "targs=[", "fn{p="],
             "stdlib_kotlin_Pair_n_n.kt": ["fq=kotlin.Pair[kind=class;gen=2]", "call=kotlin.Pair.<init>"],
             "data_class_copy_edge.kt": ["flags=dataType", ".copy[kind=fun", "defaults=["],
             "enum_class.kt": ["kind=enum"],
@@ -93,8 +93,8 @@ struct GoldenHarnessMetadataContractTests {
         // investigation; they must not silently grow either.
         "stdlib_kotlin_collections_Map_iterator.kt",
         "stdlib_kotlin_collections_Map_min.kt",
-        "stdlib_kotlin_collections_n_MutableListIterator.kt",
         "stdlib_kotlin_collections_n_build.kt",
+        "stdlib_kotlin_ranges_IntRange_cross_contains_n.kt",
         "stdlib_kotlin_native_SymbolName_n_n.kt",
         "use_site_variance.kt",
         "variance_violation.kt",
@@ -113,8 +113,8 @@ struct GoldenHarnessMetadataContractTests {
     /// Cases where an expression type rendered as `<error>` — the same
     /// mechanical-acceptance guard as the diagnostic inventory.
     private static let errorTypeCaseBasenames: Set<String> = [
-        "flatten_sequence_stdlib.kt",
         "inner_class.kt",
+        "stdlib_kotlin_ranges_IntRange_cross_contains_n.kt",
         "use_site_variance.kt",
     ]
 

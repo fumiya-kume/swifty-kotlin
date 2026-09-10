@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.ExperimentalStdlibApi::class)
+
 package kotlin.concurrent
 
 import kotlin.internal.KsSymbolName

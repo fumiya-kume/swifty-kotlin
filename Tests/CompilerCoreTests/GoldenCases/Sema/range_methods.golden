@@ -1,5 +1,4 @@
 symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.IntRange.contains[kind=fun;recv=kotlin.ranges.IntRange;params=Int] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.ranges.IntRange params=[Int] ret=Boolean
 symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
 symbol fq=rangeContains.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=rangeContains[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean
@@ -31,7 +30,7 @@ expr e@4:39 int(1) type=Int
 expr e@4:42 int(10) type=Int
 expr e@4:39#1 binary(rangeTo) lhs=e@4:39 rhs=e@4:42 type=Int
 expr e@4:55 name(x) type=Int ref=rangeContains.$0.x[kind=vparam]
-expr e@4:39#2 memberCall recv=e@4:39#1 callee=contains args=[_:e@4:55] type=Boolean call=kotlin.ranges.IntRange.contains[kind=fun;recv=kotlin.ranges.IntRange;params=Int]
+expr e@4:39#2 memberCall recv=e@4:39#1 callee=contains args=[_:e@4:55] type=Boolean call=kotlin.ranges.contains[kind=fun;recv=kotlin.ranges.IntRange;params=Int]
 expr e@5:27 int(1) type=Int
 expr e@5:30 int(5) type=Int
 expr e@5:27#1 binary(rangeTo) lhs=e@5:27 rhs=e@5:30 type=Int

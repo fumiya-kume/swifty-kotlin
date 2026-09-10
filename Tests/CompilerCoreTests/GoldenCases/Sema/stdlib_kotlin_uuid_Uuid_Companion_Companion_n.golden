@@ -29,7 +29,6 @@ symbol fq=golden.sema.useParse[kind=fun;params=String] kind=function vis=public 
 symbol fq=golden.sema.useRandom[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.uuid.Uuid
 symbol fq=golden.sema.useSizeConstants[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=kotlin.ByteArray[kind=class] kind=class vis=public flags=synthetic type=kotlin.ByteArray
-symbol fq=kotlin.Comparator[kind=iface;gen=1] kind=interface vis=public flags=funInterface
 symbol fq=kotlin.UByteArray[kind=class] kind=class vis=public flags=synthetic
 symbol fq=kotlin.time.Instant[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_uuid_Uuid_Companion_Companion_n package=golden.sema annotations=[@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class,kotlin.time.ExperimentalTime::class)]

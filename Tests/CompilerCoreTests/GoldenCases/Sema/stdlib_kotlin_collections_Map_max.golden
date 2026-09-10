@@ -10,7 +10,6 @@ symbol fq=__local_8.maxOfWithOrNull[kind=local] kind=local vis=private flags=_ t
 symbol fq=__local_9.maxWith[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<String, Int>
 symbol fq=__local_10.maxWithOrNull[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<String, Int>?
 symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.Comparator[kind=iface;gen=1] kind=interface vis=public flags=funInterface
 symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
 symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_

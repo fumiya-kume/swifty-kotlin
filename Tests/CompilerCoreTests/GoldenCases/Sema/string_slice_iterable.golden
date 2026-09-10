@@ -4,6 +4,7 @@ symbol fq=golden.sema.useListSliceListOf[kind=fun;params=] kind=function vis=pub
 symbol fq=golden.sema.useListSliceRange[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
 symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
 file fstring_slice_iterable package=golden.sema
   decl golden.sema.useListSliceEmptyExplicitType[kind=fun;params=] fun useListSliceEmptyExplicitType sym=golden.sema.useListSliceEmptyExplicitType[kind=fun;params=]
   decl golden.sema.useListSliceListOf[kind=fun;params=] fun useListSliceListOf sym=golden.sema.useListSliceListOf[kind=fun;params=]
@@ -30,5 +31,5 @@ expr e@9:38 call callee=e@9:38#1 args=[_:e@9:45,_:e@9:49,_:e@9:53] type=kotlin.c
 expr e@9:63 int(1) type=Int
 expr e@9:66 int(2) type=Int
 expr e@9:63#1 binary(rangeTo) lhs=e@9:63 rhs=e@9:66 type=Int
-expr e@9:38#2 memberCall recv=e@9:38 callee=slice args=[_:e@9:63#1] type=kotlin.collections.List<Int> call=kotlin.collections.slice[kind=fun;recv=kotlin.collections.List<T0>;params=kotlin.collections.Iterable<Int>;gen=1]
+expr e@9:38#2 memberCall recv=e@9:38 callee=slice args=[_:e@9:63#1] type=kotlin.collections.List<Int> call=kotlin.collections.slice[kind=fun;recv=kotlin.collections.List<T0>;params=kotlin.ranges.IntRange;gen=1]
 expr e@11:45 call callee=e@11:45#1 args=[] type=kotlin.collections.List<Int> call=kotlin.collections.listOf[kind=fun;params=;gen=1] targs=[Int]

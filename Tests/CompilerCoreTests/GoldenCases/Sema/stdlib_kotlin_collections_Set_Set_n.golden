@@ -22,7 +22,7 @@ expr e@6:40 name(null) type=Nothing?
 expr e@6:24#1 memberCall recv=e@6:24 callee=contains args=[_:e@6:40] type=Boolean call=kotlin.collections.Set.contains[kind=fun;recv=kotlin.collections.Set<T0>;params=T0;gen=1]
 expr e@6:5 localDecl containsNull mutable=0 type=_ init=e@6:24#1 type=Unit ref=__local_2.containsNull[kind=local]
 expr e@7:27 name(values) type=kotlin.collections.Set<Int?> ref=golden.sema.inspect.$0.values[kind=vparam]
-expr e@7:27#1 memberCall recv=e@7:27 callee=iterator args=[] type=kotlin.collections.Iterator<out Int?> call=kotlin.collections.Set.iterator[kind=fun;recv=kotlin.collections.Set<T0>;params=;gen=1]
+expr e@7:27#1 memberCall recv=e@7:27 callee=iterator args=[] type=kotlin.collections.Iterator<Int?> call=kotlin.collections.Set.iterator[kind=fun;recv=kotlin.collections.Set<T0>;params=;gen=1] targs=[Int?]
 expr e@7:27#2 memberCall recv=e@7:27#1 callee=hasNext args=[] type=Boolean call=kotlin.collections.Iterator.hasNext[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] targs=[Int?]
 expr e@7:5 localDecl iteratorHasNext mutable=0 type=_ init=e@7:27#2 type=Unit ref=__local_3.iteratorHasNext[kind=local]
 expr e@8:14 name(size) type=Int ref=__local_0.size[kind=local]

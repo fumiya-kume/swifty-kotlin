@@ -31,23 +31,6 @@ extension CallLowerer {
             || resolvedName == "KMutableProperty2"
     }
 
-    private func isKPropertyReceiverType(
-        _ receiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> Bool {
-        let nonNullType = sema.types.makeNonNullable(receiverType)
-        guard let (_, symbol) = resolveClassTypeSymbol(nonNullType, sema: sema) else {
-            return false
-        }
-        let resolvedName = interner.resolve(symbol.name)
-        return resolvedName == "KProperty" || resolvedName == "KProperty0"
-            || resolvedName == "KProperty1" || resolvedName == "KProperty2"
-            || resolvedName == "KCallable"
-            || resolvedName == "KMutableProperty" || resolvedName == "KMutableProperty0"
-            || resolvedName == "KMutableProperty1" || resolvedName == "KMutableProperty2"
-    }
-
     func tryLowerKPropertyMemberAccess(
         _ exprID: ExprID,
         receiverExpr: ExprID,
