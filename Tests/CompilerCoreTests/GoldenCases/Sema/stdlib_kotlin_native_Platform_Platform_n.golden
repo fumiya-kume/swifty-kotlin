@@ -10,7 +10,6 @@ symbol fq=__local_8.leakChecker[kind=local] kind=local vis=private flags=_ type=
 symbol fq=__local_9.cleanersChecker[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=kotlin.Enum.T[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=kotlin.Enum[kind=class;gen=1] kind=class vis=public flags=abstractType|openType
-symbol fq=kotlin.native.CpuArchitecture[kind=enum] kind=enumClass vis=public flags=synthetic
 symbol fq=kotlin.native.MemoryModel[kind=enum] kind=enumClass vis=public flags=synthetic
 symbol fq=platformContract[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_native_Platform_Platform_n package=_ annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class),@file:Suppress("DEPRECATION")]
@@ -73,7 +72,7 @@ expr e@21:25 name(osFamily) type=kotlin.native.OsFamily ref=__local_2.osFamily[k
 expr e@21:13#1 binary(equal) lhs=e@21:13 rhs=e@21:25 type=Boolean call=kotlin.Enum.equals[kind=fun;recv=kotlin.Enum<T0>;params=Any?;gen=1] targs=[kotlin.native.OsFamily]
 expr e@21:37 name(cpuArchitecture) type=kotlin.native.CpuArchitecture ref=__local_3.cpuArchitecture[kind=local]
 expr e@21:56 name(cpuArchitecture) type=kotlin.native.CpuArchitecture ref=__local_3.cpuArchitecture[kind=local]
-expr e@21:37#1 binary(equal) lhs=e@21:37 rhs=e@21:56 type=Boolean
+expr e@21:37#1 binary(equal) lhs=e@21:37 rhs=e@21:56 type=Boolean call=kotlin.Enum.equals[kind=fun;recv=kotlin.Enum<T0>;params=Any?;gen=1] targs=[kotlin.native.CpuArchitecture]
 expr e@21:13#2 binary(logicalAnd) lhs=e@21:13#1 rhs=e@21:37#1 type=Boolean
 expr e@21:75 name(memoryModel) type=kotlin.native.MemoryModel ref=__local_4.memoryModel[kind=local]
 expr e@21:90 name(memoryModel) type=kotlin.native.MemoryModel ref=__local_4.memoryModel[kind=local]

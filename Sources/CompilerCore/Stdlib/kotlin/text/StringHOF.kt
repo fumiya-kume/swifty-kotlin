@@ -267,6 +267,10 @@ public fun CharSequence.all(predicate: (Char) -> Boolean): Boolean {
     return true
 }
 
+public fun CharSequence.none(): Boolean {
+    return isEmpty()
+}
+
 public fun CharSequence.none(predicate: (Char) -> Boolean): Boolean {
     var i = 0
     val sz = this.length
@@ -275,6 +279,14 @@ public fun CharSequence.none(predicate: (Char) -> Boolean): Boolean {
         i++
     }
     return true
+}
+
+/**
+ * Returns the length of this char sequence.
+ */
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.count(): Int {
+    return length
 }
 
 public fun CharSequence.count(predicate: (Char) -> Boolean): Int {

@@ -1,3 +1,10 @@
+/*
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Licensed under the Apache License, Version 2.0.
+ *
+ * Derived from kotlin-stdlib libraries/stdlib/src/kotlin/collections/Iterables.kt.
+ */
+
 package kotlin.collections
 
 import kotlin.comparisons.compareValues
@@ -19,6 +26,16 @@ private external fun kk_unbox_double(value: Double): Double
 
 // KSP-963: Kotlin's Iterable.asIterable() is an identity conversion.
 public inline fun <T> Iterable<T>.asIterable(): Iterable<T> = this
+
+// KSP-966: Published helpers expose a Collection's known size without
+// traversing a general Iterable.
+@PublishedApi
+internal fun <T> Iterable<T>.collectionSizeOrNull(): Int? =
+    if (this is Collection<*>) (this as Collection<*>).size else null
+
+@PublishedApi
+internal fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int =
+    if (this is Collection<*>) (this as Collection<*>).size else default
 
 public fun <T> Iterable<T>.toList(): List<T> {
     val result = mutableListOf<T>()

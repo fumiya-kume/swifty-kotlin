@@ -95,7 +95,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "KSwiftLSPCLI",
-            dependencies: ["LSPServer"]
+            dependencies: ["LSPServer", "CompilerCore", "CompilerBackend"]
         ),
         .executableTarget(
             name: "GoldenHarnessWorker",
