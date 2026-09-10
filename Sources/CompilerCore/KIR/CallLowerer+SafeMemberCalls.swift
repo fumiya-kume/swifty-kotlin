@@ -842,7 +842,7 @@ extension CallLowerer {
         // Safe-call collection fallback can resolve the source-backed
         // joinToString declaration without retaining its default-value flags.
         // In that case normalizedCallArguments leaves zero sentinels for the
-        // omitted String parameters, which become literal `null` at runtime.
+        // omitted parameters, including the limit and truncation marker.
         // Recover the mask from the source call labels and materialize the
         // Kotlin defaults before emitting the direct source-backed call.
         let sourceBackedJoinToStringMask: Int64 = {
