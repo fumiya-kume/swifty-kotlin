@@ -219,7 +219,7 @@ extension DataFlowSemaPhase {
             guard let fieldSymbol = resolveImportedFieldSymbol(entry.fqName, symbols: symbols) else {
                 diagnostics.warning(
                     "KSWIFTK-LIB-0004",
-                    "Unknown metadata field symbol in \(metadataPath): \(entry.fqName)",
+                    "Unknown metadata field symbol in \(metadataPath): \(renderFQName(entry.fqName, interner: interner))",
                     range: nil
                 )
                 continue
@@ -342,7 +342,9 @@ extension DataFlowSemaPhase {
     ) -> SymbolID? {
         symbols.lookupAll(fqName: fqName)
             .compactMap { symbols.symbol($0) }
-            .first(where: { $0.kind == .field || $0.kind == .property })?
+            .first(where: {
+                $0.kind == .field || $0.kind == .property || $0.kind == .backingField
+            })?
             .id
     }
 

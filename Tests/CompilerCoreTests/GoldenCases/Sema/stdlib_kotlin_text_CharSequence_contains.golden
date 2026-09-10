@@ -22,7 +22,6 @@ symbol fq=golden.sema.containsSequenceOperator.$8.source[kind=vparam] kind=value
 symbol fq=golden.sema.containsSequenceOperator[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=Boolean
 symbol fq=golden.sema.containsSequence[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=Boolean
 symbol fq=golden.sema.containsStringRegex[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_contains package=golden.sema
   decl golden.sema.containsSequence[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] fun containsSequence sym=golden.sema.containsSequence[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence]
   decl golden.sema.containsSequenceNamed[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] fun containsSequenceNamed sym=golden.sema.containsSequenceNamed[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence]

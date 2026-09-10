@@ -1,8 +1,5 @@
 symbol fq=__local_0.walked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<out java.io.File>
 symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<out java.io.File>
-symbol fq=java.io.File.walk[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=kotlin.collections.List<out java.io.File>
-symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=walkTree.$0.dir[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=walkTree[kind=fun;params=java.io.File] kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=Unit
 file ffile_walk package=_

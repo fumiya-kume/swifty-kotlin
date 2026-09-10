@@ -1,7 +1,6 @@
 symbol fq=golden.sema.Marker[kind=anno] kind=annotationClass vis=public flags=_
 symbol fq=golden.sema.identity.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.identity[kind=fun;params=kotlin.Annotation] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Annotation] ret=kotlin.Annotation
-symbol fq=kotlin.Annotation[kind=iface] kind=interface vis=public flags=_
 file fstdlib_kotlin_n_Annotation package=golden.sema
   decl golden.sema.Marker[kind=anno] class Marker sym=golden.sema.Marker[kind=anno]
   decl golden.sema.identity[kind=fun;params=kotlin.Annotation] fun identity sym=golden.sema.identity[kind=fun;params=kotlin.Annotation]

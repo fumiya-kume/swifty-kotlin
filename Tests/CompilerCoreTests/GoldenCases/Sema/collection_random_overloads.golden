@@ -9,7 +9,6 @@ symbol fq=__local_7.checkedOrNullSeeded[kind=local] kind=local vis=private flags
 symbol fq=golden.sema.collectionRandom.$0.seeded[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.collectionRandom.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.collectionRandom[kind=fun;params=kotlin.collections.Collection<Int>,kotlin.random.Random] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>,kotlin.random.Random] ret=Unit
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
 file fcollection_random_overloads package=golden.sema
   decl golden.sema.collectionRandom[kind=fun;params=kotlin.collections.Collection<Int>,kotlin.random.Random] fun collectionRandom sym=golden.sema.collectionRandom[kind=fun;params=kotlin.collections.Collection<Int>,kotlin.random.Random]
 expr e@8:18 name(values) type=kotlin.collections.Collection<Int> ref=golden.sema.collectionRandom.$0.values[kind=vparam]

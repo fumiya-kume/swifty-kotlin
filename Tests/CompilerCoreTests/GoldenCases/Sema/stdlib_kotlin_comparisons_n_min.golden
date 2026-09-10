@@ -89,7 +89,6 @@ symbol fq=golden.sema.minUShortVararg.$19.b[kind=vparam] kind=valueParameter vis
 symbol fq=golden.sema.minUShortVararg.$19.c[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.minUShortVararg.$19.d[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.minUShortVararg[kind=fun;params=UShort,UShort,UShort,UShort] kind=function vis=public flags=_ sig=recv=_ params=[UShort,UShort,UShort,UShort] ret=UShort
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_comparisons_n_min package=golden.sema
   decl golden.sema.minComparable2[kind=fun;params=String,String] fun minComparable2 sym=golden.sema.minComparable2[kind=fun;params=String,String]
   decl golden.sema.minComparableVararg[kind=fun;params=String,String,String,String] fun minComparableVararg sym=golden.sema.minComparableVararg[kind=fun;params=String,String,String,String]

@@ -2,8 +2,6 @@ symbol fq=inspectArrayDeque.$0.deque[kind=vparam] kind=valueParameter vis=privat
 symbol fq=inspectArrayDeque.$0.destination[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=inspectArrayDeque.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=inspectArrayDeque[kind=fun;params=kotlin.collections.ArrayDeque<Int>,kotlin.collections.Collection<Int>,kotlin.Array<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.ArrayDeque<Int>,kotlin.collections.Collection<Int>,kotlin.Array<Int?>] ret=Unit
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_ArrayDeque_ArrayDeque_n package=_
   decl inspectArrayDeque[kind=fun;params=kotlin.collections.ArrayDeque<Int>,kotlin.collections.Collection<Int>,kotlin.Array<Int?>] fun inspectArrayDeque sym=inspectArrayDeque[kind=fun;params=kotlin.collections.ArrayDeque<Int>,kotlin.collections.Collection<Int>,kotlin.Array<Int?>]
 expr e@6:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque[kind=vparam]

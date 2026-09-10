@@ -11,9 +11,6 @@ symbol fq=golden.sema.customCount[kind=fun;params=golden.sema.CountingCharSequen
 symbol fq=golden.sema.emptyCount[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.stringBuilderCount[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.stringCount[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.text.get.index[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.text.get[kind=fun;recv=String;params=Int] kind=function vis=public flags=synthetic|operatorFunction sig=recv=String params=[Int] ret=Char
 file fstdlib_kotlin_text_CharSequence_count package=golden.sema
   decl golden.sema.charSequenceCount[kind=fun;params=kotlin.CharSequence] fun charSequenceCount sym=golden.sema.charSequenceCount[kind=fun;params=kotlin.CharSequence]
   decl golden.sema.stringCount[kind=fun;params=] fun stringCount sym=golden.sema.stringCount[kind=fun;params=]
@@ -34,7 +31,7 @@ expr e@12:28 int(0) type=Int
 expr e@16:24 int(1) type=Int
 expr e@16:13 compoundAssign(plusAssign) name=lengthReads value=e@16:24 type=Unit ref=golden.sema.CountingCharSequence.lengthReads[kind=prop]
 expr e@17:20 name(value) type=String ref=golden.sema.CountingCharSequence.value[kind=prop]
-expr e@17:20#1 memberCall recv=e@17:20 callee=length args=[] type=Int
+expr e@17:20#1 memberCall recv=e@17:20 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@17:13 return value=e@17:20#1 type=Nothing
 expr e@20:51 name(value) type=String ref=golden.sema.CountingCharSequence.value[kind=prop]
 expr e@20:57 name(index) type=Int ref=golden.sema.CountingCharSequence.get.$0.index[kind=vparam]

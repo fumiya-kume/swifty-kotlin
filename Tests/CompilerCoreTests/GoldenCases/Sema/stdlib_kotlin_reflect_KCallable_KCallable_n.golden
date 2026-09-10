@@ -5,13 +5,6 @@ symbol fq=__local_1.type[kind=local] kind=local vis=private flags=_ type=kotlin.
 symbol fq=__local_2.function[kind=local] kind=local vis=private flags=_ type=kotlin.reflect.KFunction<*>
 symbol fq=__local_3.property[kind=local] kind=local vis=private flags=_ type=kotlin.reflect.KProperty<*>
 symbol fq=answer[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.Any.toString[kind=fun;recv=kotlin.Any;params=] kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=String
-symbol fq=kotlin.Any[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.reflect.KCallable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.reflect.KFunction[kind=iface] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.reflect.KProperty.returnType[kind=prop] kind=property vis=public flags=synthetic type=kotlin.reflect.KType
-symbol fq=kotlin.reflect.KProperty[kind=iface] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.reflect.KType[kind=iface] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=read.$0.callable[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=readFunction.$1.function[kind=vparam] kind=valueParameter vis=private flags=_

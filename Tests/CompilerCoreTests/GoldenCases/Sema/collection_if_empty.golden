@@ -1,0 +1,37 @@
+symbol fq=__local_0.result[kind=local] kind=local vis=private flags=_ type=Any?
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=Any?
+symbol fq=__local_2.result[kind=local] kind=local vis=private flags=_ type=Any?
+symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=Any?
+symbol fq=__local_4.result[kind=local] kind=local vis=private flags=_ type=Any?
+symbol fq=__local_5.checked[kind=local] kind=local vis=private flags=_ type=Any?
+symbol fq=arrayIfEmpty.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=arrayIfEmpty[kind=fun;params=kotlin.Array<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<String?>] ret=Unit
+symbol fq=collectionIfEmpty.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=collectionIfEmpty[kind=fun;params=kotlin.collections.Collection<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<String?>] ret=Unit
+symbol fq=mapIfEmpty.$2.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=mapIfEmpty[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Unit
+file fcollection_if_empty package=_
+  decl collectionIfEmpty[kind=fun;params=kotlin.collections.Collection<String?>] fun collectionIfEmpty sym=collectionIfEmpty[kind=fun;params=kotlin.collections.Collection<String?>]
+  decl mapIfEmpty[kind=fun;params=kotlin.collections.Map<String?,Int?>] fun mapIfEmpty sym=mapIfEmpty[kind=fun;params=kotlin.collections.Map<String?,Int?>]
+  decl arrayIfEmpty[kind=fun;params=kotlin.Array<String?>] fun arrayIfEmpty sym=arrayIfEmpty[kind=fun;params=kotlin.Array<String?>]
+expr e@7:24 name(value) type=kotlin.collections.Collection<String?> ref=collectionIfEmpty.$1.value[kind=vparam]
+expr e@7:40 string(fallback) type=String
+expr e@7:38 lambda params=[] body=e@7:40 label=ifEmpty type=() -> Any
+expr e@7:24#1 memberCall recv=e@7:24 callee=ifEmpty args=[_:e@7:38] type=Any call=kotlin.collections.ifEmpty[kind=fun;recv=T0;params=fn{p=;ret=T1};gen=2;scope=up:kotlin.collections[kind=pkg]] targs=[kotlin.collections.Collection<String?>,Any]
+expr e@7:5 localDecl result mutable=0 type=Any? init=e@7:24#1 type=Unit ref=__local_0.result[kind=local]
+expr e@8:25 name(result) type=Any? ref=__local_0.result[kind=local]
+expr e@8:5 localDecl checked mutable=0 type=Any? init=e@8:25 type=Unit ref=__local_1.checked[kind=local]
+expr e@12:24 name(value) type=kotlin.collections.Map<String?, Int?> ref=mapIfEmpty.$2.value[kind=vparam]
+expr e@12:40 string(fallback) type=String
+expr e@12:38 lambda params=[] body=e@12:40 label=ifEmpty type=() -> Any
+expr e@12:24#1 memberCall recv=e@12:24 callee=ifEmpty args=[_:e@12:38] type=Any call=kotlin.collections.ifEmpty[kind=fun;recv=T0;params=fn{p=;ret=T1};gen=2;scope=up:kotlin.collections[kind=pkg]] targs=[kotlin.collections.Map<String?, Int?>,Any]
+expr e@12:5 localDecl result mutable=0 type=Any? init=e@12:24#1 type=Unit ref=__local_2.result[kind=local]
+expr e@13:25 name(result) type=Any? ref=__local_2.result[kind=local]
+expr e@13:5 localDecl checked mutable=0 type=Any? init=e@13:25 type=Unit ref=__local_3.checked[kind=local]
+expr e@17:24 name(value) type=kotlin.Array<String?> ref=arrayIfEmpty.$0.value[kind=vparam]
+expr e@17:40 string(fallback) type=String
+expr e@17:38 lambda params=[] body=e@17:40 label=ifEmpty type=() -> Any
+expr e@17:24#1 memberCall recv=e@17:24 callee=ifEmpty args=[_:e@17:38] type=Any call=kotlin.collections.ifEmpty[kind=fun;recv=T0;params=fn{p=;ret=T1};gen=2;scope=up:kotlin.collections[kind=pkg]] targs=[kotlin.Array<String?>,Any]
+expr e@17:5 localDecl result mutable=0 type=Any? init=e@17:24#1 type=Unit ref=__local_4.result[kind=local]
+expr e@18:25 name(result) type=Any? ref=__local_4.result[kind=local]
+expr e@18:5 localDecl checked mutable=0 type=Any? init=e@18:25 type=Unit ref=__local_5.checked[kind=local]

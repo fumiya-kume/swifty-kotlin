@@ -1,5 +1,4 @@
 symbol fq=golden.sema.nothingClassSimpleName[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String?
-symbol fq=kotlin.reflect.KClass[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_n_Nothing package=golden.sema
   decl golden.sema.nothingClassSimpleName[kind=fun;params=] fun nothingClassSimpleName sym=golden.sema.nothingClassSimpleName[kind=fun;params=]
 expr e@3:41 name(Nothing) type=Any ref=kotlin.Nothing[kind=class]

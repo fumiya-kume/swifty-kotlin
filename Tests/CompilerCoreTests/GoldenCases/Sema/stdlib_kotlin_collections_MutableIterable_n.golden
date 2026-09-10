@@ -6,13 +6,6 @@ symbol fq=ProbeIterator.index[kind=prop] kind=property vis=private flags=mutable
 symbol fq=ProbeIterator.values[kind=prop] kind=property vis=public flags=_ type=kotlin.collections.MutableList<Int>
 symbol fq=ProbeIterator[kind=class] kind=class vis=public flags=_
 symbol fq=__local_0.value[kind=local] kind=local vis=private flags=_ type=Int
-symbol fq=kotlin.collections.List.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.List.get[kind=fun;recv=kotlin.collections.List<out T0>;params=Int;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[Int] ret=kotlin.collections.List.E
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableIterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableList.removeAt[kind=fun;recv=kotlin.collections.MutableList<T0>;params=Int;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[Int] ret=kotlin.collections.MutableList.E
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=probe.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=probe[kind=fun;params=kotlin.collections.MutableIterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableIterable<Int>] ret=Boolean
 file fstdlib_kotlin_collections_MutableIterable_n package=_

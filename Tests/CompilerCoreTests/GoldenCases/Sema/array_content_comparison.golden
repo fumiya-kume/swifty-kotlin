@@ -13,10 +13,6 @@ symbol fq=inspect.$0.nested[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=inspect.$0.uints[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=inspect.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=inspect[kind=fun;params=kotlin.Array<Int?>,kotlin.Array<Any?>,kotlin.IntArray,kotlin.UIntArray,kotlin.FloatArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<Int?>,kotlin.Array<Any?>,kotlin.IntArray,kotlin.UIntArray,kotlin.FloatArray] ret=Unit
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
-symbol fq=kotlin.FloatArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.IntArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.UIntArray[kind=class] kind=class vis=public flags=synthetic
 file farray_content_comparison package=_
   decl inspect[kind=fun;params=kotlin.Array<Int?>,kotlin.Array<Any?>,kotlin.IntArray,kotlin.UIntArray,kotlin.FloatArray] fun inspect sym=inspect[kind=fun;params=kotlin.Array<Int?>,kotlin.Array<Any?>,kotlin.IntArray,kotlin.UIntArray,kotlin.FloatArray]
 expr e@8:24 name(values) type=kotlin.Array<Int?> ref=inspect.$0.values[kind=vparam]

@@ -5,9 +5,6 @@ symbol fq=golden.sema.useIsBlank[kind=fun;params=] kind=function vis=public flag
 symbol fq=golden.sema.useIsEmpty[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 symbol fq=golden.sema.useIsNotBlank[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 symbol fq=golden.sema.useIsNotEmpty[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.text.format.args[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.text.format[kind=fun;recv=String;params=*Any?] kind=function vis=public flags=synthetic sig=recv=String params=[Any?] ret=String vararg=[1]
 file fstring_format_blankness package=golden.sema
   decl golden.sema.useFormat[kind=fun;params=] fun useFormat sym=golden.sema.useFormat[kind=fun;params=]
   decl golden.sema.useIsEmpty[kind=fun;params=] fun useIsEmpty sym=golden.sema.useIsEmpty[kind=fun;params=]

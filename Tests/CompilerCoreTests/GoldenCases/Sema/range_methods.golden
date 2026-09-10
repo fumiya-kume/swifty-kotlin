@@ -1,5 +1,3 @@
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
 symbol fq=rangeContains.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=rangeContains[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean
 symbol fq=rangeCount[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int

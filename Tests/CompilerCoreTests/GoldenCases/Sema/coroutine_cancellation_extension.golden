@@ -1,12 +1,5 @@
 symbol fq=__local_0.job[kind=local] kind=local vis=private flags=_ type=kotlinx.coroutines.Job
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
-symbol fq=kotlinx.coroutines.Job.cancel[kind=fun;recv=kotlinx.coroutines.Job;params=] kind=function vis=public flags=synthetic sig=recv=kotlinx.coroutines.Job params=[] ret=Unit
-symbol fq=kotlinx.coroutines.Job.join[kind=fun;recv=kotlinx.coroutines.Job;params=] kind=function vis=public flags=synthetic sig=recv=kotlinx.coroutines.Job params=[] ret=Unit
-symbol fq=kotlinx.coroutines.Job[kind=class] kind=class vis=public flags=synthetic type=kotlinx.coroutines.Job
-symbol fq=kotlinx.coroutines.launch.block[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlinx.coroutines.launch[kind=fun;params=fn{su;p=;ret=Unit}] kind=function vis=public flags=synthetic sig=recv=_ params=[suspend () -> Unit] ret=kotlinx.coroutines.Job
-symbol fq=kotlinx.coroutines.runBlocking.block[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlinx.coroutines.runBlocking[kind=fun;params=fn{su;p=;ret=Any}] kind=function vis=public flags=synthetic sig=recv=_ params=[suspend () -> Any] ret=Any
 file fcoroutine_cancellation_extension package=golden.sema
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@8:15 int(10) type=Long

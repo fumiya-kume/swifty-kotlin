@@ -7,14 +7,6 @@ symbol fq=golden.sema.Probe.size[kind=prop] kind=property vis=public flags=overr
 symbol fq=golden.sema.Probe[kind=class] kind=class vis=public flags=_
 symbol fq=golden.sema.exercise.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.exercise[kind=fun;params=golden.sema.Probe] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Probe] ret=Unit
-symbol fq=kotlin.collections.AbstractMutableList.E[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.AbstractMutableList[kind=class;gen=1] kind=class vis=public flags=abstractType|openType type=kotlin.collections.AbstractMutableList<kotlin.collections.AbstractMutableList.E>
-symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableIterator[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableListIterator[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_AbstractMutableList_AbstractMutableList_n package=golden.sema
   decl golden.sema.Probe[kind=class] class Probe sym=golden.sema.Probe[kind=class]
   decl golden.sema.exercise[kind=fun;params=golden.sema.Probe] fun exercise sym=golden.sema.exercise[kind=fun;params=golden.sema.Probe]

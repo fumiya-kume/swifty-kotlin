@@ -6,9 +6,6 @@ symbol fq=golden.sema.listAsIterable.$2.values[kind=vparam] kind=valueParameter 
 symbol fq=golden.sema.listAsIterable[kind=fun;params=kotlin.collections.List<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=kotlin.collections.Iterable<Int>
 symbol fq=golden.sema.setAsIterable.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.setAsIterable[kind=fun;params=kotlin.collections.Set<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int?>] ret=kotlin.collections.Iterable<Int?>
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_as package=golden.sema
   decl golden.sema.iterableAsIterable[kind=fun;params=kotlin.collections.Iterable<String?>] fun iterableAsIterable sym=golden.sema.iterableAsIterable[kind=fun;params=kotlin.collections.Iterable<String?>]
   decl golden.sema.listAsIterable[kind=fun;params=kotlin.collections.List<Int>] fun listAsIterable sym=golden.sema.listAsIterable[kind=fun;params=kotlin.collections.List<Int>]

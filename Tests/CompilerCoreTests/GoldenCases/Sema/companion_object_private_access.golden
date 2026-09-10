@@ -112,7 +112,6 @@ symbol fq=golden.sema.defaultTimeout[kind=prop] kind=property vis=public flags=_
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=golden.sema.maxFiles.$get[kind=fun;recv=golden.sema.FileManager.Factory;params=] kind=function vis=public flags=synthetic sig=recv=golden.sema.FileManager.Factory params=[] ret=Int
 symbol fq=golden.sema.maxFiles[kind=prop] kind=property vis=public flags=_ type=Int
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fcompanion_object_private_access package=golden.sema
   decl golden.sema.User[kind=class] class User sym=golden.sema.User[kind=class]
   decl golden.sema.Database[kind=class] class Database sym=golden.sema.Database[kind=class]

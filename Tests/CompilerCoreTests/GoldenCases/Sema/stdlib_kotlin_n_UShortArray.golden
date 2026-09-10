@@ -4,9 +4,6 @@ symbol fq=__local_2.storage[kind=local] kind=local vis=private flags=_ type=kotl
 symbol fq=__local_3.storageView[kind=local] kind=local vis=private flags=_ type=kotlin.UShortArray
 symbol fq=__local_4.values[kind=local] kind=local vis=private flags=_ type=kotlin.UShortArray
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.ShortArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.UShortArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_n_UShortArray package=golden.sema
   decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:29 int(0) type=Int

@@ -1,8 +1,5 @@
 symbol fq=__local_0.pairs[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<kotlin.Pair<String, Int>>
 symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<kotlin.Pair<String, Int>>
-symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=toListOfPairs.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=toListOfPairs[kind=fun;params=kotlin.collections.Map<String,Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>] ret=Unit
 file fmap_to_list package=_

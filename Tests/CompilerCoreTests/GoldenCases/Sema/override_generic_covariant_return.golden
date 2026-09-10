@@ -10,8 +10,6 @@ symbol fq=golden.sema.ListProvider.$class0.T[kind=tparam] kind=typeParameter vis
 symbol fq=golden.sema.ListProvider[kind=class;gen=1] kind=class vis=public flags=openType
 symbol fq=golden.sema.NumberHolder[kind=class;gen=1] kind=class vis=public flags=openType
 symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.RuntimeException[kind=class] kind=class vis=public flags=openType
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file foverride_generic_covariant_return package=golden.sema
   decl golden.sema.ListProvider[kind=class;gen=1] class ListProvider sym=golden.sema.ListProvider[kind=class;gen=1]
   decl golden.sema.IntListProvider[kind=class] class IntListProvider sym=golden.sema.IntListProvider[kind=class]

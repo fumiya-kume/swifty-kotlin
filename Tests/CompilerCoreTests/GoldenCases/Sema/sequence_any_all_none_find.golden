@@ -6,7 +6,6 @@ symbol fq=__local_4.firstEven[kind=local] kind=local vis=private flags=_ type=In
 symbol fq=__local_5.nonEmpty[kind=local] kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_6.emptySeq[kind=local] kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
 symbol fq=__local_7.isEmpty[kind=local] kind=local vis=private flags=_ type=Boolean
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fsequence_any_all_none_find package=_
   decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]

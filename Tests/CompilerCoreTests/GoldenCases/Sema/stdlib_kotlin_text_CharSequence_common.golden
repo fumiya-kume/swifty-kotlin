@@ -20,9 +20,6 @@ symbol fq=charSequenceCommonSuffixIgnoreCase.$6.value[kind=vparam] kind=valuePar
 symbol fq=charSequenceCommonSuffixIgnoreCase[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=String
 symbol fq=charSequenceCommonSuffix[kind=fun;params=kotlin.CharSequence,kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,kotlin.CharSequence] ret=String
 symbol fq=customCharSequenceCommonSuffix[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.text.get.index[kind=vparam] kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.text.get[kind=fun;recv=String;params=Int] kind=function vis=public flags=synthetic|operatorFunction sig=recv=String params=[Int] ret=Char
 symbol fq=stringBuilderCommonPrefix[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstdlib_kotlin_text_CharSequence_common package=_
   decl CustomCharSequence[kind=class] class CustomCharSequence sym=CustomCharSequence[kind=class]
@@ -33,7 +30,7 @@ file fstdlib_kotlin_text_CharSequence_common package=_
   decl stringBuilderCommonPrefix[kind=fun;params=] fun stringBuilderCommonPrefix sym=stringBuilderCommonPrefix[kind=fun;params=]
   decl customCharSequenceCommonSuffix[kind=fun;params=] fun customCharSequenceCommonSuffix sym=customCharSequenceCommonSuffix[kind=fun;params=]
 expr e@3:17 name(value) type=String ref=CustomCharSequence.value[kind=prop]
-expr e@3:17#1 memberCall recv=e@3:17 callee=length args=[] type=Int
+expr e@3:17#1 memberCall recv=e@3:17 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@5:42 name(value) type=String ref=CustomCharSequence.value[kind=prop]
 expr e@5:48 name(index) type=Int ref=CustomCharSequence.get.$1.index[kind=vparam]
 expr e@5:42#1 indexedAccess receiver=e@5:42 indices=[e@5:48] type=Char call=kotlin.text.get[kind=fun;recv=String;params=Int]

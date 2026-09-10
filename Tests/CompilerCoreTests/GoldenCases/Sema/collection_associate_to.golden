@@ -6,10 +6,6 @@ symbol fq=__local_4.dest3[kind=local] kind=local vis=private flags=_ type=kotlin
 symbol fq=__local_5.result3[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
 symbol fq=__local_6.dest4[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>>
 symbol fq=__local_7.result4[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>>
-symbol fq=kotlin.Pair[kind=class;gen=2] kind=class vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 symbol fq=testAssociateByTo.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=testAssociateByTo[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
 symbol fq=testAssociateTo.$1.values[kind=vparam] kind=valueParameter vis=private flags=_

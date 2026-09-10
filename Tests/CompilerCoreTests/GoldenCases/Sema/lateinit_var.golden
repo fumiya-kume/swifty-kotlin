@@ -5,7 +5,6 @@ symbol fq=Config.setup[kind=fun;recv=Config;params=] kind=function vis=public fl
 symbol fq=Config[kind=class] kind=class vis=public flags=_
 symbol fq=__local_0.c[kind=local] kind=local vis=private flags=_ type=Config
 symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.Exception
-symbol fq=kotlin.Exception[kind=class] kind=class vis=public flags=openType type=kotlin.Exception
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file flateinit_var package=_
   decl Config[kind=class] class Config sym=Config[kind=class]

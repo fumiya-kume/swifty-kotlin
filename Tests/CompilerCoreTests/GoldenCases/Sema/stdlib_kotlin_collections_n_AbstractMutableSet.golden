@@ -3,8 +3,6 @@ symbol fq=acceptMutableSet.$0.values[kind=vparam] kind=valueParameter vis=privat
 symbol fq=acceptMutableSet[kind=fun;params=kotlin.collections.MutableSet<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableSet<Int>] ret=Unit
 symbol fq=acceptSet.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=acceptSet[kind=fun;params=kotlin.collections.Set<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int>] ret=Unit
-symbol fq=kotlin.collections.MutableSet[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=probe.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=probe[kind=fun;params=ProbeMutableSet] kind=function vis=public flags=_ sig=recv=_ params=[ProbeMutableSet] ret=Unit
 file fstdlib_kotlin_collections_n_AbstractMutableSet package=_

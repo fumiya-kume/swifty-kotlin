@@ -38,8 +38,6 @@ symbol fq=golden.sema.iterableMaxWithOrNull.$17.comparator[kind=vparam] kind=val
 symbol fq=golden.sema.iterableMaxWithOrNull.$17.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.iterableMaxWithOrNull[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] ret=Int?
 symbol fq=golden.sema.iterableMaxWith[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Comparator<Any>] ret=Int
-symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_max package=golden.sema
   decl golden.sema.iterableMaxComparable[kind=fun;params=kotlin.collections.Iterable<Int>] fun iterableMaxComparable sym=golden.sema.iterableMaxComparable[kind=fun;params=kotlin.collections.Iterable<Int>]
   decl golden.sema.iterableMaxDouble[kind=fun;params=kotlin.collections.Iterable<Double>] fun iterableMaxDouble sym=golden.sema.iterableMaxDouble[kind=fun;params=kotlin.collections.Iterable<Double>]

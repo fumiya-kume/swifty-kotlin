@@ -19,9 +19,6 @@ symbol fq=compoundSub.$4.x[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=compoundSub[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
 symbol fq=elvisOp.$5.v[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=elvisOp[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=String
-symbol fq=kotlin.Any.hashCode[kind=fun;recv=kotlin.Any;params=] kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=Int
-symbol fq=kotlin.Any[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.IntArray[kind=class] kind=class vis=public flags=synthetic
 symbol fq=memberCompoundAdd.$6.c[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=memberCompoundAdd[kind=fun;params=Counter] kind=function vis=public flags=_ sig=recv=_ params=[Counter] ret=Int
 symbol fq=memberCompoundDec.$7.c[kind=vparam] kind=valueParameter vis=private flags=_

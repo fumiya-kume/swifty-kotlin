@@ -1,0 +1,65 @@
+symbol fq=__local_0.baseDir kind=local vis=private flags=_ type=java.io.File
+symbol fq=__local_1.subDir kind=local vis=private flags=_ type=java.io.File
+symbol fq=__local_2.nestedDir kind=local vis=private flags=_ type=java.io.File
+symbol fq=__local_3.mkdirsResult kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_4.walkedFiles kind=local vis=private flags=_ type=kotlin.collections.List<out java.io.File>
+symbol fq=__local_5.baseFiles kind=local vis=private flags=_ type=kotlin.collections.List<out java.io.File>?
+symbol fq=__local_6.subFiles kind=local vis=private flags=_ type=kotlin.collections.List<out java.io.File>?
+symbol fq=__local_7.deleteBaseResult kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_8.finalDeleteResult kind=local vis=private flags=_ type=Boolean
+symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+file ffile_operations_advanced package=_
+  decl main fun main sym=main
+expr e@4:24 string(/tmp/advanced_test) type=String
+expr e@4:19 call callee=e@4:19#1 args=[_:e@4:24] type=java.io.File call=java.io.File.<init>#0
+expr e@4:5 localDecl baseDir mutable=0 type=_ init=e@4:19 type=Unit ref=__local_0.baseDir
+expr e@5:23 string(/tmp/advanced_test/subdir) type=String
+expr e@5:18 call callee=e@5:18#1 args=[_:e@5:23] type=java.io.File call=java.io.File.<init>#0
+expr e@5:5 localDecl subDir mutable=0 type=_ init=e@5:18 type=Unit ref=__local_1.subDir
+expr e@6:26 string(/tmp/advanced_test/subdir/nested) type=String
+expr e@6:21 call callee=e@6:21#1 args=[_:e@6:26] type=java.io.File call=java.io.File.<init>#0
+expr e@6:5 localDecl nestedDir mutable=0 type=_ init=e@6:21 type=Unit ref=__local_2.nestedDir
+expr e@8:24 name(nestedDir) type=java.io.File ref=__local_2.nestedDir
+expr e@8:24#1 memberCall recv=e@8:24 callee=mkdirs args=[] type=Boolean call=java.io.File.mkdirs
+expr e@8:5 localDecl mkdirsResult mutable=0 type=_ init=e@8:24#1 type=Unit ref=__local_3.mkdirsResult
+expr e@9:13 name(mkdirsResult) type=Boolean ref=__local_3.mkdirsResult
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println#1
+expr e@11:23 name(baseDir) type=java.io.File ref=__local_0.baseDir
+expr e@11:23#1 memberCall recv=e@11:23 callee=walk args=[] type=kotlin.collections.List<out java.io.File> call=java.io.File.walk
+expr e@11:5 localDecl walkedFiles mutable=0 type=_ init=e@11:23#1 type=Unit ref=__local_4.walkedFiles
+expr e@12:13 name(walkedFiles) type=kotlin.collections.List<out java.io.File> ref=__local_4.walkedFiles
+expr e@12:13#1 memberCall recv=e@12:13 callee=toList args=[] type=kotlin.collections.List<java.io.File> call=kotlin.collections.toList#13 targs=[java.io.File]
+expr e@12:13#2 memberCall recv=e@12:13#1 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#2] type=Unit call=kotlin.io.println#1
+expr e@14:21 name(baseDir) type=java.io.File ref=__local_0.baseDir
+expr e@14:21#1 memberCall recv=e@14:21 callee=listFiles args=[] type=kotlin.collections.List<out java.io.File>? call=java.io.File.listFiles
+expr e@14:5 localDecl baseFiles mutable=0 type=_ init=e@14:21#1 type=Unit ref=__local_5.baseFiles
+expr e@15:13 name(baseFiles) type=kotlin.collections.List<out java.io.File>? ref=__local_5.baseFiles
+expr e@15:13#1 safeMemberCall recv=e@15:13 callee=toList args=[] type=kotlin.collections.List<java.io.File>? call=kotlin.collections.toList#13 targs=[java.io.File]
+expr e@15:13#2 safeMemberCall recv=e@15:13#1 callee=size args=[] type=Int? ref=kotlin.collections.Collection.size
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#2] type=Unit call=kotlin.io.println#1
+expr e@17:20 name(subDir) type=java.io.File ref=__local_1.subDir
+expr e@17:20#1 memberCall recv=e@17:20 callee=listFiles args=[] type=kotlin.collections.List<out java.io.File>? call=java.io.File.listFiles
+expr e@17:5 localDecl subFiles mutable=0 type=_ init=e@17:20#1 type=Unit ref=__local_6.subFiles
+expr e@18:13 name(subFiles) type=kotlin.collections.List<out java.io.File>? ref=__local_6.subFiles
+expr e@18:13#1 safeMemberCall recv=e@18:13 callee=toList args=[] type=kotlin.collections.List<java.io.File>? call=kotlin.collections.toList#13 targs=[java.io.File]
+expr e@18:13#2 safeMemberCall recv=e@18:13#1 callee=size args=[] type=Int? ref=kotlin.collections.Collection.size
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13#2] type=Unit call=kotlin.io.println#1
+expr e@20:28 name(baseDir) type=java.io.File ref=__local_0.baseDir
+expr e@20:28#1 memberCall recv=e@20:28 callee=delete args=[] type=Boolean call=java.io.File.delete
+expr e@20:5 localDecl deleteBaseResult mutable=0 type=_ init=e@20:28#1 type=Unit ref=__local_7.deleteBaseResult
+expr e@21:13 name(deleteBaseResult) type=Boolean ref=__local_7.deleteBaseResult
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13] type=Unit call=kotlin.io.println#1
+expr e@23:10 string(/tmp/advanced_test/file1.txt) type=String
+expr e@23:5 call callee=e@23:5#1 args=[_:e@23:10] type=java.io.File call=java.io.File.<init>#0
+expr e@23:5#2 memberCall recv=e@23:5 callee=delete args=[] type=Boolean call=java.io.File.delete
+expr e@24:10 string(/tmp/advanced_test/subdir/file2.txt) type=String
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:10] type=java.io.File call=java.io.File.<init>#0
+expr e@24:5#2 memberCall recv=e@24:5 callee=delete args=[] type=Boolean call=java.io.File.delete
+expr e@25:5 name(subDir) type=java.io.File ref=__local_1.subDir
+expr e@25:5#1 memberCall recv=e@25:5 callee=delete args=[] type=Boolean call=java.io.File.delete
+expr e@26:29 name(baseDir) type=java.io.File ref=__local_0.baseDir
+expr e@26:29#1 memberCall recv=e@26:29 callee=delete args=[] type=Boolean call=java.io.File.delete
+expr e@26:5 localDecl finalDeleteResult mutable=0 type=_ init=e@26:29#1 type=Unit ref=__local_8.finalDeleteResult
+expr e@27:13 name(finalDeleteResult) type=Boolean ref=__local_8.finalDeleteResult
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println#1

@@ -10,11 +10,6 @@ symbol fq=__local_8.nullableResult[kind=local] kind=local vis=private flags=_ ty
 symbol fq=iterableFlatFamily.$0.nullableValues[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=iterableFlatFamily.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=iterableFlatFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<Int?>] ret=Unit
-symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_flat package=_
   decl iterableFlatFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<Int?>] fun iterableFlatFamily sym=iterableFlatFamily[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<Int?>]
 expr e@2:38 name(values) type=kotlin.collections.Iterable<Int> ref=iterableFlatFamily.$0.values[kind=vparam]

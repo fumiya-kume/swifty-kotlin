@@ -1,7 +1,6 @@
 symbol fq=identity.$0.T[kind=tparam] kind=typeParameter vis=private flags=_
 symbol fq=identity.$0.iterator[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=identity[kind=fun;params=kotlin.collections.Iterator<T0>;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterator<identity.$0.T>] ret=kotlin.collections.Iterator<identity.$0.T>
-symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_collections_Iterator_n package=_
   decl identity[kind=fun;params=kotlin.collections.Iterator<T0>;gen=1] fun identity sym=identity[kind=fun;params=kotlin.collections.Iterator<T0>;gen=1]
 expr e@2:5 name(iterator) type=kotlin.collections.Iterator<identity.$0.T> ref=identity.$0.iterator[kind=vparam]

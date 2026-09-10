@@ -4,7 +4,6 @@ symbol fq=golden.sema.isRawList.$1.v[kind=vparam] kind=valueParameter vis=privat
 symbol fq=golden.sema.isRawList[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
 symbol fq=golden.sema.printSizeIfList.$2.v[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.printSizeIfList[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Unit
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file ftype_erasure package=golden.sema
   decl golden.sema.isRawList[kind=fun;params=Any] fun isRawList sym=golden.sema.isRawList[kind=fun;params=Any]
   decl golden.sema.asRawList[kind=fun;params=Any] fun asRawList sym=golden.sema.asRawList[kind=fun;params=Any]

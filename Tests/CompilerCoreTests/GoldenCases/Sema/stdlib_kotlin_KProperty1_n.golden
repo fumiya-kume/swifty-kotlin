@@ -10,7 +10,6 @@ symbol fq=golden.sema.read.$1.metadata[kind=vparam] kind=valueParameter vis=priv
 symbol fq=golden.sema.read.$1.property[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.read.$1.receiver[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.read[kind=fun;params=kotlin.reflect.KProperty1<T0,T1>,T0,kotlin.reflect.KProperty<*>;gen=2] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KProperty1<golden.sema.read.$1.T, golden.sema.read.$1.V>,golden.sema.read.$1.T,kotlin.reflect.KProperty<*>] ret=golden.sema.read.$1.V
-symbol fq=kotlin.reflect.KProperty[kind=iface] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_KProperty1_n package=golden.sema
   decl golden.sema.Person[kind=class] class Person sym=golden.sema.Person[kind=class]
   decl golden.sema.read[kind=fun;params=kotlin.reflect.KProperty1<T0,T1>,T0,kotlin.reflect.KProperty<*>;gen=2] fun read sym=golden.sema.read[kind=fun;params=kotlin.reflect.KProperty1<T0,T1>,T0,kotlin.reflect.KProperty<*>;gen=2]

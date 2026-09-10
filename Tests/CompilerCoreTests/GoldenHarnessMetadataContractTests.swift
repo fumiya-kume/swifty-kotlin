@@ -60,7 +60,12 @@ struct GoldenHarnessMetadataContractTests {
         let expectations: [String: [String]] = [
             "linkedhashmap_alias.kt": ["symbol fq=", "kind=", "vis=", "flags=", "type=", "ref=", "call="],
             "stdlib_kotlin_collections_Map_map.kt": ["call=", "targs=[", "fn{p="],
-            "stdlib_kotlin_Pair_n_n.kt": ["fq=kotlin.Pair[kind=class;gen=2]", "call=kotlin.Pair.<init>"],
+            // `kotlin.Pair` is library-owned (no case-file `declSite`), so RF-GOLDEN-001's
+            // original "fq=kotlin.Pair[kind=class;gen=2]" standalone symbol line no longer
+            // prints — `isExcludedLibrarySymbol` (PR: golden-stdlib-artifact) omits every
+            // symbol without a case-file declSite from `symbol` lines. The generic-arity
+            // metadata (`gen=2`) is still observable through the constructor call site.
+            "stdlib_kotlin_Pair_n_n.kt": ["call=kotlin.Pair.<init>[kind=ctor;recv=kotlin.Pair<T0,T1>;params=T0,T1;gen=2]", "call=kotlin.Pair.<init>"],
             "data_class_copy_edge.kt": ["flags=dataType", ".copy[kind=fun", "defaults=["],
             "enum_class.kt": ["kind=enum"],
             "object_literal_property_no_init.kt": ["__ObjectLiteral_", "flags=synthetic"],
@@ -91,6 +96,10 @@ struct GoldenHarnessMetadataContractTests {
         "sealed_when_missing_branch.kt",
         // stdlib surface cases carrying errors — flagged for individual
         // investigation; they must not silently grow either.
+        // AtomicIntArray's internal constructor becomes correctly invisible
+        // cross-module under `.kklib` artifact loading (PR: golden-stdlib-artifact) —
+        // an intentional parity fix versus bundled-source injection, not a regression.
+        "stdlib_kotlin_concurrent_AtomicIntArray_n_n.kt",
         "stdlib_kotlin_collections_Map_iterator.kt",
         "stdlib_kotlin_collections_Map_min.kt",
         "stdlib_kotlin_collections_n_build.kt",
@@ -133,6 +142,10 @@ struct GoldenHarnessMetadataContractTests {
     /// Every flag name the ordinary renderer can emit. The set is closed so a
     /// formatter change adding a flag (e.g. `throwingFunction`) or dropping one
     /// is a deliberate contract change, not an accident of an update pass.
+    // `static` dropped out of the emitted vocabulary under `isExcludedLibrarySymbol`
+    // (PR: golden-stdlib-artifact): it was only ever observed on library-owned
+    // companion-object symbol lines (e.g. `kotlin.UByte.Companion`), which no
+    // longer print — no case-file-local declaration in the corpus carries it.
     private static let ordinaryFlagVocabulary: Set<String> = [
         "_",
         "abstractType",
@@ -149,7 +162,6 @@ struct GoldenHarnessMetadataContractTests {
         "overrideMember",
         "reifiedTypeParameter",
         "sealedType",
-        "static",
         "suspendFunction",
         "synthetic",
         "valueType",

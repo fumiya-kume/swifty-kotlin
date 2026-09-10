@@ -12,12 +12,6 @@ symbol fq=golden.sema.takesPointer.$2.ints[kind=vparam] kind=valueParameter vis=
 symbol fq=golden.sema.takesPointer.$2.opaque[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.takesPointer.$2.ptr[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.takesPointer[kind=fun;params=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>?,kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>?,kotlinx.cinterop.CValuesRef<kotlinx.cinterop.IntVar>?] kind=function vis=public flags=_ sig=recv=_ params=[kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>?,kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>?,kotlinx.cinterop.CValuesRef<kotlinx.cinterop.IntVar>?] ret=kotlinx.cinterop.CPointer<kotlinx.cinterop.IntVar>?
-symbol fq=kotlinx.cinterop.CPointed[kind=class] kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CPointed
-symbol fq=kotlinx.cinterop.CPointer.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.CPointer[kind=class;gen=1] kind=class vis=public flags=synthetic type=kotlinx.cinterop.CPointer<kotlinx.cinterop.CPointer.T>
-symbol fq=kotlinx.cinterop.CValuesRef.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.CValuesRef[kind=class;gen=1] kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CValuesRef<kotlinx.cinterop.CValuesRef.T>
-symbol fq=kotlinx.cinterop.IntVar[kind=class] kind=class vis=public flags=synthetic type=kotlinx.cinterop.IntVar
 file fnative_annotations package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class,kotlin.experimental.ExperimentalObjCEnum::class,kotlin.experimental.ExperimentalObjCName::class,kotlin.experimental.ExperimentalObjCRefinement::class)]
   decl golden.sema.SwiftRefined[kind=anno] class SwiftRefined sym=golden.sema.SwiftRefined[kind=anno]
   decl golden.sema.NativeEnumBridge[kind=anno] class NativeEnumBridge sym=golden.sema.NativeEnumBridge[kind=anno]

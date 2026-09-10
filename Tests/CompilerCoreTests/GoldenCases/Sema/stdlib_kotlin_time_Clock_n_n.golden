@@ -4,11 +4,6 @@ symbol fq=__local_0.companion[kind=local] kind=local vis=private flags=_ type=ko
 symbol fq=__local_1.system[kind=local] kind=local vis=private flags=_ type=kotlin.time.Clock.System
 symbol fq=__local_2.asClock[kind=local] kind=local vis=private flags=_ type=kotlin.time.Clock
 symbol fq=__local_3.custom[kind=local] kind=local vis=private flags=_ type=kotlin.time.Clock
-symbol fq=kotlin.time.Clock.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.time.Clock.System[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.time.Clock[kind=iface] kind=interface vis=public flags=_
-symbol fq=kotlin.time.Instant.Companion[kind=obj] kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.time.Instant[kind=class] kind=class vis=public flags=synthetic
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_time_Clock_n_n package=_
   decl FixedClock[kind=class] class FixedClock sym=FixedClock[kind=class]

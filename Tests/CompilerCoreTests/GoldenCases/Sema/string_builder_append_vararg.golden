@@ -5,7 +5,6 @@ symbol fq=__local_3.parts[kind=local] kind=local vis=private flags=_ type=kotlin
 symbol fq=golden.sema.useAppendVarargAny[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.useAppendVarargSpread[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.useAppendVarargStrings[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
 file fstring_builder_append_vararg package=golden.sema
   decl golden.sema.useAppendVarargStrings[kind=fun;params=] fun useAppendVarargStrings sym=golden.sema.useAppendVarargStrings[kind=fun;params=]
   decl golden.sema.useAppendVarargAny[kind=fun;params=] fun useAppendVarargAny sym=golden.sema.useAppendVarargAny[kind=fun;params=]

@@ -42,6 +42,19 @@ extension CallTypeChecker {
             }
             return receiverKind == .uintRange || receiverKind == .uintProgression
         }()
+        let isTypedULongProgressionReceiver: Bool = {
+            guard let receiverType,
+                  let receiverKind = MemberRuntimeDispatch.rangeReceiverKind(
+                      receiverExpr: receiverID,
+                      receiverType: receiverType,
+                      sema: sema,
+                      interner: interner
+                  )
+            else {
+                return false
+            }
+            return receiverKind == .ulongProgression
+        }()
         let isTypedIntRangeReceiver: Bool = {
             guard let receiverType,
                   let receiverKind = MemberRuntimeDispatch.rangeReceiverKind(
@@ -86,13 +99,15 @@ extension CallTypeChecker {
               (sema.bindings.isRangeExpr(receiverID)
                   || isOpenEndRangeReceiver
                   || isSyntacticRangeExpression
+                  || (isTypedUIntRangeReceiver && isUIntRangeSourceMigrationMember)
+                  || (isTypedULongProgressionReceiver
+                      && isULongProgressionSourceBackedHOF(memberName, argCount: args.count))
                   || (isTypedIntRangeReceiver
                       && isIntRangeSourceBackedHOF(memberName, argCount: args.count))
                   || (isTypedLongRangeReceiver
                       && isLongRangeSourceBackedHOF(memberName, argCount: args.count))
                   || (isTypedULongRangeReceiver
-                      && isULongRangeSourceBackedHOF(memberName, argCount: args.count))
-                  || (isTypedUIntRangeReceiver && isUIntRangeSourceMigrationMember))
+                      && isULongRangeSourceBackedHOF(memberName, argCount: args.count)))
         else {
             return nil
         }
@@ -392,7 +407,7 @@ extension CallTypeChecker {
             return argCount == 1
         }
         if memberName == "first" || memberName == "last" {
-            return argCount > 0
+            return argCount == 0 || argCount == 1
         }
         let sourceBacked: Set<String> = [
             "toList", "toIntArray", "average", "sorted",
@@ -410,6 +425,22 @@ extension CallTypeChecker {
     }
 
     private func isCharProgressionSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
+        guard argCount == 0 else { return false }
+        return memberName == "first"
+            || memberName == "firstOrNull"
+            || memberName == "last"
+            || memberName == "lastOrNull"
+    }
+
+    private func isLongProgressionSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
+        guard argCount == 0 else { return false }
+        return memberName == "first"
+            || memberName == "firstOrNull"
+            || memberName == "last"
+            || memberName == "lastOrNull"
+    }
+
+    private func isULongProgressionSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
         guard argCount == 0 else { return false }
         return memberName == "first"
             || memberName == "firstOrNull"
@@ -454,6 +485,11 @@ extension CallTypeChecker {
         }
         if memberName == "step" {
             return argCount == 1
+        }
+        if memberName == "first" || memberName == "firstOrNull"
+            || memberName == "last" || memberName == "lastOrNull"
+        {
+            return argCount == 0
         }
         if memberName == "windowed" {
             return (1...3).contains(argCount)
@@ -677,6 +713,10 @@ extension CallTypeChecker {
                 && isUIntProgressionSourceBackedHOF(memberName, argCount: args.count))
             || (rangeKind == .charProgression
                 && isCharProgressionSourceBackedHOF(memberName, argCount: args.count))
+            || (rangeKind == .longProgression
+                && isLongProgressionSourceBackedHOF(memberName, argCount: args.count))
+            || (rangeKind == .ulongProgression
+                && isULongProgressionSourceBackedHOF(memberName, argCount: args.count))
             || (rangeKind == .longRange
                 && isLongRangeSourceBackedHOF(memberName, argCount: args.count)
                 && isLongRangeCrossTypeContains(argumentTypesForSourceLookup, sema: sema))
@@ -1111,6 +1151,10 @@ extension CallTypeChecker {
             return [kotlin, ranges, interner.intern("IntRange")]
         case .intProgression:
             return [kotlin, ranges, interner.intern("IntProgression")]
+        case .longProgression:
+            return [kotlin, ranges, interner.intern("LongProgression")]
+        case .ulongProgression:
+            return [kotlin, ranges, interner.intern("ULongProgression")]
         case .charProgression:
             return [kotlin, ranges, interner.intern("CharProgression")]
         case .longRange:

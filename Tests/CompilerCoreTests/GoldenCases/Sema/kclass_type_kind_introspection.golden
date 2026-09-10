@@ -16,7 +16,6 @@ symbol fq=golden.sema.Transformer[kind=iface] kind=interface vis=public flags=fu
 symbol fq=golden.sema.checkTypeKinds[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 symbol fq=golden.sema.checkViaVariable.$0.klass[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.checkViaVariable[kind=fun;params=kotlin.reflect.KClass<*>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KClass<*>] ret=String
-symbol fq=kotlin.reflect.KClass[kind=iface;gen=1] kind=interface vis=public flags=_
 file fkclass_type_kind_introspection package=golden.sema
   decl golden.sema.Point[kind=class] class Point sym=golden.sema.Point[kind=class]
   decl golden.sema.Shape[kind=class] class Shape sym=golden.sema.Shape[kind=class]

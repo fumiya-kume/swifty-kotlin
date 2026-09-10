@@ -1,8 +1,6 @@
 symbol fq=golden.sema.makeULongArrayFromLongView.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.makeULongArrayFromLongView[kind=fun;params=kotlin.LongArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.LongArray] ret=kotlin.ULongArray
 symbol fq=golden.sema.makeULongArraySizeOnly[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.ULongArray
-symbol fq=kotlin.LongArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ULongArray[kind=class] kind=class vis=public flags=synthetic
 file fstdlib_kotlin_ULongArray_n_n package=golden.sema
   decl golden.sema.makeULongArraySizeOnly[kind=fun;params=] fun makeULongArraySizeOnly sym=golden.sema.makeULongArraySizeOnly[kind=fun;params=]
   decl golden.sema.makeULongArrayFromLongView[kind=fun;params=kotlin.LongArray] fun makeULongArrayFromLongView sym=golden.sema.makeULongArrayFromLongView[kind=fun;params=kotlin.LongArray]

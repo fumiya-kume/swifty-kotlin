@@ -22,8 +22,6 @@ symbol fq=constrain.$0.set[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=constrain[kind=fun;params=T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[constrain.$0.T] ret=constrain.$0.T bounds=[kotlin.collections.HashSet<String>]
 symbol fq=createSet[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.HashSet<Int>
 symbol fq=customExtension[kind=fun;recv=kotlin.collections.HashSet<String>;params=] kind=function vis=public flags=_ sig=recv=kotlin.collections.HashSet<String> params=[] ret=String
-symbol fq=kotlin.collections.MutableSet[kind=iface;gen=1] kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set[kind=iface;gen=1] kind=interface vis=public flags=_
 symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=processSet.$1.set[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=processSet[kind=fun;params=kotlin.collections.HashSet<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.HashSet<String>] ret=Unit

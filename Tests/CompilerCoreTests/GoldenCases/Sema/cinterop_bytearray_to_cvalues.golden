@@ -1,11 +1,5 @@
 symbol fq=golden.sema.convertToNative.$0.bytes[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.convertToNative[kind=fun;params=kotlin.ByteArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray] ret=kotlinx.cinterop.CValues<kotlinx.cinterop.ByteVarOf<Int>>
-symbol fq=kotlin.ByteArray[kind=class] kind=class vis=public flags=synthetic type=kotlin.ByteArray
-symbol fq=kotlinx.cinterop.ByteVarOf.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.ByteVarOf[kind=class;gen=1] kind=class vis=public flags=synthetic type=kotlinx.cinterop.ByteVarOf<kotlinx.cinterop.ByteVarOf.T>
-symbol fq=kotlinx.cinterop.CValues.T[kind=tparam] kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.CValues[kind=class;gen=1] kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CValues<kotlinx.cinterop.CValues.T>
-symbol fq=kotlinx.cinterop.toCValues[kind=fun;recv=kotlin.ByteArray;params=] kind=function vis=public flags=synthetic sig=recv=kotlin.ByteArray params=[] ret=kotlinx.cinterop.CValues<kotlinx.cinterop.ByteVarOf<Int>>
 file fcinterop_bytearray_to_cvalues package=golden.sema
   decl golden.sema.convertToNative[kind=fun;params=kotlin.ByteArray] fun convertToNative sym=golden.sema.convertToNative[kind=fun;params=kotlin.ByteArray]
 expr e@9:59 name(bytes) type=kotlin.ByteArray ref=golden.sema.convertToNative.$0.bytes[kind=vparam]

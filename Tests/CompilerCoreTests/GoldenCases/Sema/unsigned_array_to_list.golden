@@ -19,11 +19,6 @@ symbol fq=golden.sema.unsignedArrayCopies.$0.uints[kind=vparam] kind=valueParame
 symbol fq=golden.sema.unsignedArrayCopies.$0.ulongs[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.unsignedArrayCopies.$0.ushorts[kind=vparam] kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.unsignedArrayCopies[kind=fun;params=kotlin.UByteArray,kotlin.UShortArray,kotlin.UIntArray,kotlin.ULongArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.UByteArray,kotlin.UShortArray,kotlin.UIntArray,kotlin.ULongArray] ret=Unit
-symbol fq=kotlin.UByteArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.UIntArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.ULongArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.UShortArray[kind=class] kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file funsigned_array_to_list package=golden.sema
   decl golden.sema.unsignedArrayCopies[kind=fun;params=kotlin.UByteArray,kotlin.UShortArray,kotlin.UIntArray,kotlin.ULongArray] fun unsignedArrayCopies sym=golden.sema.unsignedArrayCopies[kind=fun;params=kotlin.UByteArray,kotlin.UShortArray,kotlin.UIntArray,kotlin.ULongArray]
 expr e@10:21 name(ubytes) type=kotlin.UByteArray ref=golden.sema.unsignedArrayCopies.$0.ubytes[kind=vparam]
