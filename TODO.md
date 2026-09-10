@@ -3447,16 +3447,19 @@
     - `kotlin.ranges.contains` — fun ClosedRange.contains(Int): Boolean  -- `final fun (kotlin.ranges/ClosedRange<kotlin/Short>).kotlin.ranges/contains(kotlin/Int): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun ClosedRange.contains(Long): Boolean  -- `final fun (kotlin.ranges/ClosedRange<kotlin/Short>).kotlin.ranges/contains(kotlin/Long): kotlin/Boolean`
 
-- [ ] KSP-1284: kotlin.ranges.IntProgression の未実装 stdlib API を実装する（2 件）
+- [~] KSP-1284: kotlin.ranges.IntProgression の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.ranges` / receiver `IntProgression`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
-  - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_ranges_IntProgression_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
-  - diff ケース: `Scripts/diff_cases/stdlib_kotlin_ranges_IntProgression_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_ranges_IntProgression_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
+  - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_ranges_IntProgression_first_last_n.kt` を追加し、専用 worker で生成。共有 `IntProgression_n_n` golden は別 PR の所有範囲のため書き換えない。
+  - diff ケース: `Scripts/diff_cases/stdlib_kotlin_ranges_IntProgression_first_last_n.kt` を追加し、Kotlin 2.3.10 reference output を保存して比較する。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.ranges.first` — fun IntProgression.first(): Int  -- `final fun (kotlin.ranges/IntProgression).kotlin.ranges/first(): kotlin/Int`
     - `kotlin.ranges.last` — fun IntProgression.last(): Int  -- `final fun (kotlin.ranges/IntProgression).kotlin.ranges/last(): kotlin/Int`
+  - 実装（focused）: Kotlin 2.3.10 contract の no-argument `first()`/`last()` と空 progression の exact exception message を `RangeHOF.kt` に追加。`CallTypeChecker` の arity 0 source routing と progression property/function overlap guard を更新し、既存 synthetic property/bridge は保持。
+  - 回帰（focused）: 専用 Sema test/Golden/diff fixture で source-backed binding、property/function distinction、正向き・負向き・empty・Int の min/max を固定。既存 CharProgression と IntProgression golden worker は無差分。
+  - 保留: 共通 G（全 Swift/全 Golden/全 diff）は未実行/pending のため Draft PR。親の head G も未実行。
 
 - [ ] KSP-1285: kotlin.ranges.IntRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `IntRange`
@@ -3470,7 +3473,7 @@
     - `kotlin.ranges.contains` — fun IntRange.contains(Long): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Long): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun IntRange.contains(Short): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Short): kotlin/Boolean`
 
-- [ ] KSP-1286: kotlin.ranges.LongProgression の未実装 stdlib API を実装する（4 件）
+- [~] KSP-1286: kotlin.ranges.LongProgression の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.ranges` / receiver `LongProgression`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3482,6 +3485,9 @@
     - `kotlin.ranges.firstOrNull` — fun LongProgression.firstOrNull(): Long  -- `final fun (kotlin.ranges/LongProgression).kotlin.ranges/firstOrNull(): kotlin/Long?`
     - `kotlin.ranges.last` — fun LongProgression.last(): Long  -- `final fun (kotlin.ranges/LongProgression).kotlin.ranges/last(): kotlin/Long`
     - `kotlin.ranges.lastOrNull` — fun LongProgression.lastOrNull(): Long  -- `final fun (kotlin.ranges/LongProgression).kotlin.ranges/lastOrNull(): kotlin/Long?`
+  - 実装（focused）: Kotlin 2.3.10 contract の no-argument first/firstOrNull/last/lastOrNull と空 progression の exact exception message を `RangeHOF.kt` に追加。LongProgression receiver の source routing、legacy lowering 回避、runtime dispatch の source-backed guard を更新し、既存 synthetic property/bridge は保持。
+  - 回帰（focused）: 専用 Sema test/Golden/diff fixture で source-backed binding、property/function distinction、正向き・負向き・empty・Long の min/max、firstOrNull/lastOrNull の null 結果を固定。LongProgression の既存 synthetic `step: Int` は KSP-1306/1307 の別契約として維持し、今回の4 APIの範囲外。
+  - 保留: 共通 G（全 Swift/全 Golden/全 diff）は未実行/pending のため Draft PR。親の head G も未実行。
 
 - [ ] KSP-1287: kotlin.ranges.LongRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `LongRange`
@@ -3495,7 +3501,7 @@
     - `kotlin.ranges.contains` — fun LongRange.contains(Int): Boolean  -- `final inline fun (kotlin.ranges/LongRange).kotlin.ranges/contains(kotlin/Int): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun LongRange.contains(Short): Boolean  -- `final inline fun (kotlin.ranges/LongRange).kotlin.ranges/contains(kotlin/Short): kotlin/Boolean`
 
-- [ ] KSP-1289: kotlin.ranges.UIntProgression の未実装 stdlib API を実装する（4 件）
+- [~] KSP-1289: kotlin.ranges.UIntProgression の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.ranges` / receiver `UIntProgression`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3507,6 +3513,7 @@
     - `kotlin.ranges.firstOrNull` — fun UIntProgression.firstOrNull(): UInt  -- `final fun (kotlin.ranges/UIntProgression).kotlin.ranges/firstOrNull(): kotlin/UInt?`
     - `kotlin.ranges.last` — fun UIntProgression.last(): UInt  -- `final fun (kotlin.ranges/UIntProgression).kotlin.ranges/last(): kotlin/UInt`
     - `kotlin.ranges.lastOrNull` — fun UIntProgression.lastOrNull(): UInt  -- `final fun (kotlin.ranges/UIntProgression).kotlin.ranges/lastOrNull(): kotlin/UInt?`
+  - focused 実装/検証: Kotlin 2.3.10 の `@SinceKotlin("1.7")` 4 API、正向き・負向き・empty・UInt の min/max、property/function distinction、nullable 戻り値を固定。全 Swift/全 Golden/全 diff の共通 G は未実行のため Draft PR。
 
 - [ ] KSP-1290: kotlin.ranges.UIntRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `UIntRange`
@@ -3520,7 +3527,7 @@
     - `kotlin.ranges.contains` — fun UIntRange.contains(ULong): Boolean  -- `final fun (kotlin.ranges/UIntRange).kotlin.ranges/contains(kotlin/ULong): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun UIntRange.contains(UShort): Boolean  -- `final fun (kotlin.ranges/UIntRange).kotlin.ranges/contains(kotlin/UShort): kotlin/Boolean`
 
-- [ ] KSP-1291: kotlin.ranges.ULongProgression の未実装 stdlib API を実装する（4 件）
+- [~] KSP-1291: kotlin.ranges.ULongProgression の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.ranges` / receiver `ULongProgression`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3532,6 +3539,7 @@
     - `kotlin.ranges.firstOrNull` — fun ULongProgression.firstOrNull(): ULong  -- `final fun (kotlin.ranges/ULongProgression).kotlin.ranges/firstOrNull(): kotlin/ULong?`
     - `kotlin.ranges.last` — fun ULongProgression.last(): ULong  -- `final fun (kotlin.ranges/ULongProgression).kotlin.ranges/last(): kotlin/ULong`
     - `kotlin.ranges.lastOrNull` — fun ULongProgression.lastOrNull(): ULong  -- `final fun (kotlin.ranges/ULongProgression).kotlin.ranges/lastOrNull(): kotlin/ULong?`
+  - focused 実装/検証: Kotlin 2.3.10 の `@SinceKotlin("1.7")` 4 API、正向き・負向き・empty・ULong の min/max、property/function distinction、nullable 戻り値を固定。全 Swift/全 Golden/全 diff の共通 G は未実行のため Draft PR。
 
 - [ ] KSP-1292: kotlin.ranges.ULongRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `ULongRange`
