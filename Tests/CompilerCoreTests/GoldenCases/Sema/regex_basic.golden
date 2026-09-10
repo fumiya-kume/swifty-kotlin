@@ -10,7 +10,7 @@ expr e@2:17 call callee=e@2:17#1 args=[_:e@2:23] type=kotlin.text.Regex call=kot
 expr e@2:5 localDecl regex mutable=0 type=_ init=e@2:17 type=Unit ref=__local_0.regex
 expr e@3:13 string(hello) type=String
 expr e@3:29 name(regex) type=kotlin.text.Regex ref=__local_0.regex
-expr e@3:13#1 memberCall recv=e@3:13 callee=matches args=[_:e@3:29] type=Boolean call=kotlin.text.matches
+expr e@3:13#1 memberCall recv=e@3:13 callee=matches args=[_:e@3:29] type=Boolean call=kotlin.text.matches#0
 expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13#1] type=Unit call=kotlin.io.println#1
 expr e@4:13 string(hello) type=String
 expr e@4:30 name(regex) type=kotlin.text.Regex ref=__local_0.regex
