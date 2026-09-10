@@ -1,56 +1,56 @@
-symbol fq=StableIterable kind=class vis=private flags=_
-symbol fq=StableIterable.values kind=property vis=public flags=_ type=kotlin.collections.List<Int>
-symbol fq=__local_0.fromIterable kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_1.checkedIterable kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_2.fromSequence kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_3.checkedSequence kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_4.fromArray kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_5.checkedArray kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_6.fromCollection kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_7.checkedCollection kind=local vis=private flags=_ type=Boolean
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableCollection.retainAll kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.Collection<out kotlin.collections.MutableCollection.E>] ret=Boolean
-symbol fq=kotlin.collections.MutableCollection.retainAll.elements kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=retainAllOverloads kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableCollection<Int>,kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>,kotlin.collections.Collection<Int>] ret=Unit
-symbol fq=retainAllOverloads.$0.array kind=valueParameter vis=private flags=_
-symbol fq=retainAllOverloads.$0.collection kind=valueParameter vis=private flags=_
-symbol fq=retainAllOverloads.$0.iterable kind=valueParameter vis=private flags=_
-symbol fq=retainAllOverloads.$0.sequence kind=valueParameter vis=private flags=_
-symbol fq=retainAllOverloads.$0.target kind=valueParameter vis=private flags=_
+symbol fq=StableIterable.values[kind=prop] kind=property vis=public flags=_ type=kotlin.collections.List<Int>
+symbol fq=StableIterable[kind=class] kind=class vis=private flags=_
+symbol fq=__local_0.fromIterable[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_1.checkedIterable[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_2.fromSequence[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_3.checkedSequence[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_4.fromArray[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_5.checkedArray[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_6.fromCollection[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_7.checkedCollection[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
+symbol fq=kotlin.collections.Collection.E[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableCollection.E[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableCollection.retainAll.elements[kind=vparam] kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.collections.MutableCollection.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=kotlin.collections.Collection<out T0>;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.Collection<out kotlin.collections.MutableCollection.E>] ret=Boolean
+symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=retainAllOverloads.$0.array[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=retainAllOverloads.$0.collection[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=retainAllOverloads.$0.iterable[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=retainAllOverloads.$0.sequence[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=retainAllOverloads.$0.target[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=retainAllOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>,kotlin.collections.Collection<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableCollection<Int>,kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>,kotlin.collections.Collection<Int>] ret=Unit
 file fmutable_collection_retain_all package=_
-  decl StableIterable class StableIterable sym=StableIterable
-  decl retainAllOverloads fun retainAllOverloads sym=retainAllOverloads
-expr e@4:46 name(values) type=kotlin.collections.List<Int> ref=StableIterable.values
-expr e@4:46#1 memberCall recv=e@4:46 callee=iterator args=[] type=kotlin.collections.Iterator<out Int> call=kotlin.collections.Collection.iterator
-expr e@14:24 name(target) type=kotlin.collections.MutableCollection<Int> ref=retainAllOverloads.$0.target
-expr e@14:41 name(iterable) type=kotlin.collections.Iterable<Int> ref=retainAllOverloads.$0.iterable
-expr e@14:24#1 memberCall recv=e@14:24 callee=retainAll args=[_:e@14:41] type=Boolean call=kotlin.collections.retainAll#0 targs=[Int]
-expr e@14:5 localDecl fromIterable mutable=0 type=_ init=e@14:24#1 type=Unit ref=__local_0.fromIterable
-expr e@15:36 name(fromIterable) type=Boolean ref=__local_0.fromIterable
-expr e@15:5 localDecl checkedIterable mutable=0 type=Boolean init=e@15:36 type=Unit ref=__local_1.checkedIterable
-expr e@16:24 name(target) type=kotlin.collections.MutableCollection<Int> ref=retainAllOverloads.$0.target
-expr e@16:41 name(sequence) type=kotlin.sequences.Sequence<Int> ref=retainAllOverloads.$0.sequence
-expr e@16:24#1 memberCall recv=e@16:24 callee=retainAll args=[_:e@16:41] type=Boolean call=kotlin.collections.retainAll#2 targs=[Int]
-expr e@16:5 localDecl fromSequence mutable=0 type=_ init=e@16:24#1 type=Unit ref=__local_2.fromSequence
-expr e@17:36 name(fromSequence) type=Boolean ref=__local_2.fromSequence
-expr e@17:5 localDecl checkedSequence mutable=0 type=Boolean init=e@17:36 type=Unit ref=__local_3.checkedSequence
-expr e@18:21 name(target) type=kotlin.collections.MutableCollection<Int> ref=retainAllOverloads.$0.target
-expr e@18:38 name(array) type=kotlin.Array<Int> ref=retainAllOverloads.$0.array
-expr e@18:21#1 memberCall recv=e@18:21 callee=retainAll args=[_:e@18:38] type=Boolean call=kotlin.collections.retainAll#1 targs=[Int]
-expr e@18:5 localDecl fromArray mutable=0 type=_ init=e@18:21#1 type=Unit ref=__local_4.fromArray
-expr e@19:33 name(fromArray) type=Boolean ref=__local_4.fromArray
-expr e@19:5 localDecl checkedArray mutable=0 type=Boolean init=e@19:33 type=Unit ref=__local_5.checkedArray
-expr e@20:26 name(target) type=kotlin.collections.MutableCollection<Int> ref=retainAllOverloads.$0.target
-expr e@20:43 name(collection) type=kotlin.collections.Collection<Int> ref=retainAllOverloads.$0.collection
-expr e@20:26#1 memberCall recv=e@20:26 callee=retainAll args=[_:e@20:43] type=Boolean call=kotlin.collections.MutableCollection.retainAll targs=[Int]
-expr e@20:5 localDecl fromCollection mutable=0 type=_ init=e@20:26#1 type=Unit ref=__local_6.fromCollection
-expr e@21:38 name(fromCollection) type=Boolean ref=__local_6.fromCollection
-expr e@21:5 localDecl checkedCollection mutable=0 type=Boolean init=e@21:38 type=Unit ref=__local_7.checkedCollection
+  decl StableIterable[kind=class] class StableIterable sym=StableIterable[kind=class]
+  decl retainAllOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>,kotlin.collections.Collection<Int>] fun retainAllOverloads sym=retainAllOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>,kotlin.collections.Collection<Int>]
+expr e@4:46 name(values) type=kotlin.collections.List<Int> ref=StableIterable.values[kind=prop]
+expr e@4:46#1 memberCall recv=e@4:46 callee=iterator args=[] type=kotlin.collections.Iterator<Int> call=kotlin.collections.Collection.iterator[kind=fun;recv=kotlin.collections.Collection<T0>;params=;gen=1] targs=[Int]
+expr e@14:24 name(target) type=kotlin.collections.MutableCollection<Int> ref=retainAllOverloads.$0.target[kind=vparam]
+expr e@14:41 name(iterable) type=kotlin.collections.Iterable<Int> ref=retainAllOverloads.$0.iterable[kind=vparam]
+expr e@14:24#1 memberCall recv=e@14:24 callee=retainAll args=[_:e@14:41] type=Boolean call=kotlin.collections.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.collections.Iterable<T0>;gen=1] targs=[Int]
+expr e@14:5 localDecl fromIterable mutable=0 type=_ init=e@14:24#1 type=Unit ref=__local_0.fromIterable[kind=local]
+expr e@15:36 name(fromIterable) type=Boolean ref=__local_0.fromIterable[kind=local]
+expr e@15:5 localDecl checkedIterable mutable=0 type=Boolean init=e@15:36 type=Unit ref=__local_1.checkedIterable[kind=local]
+expr e@16:24 name(target) type=kotlin.collections.MutableCollection<Int> ref=retainAllOverloads.$0.target[kind=vparam]
+expr e@16:41 name(sequence) type=kotlin.sequences.Sequence<Int> ref=retainAllOverloads.$0.sequence[kind=vparam]
+expr e@16:24#1 memberCall recv=e@16:24 callee=retainAll args=[_:e@16:41] type=Boolean call=kotlin.collections.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.sequences.Sequence<T0>;gen=1] targs=[Int]
+expr e@16:5 localDecl fromSequence mutable=0 type=_ init=e@16:24#1 type=Unit ref=__local_2.fromSequence[kind=local]
+expr e@17:36 name(fromSequence) type=Boolean ref=__local_2.fromSequence[kind=local]
+expr e@17:5 localDecl checkedSequence mutable=0 type=Boolean init=e@17:36 type=Unit ref=__local_3.checkedSequence[kind=local]
+expr e@18:21 name(target) type=kotlin.collections.MutableCollection<Int> ref=retainAllOverloads.$0.target[kind=vparam]
+expr e@18:38 name(array) type=kotlin.Array<Int> ref=retainAllOverloads.$0.array[kind=vparam]
+expr e@18:21#1 memberCall recv=e@18:21 callee=retainAll args=[_:e@18:38] type=Boolean call=kotlin.collections.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.Array<out T0>;gen=1] targs=[Int]
+expr e@18:5 localDecl fromArray mutable=0 type=_ init=e@18:21#1 type=Unit ref=__local_4.fromArray[kind=local]
+expr e@19:33 name(fromArray) type=Boolean ref=__local_4.fromArray[kind=local]
+expr e@19:5 localDecl checkedArray mutable=0 type=Boolean init=e@19:33 type=Unit ref=__local_5.checkedArray[kind=local]
+expr e@20:26 name(target) type=kotlin.collections.MutableCollection<Int> ref=retainAllOverloads.$0.target[kind=vparam]
+expr e@20:43 name(collection) type=kotlin.collections.Collection<Int> ref=retainAllOverloads.$0.collection[kind=vparam]
+expr e@20:26#1 memberCall recv=e@20:26 callee=retainAll args=[_:e@20:43] type=Boolean call=kotlin.collections.MutableCollection.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=kotlin.collections.Collection<out T0>;gen=1] targs=[Int]
+expr e@20:5 localDecl fromCollection mutable=0 type=_ init=e@20:26#1 type=Unit ref=__local_6.fromCollection[kind=local]
+expr e@21:38 name(fromCollection) type=Boolean ref=__local_6.fromCollection[kind=local]
+expr e@21:5 localDecl checkedCollection mutable=0 type=Boolean init=e@21:38 type=Unit ref=__local_7.checkedCollection[kind=local]
