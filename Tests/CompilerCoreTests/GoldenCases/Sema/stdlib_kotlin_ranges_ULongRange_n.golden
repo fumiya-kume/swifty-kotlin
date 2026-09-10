@@ -35,11 +35,11 @@ expr e@13:32 ulong(5) type=ULong
 expr e@13:5 localDecl explicitULong mutable=0 type=ULong init=e@13:32 type=Unit ref=__local_2.explicitULong[kind=local]
 expr e@14:25 name(literalRange) type=ULong ref=__local_0.literalRange[kind=local]
 expr e@14:55 uint(5) type=ULong
-expr e@14:25#1 memberCall recv=e@14:25 callee=contains args=[value:e@14:55] type=Boolean call=kotlin.ranges.ClosedRange.contains[kind=fun;recv=kotlin.ranges.ClosedRange<T0>;params=T0;gen=1] targs=[ULong]
+expr e@14:25#1 memberCall recv=e@14:25 callee=contains args=[value:e@14:55] type=Boolean call=kotlin.ranges.ULongRange.contains[kind=fun;recv=kotlin.ranges.ULongRange;params=ULong]
 expr e@14:5 localDecl literalDirect mutable=0 type=_ init=e@14:25#1 type=Unit ref=__local_3.literalDirect[kind=local]
 expr e@15:21 uint(5) type=ULong
 expr e@15:27 name(literalRange) type=ULong ref=__local_0.literalRange[kind=local]
-expr e@15:21#1 inExpr lhs=e@15:21 rhs=e@15:27 type=Boolean call=kotlin.ranges.contains[kind=fun;recv=kotlin.ranges.ULongRange;params=ULong]
+expr e@15:21#1 inExpr lhs=e@15:21 rhs=e@15:27 type=Boolean call=kotlin.ranges.ULongRange.contains[kind=fun;recv=kotlin.ranges.ULongRange;params=ULong]
 expr e@15:5 localDecl literalIn mutable=0 type=_ init=e@15:21#1 type=Unit ref=__local_4.literalIn[kind=local]
 expr e@16:26 name(literalRange) type=ULong ref=__local_0.literalRange[kind=local]
 expr e@16:56 name(explicitUInt) type=UInt ref=__local_1.explicitUInt[kind=local]
@@ -63,7 +63,7 @@ expr e@20:24#1 memberCall recv=e@20:24 callee=contains args=[value:e@20:47] type
 expr e@20:5 localDecl directUShort mutable=0 type=_ init=e@20:24#1 type=Unit ref=__local_9.directUShort[kind=local]
 expr e@21:25 name(range) type=kotlin.ranges.ULongRange ref=golden.sema.ulongRangeCrossContains.$1.range[kind=vparam]
 expr e@21:48 name(explicitULong) type=ULong ref=__local_2.explicitULong[kind=local]
-expr e@21:25#1 memberCall recv=e@21:25 callee=contains args=[value:e@21:48] type=Boolean call=kotlin.ranges.ClosedRange.contains[kind=fun;recv=kotlin.ranges.ClosedRange<T0>;params=T0;gen=1] targs=[ULong]
+expr e@21:25#1 memberCall recv=e@21:25 callee=contains args=[value:e@21:48] type=Boolean call=kotlin.ranges.ULongRange.contains[kind=fun;recv=kotlin.ranges.ULongRange;params=ULong]
 expr e@21:5 localDecl ordinaryULong mutable=0 type=_ init=e@21:25#1 type=Unit ref=__local_10.ordinaryULong[kind=local]
 expr e@22:22 name(byteValue) type=UByte ref=golden.sema.ulongRangeCrossContains.$1.byteValue[kind=vparam]
 expr e@22:35 name(range) type=kotlin.ranges.ULongRange ref=golden.sema.ulongRangeCrossContains.$1.range[kind=vparam]
@@ -107,7 +107,7 @@ expr e@30:61 name(variableIn) type=Boolean ref=__local_6.variableIn[kind=local]
 expr e@30:12#3 binary(logicalAnd) lhs=e@30:12#2 rhs=e@30:61 type=Boolean
 expr e@31:9 name(literalRange) type=ULong ref=__local_0.literalRange[kind=local]
 expr e@31:39 name(explicitULong) type=ULong ref=__local_2.explicitULong[kind=local]
-expr e@31:9#1 memberCall recv=e@31:9 callee=contains args=[value:e@31:39] type=Boolean call=kotlin.ranges.ClosedRange.contains[kind=fun;recv=kotlin.ranges.ClosedRange<T0>;params=T0;gen=1] targs=[ULong]
+expr e@31:9#1 memberCall recv=e@31:9 callee=contains args=[value:e@31:39] type=Boolean call=kotlin.ranges.ULongRange.contains[kind=fun;recv=kotlin.ranges.ULongRange;params=ULong]
 expr e@30:12#4 binary(logicalAnd) lhs=e@30:12#3 rhs=e@31:9#1 type=Boolean
 expr e@32:9 name(directUByte) type=Boolean ref=__local_7.directUByte[kind=local]
 expr e@30:12#5 binary(logicalAnd) lhs=e@30:12#4 rhs=e@32:9 type=Boolean

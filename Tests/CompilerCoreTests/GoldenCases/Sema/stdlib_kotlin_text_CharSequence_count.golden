@@ -31,7 +31,7 @@ expr e@12:28 int(0) type=Int
 expr e@16:24 int(1) type=Int
 expr e@16:13 compoundAssign(plusAssign) name=lengthReads value=e@16:24 type=Unit ref=golden.sema.CountingCharSequence.lengthReads[kind=prop]
 expr e@17:20 name(value) type=String ref=golden.sema.CountingCharSequence.value[kind=prop]
-expr e@17:20#1 memberCall recv=e@17:20 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
+expr e@17:20#1 memberCall recv=e@17:20 callee=length args=[] type=Int
 expr e@17:13 return value=e@17:20#1 type=Nothing
 expr e@20:51 name(value) type=String ref=golden.sema.CountingCharSequence.value[kind=prop]
 expr e@20:57 name(index) type=Int ref=golden.sema.CountingCharSequence.get.$0.index[kind=vparam]

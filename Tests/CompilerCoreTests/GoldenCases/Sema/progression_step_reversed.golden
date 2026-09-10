@@ -21,7 +21,7 @@ expr e@10:51 int(1) type=Int
 expr e@10:54 int(9) type=Int
 expr e@10:57 int(2) type=Int
 expr e@10:20#1 memberCall recv=e@10:20 callee=fromClosedRange args=[_:e@10:51,_:e@10:54,_:e@10:57] type=kotlin.ranges.IntProgression call=kotlin.ranges.fromClosedRange[kind=fun;recv=kotlin.ranges.IntProgression.Companion;params=Int,Int,Int]
-expr e@10:20#2 memberCall recv=e@10:20#1 callee=reversed args=[] type=kotlin.ranges.IntProgression call=kotlin.ranges.reversed[kind=fun;recv=kotlin.ranges.IntProgression;params=]
+expr e@10:20#2 memberCall recv=e@10:20#1 callee=reversed args=[] type=kotlin.ranges.IntProgression call=kotlin.ranges.IntProgression.reversed[kind=fun;recv=kotlin.ranges.IntProgression;params=]
 expr e@10:5 localDecl reversed mutable=0 type=_ init=e@10:20#2 type=Unit ref=__local_2.reversed[kind=local]
 expr e@11:35 name(reversed) type=kotlin.ranges.IntProgression ref=__local_2.reversed[kind=local]
 expr e@11:5 localDecl checked mutable=0 type=IntProgression init=e@11:35 type=Unit ref=__local_3.checked[kind=local]

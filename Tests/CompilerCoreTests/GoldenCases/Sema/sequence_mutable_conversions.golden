@@ -26,7 +26,7 @@ expr e@8:56 int(2) type=Int
 expr e@8:59 int(1) type=Int
 expr e@8:62 int(3) type=Int
 expr e@8:39 call callee=e@8:39#1 args=[_:e@8:50,_:e@8:53,_:e@8:56,_:e@8:59,_:e@8:62] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
-expr e@8:39#2 memberCall recv=e@8:39 callee=toMutableSet args=[] type=kotlin.collections.MutableSet<Int> call=kotlin.sequences.toMutableSet[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int]
+expr e@8:39#2 memberCall recv=e@8:39 callee=toMutableSet args=[] type=kotlin.collections.MutableSet<Int> call=kotlin.sequences.Sequence.toMutableSet[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int]
 expr e@8:5 localDecl mutableSet mutable=0 type=MutableSet<Int> init=e@8:39#2 type=Unit ref=__local_2.mutableSet[kind=local]
 expr e@9:5 name(mutableSet) type=kotlin.collections.MutableSet<Int> ref=__local_2.mutableSet[kind=local]
 expr e@9:20 int(42) type=Int
@@ -39,7 +39,7 @@ expr e@12:53 int(2) type=Int
 expr e@12:56 int(1) type=Int
 expr e@12:59 int(3) type=Int
 expr e@12:36 call callee=e@12:36#1 args=[_:e@12:47,_:e@12:50,_:e@12:53,_:e@12:56,_:e@12:59] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
-expr e@12:36#2 memberCall recv=e@12:36 callee=toHashSet args=[] type=kotlin.collections.MutableSet<Int> call=kotlin.sequences.toHashSet[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int]
+expr e@12:36#2 memberCall recv=e@12:36 callee=toHashSet args=[] type=kotlin.collections.MutableSet<Int> call=kotlin.sequences.Sequence.toHashSet[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int]
 expr e@12:5 localDecl hashSet mutable=0 type=MutableSet<Int> init=e@12:36#2 type=Unit ref=__local_3.hashSet[kind=local]
 expr e@13:5 name(hashSet) type=kotlin.collections.MutableSet<Int> ref=__local_3.hashSet[kind=local]
 expr e@13:17 int(77) type=Int

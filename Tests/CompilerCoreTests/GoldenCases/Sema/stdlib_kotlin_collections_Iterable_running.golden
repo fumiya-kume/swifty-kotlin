@@ -41,5 +41,5 @@ expr e@10:69 name(value) type=Int ref=s-8
 expr e@10:63#1 binary(add) lhs=e@10:63 rhs=e@10:69 type=Int
 expr e@10:47 lambda params=[acc,value] body=e@10:63#1 label=runningReduce type=(Int, Int) -> Int
 expr e@10:13#2 memberCall recv=e@10:13#1 callee=runningReduce args=[_:e@10:47] type=kotlin.sequences.Sequence<out Int> call=kotlin.collections.runningReduce[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=fn{p=T0,T0;ret=T0};gen=1] targs=[Int]
-expr e@10:13#3 memberCall recv=e@10:13#2 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.toList[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int]
+expr e@10:13#3 memberCall recv=e@10:13#2 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.Sequence.toList[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1]
 expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#3] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

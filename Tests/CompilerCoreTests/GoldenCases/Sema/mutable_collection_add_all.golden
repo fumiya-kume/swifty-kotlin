@@ -1,0 +1,54 @@
+symbol fq=StableIterable.<init>.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=StableIterable.<init>[kind=ctor;recv=StableIterable;params=kotlin.collections.List<Int>] kind=constructor vis=private flags=_ sig=recv=StableIterable params=[kotlin.collections.List<Int>] ret=StableIterable
+symbol fq=StableIterable.values[kind=prop] kind=property vis=public flags=_ type=kotlin.collections.List<Int>
+symbol fq=StableIterable[kind=class] kind=class vis=private flags=_
+symbol fq=__local_0.fromIterable[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_1.checkedIterable[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_2.fromSequence[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_3.checkedSequence[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_4.fromArray[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_5.checkedArray[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=addAllOverloads.$1.array[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=addAllOverloads.$1.iterable[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=addAllOverloads.$1.sequence[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=addAllOverloads.$1.target[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=addAllOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableCollection<Int>,kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>] ret=Unit
+symbol fq=plusAssignOverloads.$2.element[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusAssignOverloads.$2.target[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=plusAssignOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,Int] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableCollection<Int>,Int] ret=Unit
+file fmutable_collection_add_all package=_
+  decl StableIterable[kind=class] class StableIterable sym=StableIterable[kind=class]
+  decl addAllOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>] fun addAllOverloads sym=addAllOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>,kotlin.Array<Int>]
+  decl plusAssignOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,Int] fun plusAssignOverloads sym=plusAssignOverloads[kind=fun;params=kotlin.collections.MutableCollection<Int>,Int]
+expr e@4:46 name(values) type=kotlin.collections.List<Int> ref=StableIterable.values[kind=prop]
+expr e@4:46#1 memberCall recv=e@4:46 callee=iterator args=[] type=kotlin.collections.Iterator<Int> call=kotlin.collections.Collection.iterator[kind=fun;recv=kotlin.collections.Collection<T0>;params=;gen=1] targs=[Int]
+expr e@13:24 name(target) type=kotlin.collections.MutableCollection<Int> ref=addAllOverloads.$1.target[kind=vparam]
+expr e@13:38 name(iterable) type=kotlin.collections.Iterable<Int> ref=addAllOverloads.$1.iterable[kind=vparam]
+expr e@13:24#1 memberCall recv=e@13:24 callee=addAll args=[_:e@13:38] type=Boolean call=kotlin.collections.addAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.collections.Iterable<T0>;gen=1] targs=[Int]
+expr e@13:5 localDecl fromIterable mutable=0 type=_ init=e@13:24#1 type=Unit ref=__local_0.fromIterable[kind=local]
+expr e@14:36 name(fromIterable) type=Boolean ref=__local_0.fromIterable[kind=local]
+expr e@14:5 localDecl checkedIterable mutable=0 type=Boolean init=e@14:36 type=Unit ref=__local_1.checkedIterable[kind=local]
+expr e@15:24 name(target) type=kotlin.collections.MutableCollection<Int> ref=addAllOverloads.$1.target[kind=vparam]
+expr e@15:38 name(sequence) type=kotlin.sequences.Sequence<Int> ref=addAllOverloads.$1.sequence[kind=vparam]
+expr e@15:24#1 memberCall recv=e@15:24 callee=addAll args=[_:e@15:38] type=Boolean call=kotlin.collections.addAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.sequences.Sequence<T0>;gen=1] targs=[Int]
+expr e@15:5 localDecl fromSequence mutable=0 type=_ init=e@15:24#1 type=Unit ref=__local_2.fromSequence[kind=local]
+expr e@16:36 name(fromSequence) type=Boolean ref=__local_2.fromSequence[kind=local]
+expr e@16:5 localDecl checkedSequence mutable=0 type=Boolean init=e@16:36 type=Unit ref=__local_3.checkedSequence[kind=local]
+expr e@17:21 name(target) type=kotlin.collections.MutableCollection<Int> ref=addAllOverloads.$1.target[kind=vparam]
+expr e@17:35 name(array) type=kotlin.Array<Int> ref=addAllOverloads.$1.array[kind=vparam]
+expr e@17:21#1 memberCall recv=e@17:21 callee=addAll args=[_:e@17:35] type=Boolean call=kotlin.collections.addAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.Array<out T0>;gen=1] targs=[Int]
+expr e@17:5 localDecl fromArray mutable=0 type=_ init=e@17:21#1 type=Unit ref=__local_4.fromArray[kind=local]
+expr e@18:33 name(fromArray) type=Boolean ref=__local_4.fromArray[kind=local]
+expr e@18:5 localDecl checkedArray mutable=0 type=Boolean init=e@18:33 type=Unit ref=__local_5.checkedArray[kind=local]
+expr e@22:15 name(element) type=Int ref=plusAssignOverloads.$2.element[kind=vparam]
+expr e@22:5 compoundAssign(plusAssign) name=target value=e@22:15 type=Unit ref=plusAssignOverloads.$2.target[kind=vparam] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=T0;gen=1] targs=[Int]
+expr e@23:37 int(3) type=Int
+expr e@23:30 call callee=e@23:30#1 args=[_:e@23:37] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@23:15 call callee=e@23:15#1 args=[_:e@23:30] type=StableIterable call=StableIterable.<init>[kind=ctor;recv=StableIterable;params=kotlin.collections.List<Int>]
+expr e@23:5 compoundAssign(plusAssign) name=target value=e@23:15 type=Unit ref=plusAssignOverloads.$2.target[kind=vparam] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.collections.Iterable<T0>;gen=1] targs=[Int]
+expr e@24:26 int(4) type=Int
+expr e@24:15 call callee=e@24:15#1 args=[_:e@24:26] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@24:5 compoundAssign(plusAssign) name=target value=e@24:15 type=Unit ref=plusAssignOverloads.$2.target[kind=vparam] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.sequences.Sequence<T0>;gen=1] targs=[Int]
+expr e@25:23 int(5) type=Int
+expr e@25:15 call callee=e@25:15#1 args=[_:e@25:23] type=kotlin.Array<Int> call=kotlin.arrayOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@25:5 compoundAssign(plusAssign) name=target value=e@25:15 type=Unit ref=plusAssignOverloads.$2.target[kind=vparam] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.Array<T0>;gen=1] targs=[Int]

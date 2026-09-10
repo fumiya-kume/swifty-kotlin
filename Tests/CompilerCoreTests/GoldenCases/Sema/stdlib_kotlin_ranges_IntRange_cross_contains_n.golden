@@ -63,7 +63,7 @@ expr e@19:14 name(range) type=kotlin.ranges.IntRange ref=golden.sema.intRangeCon
 expr e@19:5#1 inExpr lhs=e@19:5 rhs=e@19:14 type=Boolean call=kotlin.ranges.contains[kind=fun;recv=kotlin.ranges.IntRange;params=Short]
 expr e@22:5 name(range) type=kotlin.ranges.IntRange ref=golden.sema.intRangeContainsInt.$4.range[kind=vparam]
 expr e@22:20 name(value) type=Int ref=golden.sema.intRangeContainsInt.$4.value[kind=vparam]
-expr e@22:5#1 memberCall recv=e@22:5 callee=contains args=[_:e@22:20] type=Boolean call=kotlin.ranges.ClosedRange.contains[kind=fun;recv=kotlin.ranges.ClosedRange<T0>;params=T0;gen=1] targs=[Int]
+expr e@22:5#1 memberCall recv=e@22:5 callee=contains args=[_:e@22:20] type=Boolean call=kotlin.ranges.IntRange.contains[kind=fun;recv=kotlin.ranges.IntRange;params=Int]
 expr e@25:5 name(value) type=Int ref=golden.sema.intRangeContainsIntIn.$5.value[kind=vparam]
 expr e@25:14 name(range) type=kotlin.ranges.IntRange ref=golden.sema.intRangeContainsIntIn.$5.range[kind=vparam]
 expr e@25:5#1 inExpr lhs=e@25:5 rhs=e@25:14 type=Boolean call=kotlin.ranges.contains[kind=fun;recv=kotlin.ranges.IntRange;params=Int]
@@ -77,4 +77,4 @@ expr e@34:5 name(range) type=kotlin.ranges.IntRange ref=golden.sema.intRangeCont
 expr e@34:20 name(value) type=Byte? ref=golden.sema.intRangeContainsNullableByte.$8.value[kind=vparam]
 expr e@34:5#1 memberCall recv=e@34:5 callee=contains args=[_:e@34:20] type=<error>
 diagnostic severity=error code=KSWIFTK-SEMA-0002 at=31:5 msg=No viable overload found for call.
-diagnostic severity=error code=KSWIFTK-TYPE-0001 at=34:5 msg=Conflicting bounds for type variable #0: inferred Any? is not a subtype of Int. lower=[Byte?, Int], upper=[Int]
+diagnostic severity=error code=KSWIFTK-SEMA-0002 at=34:5 msg=No viable overload found for call.

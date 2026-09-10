@@ -32,4 +32,4 @@ expr e@12:20 int(1) type=Int
 expr e@12:5#1 memberCall recv=e@12:5 callee=contains args=[_:e@12:20] type=Boolean call=kotlin.collections.Set.contains[kind=fun;recv=kotlin.collections.Set<T0>;params=T0;gen=1]
 expr e@13:5 name(sized) type=kotlin.collections.HashSet<Int> ref=__local_1.sized[kind=local]
 expr e@13:15 int(2) type=Int
-expr e@13:5#1 memberCall recv=e@13:5 callee=add args=[_:e@13:15] type=Boolean call=kotlin.collections.AbstractMutableSet.add[kind=fun;recv=kotlin.collections.AbstractMutableSet<T0>;params=T0;gen=1]
+expr e@13:5#1 memberCall recv=e@13:5 callee=add args=[_:e@13:15] type=Boolean call=kotlin.collections.MutableSet.add[kind=fun;recv=kotlin.collections.MutableSet<T0>;params=T0;gen=1]

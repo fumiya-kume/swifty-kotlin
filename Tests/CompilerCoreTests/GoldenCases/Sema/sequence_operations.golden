@@ -48,5 +48,5 @@ expr e@8:5 localDecl g mutable=0 type=_ init=e@8:13 type=Unit ref=__local_5.g[ki
 expr e@9:13 name(g) type=kotlin.sequences.Sequence<Int> ref=__local_5.g[kind=local]
 expr e@9:20 int(3) type=Int
 expr e@9:13#1 memberCall recv=e@9:13 callee=take args=[_:e@9:20] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.take[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=Int;gen=1] targs=[Int]
-expr e@9:13#2 memberCall recv=e@9:13#1 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.toList[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int]
+expr e@9:13#2 memberCall recv=e@9:13#1 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.Sequence.toList[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1]
 expr e@9:5 localDecl r mutable=0 type=_ init=e@9:13#2 type=Unit ref=__local_6.r[kind=local]

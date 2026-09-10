@@ -39,7 +39,7 @@ expr e@9:31 call callee=e@9:31#1 args=[] type=kotlin.collections.MutableList<Str
 expr e@9:5 localDecl instanceDestination mutable=0 type=_ init=e@9:31 type=Unit ref=__local_1.instanceDestination[kind=local]
 expr e@10:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
 expr e@10:31 name(instanceDestination) type=kotlin.collections.MutableList<String> ref=__local_1.instanceDestination[kind=local]
-expr e@10:5#1 memberCall recv=e@10:5 callee=filterIsInstanceTo args=[_:e@10:31] type=kotlin.collections.MutableList<String> call=kotlin.collections.filterIsInstanceTo[kind=fun;recv=kotlin.collections.Iterable<*>;params=T0;gen=1] targs=[String,kotlin.collections.MutableList<String>]
+expr e@10:5#1 memberCall recv=e@10:5 callee=filterIsInstanceTo args=[_:e@10:31] type=kotlin.collections.MutableList<String> call=kotlin.collections.filterIsInstanceTo[kind=fun;recv=kotlin.collections.Iterable<*>;params=T1;gen=2] targs=[String,kotlin.collections.MutableList<String>]
 expr e@12:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
 expr e@12:24 name(it) type=Any? ref=s-3
 expr e@12:30 name(null) type=Nothing?

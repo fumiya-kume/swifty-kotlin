@@ -3,4 +3,4 @@ symbol fq=golden.sema.probe[kind=fun;params=kotlin.Throwable] kind=function vis=
 file fstdlib_kotlin_native_Throwable_n package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)]
   decl golden.sema.probe[kind=fun;params=kotlin.Throwable] fun probe sym=golden.sema.probe[kind=fun;params=kotlin.Throwable]
 expr e@7:47 name(throwable) type=kotlin.Throwable ref=golden.sema.probe.$0.throwable[kind=vparam]
-expr e@7:47#1 memberCall recv=e@7:47 callee=getStackTraceAddresses args=[] type=kotlin.collections.List<Long> call=kotlin.native.getStackTraceAddresses[kind=fun;recv=kotlin.Throwable;params=]
+expr e@7:47#1 memberCall recv=e@7:47 callee=getStackTraceAddresses args=[] type=kotlin.collections.List<Long> call=kotlin.Throwable.getStackTraceAddresses[kind=fun;recv=kotlin.Throwable;params=]

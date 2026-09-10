@@ -25,12 +25,12 @@ expr e@17:47 name(null) type=Nothing?
 expr e@19:62 int(2) type=Int
 expr e@19:67 name(it) type=Int ref=s-0
 expr e@19:65 lambda params=[] body=e@19:67 label=AtomicIntArray type=(Int) -> Int
-expr e@19:47 call callee=e@19:47#1 args=[_:e@19:62,_:e@19:65] type=kotlin.concurrent.AtomicIntArray
+expr e@19:47 call callee=e@19:47#1 args=[_:e@19:62,_:e@19:65] type=kotlin.concurrent.AtomicIntArray call=kotlin.concurrent.AtomicIntArray[kind=fun;params=Int,fn{p=Int;ret=Int}]
 expr e@20:65 int(2) type=Int
 expr e@20:70 name(it) type=Int ref=s-1
 expr e@20:70#1 memberCall recv=e@20:70 callee=toLong args=[] type=Long
 expr e@20:68 lambda params=[] body=e@20:70#1 label=AtomicLongArray type=(Int) -> Long
-expr e@20:49 call callee=e@20:49#1 args=[_:e@20:65,_:e@20:68] type=kotlin.concurrent.AtomicLongArray
+expr e@20:49 call callee=e@20:49#1 args=[_:e@20:65,_:e@20:68] type=kotlin.concurrent.AtomicLongArray call=kotlin.concurrent.AtomicLongArray[kind=fun;params=Int,fn{p=Int;ret=Long}]
 expr e@21:61 int(2) type=Int
 expr e@21:66 name(it) type=Int ref=s-2
 expr e@21:66#1 memberCall recv=e@21:66 callee=toString args=[] type=String

@@ -126,5 +126,5 @@ expr e@27:50 int(13) type=Int
 expr e@27:39 call callee=e@27:39#1 args=[_:e@27:50] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
 expr e@27:67 int(14) type=Int
 expr e@27:56 call callee=e@27:56#1 args=[_:e@27:67] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
-expr e@27:39#2 binary(add) lhs=e@27:39 rhs=e@27:56 type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.plus[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=kotlin.sequences.Sequence<T0>;gen=1] targs=[Int]
+expr e@27:39#2 binary(add) lhs=e@27:39 rhs=e@27:56 type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.Sequence.plus[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=kotlin.sequences.Sequence<T0>;gen=1] targs=[Int]
 expr e@27:5 localDecl sequencePlus mutable=0 type=Sequence<Int> init=e@27:39#2 type=Unit ref=__local_21.sequencePlus[kind=local]
