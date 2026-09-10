@@ -1,23 +1,19 @@
-symbol fq=__try_0_catch_0.e kind=local vis=internal flags=_ type=kotlin.native.concurrent.InvalidMutabilityException
-symbol fq=golden.sema.catchMessage kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.construct kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.RuntimeException
-symbol fq=golden.sema.construct.$0.message kind=valueParameter vis=private flags=_
-symbol fq=kotlin.RuntimeException kind=class vis=public flags=openType
-symbol fq=kotlin.native.concurrent.InvalidMutabilityException kind=class vis=public flags=synthetic type=kotlin.native.concurrent.InvalidMutabilityException
-symbol fq=kotlin.native.concurrent.InvalidMutabilityException.<init> kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=kotlin.native.concurrent.InvalidMutabilityException
-symbol fq=kotlin.native.concurrent.InvalidMutabilityException.<init>.message kind=valueParameter vis=private flags=synthetic type=String
+symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.native.concurrent.InvalidMutabilityException
+symbol fq=golden.sema.catchMessage[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.construct.$0.message[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.construct[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.RuntimeException
 file fstdlib_kotlin_native_concurrent_InvalidMutabilityException_n_n package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)]
-  decl golden.sema.construct fun construct sym=golden.sema.construct
-  decl golden.sema.catchMessage fun catchMessage sym=golden.sema.catchMessage
-expr e@7:79 name(message) type=String ref=golden.sema.construct.$0.message
-expr e@7:52 call callee=e@7:52#1 args=[_:e@7:79] type=kotlin.native.concurrent.InvalidMutabilityException call=kotlin.native.concurrent.InvalidMutabilityException.<init>
+  decl golden.sema.construct[kind=fun;params=String] fun construct sym=golden.sema.construct[kind=fun;params=String]
+  decl golden.sema.catchMessage[kind=fun;params=] fun catchMessage sym=golden.sema.catchMessage[kind=fun;params=]
+expr e@7:79 name(message) type=String ref=golden.sema.construct.$0.message[kind=vparam]
+expr e@7:52 call callee=e@7:52#1 args=[_:e@7:79] type=kotlin.native.concurrent.InvalidMutabilityException call=kotlin.native.concurrent.InvalidMutabilityException.<init>[kind=ctor;params=String]
 expr e@11:42 string(mutation blocked) type=String
-expr e@11:15 call callee=e@11:15#1 args=[_:e@11:42] type=kotlin.native.concurrent.InvalidMutabilityException call=kotlin.native.concurrent.InvalidMutabilityException.<init>
+expr e@11:15 call callee=e@11:15#1 args=[_:e@11:42] type=kotlin.native.concurrent.InvalidMutabilityException call=kotlin.native.concurrent.InvalidMutabilityException.<init>[kind=ctor;params=String]
 expr e@11:9 throw value=e@11:15 type=Nothing
 expr e@10:9 blockExpr stmts=[] trailing=e@11:9 type=Nothing
-expr e@13:9 name(e) type=kotlin.native.concurrent.InvalidMutabilityException ref=__try_0_catch_0.e
-expr e@13:9#1 memberCall recv=e@13:9 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@13:9 name(e) type=kotlin.native.concurrent.InvalidMutabilityException ref=__try_0_catch_0.e[kind=local]
+expr e@13:9#1 memberCall recv=e@13:9 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@13:22 string(missing) type=String
 expr e@13:9#2 binary(elvis) lhs=e@13:9#1 rhs=e@13:22 type=String
-expr e@12:45 blockExpr stmts=[] trailing=e@13:9#2 type=String ref=__try_0_catch_0.e
+expr e@12:45 blockExpr stmts=[] trailing=e@13:9#2 type=String ref=__try_0_catch_0.e[kind=local]
 expr e@10:5 try body=e@10:9 catches=[e@12:45] finally=_ type=String

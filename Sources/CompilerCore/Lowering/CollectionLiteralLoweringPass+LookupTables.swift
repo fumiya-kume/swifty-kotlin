@@ -220,8 +220,6 @@ struct CollectionLiteralLookupTables {
     var kkSequenceMaxOrNullName: InternedString { sequenceLookup.kkSequenceMaxOrNullName }
     var kkSequenceMinOrNullName: InternedString { sequenceLookup.kkSequenceMinOrNullName }
     var kkSequenceFlattenName: InternedString { sequenceLookup.kkSequenceFlattenName }
-    var kkSequenceFoldName: InternedString { sequenceLookup.kkSequenceFoldName }
-    var kkSequenceFoldIndexedName: InternedString { sequenceLookup.kkSequenceFoldIndexedName }
     var kkSequenceRunningFoldIndexedName: InternedString { sequenceLookup.kkSequenceRunningFoldIndexedName }
     var kkSequenceScanIndexedName: InternedString { sequenceLookup.kkSequenceScanIndexedName }
     var kkSequenceReduceIndexedName: InternedString { sequenceLookup.kkSequenceReduceIndexedName }

@@ -1,0 +1,13 @@
+symbol fq=golden.sema.fromLinkedHashSet.$0.set[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.fromLinkedHashSet[kind=fun;params=kotlin.collections.LinkedHashSet<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.LinkedHashSet<Int>] ret=kotlin.collections.MutableIterator<Int>
+symbol fq=golden.sema.fromMutableIterable.$1.iterable[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.fromMutableIterable[kind=fun;params=kotlin.collections.MutableIterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableIterable<Int>] ret=kotlin.collections.MutableIterator<Int>
+file fstdlib_kotlin_collections_MutableIterable_MutableIterable_n package=golden.sema
+  decl golden.sema.fromMutableIterable[kind=fun;params=kotlin.collections.MutableIterable<Int>] fun fromMutableIterable sym=golden.sema.fromMutableIterable[kind=fun;params=kotlin.collections.MutableIterable<Int>]
+  decl golden.sema.fromLinkedHashSet[kind=fun;params=kotlin.collections.LinkedHashSet<Int>] fun fromLinkedHashSet sym=golden.sema.fromLinkedHashSet[kind=fun;params=kotlin.collections.LinkedHashSet<Int>]
+expr e@4:12 name(iterable) type=kotlin.collections.MutableIterable<Int> ref=golden.sema.fromMutableIterable.$1.iterable[kind=vparam]
+expr e@4:12#1 memberCall recv=e@4:12 callee=iterator args=[] type=kotlin.collections.MutableIterator<Int> call=kotlin.collections.MutableIterable.iterator[kind=fun;recv=kotlin.collections.MutableIterable<T0>;params=;gen=1] targs=[Int]
+expr e@4:5 return value=e@4:12#1 type=Nothing
+expr e@8:12 name(set) type=kotlin.collections.LinkedHashSet<Int> ref=golden.sema.fromLinkedHashSet.$0.set[kind=vparam]
+expr e@8:12#1 memberCall recv=e@8:12 callee=iterator args=[] type=kotlin.collections.MutableIterator<Int> call=kotlin.collections.LinkedHashSet.iterator[kind=fun;recv=kotlin.collections.LinkedHashSet<T0>;params=;gen=1] targs=[Int]
+expr e@8:5 return value=e@8:12#1 type=Nothing

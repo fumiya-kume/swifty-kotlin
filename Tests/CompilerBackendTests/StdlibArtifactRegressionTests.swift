@@ -97,6 +97,40 @@ struct StdlibArtifactRegressionTests {
         }
     }
 
+    /// KSP-1151: source-backed coroutine intrinsic fallbacks must not leave a
+    /// direct reference to the Kotlin parameter `function` in the stdlib
+    /// artifact. A trivial artifact consumer is enough to exercise the native
+    /// linker against every object emitted by the stdlib-only build.
+    @Test
+    func testCoroutineIntrinsicFallbackThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        fun main() {
+            println("ok")
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "CoroutineIntrinsicArtifact",
+                emit: .executable,
+                outputPath: outputBase,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            #expect(result.stdout.replacingOccurrences(of: "\r\n", with: "\n") == "ok\n")
+        }
+    }
+
     /// KSP-1165: a named companion object must remain an exact nested type when
     /// the stdlib is consumed through a precompiled artifact.
     @Test
@@ -122,6 +156,43 @@ struct StdlibArtifactRegressionTests {
             )
             try runToKIR(ctx)
             #expect(!ctx.diagnostics.hasError, "Unexpected diagnostics: \(ctx.diagnostics.diagnostics)")
+        }
+    }
+
+    /// KSP-1083: a generic kotlin.concurrent nominal must preserve its
+    /// source-backed type parameter while residual constructor/member links
+    /// remain usable through a precompiled stdlib artifact.
+    @Test
+    func testAtomicReferenceGenericThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        import kotlin.concurrent.AtomicReference
+
+        fun main() {
+            val reference = AtomicReference("source-plus-residual")
+            val loaded: String = reference.get()
+            println(loaded)
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "AtomicReferenceArtifact",
+                emit: .executable,
+                outputPath: outputBase,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            #expect(result.stdout.replacingOccurrences(of: "\r\n", with: "\n") == "source-plus-residual\n")
         }
     }
 
@@ -1854,6 +1925,171 @@ struct StdlibArtifactRegressionTests {
             let normalizedStdout = result.stdout
                 .replacingOccurrences(of: "\r\n", with: "\n")
             #expect(normalizedStdout == "15\n41\n")
+        }
+    }
+
+    /// Imported enum declarations have no AST, so the per-decl synthesis that
+    /// normally registers `values()` / `valueOf(_:)` / `entries` / `name` /
+    /// `ordinal` never ran for them. Consumers of a precompiled stdlib
+    /// artifact must still resolve the full implicit enum API.
+    @Test
+    func testImportedEnumImplicitMembersThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        @file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class)
+
+        import kotlin.native.concurrent.FutureState
+
+        fun futureStateEntries(): kotlin.enums.EnumEntries<FutureState> = FutureState.entries
+        fun futureStateValue(): Int = FutureState.COMPUTED.value
+        fun futureStateValueOf(): FutureState = FutureState.valueOf("THROWN")
+        fun futureStateValues(): Array<FutureState> = FutureState.values()
+        fun futureStateOrdinal(): Int = FutureState.CANCELLED.ordinal
+        fun futureStateName(): String = FutureState.INVALID.name
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "ImportedEnumMembersArtifact",
+                emit: .kirDump,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            #expect(
+                !ctx.diagnostics.hasError,
+                "Imported enum implicit members should resolve: \(ctx.diagnostics.diagnostics)"
+            )
+        }
+    }
+
+    /// An `override` member is implicitly open in Kotlin, but the serializer
+    /// dropped that, so an imported `AbstractMap.size` decoded as final and
+    /// consumers could not override it.
+    @Test
+    func testAbstractMapSizeOverrideThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        import kotlin.collections.AbstractMap
+        import kotlin.collections.Map
+        import kotlin.collections.Set
+
+        class ObservedMap : AbstractMap<String?, Int?>() {
+            override val entries: Set<Map.Entry<String?, Int?>>
+                get() = emptyMap<String?, Int?>().entries
+
+            override val size: Int
+                get() = 2
+        }
+
+        fun customMapCount(): Int {
+            return ObservedMap().size
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "AbstractMapSizeOverrideArtifact",
+                emit: .kirDump,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            #expect(
+                !ctx.diagnostics.hasError,
+                "Overriding imported AbstractMap.size should not be rejected: \(ctx.diagnostics.diagnostics)"
+            )
+        }
+    }
+
+    /// Two metadata-path warnings used to fire on every artifact compile:
+    /// `KSWIFTK-LIB-0004` because serialized `fieldOffsets` referenced
+    /// `backingField` records the layout resolver did not accept, and
+    /// `KSWIFTK-SEMA-0102` because synthesized enum `values` stubs collided
+    /// with source-backed enum extensions (e.g. `RequiresOptIn.Level.values`).
+    @Test
+    func testStdlibArtifactImportDoesNotEmitLayoutOrStubOverlapWarnings() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        fun main() {
+            println("ok")
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "CleanArtifactImport",
+                emit: .kirDump,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            let codes = ctx.diagnostics.diagnostics.map(\.code)
+            #expect(
+                !codes.contains("KSWIFTK-LIB-0004"),
+                "Imported layout should not warn about backingField entries: \(ctx.diagnostics.diagnostics)"
+            )
+            #expect(
+                !codes.contains("KSWIFTK-SEMA-0102"),
+                "Imported enum synthesis should not emit stub-overlap warnings: \(ctx.diagnostics.diagnostics)"
+            )
+        }
+    }
+
+    /// `LinkedHashSet()` lowers to the `__kk_set_of` runtime factory, so the
+    /// returned box never passes `kk_object_new` and never received the
+    /// constructor-site `kk_object_register_vtable_method` registrations. Once
+    /// `size` imported as the (Kotlin-correct) open member it is, a subclass in
+    /// the same module marked its slot virtual and `base.size` trapped in
+    /// `kk_vtable_lookup`. The lowering pass now registers the nominal vtable
+    /// implementations on factory-produced boxes.
+    @Test
+    func testLinkedHashSetOpenMembersDispatchOnFactoryBox() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        class Tags : LinkedHashSet<String>()
+
+        fun makeSet(): LinkedHashSet<String> {
+            val s = LinkedHashSet<String>()
+            s.add("x")
+            return s
+        }
+
+        fun main() {
+            val t = Tags()
+            t.add("kotlin")
+            println(t.size)
+            println(t.contains("kotlin"))
+
+            val base = LinkedHashSet<String>()
+            base.add("a")
+            println(base.size)
+            println(base.contains("a"))
+
+            println(makeSet().size)
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "LinkedHashSetFactoryVtable",
+                emit: .executable,
+                outputPath: outputBase,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout
+                .replacingOccurrences(of: "\r\n", with: "\n")
+            #expect(normalizedStdout == "1\ntrue\n1\ntrue\n1\n")
         }
     }
 }

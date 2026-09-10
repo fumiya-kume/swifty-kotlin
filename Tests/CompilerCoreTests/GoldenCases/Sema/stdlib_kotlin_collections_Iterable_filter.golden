@@ -1,77 +1,73 @@
-symbol fq=__local_0.indexedDestination kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
-symbol fq=__local_1.instanceDestination kind=local vis=private flags=_ type=kotlin.collections.MutableList<String>
-symbol fq=__local_2.notNullDestination kind=local vis=private flags=_ type=kotlin.collections.MutableList<String>
-symbol fq=__local_3.notDestination kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
-symbol fq=__local_4.destination kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
-symbol fq=filterFamily kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>] ret=Unit
-symbol fq=filterFamily.$0.nullable kind=valueParameter vis=private flags=_
-symbol fq=filterFamily.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
+symbol fq=__local_0.indexedDestination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
+symbol fq=__local_1.instanceDestination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<String>
+symbol fq=__local_2.notNullDestination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<String>
+symbol fq=__local_3.notDestination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
+symbol fq=__local_4.destination[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
+symbol fq=filterFamily.$0.nullable[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=filterFamily.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=filterFamily[kind=fun;params=kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>] ret=Unit
 file fstdlib_kotlin_collections_Iterable_filter package=_
-  decl filterFamily fun filterFamily sym=filterFamily
-expr e@2:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values
+  decl filterFamily[kind=fun;params=kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>] fun filterFamily sym=filterFamily[kind=fun;params=kotlin.collections.Iterable<Any?>,kotlin.collections.Iterable<String?>]
+expr e@2:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
 expr e@2:21 name(it) type=Any? ref=s-0
 expr e@2:27 name(null) type=Nothing?
 expr e@2:21#1 binary(notEqual) lhs=e@2:21 rhs=e@2:27 type=Boolean
 expr e@2:19 lambda params=[] body=e@2:21#1 label=filter type=(Any?) -> Boolean
-expr e@2:5#1 memberCall recv=e@2:5 callee=filter args=[_:e@2:19] type=kotlin.collections.List<Any?> call=kotlin.collections.filter#13 targs=[Any?]
-expr e@3:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values
+expr e@2:5#1 memberCall recv=e@2:5 callee=filter args=[_:e@2:19] type=kotlin.collections.List<Any?> call=kotlin.collections.filter[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Any?]
+expr e@3:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
 expr e@3:40 name(index) type=Int ref=s-1
 expr e@3:48 int(2) type=Int
 expr e@3:40#1 binary(modulo) lhs=e@3:40 rhs=e@3:48 type=Int
 expr e@3:53 int(0) type=Int
 expr e@3:40#2 binary(equal) lhs=e@3:40#1 rhs=e@3:53 type=Boolean
 expr e@3:26 lambda params=[index,_] body=e@3:40#2 label=filterIndexed type=(Int, Any?) -> Boolean
-expr e@3:5#1 memberCall recv=e@3:5 callee=filterIndexed args=[_:e@3:26] type=kotlin.collections.List<Any?> call=kotlin.collections.filterIndexed#13 targs=[Any?]
-expr e@5:30 call callee=e@5:30#1 args=[] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf#0 targs=[Any?]
-expr e@5:5 localDecl indexedDestination mutable=0 type=_ init=e@5:30 type=Unit ref=__local_0.indexedDestination
-expr e@6:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values
-expr e@6:28 name(indexedDestination) type=kotlin.collections.MutableList<Any?> ref=__local_0.indexedDestination
+expr e@3:5#1 memberCall recv=e@3:5 callee=filterIndexed args=[_:e@3:26] type=kotlin.collections.List<Any?> call=kotlin.collections.filterIndexed[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=Int,T0;ret=Boolean};gen=1] targs=[Any?]
+expr e@5:30 call callee=e@5:30#1 args=[] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf[kind=fun;params=;gen=1] targs=[Any?]
+expr e@5:5 localDecl indexedDestination mutable=0 type=_ init=e@5:30 type=Unit ref=__local_0.indexedDestination[kind=local]
+expr e@6:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
+expr e@6:28 name(indexedDestination) type=kotlin.collections.MutableList<Any?> ref=__local_0.indexedDestination[kind=local]
 expr e@6:62 name(index) type=Int ref=s-2
 expr e@6:70 int(2) type=Int
 expr e@6:62#1 binary(modulo) lhs=e@6:62 rhs=e@6:70 type=Int
 expr e@6:75 int(0) type=Int
 expr e@6:62#2 binary(equal) lhs=e@6:62#1 rhs=e@6:75 type=Boolean
 expr e@6:48 lambda params=[index,_] body=e@6:62#2 label=filterIndexedTo type=(Int, Any?) -> Boolean
-expr e@6:5#1 memberCall recv=e@6:5 callee=filterIndexedTo args=[_:e@6:28,_:e@6:48] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.filterIndexedTo#0 targs=[Any?,kotlin.collections.MutableList<Any?>]
-expr e@8:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values
-expr e@8:5#1 memberCall recv=e@8:5 callee=filterIsInstance args=[] type=kotlin.collections.List<String> call=kotlin.collections.filterIsInstance#1 targs=[String]
-expr e@9:31 call callee=e@9:31#1 args=[] type=kotlin.collections.MutableList<String> call=kotlin.collections.mutableListOf#0 targs=[String]
-expr e@9:5 localDecl instanceDestination mutable=0 type=_ init=e@9:31 type=Unit ref=__local_1.instanceDestination
-expr e@10:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values
-expr e@10:31 name(instanceDestination) type=kotlin.collections.MutableList<String> ref=__local_1.instanceDestination
-expr e@10:5#1 memberCall recv=e@10:5 callee=filterIsInstanceTo args=[_:e@10:31] type=kotlin.collections.MutableList<String> call=kotlin.collections.filterIsInstanceTo#0 targs=[String,kotlin.collections.MutableList<String>]
-expr e@12:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values
+expr e@6:5#1 memberCall recv=e@6:5 callee=filterIndexedTo args=[_:e@6:28,_:e@6:48] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.filterIndexedTo[kind=fun;recv=kotlin.collections.Iterable<T0>;params=T1,fn{p=Int,T0;ret=Boolean};gen=2] targs=[Any?,kotlin.collections.MutableList<Any?>]
+expr e@8:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
+expr e@8:5#1 memberCall recv=e@8:5 callee=filterIsInstance args=[] type=kotlin.collections.List<String> call=kotlin.collections.filterIsInstance[kind=fun;recv=kotlin.collections.Iterable<*>;params=;gen=1] targs=[String]
+expr e@9:31 call callee=e@9:31#1 args=[] type=kotlin.collections.MutableList<String> call=kotlin.collections.mutableListOf[kind=fun;params=;gen=1] targs=[String]
+expr e@9:5 localDecl instanceDestination mutable=0 type=_ init=e@9:31 type=Unit ref=__local_1.instanceDestination[kind=local]
+expr e@10:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
+expr e@10:31 name(instanceDestination) type=kotlin.collections.MutableList<String> ref=__local_1.instanceDestination[kind=local]
+expr e@10:5#1 memberCall recv=e@10:5 callee=filterIsInstanceTo args=[_:e@10:31] type=kotlin.collections.MutableList<String> call=kotlin.collections.filterIsInstanceTo[kind=fun;recv=kotlin.collections.Iterable<*>;params=T0;gen=1] targs=[String,kotlin.collections.MutableList<String>]
+expr e@12:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
 expr e@12:24 name(it) type=Any? ref=s-3
 expr e@12:30 name(null) type=Nothing?
 expr e@12:24#1 binary(equal) lhs=e@12:24 rhs=e@12:30 type=Boolean
 expr e@12:22 lambda params=[] body=e@12:24#1 label=filterNot type=(Any?) -> Boolean
-expr e@12:5#1 memberCall recv=e@12:5 callee=filterNot args=[_:e@12:22] type=kotlin.collections.List<Any?> call=kotlin.collections.filterNot#13 targs=[Any?]
-expr e@13:5 name(nullable) type=kotlin.collections.Iterable<String?> ref=filterFamily.$0.nullable
-expr e@13:5#1 memberCall recv=e@13:5 callee=filterNotNull args=[] type=kotlin.collections.List<String> call=kotlin.collections.filterNotNull#1 targs=[String]
-expr e@15:30 call callee=e@15:30#1 args=[] type=kotlin.collections.MutableList<String> call=kotlin.collections.mutableListOf#0 targs=[String]
-expr e@15:5 localDecl notNullDestination mutable=0 type=_ init=e@15:30 type=Unit ref=__local_2.notNullDestination
-expr e@16:5 name(nullable) type=kotlin.collections.Iterable<String?> ref=filterFamily.$0.nullable
-expr e@16:30 name(notNullDestination) type=kotlin.collections.MutableList<String> ref=__local_2.notNullDestination
-expr e@16:5#1 memberCall recv=e@16:5 callee=filterNotNullTo args=[_:e@16:30] type=kotlin.collections.MutableList<String> call=kotlin.collections.filterNotNullTo#0 targs=[String,kotlin.collections.MutableList<String>]
-expr e@18:26 call callee=e@18:26#1 args=[] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf#0 targs=[Any?]
-expr e@18:5 localDecl notDestination mutable=0 type=_ init=e@18:26 type=Unit ref=__local_3.notDestination
-expr e@19:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values
-expr e@19:24 name(notDestination) type=kotlin.collections.MutableList<Any?> ref=__local_3.notDestination
+expr e@12:5#1 memberCall recv=e@12:5 callee=filterNot args=[_:e@12:22] type=kotlin.collections.List<Any?> call=kotlin.collections.filterNot[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Any?]
+expr e@13:5 name(nullable) type=kotlin.collections.Iterable<String?> ref=filterFamily.$0.nullable[kind=vparam]
+expr e@13:5#1 memberCall recv=e@13:5 callee=filterNotNull args=[] type=kotlin.collections.List<String> call=kotlin.collections.filterNotNull[kind=fun;recv=kotlin.collections.Iterable<T0?>;params=;gen=1] targs=[String]
+expr e@15:30 call callee=e@15:30#1 args=[] type=kotlin.collections.MutableList<String> call=kotlin.collections.mutableListOf[kind=fun;params=;gen=1] targs=[String]
+expr e@15:5 localDecl notNullDestination mutable=0 type=_ init=e@15:30 type=Unit ref=__local_2.notNullDestination[kind=local]
+expr e@16:5 name(nullable) type=kotlin.collections.Iterable<String?> ref=filterFamily.$0.nullable[kind=vparam]
+expr e@16:30 name(notNullDestination) type=kotlin.collections.MutableList<String> ref=__local_2.notNullDestination[kind=local]
+expr e@16:5#1 memberCall recv=e@16:5 callee=filterNotNullTo args=[_:e@16:30] type=kotlin.collections.MutableList<String> call=kotlin.collections.filterNotNullTo[kind=fun;recv=kotlin.collections.Iterable<T1?>;params=T0;gen=2] targs=[String,kotlin.collections.MutableList<String>]
+expr e@18:26 call callee=e@18:26#1 args=[] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf[kind=fun;params=;gen=1] targs=[Any?]
+expr e@18:5 localDecl notDestination mutable=0 type=_ init=e@18:26 type=Unit ref=__local_3.notDestination[kind=local]
+expr e@19:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
+expr e@19:24 name(notDestination) type=kotlin.collections.MutableList<Any?> ref=__local_3.notDestination[kind=local]
 expr e@19:42 name(it) type=Any? ref=s-4
 expr e@19:48 name(null) type=Nothing?
 expr e@19:42#1 binary(equal) lhs=e@19:42 rhs=e@19:48 type=Boolean
 expr e@19:40 lambda params=[] body=e@19:42#1 label=filterNotTo type=(Any?) -> Boolean
-expr e@19:5#1 memberCall recv=e@19:5 callee=filterNotTo args=[_:e@19:24,_:e@19:40] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.filterNotTo#0 targs=[Any?,kotlin.collections.MutableList<Any?>]
-expr e@21:23 call callee=e@21:23#1 args=[] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf#0 targs=[Any?]
-expr e@21:5 localDecl destination mutable=0 type=_ init=e@21:23 type=Unit ref=__local_4.destination
-expr e@22:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values
-expr e@22:21 name(destination) type=kotlin.collections.MutableList<Any?> ref=__local_4.destination
+expr e@19:5#1 memberCall recv=e@19:5 callee=filterNotTo args=[_:e@19:24,_:e@19:40] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.filterNotTo[kind=fun;recv=kotlin.collections.Iterable<T0>;params=T1,fn{p=T0;ret=Boolean};gen=2] targs=[Any?,kotlin.collections.MutableList<Any?>]
+expr e@21:23 call callee=e@21:23#1 args=[] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf[kind=fun;params=;gen=1] targs=[Any?]
+expr e@21:5 localDecl destination mutable=0 type=_ init=e@21:23 type=Unit ref=__local_4.destination[kind=local]
+expr e@22:5 name(values) type=kotlin.collections.Iterable<Any?> ref=filterFamily.$0.values[kind=vparam]
+expr e@22:21 name(destination) type=kotlin.collections.MutableList<Any?> ref=__local_4.destination[kind=local]
 expr e@22:36 name(it) type=Any? ref=s-5
 expr e@22:42 name(null) type=Nothing?
 expr e@22:36#1 binary(notEqual) lhs=e@22:36 rhs=e@22:42 type=Boolean
 expr e@22:34 lambda params=[] body=e@22:36#1 label=filterTo type=(Any?) -> Boolean
-expr e@22:5#1 memberCall recv=e@22:5 callee=filterTo args=[_:e@22:21,_:e@22:34] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.filterTo#0 targs=[Any?,kotlin.collections.MutableList<Any?>]
+expr e@22:5#1 memberCall recv=e@22:5 callee=filterTo args=[_:e@22:21,_:e@22:34] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.filterTo[kind=fun;recv=kotlin.collections.Iterable<T0>;params=T1,fn{p=T0;ret=Boolean};gen=2] targs=[Any?,kotlin.collections.MutableList<Any?>]

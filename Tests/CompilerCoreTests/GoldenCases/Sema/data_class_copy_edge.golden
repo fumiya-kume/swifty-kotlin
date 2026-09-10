@@ -1,64 +1,64 @@
-symbol fq=Name kind=class vis=public flags=dataType
-symbol fq=Name.<init> kind=constructor vis=public flags=_ sig=recv=Name params=[String] ret=Name
-symbol fq=Name.<init>.$0.value kind=valueParameter vis=private flags=_
-symbol fq=Name.copy kind=function vis=public flags=synthetic sig=recv=Name params=[String] ret=Name defaults=[1]
-symbol fq=Name.copy.$1.value kind=valueParameter vis=private flags=_
-symbol fq=Name.value kind=property vis=public flags=_ type=String
-symbol fq=Point kind=class vis=public flags=dataType
-symbol fq=Point.<init> kind=constructor vis=public flags=_ sig=recv=Point params=[Int,Int] ret=Point
-symbol fq=Point.<init>.$2.x kind=valueParameter vis=private flags=_
-symbol fq=Point.<init>.$2.y kind=valueParameter vis=private flags=_
-symbol fq=Point.copy kind=function vis=public flags=synthetic sig=recv=Point params=[Int,Int] ret=Point defaults=[1,1]
-symbol fq=Point.copy.$3.x kind=valueParameter vis=private flags=_
-symbol fq=Point.copy.$3.y kind=valueParameter vis=private flags=_
-symbol fq=Point.x kind=property vis=public flags=_ type=Int
-symbol fq=Point.y kind=property vis=public flags=_ type=Int
-symbol fq=__local_0.p kind=local vis=private flags=_ type=Point
-symbol fq=__local_1.p2 kind=local vis=private flags=_ type=Point
-symbol fq=__local_2.p kind=local vis=private flags=_ type=Point
-symbol fq=__local_3.p3 kind=local vis=private flags=_ type=Point
-symbol fq=__local_4.n kind=local vis=private flags=_ type=Name
-symbol fq=__local_5.n2 kind=local vis=private flags=_ type=Name
-symbol fq=testCopyBasic kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=testCopySingleProperty kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=testCopyWithOverride kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=Name.<init>.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Name.<init>[kind=ctor;recv=Name;params=String] kind=constructor vis=public flags=_ sig=recv=Name params=[String] ret=Name
+symbol fq=Name.copy.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Name.copy[kind=fun;recv=Name;params=String] kind=function vis=public flags=synthetic sig=recv=Name params=[String] ret=Name defaults=[1]
+symbol fq=Name.value[kind=prop] kind=property vis=public flags=_ type=String
+symbol fq=Name[kind=class] kind=class vis=public flags=dataType
+symbol fq=Point.<init>.$2.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Point.<init>.$2.y[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Point.<init>[kind=ctor;recv=Point;params=Int,Int] kind=constructor vis=public flags=_ sig=recv=Point params=[Int,Int] ret=Point
+symbol fq=Point.copy.$3.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Point.copy.$3.y[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Point.copy[kind=fun;recv=Point;params=Int,Int] kind=function vis=public flags=synthetic sig=recv=Point params=[Int,Int] ret=Point defaults=[1,1]
+symbol fq=Point.x[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=Point.y[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=Point[kind=class] kind=class vis=public flags=dataType
+symbol fq=__local_0.p[kind=local] kind=local vis=private flags=_ type=Point
+symbol fq=__local_1.p2[kind=local] kind=local vis=private flags=_ type=Point
+symbol fq=__local_2.p[kind=local] kind=local vis=private flags=_ type=Point
+symbol fq=__local_3.p3[kind=local] kind=local vis=private flags=_ type=Point
+symbol fq=__local_4.n[kind=local] kind=local vis=private flags=_ type=Name
+symbol fq=__local_5.n2[kind=local] kind=local vis=private flags=_ type=Name
+symbol fq=testCopyBasic[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=testCopySingleProperty[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=testCopyWithOverride[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fdata_class_copy_edge package=_
-  decl Point class Point sym=Point
-  decl Name class Name sym=Name
-  decl testCopyBasic fun testCopyBasic sym=testCopyBasic
-  decl testCopyWithOverride fun testCopyWithOverride sym=testCopyWithOverride
-  decl testCopySingleProperty fun testCopySingleProperty sym=testCopySingleProperty
+  decl Point[kind=class] class Point sym=Point[kind=class]
+  decl Name[kind=class] class Name sym=Name[kind=class]
+  decl testCopyBasic[kind=fun;params=] fun testCopyBasic sym=testCopyBasic[kind=fun;params=]
+  decl testCopyWithOverride[kind=fun;params=] fun testCopyWithOverride sym=testCopyWithOverride[kind=fun;params=]
+  decl testCopySingleProperty[kind=fun;params=] fun testCopySingleProperty sym=testCopySingleProperty[kind=fun;params=]
 expr e@6:19 int(1) type=Int
 expr e@6:22 int(2) type=Int
-expr e@6:13 call callee=e@6:13#1 args=[_:e@6:19,_:e@6:22] type=Point call=Point.<init>
-expr e@6:5 localDecl p mutable=0 type=_ init=e@6:13 type=Unit ref=__local_0.p
-expr e@7:14 name(p) type=Point ref=__local_0.p
-expr e@7:14#1 memberCall recv=e@7:14 callee=copy args=[] type=Point call=Point.copy
-expr e@7:5 localDecl p2 mutable=0 type=_ init=e@7:14#1 type=Unit ref=__local_1.p2
-expr e@8:13 name(p2) type=Point ref=__local_1.p2
-expr e@8:13#1 memberCall recv=e@8:13 callee=x args=[] type=Int ref=Point.x
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println#1
-expr e@9:13 name(p2) type=Point ref=__local_1.p2
-expr e@9:13#1 memberCall recv=e@9:13 callee=y args=[] type=Int ref=Point.y
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#1
+expr e@6:13 call callee=e@6:13#1 args=[_:e@6:19,_:e@6:22] type=Point call=Point.<init>[kind=ctor;recv=Point;params=Int,Int]
+expr e@6:5 localDecl p mutable=0 type=_ init=e@6:13 type=Unit ref=__local_0.p[kind=local]
+expr e@7:14 name(p) type=Point ref=__local_0.p[kind=local]
+expr e@7:14#1 memberCall recv=e@7:14 callee=copy args=[] type=Point call=Point.copy[kind=fun;recv=Point;params=Int,Int]
+expr e@7:5 localDecl p2 mutable=0 type=_ init=e@7:14#1 type=Unit ref=__local_1.p2[kind=local]
+expr e@8:13 name(p2) type=Point ref=__local_1.p2[kind=local]
+expr e@8:13#1 memberCall recv=e@8:13 callee=x args=[] type=Int ref=Point.x[kind=prop]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@9:13 name(p2) type=Point ref=__local_1.p2[kind=local]
+expr e@9:13#1 memberCall recv=e@9:13 callee=y args=[] type=Int ref=Point.y[kind=prop]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@13:19 int(1) type=Int
 expr e@13:22 int(2) type=Int
-expr e@13:13 call callee=e@13:13#1 args=[_:e@13:19,_:e@13:22] type=Point call=Point.<init>
-expr e@13:5 localDecl p mutable=0 type=_ init=e@13:13 type=Unit ref=__local_2.p
-expr e@14:14 name(p) type=Point ref=__local_2.p
+expr e@13:13 call callee=e@13:13#1 args=[_:e@13:19,_:e@13:22] type=Point call=Point.<init>[kind=ctor;recv=Point;params=Int,Int]
+expr e@13:5 localDecl p mutable=0 type=_ init=e@13:13 type=Unit ref=__local_2.p[kind=local]
+expr e@14:14 name(p) type=Point ref=__local_2.p[kind=local]
 expr e@14:25 int(10) type=Int
-expr e@14:14#1 memberCall recv=e@14:14 callee=copy args=[x:e@14:25] type=Point call=Point.copy
-expr e@14:5 localDecl p3 mutable=0 type=_ init=e@14:14#1 type=Unit ref=__local_3.p3
-expr e@15:13 name(p3) type=Point ref=__local_3.p3
-expr e@15:13#1 memberCall recv=e@15:13 callee=x args=[] type=Int ref=Point.x
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println#1
+expr e@14:14#1 memberCall recv=e@14:14 callee=copy args=[x:e@14:25] type=Point call=Point.copy[kind=fun;recv=Point;params=Int,Int]
+expr e@14:5 localDecl p3 mutable=0 type=_ init=e@14:14#1 type=Unit ref=__local_3.p3[kind=local]
+expr e@15:13 name(p3) type=Point ref=__local_3.p3[kind=local]
+expr e@15:13#1 memberCall recv=e@15:13 callee=x args=[] type=Int ref=Point.x[kind=prop]
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@19:18 string(hello) type=String
-expr e@19:13 call callee=e@19:13#1 args=[_:e@19:18] type=Name call=Name.<init>
-expr e@19:5 localDecl n mutable=0 type=_ init=e@19:13 type=Unit ref=__local_4.n
-expr e@20:14 name(n) type=Name ref=__local_4.n
+expr e@19:13 call callee=e@19:13#1 args=[_:e@19:18] type=Name call=Name.<init>[kind=ctor;recv=Name;params=String]
+expr e@19:5 localDecl n mutable=0 type=_ init=e@19:13 type=Unit ref=__local_4.n[kind=local]
+expr e@20:14 name(n) type=Name ref=__local_4.n[kind=local]
 expr e@20:29 string(world) type=String
-expr e@20:14#1 memberCall recv=e@20:14 callee=copy args=[value:e@20:29] type=Name call=Name.copy
-expr e@20:5 localDecl n2 mutable=0 type=_ init=e@20:14#1 type=Unit ref=__local_5.n2
-expr e@21:13 name(n2) type=Name ref=__local_5.n2
-expr e@21:13#1 memberCall recv=e@21:13 callee=value args=[] type=String ref=Name.value
-expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13#1] type=Unit call=kotlin.io.println#2
+expr e@20:14#1 memberCall recv=e@20:14 callee=copy args=[value:e@20:29] type=Name call=Name.copy[kind=fun;recv=Name;params=String]
+expr e@20:5 localDecl n2 mutable=0 type=_ init=e@20:14#1 type=Unit ref=__local_5.n2[kind=local]
+expr e@21:13 name(n2) type=Name ref=__local_5.n2[kind=local]
+expr e@21:13#1 memberCall recv=e@21:13 callee=value args=[] type=String ref=Name.value[kind=prop]
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]

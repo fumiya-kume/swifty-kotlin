@@ -183,6 +183,22 @@ public external fun IntRange.reversed(): IntRange
 
 public fun IntRange.toIntArray(): IntArray = toList().toIntArray()
 
+// KSP-1285: Kotlin exposes exact IntRange overloads for the other signed
+// primitive integer types. Long values must be range-checked before narrowing.
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Byte): Boolean =
+    contains(value.toInt())
+
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Long): Boolean {
+    if (value < -2147483648L || value > 2147483647L) return false
+    return contains(value.toInt())
+}
+
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Short): Boolean =
+    contains(value.toInt())
+
 public fun IntRange.average(): Double {
     if (isEmpty()) return Double.NaN
     var sum = 0.0
@@ -541,6 +557,22 @@ public fun <R> IntProgression.foldIndexed(initial: R, operation: (Int, R, Int) -
 public fun IntProgression.find(predicate: (Int) -> Boolean): Int? = firstOrNull(predicate)
 public fun IntProgression.findLast(predicate: (Int) -> Boolean): Int? = lastOrNull(predicate)
 
+private fun intProgressionDescription(progression: IntProgression): String {
+    val step = progression.step
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun IntProgression.first(): Int {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${intProgressionDescription(this)} is empty.")
+    return this.first
+}
+
 public fun IntProgression.first(predicate: (Int) -> Boolean): Int {
     for (element in this) if (predicate(element)) return element
     throw NoSuchElementException("No element found matching predicate.")
@@ -550,6 +582,13 @@ public fun IntProgression.firstOrNull(): Int? = if (isEmpty()) null else first
 public fun IntProgression.firstOrNull(predicate: (Int) -> Boolean): Int? {
     for (element in this) if (predicate(element)) return element
     return null
+}
+
+@SinceKotlin("1.7")
+public fun IntProgression.last(): Int {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${intProgressionDescription(this)} is empty.")
+    return this.last
 }
 
 @NoInline
@@ -621,6 +660,20 @@ public fun IntProgression.windowed(size: Int, step: Int = 1, partialWindows: Boo
 }
 
 // MARK: - LongRange
+
+// KSP-1287: Kotlin exposes exact LongRange overloads for the other signed
+// primitive integer types; widening preserves their values before membership.
+@kotlin.internal.InlineOnly
+public inline operator fun LongRange.contains(value: Byte): Boolean =
+    this.contains(value.toLong())
+
+@kotlin.internal.InlineOnly
+public inline operator fun LongRange.contains(value: Int): Boolean =
+    this.contains(value.toLong())
+
+@kotlin.internal.InlineOnly
+public inline operator fun LongRange.contains(value: Short): Boolean =
+    this.contains(value.toLong())
 
 public fun LongRange.forEach(action: (Long) -> Unit) {
     for (element in this) { action(element) }
@@ -726,6 +779,37 @@ public fun LongRange.sum(): Long {
 public external fun LongRange.reversed(): LongProgression
 
 // MARK: - LongProgression
+
+private fun longProgressionDescription(progression: LongProgression): String {
+    // Widen before negation so the existing Int-typed synthetic step also
+    // renders Int.MIN_VALUE as 2147483648 when used in an empty message.
+    val step = progression.step.toLong()
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun LongProgression.first(): Long {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${longProgressionDescription(this)} is empty.")
+    return this.first
+}
+
+@SinceKotlin("1.7")
+public fun LongProgression.firstOrNull(): Long? = if (isEmpty()) null else this.first
+
+@SinceKotlin("1.7")
+public fun LongProgression.last(): Long {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${longProgressionDescription(this)} is empty.")
+    return this.last
+}
+
+@SinceKotlin("1.7")
+public fun LongProgression.lastOrNull(): Long? = if (isEmpty()) null else this.last
 
 public fun LongProgression.forEach(action: (Long) -> Unit) {
     for (element in this) { action(element) }
@@ -1279,6 +1363,35 @@ public external fun UIntRange.reversed(): UIntProgression
 
 // MARK: - UIntProgression
 
+private fun uintProgressionDescription(progression: UIntProgression): String {
+    val step = progression.step
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun UIntProgression.first(): UInt {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${uintProgressionDescription(this)} is empty.")
+    return this.first
+}
+
+@SinceKotlin("1.7")
+public fun UIntProgression.firstOrNull(): UInt? = if (isEmpty()) null else this.first
+
+@SinceKotlin("1.7")
+public fun UIntProgression.last(): UInt {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${uintProgressionDescription(this)} is empty.")
+    return this.last
+}
+
+@SinceKotlin("1.7")
+public fun UIntProgression.lastOrNull(): UInt? = if (isEmpty()) null else this.last
+
 public fun UIntProgression.forEach(action: (UInt) -> Unit) {
     for (element in this) { action(element) }
 }
@@ -1470,6 +1583,23 @@ public fun ULongRange.toList(): List<ULong> {
     return result
 }
 
+// KSP-1292: Kotlin 2.3.10 widens unsigned values before using the native
+// ULong overload, preserving the exact range membership and boundary rules.
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UByte): Boolean {
+    return contains(value.toULong())
+}
+
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UInt): Boolean {
+    return contains(value.toULong())
+}
+
+@SinceKotlin("1.5")
+public operator fun ULongRange.contains(value: UShort): Boolean {
+    return contains(value.toULong())
+}
+
 @KsSymbolName("__kk_range_count")
 public fun ULongRange.count(): Int {
     val count: ULong = if (step > 0) {
@@ -1495,6 +1625,35 @@ public fun ULongRange.sum(): ULong {
 public external fun ULongRange.reversed(): ULongProgression
 
 // MARK: - ULongProgression
+
+private fun ulongProgressionDescription(progression: ULongProgression): String {
+    val step = progression.step
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun ULongProgression.first(): ULong {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${ulongProgressionDescription(this)} is empty.")
+    return this.first
+}
+
+@SinceKotlin("1.7")
+public fun ULongProgression.firstOrNull(): ULong? = if (isEmpty()) null else this.first
+
+@SinceKotlin("1.7")
+public fun ULongProgression.last(): ULong {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${ulongProgressionDescription(this)} is empty.")
+    return this.last
+}
+
+@SinceKotlin("1.7")
+public fun ULongProgression.lastOrNull(): ULong? = if (isEmpty()) null else this.last
 
 public fun ULongProgression.forEach(action: (ULong) -> Unit) {
     for (element in this) { action(element) }

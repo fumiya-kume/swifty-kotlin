@@ -27,23 +27,17 @@ struct GenericInterfaceInheritanceTests {
 
     private func sharedSema() throws -> (SemaModule, StringInterner) {
         if let cached = Self._sharedSema { return cached }
-        let pair = try makeSema(source: Self.sharedSource)
-        Self._sharedSema = pair
-        return pair
-    }
-
-    private func makeSema(
-        source: String
-    ) throws -> (SemaModule, StringInterner) {
         var result: (SemaModule, StringInterner)?
-        try withTemporaryFile(contents: source) { path in
+        try withTemporaryFile(contents: Self.sharedSource) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
             let diagnostics = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
             #expect(!(ctx.diagnostics.hasError), Comment(rawValue: "Expected clean resolution, got: \(diagnostics)"))
             result = (try #require(ctx.sema), ctx.interner)
         }
-        return try #require(result)
+        let pair = try #require(result)
+        Self._sharedSema = pair
+        return pair
     }
 
     @Test func testGenericInterfaceForwardsTypeParameterToSupertype() throws {

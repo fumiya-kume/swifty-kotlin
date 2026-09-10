@@ -188,7 +188,7 @@ struct BundledDeclarationIndex: Sendable {
             // A Kotlin property and an extension function may share the same
             // owner, name, and arity. Do not report the retained synthetic
             // property when the bundled declaration is the source-backed
-            // function being migrated (for example CharProgression.first).
+            // function being migrated (for example IntProgression.first).
             if Self.hasSourceBackedFunctionOverlap(symbol, key: key, symbols: symbols, types: types, interner: interner) {
                 continue
             }
@@ -261,8 +261,9 @@ struct BundledDeclarationIndex: Sendable {
         }
 
         let sourceFunctionFQName = kotlinCollections + [symbol.name]
-        return symbols.allSymbols().contains { candidate in
-            guard candidate.kind == .function,
+        return symbols.lookupAll(fqName: sourceFunctionFQName).contains { candidateID in
+            guard let candidate = symbols.symbol(candidateID),
+                  candidate.kind == .function,
                   (!candidate.flags.contains(.synthetic) || candidate.flags.contains(.importedLibrary)),
                   candidate.name == symbol.name,
                   candidate.fqName == sourceFunctionFQName,
@@ -295,8 +296,9 @@ struct BundledDeclarationIndex: Sendable {
             return false
         }
 
-        return symbols.allSymbols().contains { candidate in
-            guard candidate.id != symbol.id,
+        return symbols.lookupByShortName(symbol.name).contains { candidateID in
+            guard let candidate = symbols.symbol(candidateID),
+                  candidate.id != symbol.id,
                   candidate.kind == .function,
                   !candidate.flags.contains(.synthetic),
                   candidate.declSite != nil,
@@ -376,18 +378,22 @@ struct BundledDeclarationIndex: Sendable {
         types: TypeSystem,
         interner: StringInterner
     ) -> Bool {
-        let charProgressionFQName = ["kotlin", "ranges", "CharProgression"].map { interner.intern($0) }
+        let progressionFQNames = [
+            "IntProgression", "LongProgression", "CharProgression",
+            "UIntProgression", "ULongProgression",
+        ].map { ["kotlin", "ranges", $0].map { interner.intern($0) } }
         let migratedNames = Set(["first", "firstOrNull", "last", "lastOrNull"].map { interner.intern($0) })
         guard symbol.kind == .property,
-              key.ownerFQName == charProgressionFQName,
+              progressionFQNames.contains(key.ownerFQName),
               migratedNames.contains(key.name)
         else {
             return false
         }
         return symbols.allSymbols().contains { candidate in
+            // Imported library members have no declSite but stand in for the
+            // bundled source declaration, so accept either source form.
             guard candidate.kind == .function,
-                  !candidate.flags.contains(.synthetic),
-                  candidate.declSite != nil,
+                  symbols.isSourceBackedSymbol(candidate.id),
                   let candidateKey = memberKey(
                       for: candidate,
                       symbolID: candidate.id,

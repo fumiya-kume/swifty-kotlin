@@ -1,12 +1,10 @@
-symbol fq=golden.sema.makeEmptyUByteArray kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.UByteArray
-symbol fq=golden.sema.makeUByteArrayFromByteArray kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray] ret=kotlin.UByteArray
-symbol fq=golden.sema.makeUByteArrayFromByteArray.$0.storage kind=valueParameter vis=private flags=_
-symbol fq=kotlin.ByteArray kind=class vis=public flags=synthetic type=kotlin.ByteArray
-symbol fq=kotlin.UByteArray#0 kind=class vis=public flags=synthetic
+symbol fq=golden.sema.makeEmptyUByteArray[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.UByteArray
+symbol fq=golden.sema.makeUByteArrayFromByteArray.$0.storage[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.makeUByteArrayFromByteArray[kind=fun;params=kotlin.ByteArray] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray] ret=kotlin.UByteArray
 file fstdlib_kotlin_UByteArray_n_n package=golden.sema annotations=[@file:Suppress("INVISIBLE_MEMBER","INVISIBLE_REFERENCE")]
-  decl golden.sema.makeUByteArrayFromByteArray fun makeUByteArrayFromByteArray sym=golden.sema.makeUByteArrayFromByteArray
-  decl golden.sema.makeEmptyUByteArray fun makeEmptyUByteArray sym=golden.sema.makeEmptyUByteArray
-expr e@5:78 name(storage) type=kotlin.ByteArray ref=golden.sema.makeUByteArrayFromByteArray.$0.storage
-expr e@5:67 call callee=e@5:67#1 args=[_:e@5:78] type=kotlin.UByteArray call=kotlin.UByteArray#2
+  decl golden.sema.makeUByteArrayFromByteArray[kind=fun;params=kotlin.ByteArray] fun makeUByteArrayFromByteArray sym=golden.sema.makeUByteArrayFromByteArray[kind=fun;params=kotlin.ByteArray]
+  decl golden.sema.makeEmptyUByteArray[kind=fun;params=] fun makeEmptyUByteArray sym=golden.sema.makeEmptyUByteArray[kind=fun;params=]
+expr e@5:78 name(storage) type=kotlin.ByteArray ref=golden.sema.makeUByteArrayFromByteArray.$0.storage[kind=vparam]
+expr e@5:67 call callee=e@5:67#1 args=[_:e@5:78] type=kotlin.UByteArray call=kotlin.UByteArray[kind=fun;params=kotlin.ByteArray]
 expr e@7:52 int(0) type=Int
 expr e@7:41 call callee=e@7:41#1 args=[_:e@7:52] type=kotlin.UByteArray

@@ -137,6 +137,8 @@ extension CoroutineLoweringPass {
         let kkFlowFlatMapConcatName = ctx.interner.intern("__kk_flow_flat_map_concat")
         let kkFlowFlatMapMergeName = ctx.interner.intern("__kk_flow_flat_map_merge")
         let kkFlowFlatMapLatestName = ctx.interner.intern("__kk_flow_flat_map_latest")
+        let kkChannelFlowCreateName = ctx.interner.intern("kk_channel_flow_create")
+        let kkCallbackFlowCreateName = ctx.interner.intern("kk_callback_flow_create")
 
         // Fallback for call results whose Sema-inferred type is Flow<T> even
         // though the callee isn't a recognized builder name (e.g. a user
@@ -455,7 +457,8 @@ extension CoroutineLoweringPass {
                         callee == toListName || callee == firstName || callee == singleName ||
                         callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName ||
                         callee == kkFlowCollectLatestName ||
-                        callee == kkFlowToListName || callee == kkFlowFirstName || callee == kkFlowSingleName
+                        callee == kkFlowToListName || callee == kkFlowFirstName || callee == kkFlowSingleName ||
+                        callee == kkChannelFlowCreateName || callee == kkCallbackFlowCreateName
                 case let .virtualCall(_, callee, _, _, _, _, _, _):
                     callee == mapName || callee == filterName || callee == takeName || callee == collectName ||
                         callee == collectLatestName ||

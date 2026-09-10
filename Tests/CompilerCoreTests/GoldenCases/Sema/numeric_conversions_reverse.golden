@@ -1,63 +1,63 @@
-symbol fq=__local_0.d kind=local vis=private flags=_ type=Double
-symbol fq=__local_1.di kind=local vis=private flags=_ type=Int
-symbol fq=__local_2.dl kind=local vis=private flags=_ type=Long
-symbol fq=__local_3.df kind=local vis=private flags=_ type=Float
-symbol fq=__local_4.f kind=local vis=private flags=_ type=Float
-symbol fq=__local_5.fi kind=local vis=private flags=_ type=Int
-symbol fq=__local_6.fl kind=local vis=private flags=_ type=Long
-symbol fq=__local_7.fd kind=local vis=private flags=_ type=Double
-symbol fq=__local_8.l kind=local vis=private flags=_ type=Long
-symbol fq=__local_9.lf kind=local vis=private flags=_ type=Float
-symbol fq=__local_10.ld kind=local vis=private flags=_ type=Double
-symbol fq=__local_11.li kind=local vis=private flags=_ type=Int
-symbol fq=__local_12.lb kind=local vis=private flags=_ type=Byte
-symbol fq=__local_13.ls kind=local vis=private flags=_ type=Short
-symbol fq=__local_14.i kind=local vis=private flags=_ type=Int
-symbol fq=__local_15.id kind=local vis=private flags=_ type=Double
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.d[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_1.di[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.dl[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_3.df[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=__local_4.f[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=__local_5.fi[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_6.fl[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_7.fd[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_8.l[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_9.lf[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=__local_10.ld[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_11.li[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_12.lb[kind=local] kind=local vis=private flags=_ type=Byte
+symbol fq=__local_13.ls[kind=local] kind=local vis=private flags=_ type=Short
+symbol fq=__local_14.i[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_15.id[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fnumeric_conversions_reverse package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:13 double(3.14) type=Double
-expr e@2:5 localDecl d mutable=0 type=_ init=e@2:13 type=Unit ref=__local_0.d
-expr e@3:14 name(d) type=Double ref=__local_0.d
+expr e@2:5 localDecl d mutable=0 type=_ init=e@2:13 type=Unit ref=__local_0.d[kind=local]
+expr e@3:14 name(d) type=Double ref=__local_0.d[kind=local]
 expr e@3:14#1 memberCall recv=e@3:14 callee=toInt args=[] type=Int
-expr e@3:5 localDecl di mutable=0 type=_ init=e@3:14#1 type=Unit ref=__local_1.di
-expr e@4:14 name(d) type=Double ref=__local_0.d
+expr e@3:5 localDecl di mutable=0 type=_ init=e@3:14#1 type=Unit ref=__local_1.di[kind=local]
+expr e@4:14 name(d) type=Double ref=__local_0.d[kind=local]
 expr e@4:14#1 memberCall recv=e@4:14 callee=toLong args=[] type=Long
-expr e@4:5 localDecl dl mutable=0 type=_ init=e@4:14#1 type=Unit ref=__local_2.dl
-expr e@5:14 name(d) type=Double ref=__local_0.d
+expr e@4:5 localDecl dl mutable=0 type=_ init=e@4:14#1 type=Unit ref=__local_2.dl[kind=local]
+expr e@5:14 name(d) type=Double ref=__local_0.d[kind=local]
 expr e@5:14#1 memberCall recv=e@5:14 callee=toFloat args=[] type=Float
-expr e@5:5 localDecl df mutable=0 type=_ init=e@5:14#1 type=Unit ref=__local_3.df
+expr e@5:5 localDecl df mutable=0 type=_ init=e@5:14#1 type=Unit ref=__local_3.df[kind=local]
 expr e@7:13 float(2.5) type=Float
-expr e@7:5 localDecl f mutable=0 type=_ init=e@7:13 type=Unit ref=__local_4.f
-expr e@8:14 name(f) type=Float ref=__local_4.f
+expr e@7:5 localDecl f mutable=0 type=_ init=e@7:13 type=Unit ref=__local_4.f[kind=local]
+expr e@8:14 name(f) type=Float ref=__local_4.f[kind=local]
 expr e@8:14#1 memberCall recv=e@8:14 callee=toInt args=[] type=Int
-expr e@8:5 localDecl fi mutable=0 type=_ init=e@8:14#1 type=Unit ref=__local_5.fi
-expr e@9:14 name(f) type=Float ref=__local_4.f
+expr e@8:5 localDecl fi mutable=0 type=_ init=e@8:14#1 type=Unit ref=__local_5.fi[kind=local]
+expr e@9:14 name(f) type=Float ref=__local_4.f[kind=local]
 expr e@9:14#1 memberCall recv=e@9:14 callee=toLong args=[] type=Long
-expr e@9:5 localDecl fl mutable=0 type=_ init=e@9:14#1 type=Unit ref=__local_6.fl
-expr e@10:14 name(f) type=Float ref=__local_4.f
+expr e@9:5 localDecl fl mutable=0 type=_ init=e@9:14#1 type=Unit ref=__local_6.fl[kind=local]
+expr e@10:14 name(f) type=Float ref=__local_4.f[kind=local]
 expr e@10:14#1 memberCall recv=e@10:14 callee=toDouble args=[] type=Double
-expr e@10:5 localDecl fd mutable=0 type=_ init=e@10:14#1 type=Unit ref=__local_7.fd
+expr e@10:5 localDecl fd mutable=0 type=_ init=e@10:14#1 type=Unit ref=__local_7.fd[kind=local]
 expr e@12:13 long(42) type=Long
-expr e@12:5 localDecl l mutable=0 type=_ init=e@12:13 type=Unit ref=__local_8.l
-expr e@13:14 name(l) type=Long ref=__local_8.l
+expr e@12:5 localDecl l mutable=0 type=_ init=e@12:13 type=Unit ref=__local_8.l[kind=local]
+expr e@13:14 name(l) type=Long ref=__local_8.l[kind=local]
 expr e@13:14#1 memberCall recv=e@13:14 callee=toFloat args=[] type=Float
-expr e@13:5 localDecl lf mutable=0 type=_ init=e@13:14#1 type=Unit ref=__local_9.lf
-expr e@14:14 name(l) type=Long ref=__local_8.l
+expr e@13:5 localDecl lf mutable=0 type=_ init=e@13:14#1 type=Unit ref=__local_9.lf[kind=local]
+expr e@14:14 name(l) type=Long ref=__local_8.l[kind=local]
 expr e@14:14#1 memberCall recv=e@14:14 callee=toDouble args=[] type=Double
-expr e@14:5 localDecl ld mutable=0 type=_ init=e@14:14#1 type=Unit ref=__local_10.ld
-expr e@15:14 name(l) type=Long ref=__local_8.l
+expr e@14:5 localDecl ld mutable=0 type=_ init=e@14:14#1 type=Unit ref=__local_10.ld[kind=local]
+expr e@15:14 name(l) type=Long ref=__local_8.l[kind=local]
 expr e@15:14#1 memberCall recv=e@15:14 callee=toInt args=[] type=Int
-expr e@15:5 localDecl li mutable=0 type=_ init=e@15:14#1 type=Unit ref=__local_11.li
-expr e@16:14 name(l) type=Long ref=__local_8.l
+expr e@15:5 localDecl li mutable=0 type=_ init=e@15:14#1 type=Unit ref=__local_11.li[kind=local]
+expr e@16:14 name(l) type=Long ref=__local_8.l[kind=local]
 expr e@16:14#1 memberCall recv=e@16:14 callee=toByte args=[] type=Byte
-expr e@16:5 localDecl lb mutable=0 type=_ init=e@16:14#1 type=Unit ref=__local_12.lb
-expr e@17:14 name(l) type=Long ref=__local_8.l
+expr e@16:5 localDecl lb mutable=0 type=_ init=e@16:14#1 type=Unit ref=__local_12.lb[kind=local]
+expr e@17:14 name(l) type=Long ref=__local_8.l[kind=local]
 expr e@17:14#1 memberCall recv=e@17:14 callee=toShort args=[] type=Short
-expr e@17:5 localDecl ls mutable=0 type=_ init=e@17:14#1 type=Unit ref=__local_13.ls
+expr e@17:5 localDecl ls mutable=0 type=_ init=e@17:14#1 type=Unit ref=__local_13.ls[kind=local]
 expr e@19:13 int(100) type=Int
-expr e@19:5 localDecl i mutable=0 type=_ init=e@19:13 type=Unit ref=__local_14.i
-expr e@20:14 name(i) type=Int ref=__local_14.i
-expr e@20:14#1 memberCall recv=e@20:14 callee=toDouble args=[] type=Double call=kotlin.toDouble#1
-expr e@20:5 localDecl id mutable=0 type=_ init=e@20:14#1 type=Unit ref=__local_15.id
+expr e@19:5 localDecl i mutable=0 type=_ init=e@19:13 type=Unit ref=__local_14.i[kind=local]
+expr e@20:14 name(i) type=Int ref=__local_14.i[kind=local]
+expr e@20:14#1 memberCall recv=e@20:14 callee=toDouble args=[] type=Double call=kotlin.toDouble[kind=fun;recv=Int;params=]
+expr e@20:5 localDecl id mutable=0 type=_ init=e@20:14#1 type=Unit ref=__local_15.id[kind=local]

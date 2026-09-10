@@ -1,7 +1,6 @@
-symbol fq=golden.sema.construct kind=function vis=public flags=_ sig=recv=_ params=[kotlinx.cinterop.NativePtr] ret=kotlin.native.concurrent.AtomicNativePtr
-symbol fq=golden.sema.construct.$0.value kind=valueParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.NativePtr kind=class vis=public flags=synthetic type=kotlinx.cinterop.NativePtr
+symbol fq=golden.sema.construct.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.construct[kind=fun;params=kotlinx.cinterop.NativePtr] kind=function vis=public flags=_ sig=recv=_ params=[kotlinx.cinterop.NativePtr] ret=kotlin.native.concurrent.AtomicNativePtr
 file fstdlib_kotlin_native_concurrent_AtomicNativePtr_n_n package=golden.sema
-  decl golden.sema.construct fun construct sym=golden.sema.construct
-expr e@5:46 name(value) type=kotlinx.cinterop.NativePtr ref=golden.sema.construct.$0.value
-expr e@5:5 memberCall recv=e@5:5#1 callee=AtomicNativePtr args=[_:e@5:46] type=kotlin.native.concurrent.AtomicNativePtr call=kotlin.native.concurrent.AtomicNativePtr.<init>
+  decl golden.sema.construct[kind=fun;params=kotlinx.cinterop.NativePtr] fun construct sym=golden.sema.construct[kind=fun;params=kotlinx.cinterop.NativePtr]
+expr e@5:46 name(value) type=kotlinx.cinterop.NativePtr ref=golden.sema.construct.$0.value[kind=vparam]
+expr e@5:5 memberCall recv=e@5:5#1 callee=AtomicNativePtr args=[_:e@5:46] type=kotlin.native.concurrent.AtomicNativePtr call=kotlin.native.concurrent.AtomicNativePtr.<init>[kind=ctor;recv=kotlin.native.concurrent.AtomicNativePtr;params=kotlinx.cinterop.NativePtr]

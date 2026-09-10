@@ -148,10 +148,47 @@ public fun String.matches(regex: Regex): Boolean =
     __kk_string_matches_regex(regex)
 
 /**
+ * Returns `true` if this char sequence matches the given regular expression.
+ */
+@kotlin.internal.InlineOnly
+public inline infix fun CharSequence.matches(regex: Regex): Boolean {
+    // Regex currently accepts String input. Preserve indexed CharSequence
+    // semantics instead of trusting a custom implementation's toString().
+    if (this is String) return regex.matches(this)
+    if (this is StringBuilder) return regex.matches(this.toString())
+    val builder = StringBuilder()
+    var i = 0
+    val size = length
+    while (i < size) {
+        builder.append(this[i])
+        i++
+    }
+    return regex.matches(builder.toString())
+}
+
+/**
  * Returns `true` if this string contains a match of [regex].
  */
 public operator fun String.contains(regex: Regex): Boolean =
     __kk_string_contains_regex(regex)
+
+/**
+ * Returns `true` if this char sequence contains at least one match of [regex].
+ */
+public operator fun CharSequence.contains(regex: Regex): Boolean =
+    regex.containsMatchIn(charSequenceRegexInput(this))
+
+private fun charSequenceRegexInput(value: CharSequence): String {
+    if (value is String) return value.toString()
+    val length = value.length
+    val result = StringBuilder(length)
+    var index = 0
+    while (index < length) {
+        result.append(value[index])
+        index++
+    }
+    return result.toString()
+}
 
 /**
  * Returns a [Regex] that matches this string as a pattern.

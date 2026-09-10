@@ -246,18 +246,15 @@ extension KIRLoweringDriver {
         var declIDs = [kirID]
         declIDs.append(contentsOf: allDecls)
 
-        // When the object implements interfaces, it needs a global slot to hold
-        // its heap-allocated pointer for interface-typed virtual dispatch.
-        let hasInterfaceSupertypes = sema.symbols.directSupertypes(for: symbol).contains { superSym in
-            sema.symbols.symbol(superSym)?.kind == .interface
-        }
-        if hasInterfaceSupertypes {
-            let objectType = sema.types.make(.classType(ClassType(
-                classSymbol: symbol, args: [], nullability: .nonNull
-            )))
-            let globalID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: objectType)))
-            declIDs.append(globalID)
-        }
+        // Every source-backed top-level object needs a global slot for its
+        // singleton heap pointer. Without it, an object crossing an Any
+        // boundary is lowered as an unresolved symbol reference and reaches
+        // the runtime as the raw zero value instead of a registered handle.
+        let objectType = sema.types.make(.classType(ClassType(
+            classSymbol: symbol, args: [], nullability: .nonNull
+        )))
+        let globalID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: objectType)))
+        declIDs.append(globalID)
 
         // Synthesise an initializer for the top-level object so that
         // property initializers and init blocks run during module init

@@ -1,0 +1,119 @@
+symbol fq=__local_0.positive[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntProgression
+symbol fq=__local_1.negative[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntProgression
+symbol fq=__local_2.emptyPositive[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntProgression
+symbol fq=__local_3.emptyNegative[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntProgression
+symbol fq=__local_4.minValue[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntProgression
+symbol fq=__local_5.maxValue[kind=local] kind=local vis=private flags=_ type=kotlin.ranges.IntProgression
+symbol fq=__try_0_catch_0.error[kind=local] kind=local vis=internal flags=_ type=kotlin.NoSuchElementException
+symbol fq=__try_1_catch_0.error[kind=local] kind=local vis=internal flags=_ type=kotlin.NoSuchElementException
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=printEmpty.$0.label[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=printEmpty.$0.progression[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=printEmpty[kind=fun;params=String,kotlin.ranges.IntProgression] kind=function vis=public flags=_ sig=recv=_ params=[String,kotlin.ranges.IntProgression] ret=Unit
+file fstdlib_kotlin_ranges_IntProgression_first_last_n package=_
+  decl printEmpty[kind=fun;params=String,kotlin.ranges.IntProgression] fun printEmpty sym=printEmpty[kind=fun;params=String,kotlin.ranges.IntProgression]
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+expr e@3:9 name(progression) type=kotlin.ranges.IntProgression ref=printEmpty.$0.progression[kind=vparam]
+expr e@3:9#1 memberCall recv=e@3:9 callee=first args=[] type=Int call=kotlin.ranges.first[kind=fun;recv=kotlin.ranges.IntProgression;params=]
+expr e@4:19 name(label) type=String ref=printEmpty.$0.label[kind=vparam]
+expr e@4:17 stringTemplate[expr(e@4:19),lit(:first-returned)] type=String
+expr e@4:9 call callee=e@4:9#1 args=[_:e@4:17] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@2:9 blockExpr stmts=[e@3:9#1] trailing=e@4:9 type=Unit
+expr e@6:19 name(label) type=String ref=printEmpty.$0.label[kind=vparam]
+expr e@6:33 name(error) type=kotlin.NoSuchElementException ref=__try_0_catch_0.error[kind=local]
+expr e@6:33#1 memberCall recv=e@6:33 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
+expr e@6:17 stringTemplate[expr(e@6:19),lit(:first=),expr(e@6:33#1)] type=String
+expr e@6:9 call callee=e@6:9#1 args=[_:e@6:17] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@5:45 blockExpr stmts=[] trailing=e@6:9 type=Unit ref=__try_0_catch_0.error[kind=local]
+expr e@2:5 try body=e@2:9 catches=[e@5:45] finally=_ type=Unit
+expr e@9:9 name(progression) type=kotlin.ranges.IntProgression ref=printEmpty.$0.progression[kind=vparam]
+expr e@9:9#1 memberCall recv=e@9:9 callee=last args=[] type=Int call=kotlin.ranges.last[kind=fun;recv=kotlin.ranges.IntProgression;params=]
+expr e@10:19 name(label) type=String ref=printEmpty.$0.label[kind=vparam]
+expr e@10:17 stringTemplate[expr(e@10:19),lit(:last-returned)] type=String
+expr e@10:9 call callee=e@10:9#1 args=[_:e@10:17] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@8:9 blockExpr stmts=[e@9:9#1] trailing=e@10:9 type=Unit
+expr e@12:19 name(label) type=String ref=printEmpty.$0.label[kind=vparam]
+expr e@12:32 name(error) type=kotlin.NoSuchElementException ref=__try_1_catch_0.error[kind=local]
+expr e@12:32#1 memberCall recv=e@12:32 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
+expr e@12:17 stringTemplate[expr(e@12:19),lit(:last=),expr(e@12:32#1)] type=String
+expr e@12:9 call callee=e@12:9#1 args=[_:e@12:17] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@11:45 blockExpr stmts=[] trailing=e@12:9 type=Unit ref=__try_1_catch_0.error[kind=local]
+expr e@8:5 try body=e@8:9 catches=[e@11:45] finally=_ type=Unit
+expr e@17:20 name(IntProgression) type=kotlin.ranges.IntProgression.Companion ref=kotlin.ranges.IntProgression[kind=class]
+expr e@17:51 int(2) type=Int
+expr e@17:54 int(11) type=Int
+expr e@17:58 int(3) type=Int
+expr e@17:20#1 memberCall recv=e@17:20 callee=fromClosedRange args=[_:e@17:51,_:e@17:54,_:e@17:58] type=kotlin.ranges.IntProgression call=kotlin.ranges.fromClosedRange[kind=fun;recv=kotlin.ranges.IntProgression.Companion;params=Int,Int,Int]
+expr e@17:5 localDecl positive mutable=0 type=_ init=e@17:20#1 type=Unit ref=__local_0.positive[kind=local]
+expr e@18:20 int(10) type=Int
+expr e@18:31 int(10) type=Int
+expr e@18:30 unary(unaryMinus) operand=e@18:31 type=Int
+expr e@18:20#1 binary(downTo) lhs=e@18:20 rhs=e@18:30 type=kotlin.ranges.IntProgression call=kotlin.ranges.downTo[kind=fun;recv=Int;params=Int]
+expr e@18:39 int(3) type=Int
+expr e@18:20#2 binary(step) lhs=e@18:20#1 rhs=e@18:39 type=kotlin.ranges.IntProgression call=kotlin.ranges.step[kind=fun;recv=kotlin.ranges.IntProgression;params=Int]
+expr e@18:5 localDecl negative mutable=0 type=_ init=e@18:20#2 type=Unit ref=__local_1.negative[kind=local]
+expr e@19:25 name(IntProgression) type=kotlin.ranges.IntProgression.Companion ref=kotlin.ranges.IntProgression[kind=class]
+expr e@19:56 int(5) type=Int
+expr e@19:59 int(1) type=Int
+expr e@19:62 int(1) type=Int
+expr e@19:25#1 memberCall recv=e@19:25 callee=fromClosedRange args=[_:e@19:56,_:e@19:59,_:e@19:62] type=kotlin.ranges.IntProgression call=kotlin.ranges.fromClosedRange[kind=fun;recv=kotlin.ranges.IntProgression.Companion;params=Int,Int,Int]
+expr e@19:5 localDecl emptyPositive mutable=0 type=_ init=e@19:25#1 type=Unit ref=__local_2.emptyPositive[kind=local]
+expr e@20:25 name(IntProgression) type=kotlin.ranges.IntProgression.Companion ref=kotlin.ranges.IntProgression[kind=class]
+expr e@20:56 int(1) type=Int
+expr e@20:59 int(5) type=Int
+expr e@20:63 int(1) type=Int
+expr e@20:62 unary(unaryMinus) operand=e@20:63 type=Int
+expr e@20:25#1 memberCall recv=e@20:25 callee=fromClosedRange args=[_:e@20:56,_:e@20:59,_:e@20:62] type=kotlin.ranges.IntProgression call=kotlin.ranges.fromClosedRange[kind=fun;recv=kotlin.ranges.IntProgression.Companion;params=Int,Int,Int]
+expr e@20:5 localDecl emptyNegative mutable=0 type=_ init=e@20:25#1 type=Unit ref=__local_3.emptyNegative[kind=local]
+expr e@21:20 name(IntProgression) type=kotlin.ranges.IntProgression.Companion ref=kotlin.ranges.IntProgression[kind=class]
+expr e@21:51 name(Int) type=kotlin.Int.Companion ref=kotlin.Int[kind=class]
+expr e@21:51#1 memberCall recv=e@21:51 callee=MIN_VALUE args=[] type=Int call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.Int.Companion;params=]
+expr e@21:66 name(Int) type=kotlin.Int.Companion ref=kotlin.Int[kind=class]
+expr e@21:66#1 memberCall recv=e@21:66 callee=MIN_VALUE args=[] type=Int call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.Int.Companion;params=]
+expr e@21:81 int(1) type=Int
+expr e@21:20#1 memberCall recv=e@21:20 callee=fromClosedRange args=[_:e@21:51#1,_:e@21:66#1,_:e@21:81] type=kotlin.ranges.IntProgression call=kotlin.ranges.fromClosedRange[kind=fun;recv=kotlin.ranges.IntProgression.Companion;params=Int,Int,Int]
+expr e@21:5 localDecl minValue mutable=0 type=_ init=e@21:20#1 type=Unit ref=__local_4.minValue[kind=local]
+expr e@22:20 name(IntProgression) type=kotlin.ranges.IntProgression.Companion ref=kotlin.ranges.IntProgression[kind=class]
+expr e@22:51 name(Int) type=kotlin.Int.Companion ref=kotlin.Int[kind=class]
+expr e@22:51#1 memberCall recv=e@22:51 callee=MAX_VALUE args=[] type=Int call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.Int.Companion;params=]
+expr e@22:66 name(Int) type=kotlin.Int.Companion ref=kotlin.Int[kind=class]
+expr e@22:66#1 memberCall recv=e@22:66 callee=MAX_VALUE args=[] type=Int call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.Int.Companion;params=]
+expr e@22:81 int(1) type=Int
+expr e@22:20#1 memberCall recv=e@22:20 callee=fromClosedRange args=[_:e@22:51#1,_:e@22:66#1,_:e@22:81] type=kotlin.ranges.IntProgression call=kotlin.ranges.fromClosedRange[kind=fun;recv=kotlin.ranges.IntProgression.Companion;params=Int,Int,Int]
+expr e@22:5 localDecl maxValue mutable=0 type=_ init=e@22:20#1 type=Unit ref=__local_5.maxValue[kind=local]
+expr e@24:27 name(positive) type=kotlin.ranges.IntProgression ref=__local_0.positive[kind=local]
+expr e@24:27#1 memberCall recv=e@24:27 callee=first args=[] type=Int ref=kotlin.ranges.IntProgression.first[kind=prop]
+expr e@24:45 name(positive) type=kotlin.ranges.IntProgression ref=__local_0.positive[kind=local]
+expr e@24:45#1 memberCall recv=e@24:45 callee=last args=[] type=Int ref=kotlin.ranges.IntProgression.last[kind=prop]
+expr e@24:13 stringTemplate[lit(properties=),expr(e@24:27#1),lit(,),expr(e@24:45#1)] type=String
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@25:25 name(positive) type=kotlin.ranges.IntProgression ref=__local_0.positive[kind=local]
+expr e@25:25#1 memberCall recv=e@25:25 callee=first args=[] type=Int call=kotlin.ranges.first[kind=fun;recv=kotlin.ranges.IntProgression;params=]
+expr e@25:45 name(positive) type=kotlin.ranges.IntProgression ref=__local_0.positive[kind=local]
+expr e@25:45#1 memberCall recv=e@25:45 callee=last args=[] type=Int call=kotlin.ranges.last[kind=fun;recv=kotlin.ranges.IntProgression;params=]
+expr e@25:13 stringTemplate[lit(positive=),expr(e@25:25#1),lit(,),expr(e@25:45#1)] type=String
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@26:25 name(negative) type=kotlin.ranges.IntProgression ref=__local_1.negative[kind=local]
+expr e@26:25#1 memberCall recv=e@26:25 callee=first args=[] type=Int call=kotlin.ranges.first[kind=fun;recv=kotlin.ranges.IntProgression;params=]
+expr e@26:45 name(negative) type=kotlin.ranges.IntProgression ref=__local_1.negative[kind=local]
+expr e@26:45#1 memberCall recv=e@26:45 callee=last args=[] type=Int call=kotlin.ranges.last[kind=fun;recv=kotlin.ranges.IntProgression;params=]
+expr e@26:13 stringTemplate[lit(negative=),expr(e@26:25#1),lit(,),expr(e@26:45#1)] type=String
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@27:20 name(minValue) type=kotlin.ranges.IntProgression ref=__local_4.minValue[kind=local]
+expr e@27:20#1 memberCall recv=e@27:20 callee=first args=[] type=Int call=kotlin.ranges.first[kind=fun;recv=kotlin.ranges.IntProgression;params=]
+expr e@27:40 name(minValue) type=kotlin.ranges.IntProgression ref=__local_4.minValue[kind=local]
+expr e@27:40#1 memberCall recv=e@27:40 callee=last args=[] type=Int call=kotlin.ranges.last[kind=fun;recv=kotlin.ranges.IntProgression;params=]
+expr e@27:13 stringTemplate[lit(min=),expr(e@27:20#1),lit(,),expr(e@27:40#1)] type=String
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@28:20 name(maxValue) type=kotlin.ranges.IntProgression ref=__local_5.maxValue[kind=local]
+expr e@28:20#1 memberCall recv=e@28:20 callee=first args=[] type=Int call=kotlin.ranges.first[kind=fun;recv=kotlin.ranges.IntProgression;params=]
+expr e@28:40 name(maxValue) type=kotlin.ranges.IntProgression ref=__local_5.maxValue[kind=local]
+expr e@28:40#1 memberCall recv=e@28:40 callee=last args=[] type=Int call=kotlin.ranges.last[kind=fun;recv=kotlin.ranges.IntProgression;params=]
+expr e@28:13 stringTemplate[lit(max=),expr(e@28:20#1),lit(,),expr(e@28:40#1)] type=String
+expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@29:16 string(positive) type=String
+expr e@29:28 name(emptyPositive) type=kotlin.ranges.IntProgression ref=__local_2.emptyPositive[kind=local]
+expr e@29:5 call callee=e@29:5#1 args=[_:e@29:16,_:e@29:28] type=Unit call=printEmpty[kind=fun;params=String,kotlin.ranges.IntProgression]
+expr e@30:16 string(negative) type=String
+expr e@30:28 name(emptyNegative) type=kotlin.ranges.IntProgression ref=__local_3.emptyNegative[kind=local]
+expr e@30:5 call callee=e@30:5#1 args=[_:e@30:16,_:e@30:28] type=Unit call=printEmpty[kind=fun;params=String,kotlin.ranges.IntProgression]
