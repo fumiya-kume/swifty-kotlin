@@ -1,15 +1,14 @@
-symbol fq=golden.sema.charSequenceAny kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
-symbol fq=golden.sema.charSequenceAny.$0.cs kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.emptyAny kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.stringAny kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=golden.sema.charSequenceAny.$0.cs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceAny[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.emptyAny[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.stringAny[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 file fstdlib_kotlin_text_CharSequence_any package=golden.sema
-  decl golden.sema.charSequenceAny fun charSequenceAny sym=golden.sema.charSequenceAny
-  decl golden.sema.stringAny fun stringAny sym=golden.sema.stringAny
-  decl golden.sema.emptyAny fun emptyAny sym=golden.sema.emptyAny
-expr e@3:50 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceAny.$0.cs
-expr e@3:50#1 memberCall recv=e@3:50 callee=any args=[] type=Boolean call=kotlin.text.any#0
+  decl golden.sema.charSequenceAny[kind=fun;params=kotlin.CharSequence] fun charSequenceAny sym=golden.sema.charSequenceAny[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.stringAny[kind=fun;params=] fun stringAny sym=golden.sema.stringAny[kind=fun;params=]
+  decl golden.sema.emptyAny[kind=fun;params=] fun emptyAny sym=golden.sema.emptyAny[kind=fun;params=]
+expr e@3:50 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceAny.$0.cs[kind=vparam]
+expr e@3:50#1 memberCall recv=e@3:50 callee=any args=[] type=Boolean call=kotlin.text.any[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@5:28 string(x) type=String
-expr e@5:28#1 memberCall recv=e@5:28 callee=any args=[] type=Boolean call=kotlin.text.any#0
+expr e@5:28#1 memberCall recv=e@5:28 callee=any args=[] type=Boolean call=kotlin.text.any[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@7:27 string() type=String
-expr e@7:27#1 memberCall recv=e@7:27 callee=any args=[] type=Boolean call=kotlin.text.any#0
+expr e@7:27#1 memberCall recv=e@7:27 callee=any args=[] type=Boolean call=kotlin.text.any[kind=fun;recv=kotlin.CharSequence;params=]

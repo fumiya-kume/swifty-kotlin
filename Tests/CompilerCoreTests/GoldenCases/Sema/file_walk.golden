@@ -1,0 +1,11 @@
+symbol fq=__local_0.walked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<out java.io.File>
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<out java.io.File>
+symbol fq=walkTree.$0.dir[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=walkTree[kind=fun;params=java.io.File] kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=Unit
+file ffile_walk package=_
+  decl walkTree[kind=fun;params=java.io.File] fun walkTree sym=walkTree[kind=fun;params=java.io.File]
+expr e@7:18 name(dir) type=java.io.File ref=walkTree.$0.dir[kind=vparam]
+expr e@7:18#1 memberCall recv=e@7:18 callee=walk args=[] type=kotlin.collections.List<out java.io.File> call=java.io.File.walk[kind=fun;recv=java.io.File;params=]
+expr e@7:5 localDecl walked mutable=0 type=_ init=e@7:18#1 type=Unit ref=__local_0.walked[kind=local]
+expr e@8:35 name(walked) type=kotlin.collections.List<out java.io.File> ref=__local_0.walked[kind=local]
+expr e@8:5 localDecl checked mutable=0 type=List<out File> init=e@8:35 type=Unit ref=__local_1.checked[kind=local]

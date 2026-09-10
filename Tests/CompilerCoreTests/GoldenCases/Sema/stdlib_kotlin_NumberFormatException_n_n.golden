@@ -1,60 +1,58 @@
-symbol fq=__try_0_catch_0.e kind=local vis=internal flags=_ type=kotlin.NumberFormatException
-symbol fq=__try_1_catch_0.e kind=local vis=internal flags=_ type=kotlin.RuntimeException
-symbol fq=__try_2_catch_0.e kind=local vis=internal flags=_ type=kotlin.Exception
-symbol fq=golden.sema.catchException kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.catchNumberFormat kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.catchRuntimeException kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.isException kind=function vis=public flags=_ sig=recv=_ params=[kotlin.NumberFormatException] ret=Boolean
-symbol fq=golden.sema.isException.$0.e kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.isRuntimeException kind=function vis=public flags=_ sig=recv=_ params=[kotlin.NumberFormatException] ret=Boolean
-symbol fq=golden.sema.isRuntimeException.$1.e kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.message kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.NumberFormatException
-symbol fq=golden.sema.message.$2.m kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.noArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.NumberFormatException
-symbol fq=kotlin.Exception kind=class vis=public flags=openType type=kotlin.Exception
-symbol fq=kotlin.RuntimeException kind=class vis=public flags=openType
+symbol fq=__try_0_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.NumberFormatException
+symbol fq=__try_1_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.RuntimeException
+symbol fq=__try_2_catch_0.e[kind=local] kind=local vis=internal flags=_ type=kotlin.Exception
+symbol fq=golden.sema.catchException[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.catchNumberFormat[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.catchRuntimeException[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.isException.$0.e[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.isException[kind=fun;params=kotlin.NumberFormatException] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.NumberFormatException] ret=Boolean
+symbol fq=golden.sema.isRuntimeException.$1.e[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.isRuntimeException[kind=fun;params=kotlin.NumberFormatException] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.NumberFormatException] ret=Boolean
+symbol fq=golden.sema.message.$2.m[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.message[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.NumberFormatException
+symbol fq=golden.sema.noArg[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.NumberFormatException
 file fstdlib_kotlin_NumberFormatException_n_n package=golden.sema
-  decl golden.sema.noArg fun noArg sym=golden.sema.noArg
-  decl golden.sema.message fun message sym=golden.sema.message
-  decl golden.sema.catchNumberFormat fun catchNumberFormat sym=golden.sema.catchNumberFormat
-  decl golden.sema.isRuntimeException fun isRuntimeException sym=golden.sema.isRuntimeException
-  decl golden.sema.isException fun isException sym=golden.sema.isException
-  decl golden.sema.catchRuntimeException fun catchRuntimeException sym=golden.sema.catchRuntimeException
-  decl golden.sema.catchException fun catchException sym=golden.sema.catchException
-expr e@3:38 call callee=e@3:38#1 args=[] type=kotlin.NumberFormatException call=kotlin.NumberFormatException.<init>#0
-expr e@4:72 name(m) type=String? ref=golden.sema.message.$2.m
-expr e@4:50 call callee=e@4:50#1 args=[_:e@4:72] type=kotlin.NumberFormatException call=kotlin.NumberFormatException.<init>#1
+  decl golden.sema.noArg[kind=fun;params=] fun noArg sym=golden.sema.noArg[kind=fun;params=]
+  decl golden.sema.message[kind=fun;params=String?] fun message sym=golden.sema.message[kind=fun;params=String?]
+  decl golden.sema.catchNumberFormat[kind=fun;params=] fun catchNumberFormat sym=golden.sema.catchNumberFormat[kind=fun;params=]
+  decl golden.sema.isRuntimeException[kind=fun;params=kotlin.NumberFormatException] fun isRuntimeException sym=golden.sema.isRuntimeException[kind=fun;params=kotlin.NumberFormatException]
+  decl golden.sema.isException[kind=fun;params=kotlin.NumberFormatException] fun isException sym=golden.sema.isException[kind=fun;params=kotlin.NumberFormatException]
+  decl golden.sema.catchRuntimeException[kind=fun;params=] fun catchRuntimeException sym=golden.sema.catchRuntimeException[kind=fun;params=]
+  decl golden.sema.catchException[kind=fun;params=] fun catchException sym=golden.sema.catchException[kind=fun;params=]
+expr e@3:38 call callee=e@3:38#1 args=[] type=kotlin.NumberFormatException call=kotlin.NumberFormatException.<init>[kind=ctor;recv=kotlin.NumberFormatException;params=]
+expr e@4:72 name(m) type=String? ref=golden.sema.message.$2.m[kind=vparam]
+expr e@4:50 call callee=e@4:50#1 args=[_:e@4:72] type=kotlin.NumberFormatException call=kotlin.NumberFormatException.<init>[kind=ctor;recv=kotlin.NumberFormatException;params=String?]
 expr e@8:37 string(bad number) type=String
-expr e@8:15 call callee=e@8:15#1 args=[_:e@8:37] type=kotlin.NumberFormatException call=kotlin.NumberFormatException.<init>#1
+expr e@8:15 call callee=e@8:15#1 args=[_:e@8:37] type=kotlin.NumberFormatException call=kotlin.NumberFormatException.<init>[kind=ctor;recv=kotlin.NumberFormatException;params=String?]
 expr e@8:9 throw value=e@8:15 type=Nothing
 expr e@7:9 blockExpr stmts=[] trailing=e@8:9 type=Nothing
-expr e@10:9 name(e) type=kotlin.NumberFormatException ref=__try_0_catch_0.e
-expr e@10:9#1 memberCall recv=e@10:9 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@10:9 name(e) type=kotlin.NumberFormatException ref=__try_0_catch_0.e[kind=local]
+expr e@10:9#1 memberCall recv=e@10:9 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@10:22 string(caught) type=String
 expr e@10:9#2 binary(elvis) lhs=e@10:9#1 rhs=e@10:22 type=String
-expr e@9:40 blockExpr stmts=[] trailing=e@10:9#2 type=String ref=__try_0_catch_0.e
+expr e@9:40 blockExpr stmts=[] trailing=e@10:9#2 type=String ref=__try_0_catch_0.e[kind=local]
 expr e@7:5 try body=e@7:9 catches=[e@9:40] finally=_ type=String
-expr e@13:61 name(e) type=kotlin.NumberFormatException ref=golden.sema.isRuntimeException.$1.e
+expr e@13:61 name(e) type=kotlin.NumberFormatException ref=golden.sema.isRuntimeException.$1.e[kind=vparam]
 expr e@13:61#1 isCheck expr=e@13:61 type=kotlin.RuntimeException type=Boolean
-expr e@14:54 name(e) type=kotlin.NumberFormatException ref=golden.sema.isException.$0.e
+expr e@14:54 name(e) type=kotlin.NumberFormatException ref=golden.sema.isException.$0.e[kind=vparam]
 expr e@14:54#1 isCheck expr=e@14:54 type=kotlin.Exception type=Boolean
 expr e@18:37 string(runtime) type=String
-expr e@18:15 call callee=e@18:15#1 args=[_:e@18:37] type=kotlin.NumberFormatException call=kotlin.NumberFormatException.<init>#1
+expr e@18:15 call callee=e@18:15#1 args=[_:e@18:37] type=kotlin.NumberFormatException call=kotlin.NumberFormatException.<init>[kind=ctor;recv=kotlin.NumberFormatException;params=String?]
 expr e@18:9 throw value=e@18:15 type=Nothing
 expr e@17:9 blockExpr stmts=[] trailing=e@18:9 type=Nothing
-expr e@20:9 name(e) type=kotlin.RuntimeException ref=__try_1_catch_0.e
-expr e@20:9#1 memberCall recv=e@20:9 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@20:9 name(e) type=kotlin.RuntimeException ref=__try_1_catch_0.e[kind=local]
+expr e@20:9#1 memberCall recv=e@20:9 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@20:22 string(caught) type=String
 expr e@20:9#2 binary(elvis) lhs=e@20:9#1 rhs=e@20:22 type=String
-expr e@19:35 blockExpr stmts=[] trailing=e@20:9#2 type=String ref=__try_1_catch_0.e
+expr e@19:35 blockExpr stmts=[] trailing=e@20:9#2 type=String ref=__try_1_catch_0.e[kind=local]
 expr e@17:5 try body=e@17:9 catches=[e@19:35] finally=_ type=String
 expr e@25:37 string(exception) type=String
-expr e@25:15 call callee=e@25:15#1 args=[_:e@25:37] type=kotlin.NumberFormatException call=kotlin.NumberFormatException.<init>#1
+expr e@25:15 call callee=e@25:15#1 args=[_:e@25:37] type=kotlin.NumberFormatException call=kotlin.NumberFormatException.<init>[kind=ctor;recv=kotlin.NumberFormatException;params=String?]
 expr e@25:9 throw value=e@25:15 type=Nothing
 expr e@24:9 blockExpr stmts=[] trailing=e@25:9 type=Nothing
-expr e@27:9 name(e) type=kotlin.Exception ref=__try_2_catch_0.e
-expr e@27:9#1 memberCall recv=e@27:9 callee=message args=[] type=String? ref=kotlin.Throwable.message
+expr e@27:9 name(e) type=kotlin.Exception ref=__try_2_catch_0.e[kind=local]
+expr e@27:9#1 memberCall recv=e@27:9 callee=message args=[] type=String? ref=kotlin.Throwable.message[kind=prop]
 expr e@27:22 string(caught) type=String
 expr e@27:9#2 binary(elvis) lhs=e@27:9#1 rhs=e@27:22 type=String
-expr e@26:28 blockExpr stmts=[] trailing=e@27:9#2 type=String ref=__try_2_catch_0.e
+expr e@26:28 blockExpr stmts=[] trailing=e@27:9#2 type=String ref=__try_2_catch_0.e[kind=local]
 expr e@24:5 try body=e@24:9 catches=[e@26:28] finally=_ type=String

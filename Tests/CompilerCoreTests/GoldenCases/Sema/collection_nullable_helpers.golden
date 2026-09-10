@@ -1,0 +1,18 @@
+symbol fq=__local_0.nullOrEmpty[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_1.checkedNullOrEmpty[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_2.orEmpty[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Collection<Int>
+symbol fq=__local_3.checkedOrEmpty[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Collection<Int>
+symbol fq=golden.sema.collectionNullableHelpers.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.collectionNullableHelpers[kind=fun;params=kotlin.collections.Collection<Int>?] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>?] ret=Unit
+file fcollection_nullable_helpers package=golden.sema
+  decl golden.sema.collectionNullableHelpers[kind=fun;params=kotlin.collections.Collection<Int>?] fun collectionNullableHelpers sym=golden.sema.collectionNullableHelpers[kind=fun;params=kotlin.collections.Collection<Int>?]
+expr e@6:23 name(values) type=kotlin.collections.Collection<Int>? ref=golden.sema.collectionNullableHelpers.$0.values[kind=vparam]
+expr e@6:23#1 memberCall recv=e@6:23 callee=isNullOrEmpty args=[] type=Boolean call=kotlin.collections.isNullOrEmpty[kind=fun;recv=kotlin.collections.Collection<T0>?;params=;gen=1] targs=[Int]
+expr e@6:5 localDecl nullOrEmpty mutable=0 type=_ init=e@6:23#1 type=Unit ref=__local_0.nullOrEmpty[kind=local]
+expr e@7:39 name(nullOrEmpty) type=Boolean ref=__local_0.nullOrEmpty[kind=local]
+expr e@7:5 localDecl checkedNullOrEmpty mutable=0 type=Boolean init=e@7:39 type=Unit ref=__local_1.checkedNullOrEmpty[kind=local]
+expr e@8:19 name(values) type=kotlin.collections.Collection<Int>? ref=golden.sema.collectionNullableHelpers.$0.values[kind=vparam]
+expr e@8:19#1 memberCall recv=e@8:19 callee=orEmpty args=[] type=kotlin.collections.Collection<Int> call=kotlin.collections.orEmpty[kind=fun;recv=kotlin.collections.Collection<T0>?;params=;gen=1] targs=[Int]
+expr e@8:5 localDecl orEmpty mutable=0 type=_ init=e@8:19#1 type=Unit ref=__local_2.orEmpty[kind=local]
+expr e@9:43 name(orEmpty) type=kotlin.collections.Collection<Int> ref=__local_2.orEmpty[kind=local]
+expr e@9:5 localDecl checkedOrEmpty mutable=0 type=Collection<Int> init=e@9:43 type=Unit ref=__local_3.checkedOrEmpty[kind=local]

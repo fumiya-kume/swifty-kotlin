@@ -1,7 +1,7 @@
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_n_is package=golden.sema
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@4:13 call callee=e@4:13#1 args=[] type=Boolean call=kotlin.isAssertionArgumentEvaluationEnabled
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13] type=Unit call=kotlin.io.println#1
-expr e@5:13 call callee=e@5:13#1 args=[] type=Boolean call=kotlin.isAssertionThrowingErrorEnabled
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13] type=Unit call=kotlin.io.println#1
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@4:13 call callee=e@4:13#1 args=[] type=Boolean call=kotlin.isAssertionArgumentEvaluationEnabled[kind=fun;params=]
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@5:13 call callee=e@5:13#1 args=[] type=Boolean call=kotlin.isAssertionThrowingErrorEnabled[kind=fun;params=]
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

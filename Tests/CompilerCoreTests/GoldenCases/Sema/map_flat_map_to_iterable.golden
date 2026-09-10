@@ -1,0 +1,39 @@
+symbol fq=__local_0.result[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any>
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any>
+symbol fq=__local_2.result[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
+symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
+symbol fq=flatMapIterable.$0.destination[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=flatMapIterable.$0.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=flatMapIterableNullable.$1.destination[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=flatMapIterableNullable.$1.source[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=flatMapIterableNullable[kind=fun;params=kotlin.collections.Map<String?,Int?>,kotlin.collections.MutableList<Any?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>,kotlin.collections.MutableList<Any?>] ret=Unit
+symbol fq=flatMapIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.MutableList<Any>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.collections.MutableList<Any>] ret=Unit
+file fmap_flat_map_to_iterable package=_
+  decl flatMapIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.MutableList<Any>] fun flatMapIterable sym=flatMapIterable[kind=fun;params=kotlin.collections.Map<String,Int>,kotlin.collections.MutableList<Any>]
+  decl flatMapIterableNullable[kind=fun;params=kotlin.collections.Map<String?,Int?>,kotlin.collections.MutableList<Any?>] fun flatMapIterableNullable sym=flatMapIterableNullable[kind=fun;params=kotlin.collections.Map<String?,Int?>,kotlin.collections.MutableList<Any?>]
+expr e@10:18 name(source) type=kotlin.collections.Map<String, Int> ref=flatMapIterable.$0.source[kind=vparam]
+expr e@10:35 name(destination) type=kotlin.collections.MutableList<Any> ref=flatMapIterable.$0.destination[kind=vparam]
+expr e@11:16 name(entry) type=kotlin.collections.Map.Entry<String, Int> ref=s-0
+expr e@11:16#1 memberCall recv=e@11:16 callee=key args=[] type=String call=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
+expr e@11:27 name(entry) type=kotlin.collections.Map.Entry<String, Int> ref=s-0
+expr e@11:27#1 memberCall recv=e@11:27 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String,Int]
+expr e@11:40 string(iterable) type=String
+expr e@11:9 call callee=e@11:9#1 args=[_:e@11:16#1,_:e@11:27#1,_:e@11:40] type=kotlin.collections.List<out Any> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Any]
+expr e@10:48 lambda params=[entry] body=e@11:9 label=flatMapTo type=(kotlin.collections.Map.Entry<String, Int>) -> Any
+expr e@10:18#1 memberCall recv=e@10:18 callee=flatMapTo args=[_:e@10:35,_:e@10:48] type=kotlin.collections.MutableList<Any> call=kotlin.collections.flatMapTo[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=T3,fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=kotlin.collections.Iterable<T2>};gen=4] targs=[String,Int,Any,kotlin.collections.MutableList<Any>]
+expr e@10:5 localDecl result mutable=0 type=_ init=e@10:18#1 type=Unit ref=__local_0.result[kind=local]
+expr e@13:37 name(result) type=kotlin.collections.MutableList<Any> ref=__local_0.result[kind=local]
+expr e@13:5 localDecl checked mutable=0 type=MutableList<Any> init=e@13:37 type=Unit ref=__local_1.checked[kind=local]
+expr e@20:18 name(source) type=kotlin.collections.Map<String?, Int?> ref=flatMapIterableNullable.$1.source[kind=vparam]
+expr e@20:35 name(destination) type=kotlin.collections.MutableList<Any?> ref=flatMapIterableNullable.$1.destination[kind=vparam]
+expr e@21:16 name(entry) type=kotlin.collections.Map.Entry<String?, Int?> ref=s-1
+expr e@21:16#1 memberCall recv=e@21:16 callee=key args=[] type=String? call=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String?,Int?]
+expr e@21:27 name(entry) type=kotlin.collections.Map.Entry<String?, Int?> ref=s-1
+expr e@21:27#1 memberCall recv=e@21:27 callee=value args=[] type=Int? call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String?,Int?]
+expr e@21:40 name(null) type=Nothing?
+expr e@21:9 call callee=e@21:9#1 args=[_:e@21:16#1,_:e@21:27#1,_:e@21:40] type=kotlin.collections.List<out Any?> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Any?]
+expr e@20:48 lambda params=[entry] body=e@21:9 label=flatMapTo type=(kotlin.collections.Map.Entry<String?, Int?>) -> Any
+expr e@20:18#1 memberCall recv=e@20:18 callee=flatMapTo args=[_:e@20:35,_:e@20:48] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.flatMapTo[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=T3,fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=kotlin.collections.Iterable<T2>};gen=4] targs=[String?,Int?,Any?,kotlin.collections.MutableList<Any?>]
+expr e@20:5 localDecl result mutable=0 type=_ init=e@20:18#1 type=Unit ref=__local_2.result[kind=local]
+expr e@23:38 name(result) type=kotlin.collections.MutableList<Any?> ref=__local_2.result[kind=local]
+expr e@23:5 localDecl checked mutable=0 type=MutableList<Any?> init=e@23:38 type=Unit ref=__local_3.checked[kind=local]

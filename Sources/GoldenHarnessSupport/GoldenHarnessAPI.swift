@@ -54,6 +54,12 @@ public enum GoldenHarness {
     private static let sigkillGracePeriodSeconds: TimeInterval = 1.0
     private static let processPollIntervalSeconds: TimeInterval = 0.05
 
+    /// Environment variable carrying a prebuilt stdlib `.kklib` path into the
+    /// worker process. When set, each dump compiles the case against the
+    /// artifact's serialized metadata instead of re-running the bundled-stdlib
+    /// source pipeline for every case.
+    static let stdlibLibraryEnvironmentKey = "KSWIFTK_GOLDEN_STDLIB_LIBRARY"
+
     public static func loadCasesOrCrash(suiteName: String) -> [GoldenHarnessCase] {
         do {
             return try GoldenHarnessCaseDiscovery.loadCases(suite: try suite(named: suiteName)).map {
@@ -73,30 +79,37 @@ public enum GoldenHarness {
     /// occurrence indices) baked in.
     public static func render(suiteName: String, sourcePath: String) throws -> String {
         let resolvedSuite = try suite(named: suiteName)
+        let stdlibLibraryPath = ProcessInfo.processInfo.environment[stdlibLibraryEnvironmentKey]
         let raw: String = switch resolvedSuite {
         case .lexer:
             try GoldenHarnessDump.dumpLexer(sourcePath: sourcePath)
         case .parser:
             try GoldenHarnessDump.dumpParser(sourcePath: sourcePath)
         case .sema:
-            try GoldenHarnessDump.dumpSema(sourcePath: sourcePath)
+            try GoldenHarnessDump.dumpSema(sourcePath: sourcePath, stdlibLibraryPath: stdlibLibraryPath)
         case .diagnostics:
-            try GoldenHarnessDump.dumpDiagnostics(sourcePath: sourcePath)
+            try GoldenHarnessDump.dumpDiagnostics(sourcePath: sourcePath, stdlibLibraryPath: stdlibLibraryPath)
         }
         return normalizedForComparison(suite: resolvedSuite, output: raw)
     }
 
-    public static func renderInSubprocess(suiteName: String, sourcePath: String) throws -> String {
+    public static func renderInSubprocess(
+        suiteName: String,
+        sourcePath: String,
+        stdlibLibraryPath: String? = nil
+    ) throws -> String {
         let stdoutData = try runWorker(
             arguments: [suiteName, sourcePath],
-            timeout: subprocessTimeout
+            timeout: subprocessTimeout,
+            stdlibLibraryPath: stdlibLibraryPath
         )
         return String(decoding: stdoutData, as: UTF8.self)
     }
 
     public static func renderBatchInSubprocess(
         suiteName: String,
-        sourcePaths: [String]
+        sourcePaths: [String],
+        stdlibLibraryPath: String? = nil
     ) throws -> [GoldenHarnessBatchResult] {
         guard !sourcePaths.isEmpty else {
             return []
@@ -104,7 +117,8 @@ public enum GoldenHarness {
 
         let stdoutData = try runWorker(
             arguments: ["--batch", suiteName] + sourcePaths,
-            timeout: subprocessTimeout * TimeInterval(sourcePaths.count)
+            timeout: subprocessTimeout * TimeInterval(sourcePaths.count),
+            stdlibLibraryPath: stdlibLibraryPath
         )
         let results: [GoldenHarnessBatchResult]
         do {
@@ -122,7 +136,11 @@ public enum GoldenHarness {
         return results
     }
 
-    private static func runWorker(arguments: [String], timeout: TimeInterval) throws -> Data {
+    private static func runWorker(
+        arguments: [String],
+        timeout: TimeInterval,
+        stdlibLibraryPath: String? = nil
+    ) throws -> Data {
         let process = Process()
         let stdout = Pipe(), stderr = Pipe()
         let stdoutAccumulator = DataAccumulator()
@@ -134,7 +152,11 @@ public enum GoldenHarness {
 
         process.executableURL = try workerExecutableURL()
         process.arguments = arguments
-        process.environment = ProcessInfo.processInfo.environment
+        var environment = ProcessInfo.processInfo.environment
+        if let stdlibLibraryPath {
+            environment[stdlibLibraryEnvironmentKey] = stdlibLibraryPath
+        }
+        process.environment = environment
         process.standardOutput = stdout
         process.standardError = stderr
 

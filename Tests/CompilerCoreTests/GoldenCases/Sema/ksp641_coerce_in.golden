@@ -1,52 +1,50 @@
-symbol fq=Score kind=class vis=public flags=_
-symbol fq=Score.<init> kind=constructor vis=public flags=_ sig=recv=Score params=[Int] ret=Score
-symbol fq=Score.<init>.$0.value kind=valueParameter vis=private flags=_
-symbol fq=Score.compareTo.$1.other kind=valueParameter vis=private flags=_
-symbol fq=Score.value kind=property vis=public flags=_ type=Int
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.ClosedFloatingPointRange kind=interface vis=public flags=_
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=Score.<init>.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Score.<init>[kind=ctor;recv=Score;params=Int] kind=constructor vis=public flags=_ sig=recv=Score params=[Int] ret=Score
+symbol fq=Score.compareTo.$1.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Score.value[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=Score[kind=class] kind=class vis=public flags=_
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fksp641_coerce_in package=_
-  decl Score class Score sym=Score
-  decl main fun main sym=main
-expr e@2:49 name(value) type=Int ref=Score.value
-expr e@2:65 name(other) type=Score ref=Score.compareTo.$1.other
-expr e@2:65#1 memberCall recv=e@2:65 callee=value args=[] type=Int ref=Score.value
-expr e@2:49#1 memberCall recv=e@2:49 callee=compareTo args=[_:e@2:65#1] type=Int call=kotlin.Comparable.compareTo targs=[Int]
+  decl Score[kind=class] class Score sym=Score[kind=class]
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+expr e@2:49 name(value) type=Int ref=Score.value[kind=prop]
+expr e@2:65 name(other) type=Score ref=Score.compareTo.$1.other[kind=vparam]
+expr e@2:65#1 memberCall recv=e@2:65 callee=value args=[] type=Int ref=Score.value[kind=prop]
+expr e@2:49#1 memberCall recv=e@2:49 callee=compareTo args=[_:e@2:65#1] type=Int call=kotlin.Comparable.compareTo[kind=fun;recv=kotlin.Comparable<T0>;params=T0;gen=1] targs=[Int]
 expr e@6:19 int(5) type=Int
-expr e@6:13 call callee=e@6:13#1 args=[_:e@6:19] type=Score call=Score.<init>
+expr e@6:13 call callee=e@6:13#1 args=[_:e@6:19] type=Score call=Score.<init>[kind=ctor;recv=Score;params=Int]
 expr e@6:31 name(null) type=Nothing?
 expr e@6:43 int(3) type=Int
-expr e@6:37 call callee=e@6:37#1 args=[_:e@6:43] type=Score call=Score.<init>
-expr e@6:13#2 memberCall recv=e@6:13 callee=coerceIn args=[_:e@6:31,_:e@6:37] type=Score call=kotlin.ranges.coerceIn#14 targs=[Score]
-expr e@6:13#3 memberCall recv=e@6:13#2 callee=value args=[] type=Int ref=Score.value
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#3] type=Unit call=kotlin.io.println#1
+expr e@6:37 call callee=e@6:37#1 args=[_:e@6:43] type=Score call=Score.<init>[kind=ctor;recv=Score;params=Int]
+expr e@6:13#2 memberCall recv=e@6:13 callee=coerceIn args=[_:e@6:31,_:e@6:37] type=Score call=kotlin.ranges.coerceIn[kind=fun;recv=T0;params=T0?,T0?;gen=1] targs=[Score]
+expr e@6:13#3 memberCall recv=e@6:13#2 callee=value args=[] type=Int ref=Score.value[kind=prop]
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#3] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@7:19 int(5) type=Int
-expr e@7:13 call callee=e@7:13#1 args=[_:e@7:19] type=Score call=Score.<init>
+expr e@7:13 call callee=e@7:13#1 args=[_:e@7:19] type=Score call=Score.<init>[kind=ctor;recv=Score;params=Int]
 expr e@7:37 int(7) type=Int
-expr e@7:31 call callee=e@7:31#1 args=[_:e@7:37] type=Score call=Score.<init>
+expr e@7:31 call callee=e@7:31#1 args=[_:e@7:37] type=Score call=Score.<init>[kind=ctor;recv=Score;params=Int]
 expr e@7:41 name(null) type=Nothing?
-expr e@7:13#2 memberCall recv=e@7:13 callee=coerceIn args=[_:e@7:31,_:e@7:41] type=Score call=kotlin.ranges.coerceIn#14 targs=[Score]
-expr e@7:13#3 memberCall recv=e@7:13#2 callee=value args=[] type=Int ref=Score.value
-expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#3] type=Unit call=kotlin.io.println#1
+expr e@7:13#2 memberCall recv=e@7:13 callee=coerceIn args=[_:e@7:31,_:e@7:41] type=Score call=kotlin.ranges.coerceIn[kind=fun;recv=T0;params=T0?,T0?;gen=1] targs=[Score]
+expr e@7:13#3 memberCall recv=e@7:13#2 callee=value args=[] type=Int ref=Score.value[kind=prop]
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#3] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@8:19 int(5) type=Int
-expr e@8:13 call callee=e@8:13#1 args=[_:e@8:19] type=Score call=Score.<init>
+expr e@8:13 call callee=e@8:13#1 args=[_:e@8:19] type=Score call=Score.<init>[kind=ctor;recv=Score;params=Int]
 expr e@8:37 int(1) type=Int
-expr e@8:31 call callee=e@8:31#1 args=[_:e@8:37] type=Score call=Score.<init>
+expr e@8:31 call callee=e@8:31#1 args=[_:e@8:37] type=Score call=Score.<init>[kind=ctor;recv=Score;params=Int]
 expr e@8:47 int(10) type=Int
-expr e@8:41 call callee=e@8:41#1 args=[_:e@8:47] type=Score call=Score.<init>
-expr e@8:13#2 memberCall recv=e@8:13 callee=coerceIn args=[_:e@8:31,_:e@8:41] type=Score call=kotlin.ranges.coerceIn#14 targs=[Score]
-expr e@8:13#3 memberCall recv=e@8:13#2 callee=value args=[] type=Int ref=Score.value
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#3] type=Unit call=kotlin.io.println#1
+expr e@8:41 call callee=e@8:41#1 args=[_:e@8:47] type=Score call=Score.<init>[kind=ctor;recv=Score;params=Int]
+expr e@8:13#2 memberCall recv=e@8:13 callee=coerceIn args=[_:e@8:31,_:e@8:41] type=Score call=kotlin.ranges.coerceIn[kind=fun;recv=T0;params=T0?,T0?;gen=1] targs=[Score]
+expr e@8:13#3 memberCall recv=e@8:13#2 callee=value args=[] type=Int ref=Score.value[kind=prop]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#3] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@9:13 double(9.9) type=Double
 expr e@9:26 double(1.0) type=Double
 expr e@9:31 double(10.0) type=Double
 expr e@9:26#1 binary(rangeTo) lhs=e@9:26 rhs=e@9:31 type=Int
-expr e@9:13#1 memberCall recv=e@9:13 callee=coerceIn args=[_:e@9:26#1] type=Double call=kotlin.ranges.coerceIn#15 targs=[Double]
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#1
+expr e@9:13#1 memberCall recv=e@9:13 callee=coerceIn args=[_:e@9:26#1] type=Double call=kotlin.ranges.coerceIn[kind=fun;recv=T0;params=kotlin.ranges.ClosedFloatingPointRange<T0>;gen=1] targs=[Double]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@10:13 float(0.0) type=Float
 expr e@10:27 float(1.0) type=Float
 expr e@10:33 float(10.0) type=Float
 expr e@10:27#1 binary(rangeTo) lhs=e@10:27 rhs=e@10:33 type=Int
-expr e@10:13#1 memberCall recv=e@10:13 callee=coerceIn args=[_:e@10:27#1] type=Float call=kotlin.ranges.coerceIn#15 targs=[Float]
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#1
+expr e@10:13#1 memberCall recv=e@10:13 callee=coerceIn args=[_:e@10:27#1] type=Float call=kotlin.ranges.coerceIn[kind=fun;recv=T0;params=kotlin.ranges.ClosedFloatingPointRange<T0>;gen=1] targs=[Float]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

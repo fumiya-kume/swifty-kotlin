@@ -1,43 +1,41 @@
-symbol fq=averageByte kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Byte>] ret=Double
-symbol fq=averageByte.$0.values kind=valueParameter vis=private flags=_
-symbol fq=averageDouble kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Double>] ret=Double
-symbol fq=averageDouble.$1.values kind=valueParameter vis=private flags=_
-symbol fq=averageFloat kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Float>] ret=Double
-symbol fq=averageFloat.$2.values kind=valueParameter vis=private flags=_
-symbol fq=averageInt kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Double
-symbol fq=averageInt.$3.values kind=valueParameter vis=private flags=_
-symbol fq=averageListDouble kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Double>] ret=Double
-symbol fq=averageListDouble.$4.values kind=valueParameter vis=private flags=_
-symbol fq=averageListInt kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=Double
-symbol fq=averageListInt.$5.values kind=valueParameter vis=private flags=_
-symbol fq=averageLong kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Long>] ret=Double
-symbol fq=averageLong.$6.values kind=valueParameter vis=private flags=_
-symbol fq=averageShort kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Short>] ret=Double
-symbol fq=averageShort.$7.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=averageByte.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=averageByte[kind=fun;params=kotlin.collections.Iterable<Byte>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Byte>] ret=Double
+symbol fq=averageDouble.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=averageDouble[kind=fun;params=kotlin.collections.Iterable<Double>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Double>] ret=Double
+symbol fq=averageFloat.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=averageFloat[kind=fun;params=kotlin.collections.Iterable<Float>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Float>] ret=Double
+symbol fq=averageInt.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=averageInt[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Double
+symbol fq=averageListDouble.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=averageListDouble[kind=fun;params=kotlin.collections.List<Double>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Double>] ret=Double
+symbol fq=averageListInt.$5.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=averageListInt[kind=fun;params=kotlin.collections.List<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=Double
+symbol fq=averageLong.$6.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=averageLong[kind=fun;params=kotlin.collections.Iterable<Long>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Long>] ret=Double
+symbol fq=averageShort.$7.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=averageShort[kind=fun;params=kotlin.collections.Iterable<Short>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Short>] ret=Double
 file fstdlib_kotlin_collections_Iterable_average package=_
-  decl averageByte fun averageByte sym=averageByte
-  decl averageDouble fun averageDouble sym=averageDouble
-  decl averageFloat fun averageFloat sym=averageFloat
-  decl averageInt fun averageInt sym=averageInt
-  decl averageLong fun averageLong sym=averageLong
-  decl averageShort fun averageShort sym=averageShort
-  decl averageListInt fun averageListInt sym=averageListInt
-  decl averageListDouble fun averageListDouble sym=averageListDouble
-expr e@1:51 name(values) type=kotlin.collections.Iterable<Byte> ref=averageByte.$0.values
-expr e@1:51#1 memberCall recv=e@1:51 callee=average args=[] type=Double call=kotlin.collections.average#0
-expr e@3:55 name(values) type=kotlin.collections.Iterable<Double> ref=averageDouble.$1.values
-expr e@3:55#1 memberCall recv=e@3:55 callee=average args=[] type=Double call=kotlin.collections.average#1
-expr e@5:53 name(values) type=kotlin.collections.Iterable<Float> ref=averageFloat.$2.values
-expr e@5:53#1 memberCall recv=e@5:53 callee=average args=[] type=Double call=kotlin.collections.average#2
-expr e@7:49 name(values) type=kotlin.collections.Iterable<Int> ref=averageInt.$3.values
-expr e@7:49#1 memberCall recv=e@7:49 callee=average args=[] type=Double call=kotlin.collections.average#3
-expr e@9:51 name(values) type=kotlin.collections.Iterable<Long> ref=averageLong.$6.values
-expr e@9:51#1 memberCall recv=e@9:51 callee=average args=[] type=Double call=kotlin.collections.average#4
-expr e@11:53 name(values) type=kotlin.collections.Iterable<Short> ref=averageShort.$7.values
-expr e@11:53#1 memberCall recv=e@11:53 callee=average args=[] type=Double call=kotlin.collections.average#5
-expr e@13:49 name(values) type=kotlin.collections.List<Int> ref=averageListInt.$5.values
-expr e@13:49#1 memberCall recv=e@13:49 callee=average args=[] type=Double call=kotlin.collections.average#7
-expr e@15:55 name(values) type=kotlin.collections.List<Double> ref=averageListDouble.$4.values
-expr e@15:55#1 memberCall recv=e@15:55 callee=average args=[] type=Double call=kotlin.collections.average#6
+  decl averageByte[kind=fun;params=kotlin.collections.Iterable<Byte>] fun averageByte sym=averageByte[kind=fun;params=kotlin.collections.Iterable<Byte>]
+  decl averageDouble[kind=fun;params=kotlin.collections.Iterable<Double>] fun averageDouble sym=averageDouble[kind=fun;params=kotlin.collections.Iterable<Double>]
+  decl averageFloat[kind=fun;params=kotlin.collections.Iterable<Float>] fun averageFloat sym=averageFloat[kind=fun;params=kotlin.collections.Iterable<Float>]
+  decl averageInt[kind=fun;params=kotlin.collections.Iterable<Int>] fun averageInt sym=averageInt[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl averageLong[kind=fun;params=kotlin.collections.Iterable<Long>] fun averageLong sym=averageLong[kind=fun;params=kotlin.collections.Iterable<Long>]
+  decl averageShort[kind=fun;params=kotlin.collections.Iterable<Short>] fun averageShort sym=averageShort[kind=fun;params=kotlin.collections.Iterable<Short>]
+  decl averageListInt[kind=fun;params=kotlin.collections.List<Int>] fun averageListInt sym=averageListInt[kind=fun;params=kotlin.collections.List<Int>]
+  decl averageListDouble[kind=fun;params=kotlin.collections.List<Double>] fun averageListDouble sym=averageListDouble[kind=fun;params=kotlin.collections.List<Double>]
+expr e@1:51 name(values) type=kotlin.collections.Iterable<Byte> ref=averageByte.$0.values[kind=vparam]
+expr e@1:51#1 memberCall recv=e@1:51 callee=average args=[] type=Double call=kotlin.collections.average[kind=fun;recv=kotlin.collections.Iterable<Byte>;params=]
+expr e@3:55 name(values) type=kotlin.collections.Iterable<Double> ref=averageDouble.$1.values[kind=vparam]
+expr e@3:55#1 memberCall recv=e@3:55 callee=average args=[] type=Double call=kotlin.collections.average[kind=fun;recv=kotlin.collections.Iterable<Double>;params=]
+expr e@5:53 name(values) type=kotlin.collections.Iterable<Float> ref=averageFloat.$2.values[kind=vparam]
+expr e@5:53#1 memberCall recv=e@5:53 callee=average args=[] type=Double call=kotlin.collections.average[kind=fun;recv=kotlin.collections.Iterable<Float>;params=]
+expr e@7:49 name(values) type=kotlin.collections.Iterable<Int> ref=averageInt.$3.values[kind=vparam]
+expr e@7:49#1 memberCall recv=e@7:49 callee=average args=[] type=Double call=kotlin.collections.average[kind=fun;recv=kotlin.collections.Iterable<Int>;params=]
+expr e@9:51 name(values) type=kotlin.collections.Iterable<Long> ref=averageLong.$6.values[kind=vparam]
+expr e@9:51#1 memberCall recv=e@9:51 callee=average args=[] type=Double call=kotlin.collections.average[kind=fun;recv=kotlin.collections.Iterable<Long>;params=]
+expr e@11:53 name(values) type=kotlin.collections.Iterable<Short> ref=averageShort.$7.values[kind=vparam]
+expr e@11:53#1 memberCall recv=e@11:53 callee=average args=[] type=Double call=kotlin.collections.average[kind=fun;recv=kotlin.collections.Iterable<Short>;params=]
+expr e@13:49 name(values) type=kotlin.collections.List<Int> ref=averageListInt.$5.values[kind=vparam]
+expr e@13:49#1 memberCall recv=e@13:49 callee=average args=[] type=Double call=kotlin.collections.average[kind=fun;recv=kotlin.collections.List<Int>;params=]
+expr e@15:55 name(values) type=kotlin.collections.List<Double> ref=averageListDouble.$4.values[kind=vparam]
+expr e@15:55#1 memberCall recv=e@15:55 callee=average args=[] type=Double call=kotlin.collections.average[kind=fun;recv=kotlin.collections.List<Double>;params=]

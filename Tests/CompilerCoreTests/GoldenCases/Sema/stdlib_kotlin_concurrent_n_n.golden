@@ -1,0 +1,38 @@
+symbol fq=golden.sema.atomicArrayFactory[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.concurrent.AtomicArray<String>
+symbol fq=golden.sema.atomicArrayType.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.atomicArrayType[kind=fun;params=kotlin.concurrent.AtomicArray<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.concurrent.AtomicArray<String?>] ret=kotlin.concurrent.AtomicArray<String?>
+symbol fq=golden.sema.atomicIntArrayFactory[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.concurrent.AtomicIntArray
+symbol fq=golden.sema.atomicIntType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.concurrent.AtomicInt?
+symbol fq=golden.sema.atomicLongArrayFactory[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.concurrent.AtomicLongArray
+symbol fq=golden.sema.atomicLongType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.concurrent.AtomicLong?
+symbol fq=golden.sema.atomicNativePtrType[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.concurrent.AtomicNativePtr?
+symbol fq=golden.sema.atomicReferenceType.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.atomicReferenceType[kind=fun;params=kotlin.concurrent.AtomicReference<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.concurrent.AtomicReference<String>] ret=kotlin.concurrent.AtomicReference<String>
+file fstdlib_kotlin_concurrent_n_n package=golden.sema annotations=[@file:OptIn(kotlin.ExperimentalStdlibApi::class,kotlinx.cinterop.ExperimentalForeignApi::class)]
+  decl golden.sema.atomicIntType[kind=fun;params=] fun atomicIntType sym=golden.sema.atomicIntType[kind=fun;params=]
+  decl golden.sema.atomicLongType[kind=fun;params=] fun atomicLongType sym=golden.sema.atomicLongType[kind=fun;params=]
+  decl golden.sema.atomicReferenceType[kind=fun;params=kotlin.concurrent.AtomicReference<String>] fun atomicReferenceType sym=golden.sema.atomicReferenceType[kind=fun;params=kotlin.concurrent.AtomicReference<String>]
+  decl golden.sema.atomicArrayType[kind=fun;params=kotlin.concurrent.AtomicArray<String?>] fun atomicArrayType sym=golden.sema.atomicArrayType[kind=fun;params=kotlin.concurrent.AtomicArray<String?>]
+  decl golden.sema.atomicNativePtrType[kind=fun;params=] fun atomicNativePtrType sym=golden.sema.atomicNativePtrType[kind=fun;params=]
+  decl golden.sema.atomicIntArrayFactory[kind=fun;params=] fun atomicIntArrayFactory sym=golden.sema.atomicIntArrayFactory[kind=fun;params=]
+  decl golden.sema.atomicLongArrayFactory[kind=fun;params=] fun atomicLongArrayFactory sym=golden.sema.atomicLongArrayFactory[kind=fun;params=]
+  decl golden.sema.atomicArrayFactory[kind=fun;params=] fun atomicArrayFactory sym=golden.sema.atomicArrayFactory[kind=fun;params=]
+expr e@13:35 name(null) type=Nothing?
+expr e@14:37 name(null) type=Nothing?
+expr e@15:84 name(value) type=kotlin.concurrent.AtomicReference<String> ref=golden.sema.atomicReferenceType.$1.value[kind=vparam]
+expr e@16:74 name(value) type=kotlin.concurrent.AtomicArray<String?> ref=golden.sema.atomicArrayType.$0.value[kind=vparam]
+expr e@17:47 name(null) type=Nothing?
+expr e@19:62 int(2) type=Int
+expr e@19:67 name(it) type=Int ref=s-0
+expr e@19:65 lambda params=[] body=e@19:67 label=AtomicIntArray type=(Int) -> Int
+expr e@19:47 call callee=e@19:47#1 args=[_:e@19:62,_:e@19:65] type=kotlin.concurrent.AtomicIntArray
+expr e@20:65 int(2) type=Int
+expr e@20:70 name(it) type=Int ref=s-1
+expr e@20:70#1 memberCall recv=e@20:70 callee=toLong args=[] type=Long
+expr e@20:68 lambda params=[] body=e@20:70#1 label=AtomicLongArray type=(Int) -> Long
+expr e@20:49 call callee=e@20:49#1 args=[_:e@20:65,_:e@20:68] type=kotlin.concurrent.AtomicLongArray
+expr e@21:61 int(2) type=Int
+expr e@21:66 name(it) type=Int ref=s-2
+expr e@21:66#1 memberCall recv=e@21:66 callee=toString args=[] type=String
+expr e@21:64 lambda params=[] body=e@21:66#1 label=AtomicArray type=(Int) -> String
+expr e@21:49 call callee=e@21:49#1 args=[_:e@21:61,_:e@21:64] type=kotlin.concurrent.AtomicArray<String> call=kotlin.concurrent.AtomicArray[kind=fun;params=Int,fn{p=Int;ret=T0};gen=1] targs=[String]

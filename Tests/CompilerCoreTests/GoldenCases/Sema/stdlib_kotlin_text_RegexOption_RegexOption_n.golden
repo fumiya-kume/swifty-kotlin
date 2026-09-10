@@ -1,20 +1,14 @@
-symbol fq=golden.sema.entries kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.text.RegexOption>
-symbol fq=golden.sema.valueOf kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.RegexOption
-symbol fq=golden.sema.values kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.text.RegexOption>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
-symbol fq=kotlin.text.RegexOption.Companion.entries kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.text.RegexOption>
-symbol fq=kotlin.text.RegexOption.Companion.valueOf kind=function vis=public flags=synthetic|static sig=recv=kotlin.text.RegexOption.Companion params=[String] ret=kotlin.text.RegexOption
-symbol fq=kotlin.text.RegexOption.Companion.valueOf.name kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.text.RegexOption.values kind=function vis=public flags=synthetic|static sig=recv=_ params=[] ret=kotlin.Array<kotlin.text.RegexOption>
+symbol fq=golden.sema.entries[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.text.RegexOption>
+symbol fq=golden.sema.valueOf[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.RegexOption
+symbol fq=golden.sema.values[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.text.RegexOption>
 file fstdlib_kotlin_text_RegexOption_RegexOption_n package=golden.sema
-  decl golden.sema.entries fun entries sym=golden.sema.entries
-  decl golden.sema.valueOf fun valueOf sym=golden.sema.valueOf
-  decl golden.sema.values fun values sym=golden.sema.values
-expr e@5:56 name(RegexOption) type=kotlin.text.RegexOption.Companion ref=kotlin.text.RegexOption
-expr e@5:56#1 memberCall recv=e@5:56 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.text.RegexOption> ref=kotlin.text.RegexOption.Companion.entries
-expr e@7:30 name(RegexOption) type=kotlin.text.RegexOption.Companion ref=kotlin.text.RegexOption
+  decl golden.sema.entries[kind=fun;params=] fun entries sym=golden.sema.entries[kind=fun;params=]
+  decl golden.sema.valueOf[kind=fun;params=] fun valueOf sym=golden.sema.valueOf[kind=fun;params=]
+  decl golden.sema.values[kind=fun;params=] fun values sym=golden.sema.values[kind=fun;params=]
+expr e@5:56 name(RegexOption) type=kotlin.text.RegexOption.Companion ref=kotlin.text.RegexOption[kind=enum]
+expr e@5:56#1 memberCall recv=e@5:56 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.text.RegexOption> ref=kotlin.text.RegexOption.Companion.entries[kind=prop]
+expr e@7:30 name(RegexOption) type=kotlin.text.RegexOption.Companion ref=kotlin.text.RegexOption[kind=enum]
 expr e@7:50 string(CANON_EQ) type=String
-expr e@7:30#1 memberCall recv=e@7:30 callee=valueOf args=[_:e@7:50] type=kotlin.text.RegexOption call=kotlin.text.RegexOption.Companion.valueOf
-expr e@9:36 name(RegexOption) type=kotlin.text.RegexOption ref=kotlin.text.RegexOption
-expr e@9:36#1 memberCall recv=e@9:36 callee=values args=[] type=kotlin.Array<kotlin.text.RegexOption> ref=kotlin.text.RegexOption.values call=kotlin.text.RegexOption.values
+expr e@7:30#1 memberCall recv=e@7:30 callee=valueOf args=[_:e@7:50] type=kotlin.text.RegexOption call=kotlin.text.RegexOption.Companion.valueOf[kind=fun;recv=kotlin.text.RegexOption.Companion;params=String]
+expr e@9:36 name(RegexOption) type=kotlin.text.RegexOption ref=kotlin.text.RegexOption[kind=enum]
+expr e@9:36#1 memberCall recv=e@9:36 callee=values args=[] type=kotlin.Array<kotlin.text.RegexOption> ref=kotlin.text.RegexOption.values[kind=fun;params=] call=kotlin.text.RegexOption.values[kind=fun;params=]

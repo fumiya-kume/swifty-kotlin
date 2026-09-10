@@ -8,9 +8,10 @@ extension KIRLoweringDriver {
     /// registered via `registerCompanionInitializer` so that it is called once
     /// during module initialization (injected into `main`).
     ///
-    /// When the object participates in runtime dispatch, this also allocates a
-    /// heap object via `kk_object_new`, stores it in the object's global slot,
-    /// and registers vtable/itable methods for virtual dispatch.
+    /// Every source-backed top-level object gets a heap object via
+    /// `kk_object_new` and stores it in the object's global slot. Objects that
+    /// participate in runtime dispatch additionally register their
+    /// vtable/itable methods.
     func synthesizeObjectInitializer(
         _ objectDecl: ObjectDecl,
         objectSymbol: SymbolID,
@@ -18,14 +19,10 @@ extension KIRLoweringDriver {
     ) -> [KIRDeclID] {
         let sema = shared.sema
 
-        // Determine whether this object implements any interfaces or has vtable entries.
+        // A source-backed top-level singleton must have a real runtime handle
+        // even when it has no interfaces or virtual slots: it may cross an Any
+        // boundary.
         let interfaceSupertypes = kirTransitiveInterfaceSupertypes(of: objectSymbol, sema: sema)
-        let needsDispatchObject = !interfaceSupertypes.isEmpty
-            || !kirVtableImplementations(for: objectSymbol, sema: sema).isEmpty
-
-        guard !objectDecl.memberProperties.isEmpty || !objectDecl.initBlocks.isEmpty || needsDispatchObject else {
-            return []
-        }
 
         let arena = shared.arena
         let interner = shared.interner
@@ -44,127 +41,123 @@ extension KIRLoweringDriver {
 
         var body: KIRLoweringEmitContext = [.beginBlock]
 
-        // When the object participates in virtual dispatch, allocate a heap object
-        // and store it in the global slot so lookup can find the registered methods.
-        if needsDispatchObject {
-            let intType = sema.types.intType
-            let layout = sema.symbols.nominalLayout(for: objectSymbol)
-            let slotCount = Int64(max(layout?.instanceSizeWords ?? 1, 1))
-            let slotCountExpr = arena.appendExpr(.intLiteral(slotCount), type: intType)
-            body.append(.constValue(result: slotCountExpr, value: .intLiteral(slotCount)))
-            let classIDValue = RuntimeTypeCheckToken.stableNominalTypeID(
-                symbol: objectSymbol, sema: sema, interner: interner
-            )
-            let classIDExpr = arena.appendExpr(.intLiteral(classIDValue), type: intType)
-            body.append(.constValue(result: classIDExpr, value: .intLiteral(classIDValue)))
-            let allocatedObj = arena.appendTemporary(type: objectType)
-            body.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_object_new"),
-                arguments: [slotCountExpr, classIDExpr],
-                result: allocatedObj,
-                canThrow: false,
-                thrownResult: nil
-            ))
+        // Allocate the singleton handle and store it in the global slot so
+        // generic Any rendering and virtual dispatch can recognize the object.
+        let intType = sema.types.intType
+        let layout = sema.symbols.nominalLayout(for: objectSymbol)
+        let slotCount = Int64(max(layout?.instanceSizeWords ?? 1, 1))
+        let slotCountExpr = arena.appendExpr(.intLiteral(slotCount), type: intType)
+        body.append(.constValue(result: slotCountExpr, value: .intLiteral(slotCount)))
+        let classIDValue = RuntimeTypeCheckToken.stableNominalTypeID(
+            symbol: objectSymbol, sema: sema, interner: interner
+        )
+        let classIDExpr = arena.appendExpr(.intLiteral(classIDValue), type: intType)
+        body.append(.constValue(result: classIDExpr, value: .intLiteral(classIDValue)))
+        let allocatedObj = arena.appendTemporary(type: objectType)
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_object_new"),
+            arguments: [slotCountExpr, classIDExpr],
+            result: allocatedObj,
+            canThrow: false,
+            thrownResult: nil
+        ))
 
-            // Store the allocated object pointer in the global slot.
-            body.append(.storeGlobal(value: allocatedObj, symbol: objectSymbol))
+        // Store the allocated object pointer in the global slot.
+        body.append(.storeGlobal(value: allocatedObj, symbol: objectSymbol))
 
-            var typeEdgeInstructions: [KIRInstruction] = []
-            appendNominalSupertypeEdgeRegistrations(
-                childSymbol: objectSymbol,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                instructions: &typeEdgeInstructions
-            )
-            body.append(contentsOf: typeEdgeInstructions)
+        var typeEdgeInstructions: [KIRInstruction] = []
+        appendNominalSupertypeEdgeRegistrations(
+            childSymbol: objectSymbol,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &typeEdgeInstructions
+        )
+        body.append(contentsOf: typeEdgeInstructions)
 
-            // Register itable methods for each interface.
-            if let objectLayout = sema.symbols.nominalLayout(for: objectSymbol) {
-                for interfaceSymbol in interfaceSupertypes {
-                    guard let interfaceLayout = sema.symbols.nominalLayout(for: interfaceSymbol) else { continue }
-                    let ifaceSlot = Int64(objectLayout.itableSlots[interfaceSymbol] ?? 0)
-                    let interfaceTypeID = RuntimeTypeCheckToken.stableNominalTypeID(
-                        symbol: interfaceSymbol,
+        // Register itable methods for each interface.
+        if let objectLayout = sema.symbols.nominalLayout(for: objectSymbol) {
+            for interfaceSymbol in interfaceSupertypes {
+                guard let interfaceLayout = sema.symbols.nominalLayout(for: interfaceSymbol) else { continue }
+                let ifaceSlot = Int64(objectLayout.itableSlots[interfaceSymbol] ?? 0)
+                let interfaceTypeID = RuntimeTypeCheckToken.stableNominalTypeID(
+                    symbol: interfaceSymbol,
+                    sema: sema,
+                    interner: interner
+                )
+                let interfaceTypeExpr = arena.appendExpr(.intLiteral(interfaceTypeID), type: intType)
+                body.append(.constValue(result: interfaceTypeExpr, value: .intLiteral(interfaceTypeID)))
+                let ifaceSlotExpr = arena.appendExpr(.intLiteral(ifaceSlot), type: intType)
+                body.append(.constValue(result: ifaceSlotExpr, value: .intLiteral(ifaceSlot)))
+                let registerIfaceResult = arena.appendTemporary(type: intType)
+                body.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_object_register_itable_iface"),
+                    arguments: [allocatedObj, interfaceTypeExpr, ifaceSlotExpr],
+                    result: registerIfaceResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+
+                // Walk the interface methods to find each method that needs registration.
+                for (methodSymbol, methodSlotInt) in kirItableMethodEntries(
+                    for: interfaceSymbol,
+                    interfaceLayout: interfaceLayout,
+                    sema: sema,
+                    interner: interner
+                ) {
+                    let methodSlot = Int64(methodSlotInt)
+                    // Find the override in the object's member functions.
+                    let implementationSymbol = kirFindOverrideMethod(
+                        for: methodSymbol,
+                        in: objectSymbol,
+                        sema: sema,
+                        interner: interner
+                    ) ?? methodSymbol
+                    let bridgeSymbol = itableBridgeSymbolForMethod(
+                        interfaceMethod: methodSymbol,
+                        implementation: implementationSymbol,
+                        nominalSymbol: objectSymbol,
+                        driver: self,
+                        arena: arena,
                         sema: sema,
                         interner: interner
                     )
-                    let interfaceTypeExpr = arena.appendExpr(.intLiteral(interfaceTypeID), type: intType)
-                    body.append(.constValue(result: interfaceTypeExpr, value: .intLiteral(interfaceTypeID)))
-                    let ifaceSlotExpr = arena.appendExpr(.intLiteral(ifaceSlot), type: intType)
-                    body.append(.constValue(result: ifaceSlotExpr, value: .intLiteral(ifaceSlot)))
-                    let registerIfaceResult = arena.appendTemporary(type: intType)
+                    let methodSlotExpr = arena.appendExpr(.intLiteral(methodSlot), type: intType)
+                    body.append(.constValue(result: methodSlotExpr, value: .intLiteral(methodSlot)))
+                    let methodFnExpr = arena.appendExpr(.symbolRef(bridgeSymbol), type: intType)
+                    body.append(.constValue(result: methodFnExpr, value: .symbolRef(bridgeSymbol)))
+                    let registerMethodResult = arena.appendTemporary(type: intType)
                     body.append(.call(
                         symbol: nil,
-                        callee: interner.intern("kk_object_register_itable_iface"),
-                        arguments: [allocatedObj, interfaceTypeExpr, ifaceSlotExpr],
-                        result: registerIfaceResult,
+                        callee: interner.intern("kk_object_register_itable_method"),
+                        arguments: [allocatedObj, ifaceSlotExpr, methodSlotExpr, methodFnExpr],
+                        result: registerMethodResult,
                         canThrow: false,
                         thrownResult: nil
                     ))
-
-                    // Walk the interface methods to find each method that needs registration.
-                    for (methodSymbol, methodSlotInt) in kirItableMethodEntries(
-                        for: interfaceSymbol,
-                        interfaceLayout: interfaceLayout,
-                        sema: sema,
-                        interner: interner
-                    ) {
-                        let methodSlot = Int64(methodSlotInt)
-                        // Find the override in the object's member functions.
-                        let implementationSymbol = kirFindOverrideMethod(
-                            for: methodSymbol,
-                            in: objectSymbol,
-                            sema: sema,
-                            interner: interner
-                        ) ?? methodSymbol
-                        let bridgeSymbol = itableBridgeSymbolForMethod(
-                            interfaceMethod: methodSymbol,
-                            implementation: implementationSymbol,
-                            nominalSymbol: objectSymbol,
-                            driver: self,
-                            arena: arena,
-                            sema: sema,
-                            interner: interner
-                        )
-                        let methodSlotExpr = arena.appendExpr(.intLiteral(methodSlot), type: intType)
-                        body.append(.constValue(result: methodSlotExpr, value: .intLiteral(methodSlot)))
-                        let methodFnExpr = arena.appendExpr(.symbolRef(bridgeSymbol), type: intType)
-                        body.append(.constValue(result: methodFnExpr, value: .symbolRef(bridgeSymbol)))
-                        let registerMethodResult = arena.appendTemporary(type: intType)
-                        body.append(.call(
-                            symbol: nil,
-                            callee: interner.intern("kk_object_register_itable_method"),
-                            arguments: [allocatedObj, ifaceSlotExpr, methodSlotExpr, methodFnExpr],
-                            result: registerMethodResult,
-                            canThrow: false,
-                            thrownResult: nil
-                        ))
-                    }
                 }
-                // BUG-141: register interface property getters into the itable.
-                appendObjectItablePropertyGetterRegistrations(
-                    objectValue: allocatedObj,
-                    nominalSymbol: objectSymbol,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    instructions: &body.instructions
-                )
             }
-            appendObjectVtableMethodRegistrations(
+            // BUG-141: register interface property getters into the itable.
+            appendObjectItablePropertyGetterRegistrations(
                 objectValue: allocatedObj,
                 nominalSymbol: objectSymbol,
-                driver: self,
                 sema: sema,
                 arena: arena,
                 interner: interner,
                 instructions: &body.instructions
             )
-        } else {
-            body.append(.constValue(result: objectReceiverExpr, value: .symbolRef(objectSymbol)))
         }
+        appendObjectVtableMethodRegistrations(
+            objectValue: allocatedObj,
+            nominalSymbol: objectSymbol,
+            driver: self,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &body.instructions
+        )
 
         emitObjectBodyInitializers(objectDecl, shared: shared, body: &body)
 

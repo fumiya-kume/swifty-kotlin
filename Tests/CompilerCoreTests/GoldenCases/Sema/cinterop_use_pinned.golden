@@ -1,13 +1,10 @@
-symbol fq=golden.sema.testUsePinned kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Any
-symbol fq=golden.sema.testUsePinned.$0.obj kind=valueParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.Pinned kind=class vis=public flags=synthetic type=kotlinx.cinterop.Pinned<kotlinx.cinterop.Pinned.T>
-symbol fq=kotlinx.cinterop.Pinned.T kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.Pinned.get kind=function vis=public flags=synthetic sig=recv=kotlinx.cinterop.Pinned<kotlinx.cinterop.Pinned.T> params=[] ret=kotlinx.cinterop.Pinned.T bounds=[Any]
+symbol fq=golden.sema.testUsePinned.$0.obj[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.testUsePinned[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Any
 file fcinterop_use_pinned package=golden.sema
-  decl golden.sema.testUsePinned fun testUsePinned sym=golden.sema.testUsePinned
-expr e@9:12 name(obj) type=Any ref=golden.sema.testUsePinned.$0.obj
+  decl golden.sema.testUsePinned[kind=fun;params=Any] fun testUsePinned sym=golden.sema.testUsePinned[kind=fun;params=Any]
+expr e@9:12 name(obj) type=Any ref=golden.sema.testUsePinned.$0.obj[kind=vparam]
 expr e@10:9 name(pinned) type=kotlinx.cinterop.Pinned<Any> ref=s-0
-expr e@10:9#1 memberCall recv=e@10:9 callee=get args=[] type=Any call=kotlinx.cinterop.Pinned.get targs=[Any]
+expr e@10:9#1 memberCall recv=e@10:9 callee=get args=[] type=Any call=kotlinx.cinterop.Pinned.get[kind=fun;recv=kotlinx.cinterop.Pinned<T0>;params=;gen=1] targs=[Any]
 expr e@9:26 lambda params=[pinned] body=e@10:9#1 label=usePinned type=(kotlinx.cinterop.Pinned<Any>) -> Any
 expr e@9:12#1 memberCall recv=e@9:12 callee=usePinned args=[_:e@9:26] type=Any
 expr e@9:5 return value=e@9:12#1 type=Nothing

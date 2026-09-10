@@ -1,16 +1,16 @@
-symbol fq=golden.sema.testFQNAbsDouble kind=function vis=public flags=_ sig=recv=_ params=[Double] ret=Double
-symbol fq=golden.sema.testFQNAbsDouble.$0.x kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.testFQNAbsInt kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
-symbol fq=golden.sema.testFQNAbsInt.$1.x kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.testFQNSqrt kind=function vis=public flags=_ sig=recv=_ params=[Double] ret=Double
-symbol fq=golden.sema.testFQNSqrt.$2.x kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.testFQNAbsDouble.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.testFQNAbsDouble[kind=fun;params=Double] kind=function vis=public flags=_ sig=recv=_ params=[Double] ret=Double
+symbol fq=golden.sema.testFQNAbsInt.$1.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.testFQNAbsInt[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
+symbol fq=golden.sema.testFQNSqrt.$2.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.testFQNSqrt[kind=fun;params=Double] kind=function vis=public flags=_ sig=recv=_ params=[Double] ret=Double
 file fmath_fqn_call package=golden.sema
-  decl golden.sema.testFQNAbsInt fun testFQNAbsInt sym=golden.sema.testFQNAbsInt
-  decl golden.sema.testFQNAbsDouble fun testFQNAbsDouble sym=golden.sema.testFQNAbsDouble
-  decl golden.sema.testFQNSqrt fun testFQNSqrt sym=golden.sema.testFQNSqrt
-expr e@3:50 name(x) type=Int ref=golden.sema.testFQNAbsInt.$1.x
-expr e@3:34 memberCall recv=e@3:34#1 callee=abs args=[_:e@3:50] type=Int call=kotlin.math.abs#2
-expr e@4:59 name(x) type=Double ref=golden.sema.testFQNAbsDouble.$0.x
-expr e@4:43 memberCall recv=e@4:43#1 callee=abs args=[_:e@4:59] type=Double call=kotlin.math.abs#0
-expr e@5:55 name(x) type=Double ref=golden.sema.testFQNSqrt.$2.x
-expr e@5:38 memberCall recv=e@5:38#1 callee=sqrt args=[_:e@5:55] type=Double call=kotlin.math.sqrt#0
+  decl golden.sema.testFQNAbsInt[kind=fun;params=Int] fun testFQNAbsInt sym=golden.sema.testFQNAbsInt[kind=fun;params=Int]
+  decl golden.sema.testFQNAbsDouble[kind=fun;params=Double] fun testFQNAbsDouble sym=golden.sema.testFQNAbsDouble[kind=fun;params=Double]
+  decl golden.sema.testFQNSqrt[kind=fun;params=Double] fun testFQNSqrt sym=golden.sema.testFQNSqrt[kind=fun;params=Double]
+expr e@3:50 name(x) type=Int ref=golden.sema.testFQNAbsInt.$1.x[kind=vparam]
+expr e@3:34 memberCall recv=e@3:34#1 callee=abs args=[_:e@3:50] type=Int call=kotlin.math.abs[kind=fun;params=Int]
+expr e@4:59 name(x) type=Double ref=golden.sema.testFQNAbsDouble.$0.x[kind=vparam]
+expr e@4:43 memberCall recv=e@4:43#1 callee=abs args=[_:e@4:59] type=Double call=kotlin.math.abs[kind=fun;params=Double]
+expr e@5:55 name(x) type=Double ref=golden.sema.testFQNSqrt.$2.x[kind=vparam]
+expr e@5:38 memberCall recv=e@5:38#1 callee=sqrt args=[_:e@5:55] type=Double call=kotlin.math.sqrt[kind=fun;params=Double]

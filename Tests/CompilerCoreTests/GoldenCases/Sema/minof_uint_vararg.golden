@@ -1,12 +1,12 @@
-symbol fq=golden.sema.varargMinUInt kind=function vis=public flags=_ sig=recv=_ params=[UInt,UInt,UInt,UInt] ret=UInt
-symbol fq=golden.sema.varargMinUInt.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinUInt.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinUInt.$0.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinUInt.$0.d kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUInt.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUInt.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUInt.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUInt.$0.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinUInt[kind=fun;params=UInt,UInt,UInt,UInt] kind=function vis=public flags=_ sig=recv=_ params=[UInt,UInt,UInt,UInt] ret=UInt
 file fminof_uint_vararg package=golden.sema
-  decl golden.sema.varargMinUInt fun varargMinUInt sym=golden.sema.varargMinUInt
-expr e@3:69 name(a) type=UInt ref=golden.sema.varargMinUInt.$0.a
-expr e@3:72 name(b) type=UInt ref=golden.sema.varargMinUInt.$0.b
-expr e@3:75 name(c) type=UInt ref=golden.sema.varargMinUInt.$0.c
-expr e@3:78 name(d) type=UInt ref=golden.sema.varargMinUInt.$0.d
-expr e@3:63 call callee=e@3:63#1 args=[_:e@3:69,_:e@3:72,_:e@3:75,_:e@3:78] type=UInt call=kotlin.comparisons.minOf#22
+  decl golden.sema.varargMinUInt[kind=fun;params=UInt,UInt,UInt,UInt] fun varargMinUInt sym=golden.sema.varargMinUInt[kind=fun;params=UInt,UInt,UInt,UInt]
+expr e@3:69 name(a) type=UInt ref=golden.sema.varargMinUInt.$0.a[kind=vparam]
+expr e@3:72 name(b) type=UInt ref=golden.sema.varargMinUInt.$0.b[kind=vparam]
+expr e@3:75 name(c) type=UInt ref=golden.sema.varargMinUInt.$0.c[kind=vparam]
+expr e@3:78 name(d) type=UInt ref=golden.sema.varargMinUInt.$0.d[kind=vparam]
+expr e@3:63 call callee=e@3:63#1 args=[_:e@3:69,_:e@3:72,_:e@3:75,_:e@3:78] type=UInt call=kotlin.comparisons.minOf[kind=fun;params=UInt,*UInt]
