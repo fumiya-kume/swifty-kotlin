@@ -688,6 +688,121 @@ final class ExprTypeChecker {
             }
         }
 
+        // Kotlin gives a bare integer literal the Long context required by
+        // LongRange.contains(Long). An explicitly typed Int remains an Int
+        // and can therefore select a user LongRange.contains(Int) extension.
+        if let rangeSourceReceiverType = driver.callChecker.sourceLevelRangeMemberLookupType(
+            receiverExpr: containerExpr,
+            receiverType: containerType,
+            sema: sema,
+            interner: interner
+        ),
+        MemberRuntimeDispatch.rangeReceiverKind(
+            receiverExpr: containerExpr,
+            receiverType: containerType,
+            sema: sema,
+            interner: interner
+        ) == .longRange {
+            let isLongLiteral = driver.callChecker.isContextualizableIntegerLiteral(
+                elementExpr,
+                ast: ctx.ast
+            )
+            let resolvedElementType: TypeID = if isLongLiteral {
+                driver.inferExpr(
+                    elementExpr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: sema.types.longType
+                )
+            } else {
+                elementType
+            }
+            if isLongLiteral,
+               let member = driver.callChecker.longRangeContainsMemberSymbol(
+                   receiverType: rangeSourceReceiverType,
+                   sema: sema,
+                   interner: interner
+               )
+            {
+                sema.bindings.bindCall(
+                    exprID,
+                    binding: CallBinding(
+                        chosenCallee: member,
+                        substitutedTypeArguments: [],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                return
+            }
+            if !isLongLiteral {
+                let scopedRangeUserCandidates = driver.callChecker
+                    .collectScopedRangeUserExtensionCandidates(
+                        named: containsName,
+                        receiverType: rangeSourceReceiverType,
+                        ctx: ctx,
+                        sema: sema,
+                        interner: interner
+                    )
+                    .filter { candidate in
+                        guard let symbol = sema.symbols.symbol(candidate),
+                              symbol.flags.contains(SymbolFlags.operatorFunction),
+                              let signature = sema.symbols.functionSignature(for: candidate),
+                              signature.parameterTypes.count == 1,
+                              signature.parameterTypes[0] == sema.types.makeNonNullable(resolvedElementType)
+                        else {
+                            return false
+                        }
+                        return [sema.types.byteType, sema.types.intType, sema.types.shortType]
+                            .contains(signature.parameterTypes[0])
+                    }
+                if !scopedRangeUserCandidates.isEmpty {
+                    let resolved = ctx.resolver.resolveCall(
+                        candidates: scopedRangeUserCandidates,
+                        call: CallExpr(
+                            range: range,
+                            calleeName: containsName,
+                            args: [CallArg(type: resolvedElementType)]
+                        ),
+                        expectedType: nil,
+                        implicitReceiverType: rangeSourceReceiverType,
+                        ctx: ctx.semaCtx
+                    )
+                    if let chosen = resolved.chosenCallee {
+                        sema.bindings.bindCall(
+                            exprID,
+                            binding: CallBinding(
+                                chosenCallee: chosen,
+                                substitutedTypeArguments: resolved.substitutedTypeArguments
+                                    .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                                    .map { _, value in value },
+                                parameterMapping: resolved.parameterMapping
+                            )
+                        )
+                        return
+                    }
+                }
+            }
+            if let sourceSymbol = driver.callChecker.sourceRangeHOFSymbol(
+                memberName: "contains",
+                rangeKind: .longRange,
+                argCount: 1,
+                argumentTypes: [sema.types.makeNonNullable(resolvedElementType)],
+                argumentLabels: [nil],
+                sema: sema,
+                interner: interner
+            ) {
+                sema.bindings.bindCall(
+                    exprID,
+                    binding: CallBinding(
+                        chosenCallee: sourceSymbol,
+                        substitutedTypeArguments: [],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                return
+            }
+        }
+
         // ULongRange.contains(ULong) is the actual member selected for a bare
         // suffixed literal. Re-infer that literal with the member's expected
         // ULong type so the source-backed UInt widening extension cannot take
