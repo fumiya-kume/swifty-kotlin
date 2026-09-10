@@ -150,6 +150,50 @@ internal fun __kkRegionMatches(
     return true
 }
 
+// KSP-1392: keep the CharSequence path on the interface's UTF-16 indexed
+// operations. Converting through toString() would bypass custom receivers.
+private fun __kkRegionMatches(
+    self: CharSequence,
+    thisOffset: Int,
+    other: CharSequence,
+    otherOffset: Int,
+    length: Int,
+    ignoreCase: Boolean
+): Boolean {
+    if ((otherOffset < 0) || (thisOffset < 0) ||
+        (thisOffset > self.length - length) ||
+        (otherOffset > other.length - length)
+    ) {
+        return false
+    }
+
+    var index = 0
+    while (index < length) {
+        if (!__kkCharsEqual(self[thisOffset + index], other[otherOffset + index], ignoreCase)) {
+            return false
+        }
+        index++
+    }
+    return true
+}
+
+/**
+ * Returns whether the specified ranges of this and [other] contain equal characters.
+ *
+ * @param thisOffset the start offset in this char sequence.
+ * @param other the char sequence whose range is compared.
+ * @param otherOffset the start offset in [other].
+ * @param length the number of characters to compare.
+ * @param ignoreCase whether character case should be ignored.
+ */
+public fun CharSequence.regionMatches(
+    thisOffset: Int,
+    other: CharSequence,
+    otherOffset: Int,
+    length: Int,
+    ignoreCase: Boolean = false
+): Boolean = __kkRegionMatches(this, thisOffset, other, otherOffset, length, ignoreCase)
+
 private fun __kkContentEquals(self: List<Char>, other: List<Char>, ignoreCase: Boolean): Boolean {
     if (self.size != other.size) return false
     var index = 0
