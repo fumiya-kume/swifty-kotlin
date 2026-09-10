@@ -4573,15 +4573,16 @@
   - 未実装シンボル一覧:
     - `kotlin.text.groupingBy` — fun CharSequence.groupingBy(Function1): Grouping  -- `final inline fun <#A: kotlin/Any?> (kotlin/CharSequence).kotlin.text/groupingBy(crossinline kotlin/Function1<kotlin/Char, #A>): kotlin.collections/Grouping<kotlin/Char, #A>`
 
-- [ ] KSP-1381: kotlin.text.CharSequence.has-family の未実装 stdlib API を実装する（1 件）
+- [~] KSP-1381: kotlin.text.CharSequence.has-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `has`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/CharSurrogate.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_text_CharSequence_has.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_text_CharSequence_has.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_text_CharSequence_has.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.text.hasSurrogatePairAt` — fun CharSequence.hasSurrogatePairAt(Int): Boolean  -- `final fun (kotlin/CharSequence).kotlin.text/hasSurrogatePairAt(kotlin/Int): kotlin/Boolean`
+  - 実装済み（ゲート保留）: Kotlin 2.3.10 の注釈なし `CharSequence.hasSurrogatePairAt(Int): Boolean` を `CharSurrogate.kt` に source-backed で追加した。upstream の短絡契約に合わせ、負の index では `length` getter を読まず、範囲内だけ indexed `get` を2回行う。専用 Sema Golden、正しい pair・孤立/逆順 surrogate・空文字列・先頭/末尾/out-of-range・custom CharSequence の indexed get/length getter を専用 diff で固定し、focused Sema、専用 diff、Swift build、synthetic link（4/4）、Runtime ABI（4/4）、TODO ID、diff check は pass。全 Golden と全 diff_cases は共有環境の aggregate gate として未完了のため Draft として記録する。
 
 - [ ] KSP-1382: kotlin.text.CharSequence.indices-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `indices`
