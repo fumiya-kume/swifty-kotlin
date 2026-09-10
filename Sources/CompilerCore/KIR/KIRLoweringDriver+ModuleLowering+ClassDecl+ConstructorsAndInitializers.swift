@@ -35,9 +35,32 @@ extension KIRLoweringDriver {
             symbol: receiverSymbol,
             exprID: arena.appendExpr(.symbolRef(receiverSymbol), type: signature.returnType)
         )
-        params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
-            KIRParameter(symbol: pair.0, type: pair.1)
-        })
+        let varargFlags = callSupportLowerer.normalizeBoolFlags(
+            signature.valueParameterIsVararg,
+            count: signature.parameterTypes.count
+        )
+        for (index, (parameterSymbol, parameterType)) in zip(
+            signature.valueParameterSymbols, signature.parameterTypes
+        ).enumerated() {
+            var storageType = parameterType
+            if varargFlags[index],
+               let listSymbol = sema.symbols.lookup(fqName: [
+                   shared.interner.intern("kotlin"),
+                   shared.interner.intern("collections"),
+                   shared.interner.intern("List"),
+               ])
+            {
+                // CallSupportLowerer packs varargs as lists, including
+                // constructor arguments. A String element type must not turn
+                // the packed list handle into a flat String LLVM parameter.
+                storageType = sema.types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.invariant(parameterType)],
+                    nullability: .nonNull
+                )))
+            }
+            params.append(KIRParameter(symbol: parameterSymbol, type: storageType))
+        }
 
         let body = buildConstructorBody(
             ctorSymbol: ctorSymbol, ctorFQName: ctorFQName,
@@ -128,6 +151,12 @@ extension KIRLoweringDriver {
     ) {
         let sema = shared.sema
         let arena = shared.arena
+        // Enum entries use the runtime ordinal box initialized by enum entry
+        // lowering. They do not call the source Enum(name, ordinal) constructor
+        // through the ordinary object constructor ABI.
+        guard sema.symbols.symbol(ownerSymbol)?.kind != .enumClass else {
+            return
+        }
         guard let receiverID = ctx.activeImplicitReceiverExprID(),
               let superclassSymbol = sema.symbols.directSupertypes(for: ownerSymbol).first(where: {
                   let kind = sema.symbols.symbol($0)?.kind

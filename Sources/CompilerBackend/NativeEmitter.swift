@@ -351,6 +351,14 @@ struct NativeEmitter {
         try CodegenCriticalSection.withLinuxLLVMProcessLock(target: target) {
             bindings.setTarget(built.module, triple: triple)
 
+            if optLevel != .O0 {
+                let targetMachine = try configuredTargetMachine(for: built.module)
+                defer { bindings.disposeTargetMachine(targetMachine) }
+                if let error = bindings.optimizeModule(built.module, targetMachine: targetMachine, optLevel: optLevel) {
+                    throw LLVMBackendError.nativeEmissionFailed(error)
+                }
+            }
+
             guard let llvmIR = bindings.printModule(built.module) else {
                 throw LLVMBackendError.nativeEmissionFailed("LLVMPrintModuleToString returned null")
             }
@@ -373,33 +381,41 @@ struct NativeEmitter {
         // on Linux. Keep module construction parallel, but serialize only the
         // target-machine section that is not thread-safe.
         try CodegenCriticalSection.withLinuxLLVMProcessLock(target: target) {
-            var triple = targetTripleString()
-            bindings.setTarget(built.module, triple: triple)
-
-            var targetMachine = bindings.createTargetMachine(triple: triple, optLevel: optLevel)
-            if targetMachine == nil,
-               let hostTriple = bindings.defaultTargetTriple(),
-               !hostTriple.isEmpty,
-               hostTriple != triple
-            {
-                triple = hostTriple
-                bindings.setTarget(built.module, triple: triple)
-                targetMachine = bindings.createTargetMachine(triple: hostTriple, optLevel: optLevel)
-            }
-
-            guard let targetMachine else {
-                throw LLVMBackendError.nativeEmissionFailed("failed to create LLVM target machine")
-            }
+            let targetMachine = try configuredTargetMachine(for: built.module)
             defer { bindings.disposeTargetMachine(targetMachine) }
 
-            guard bindings.applyTargetMachine(targetMachine, to: built.module) else {
-                throw LLVMBackendError.nativeEmissionFailed("failed to apply target data layout")
+            if let error = bindings.optimizeModule(built.module, targetMachine: targetMachine, optLevel: optLevel) {
+                throw LLVMBackendError.nativeEmissionFailed(error)
             }
 
             if let errorMessage = bindings.emitObject(targetMachine: targetMachine, module: built.module, outputPath: outputPath) {
                 throw LLVMBackendError.nativeEmissionFailed(errorMessage)
             }
         }
+    }
+
+    private func configuredTargetMachine(for llvmModule: LLVMCAPIBindings.LLVMModuleRef) throws -> LLVMCAPIBindings.LLVMTargetMachineRef {
+        var triple = targetTripleString()
+        bindings.setTarget(llvmModule, triple: triple)
+
+        var targetMachine = bindings.createTargetMachine(triple: triple, optLevel: optLevel)
+        if targetMachine == nil,
+           let hostTriple = bindings.defaultTargetTriple(),
+           !hostTriple.isEmpty,
+           hostTriple != triple
+        {
+            triple = hostTriple
+            bindings.setTarget(llvmModule, triple: triple)
+            targetMachine = bindings.createTargetMachine(triple: hostTriple, optLevel: optLevel)
+        }
+        guard let targetMachine else {
+            throw LLVMBackendError.nativeEmissionFailed("failed to create LLVM target machine")
+        }
+        guard bindings.applyTargetMachine(targetMachine, to: llvmModule) else {
+            bindings.disposeTargetMachine(targetMachine)
+            throw LLVMBackendError.nativeEmissionFailed("failed to apply target data layout")
+        }
+        return targetMachine
     }
 
     /// Returns a stable C-compatible LLVM global slot name for the given symbol.

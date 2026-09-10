@@ -169,6 +169,12 @@ extension LLVMCAPIBindings {
 
             return LLVMCAPIBindings(
                 handle: handle,
+                runPassesFn: loadSymbol(handle: handle, name: "LLVMRunPasses", as: LLVMRunPassesFn.self),
+                createPassBuilderOptionsFn: loadSymbol(handle: handle, name: "LLVMCreatePassBuilderOptions", as: LLVMCreatePassBuilderOptionsFn.self),
+                disposePassBuilderOptionsFn: loadSymbol(handle: handle, name: "LLVMDisposePassBuilderOptions", as: LLVMDisposePassBuilderOptionsFn.self),
+                getErrorMessageFn: loadSymbol(handle: handle, name: "LLVMGetErrorMessage", as: LLVMGetErrorMessageFn.self),
+                disposeErrorMessageFn: loadSymbol(handle: handle, name: "LLVMDisposeErrorMessage", as: LLVMDisposeErrorMessageFn.self),
+                verifyModuleFn: loadSymbol(handle: handle, name: "LLVMVerifyModule", as: LLVMVerifyModuleFn.self),
                 contextCreateFn: contextCreate,
                 contextDisposeFn: contextDispose,
                 moduleCreateFn: moduleCreate,

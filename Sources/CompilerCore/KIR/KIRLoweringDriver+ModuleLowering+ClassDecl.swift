@@ -73,7 +73,8 @@ extension KIRLoweringDriver {
             ))
         }
 
-        // Lower constructors for nested classes recursively.
+        // MemberLowerer has already emitted nested constructors recursively.
+        // Add the reflection initializers and enum helpers here only once.
         lowerNestedClassConstructors(
             nestedClasses: classDecl.nestedClasses,
             shared: shared,
@@ -91,7 +92,7 @@ extension KIRLoweringDriver {
         return declIDs
     }
 
-    /// Recursively lower constructors for nested (and inner) classes.
+    /// Adds reflection initializers and enum helpers for nested classes.
     private func lowerNestedClassConstructors(
         nestedClasses: [DeclID],
         shared: KIRLoweringSharedContext,
@@ -108,18 +109,6 @@ extension KIRLoweringDriver {
             }
             switch decl {
             case let .classDecl(nestedClass):
-                let nestedCtorFQName = (sema.symbols.symbol(nestedSymbol)?.fqName ?? []) + [compilationCtx.interner.intern("<init>")]
-                let nestedCtorSymbols = sema.symbols.lookupAll(fqName: nestedCtorFQName)
-                for ctorSymbol in nestedCtorSymbols {
-                    declIDs.append(contentsOf: lowerConstructor(
-                        ctorSymbol: ctorSymbol,
-                        ctorFQName: nestedCtorFQName,
-                        classDecl: nestedClass,
-                        ownerSymbol: nestedSymbol,
-                        shared: shared,
-                        compilationCtx: compilationCtx
-                    ))
-                }
                 declIDs.append(contentsOf: synthesizeConstructorReflectionInitializer(
                     classDecl: nestedClass,
                     ownerSymbol: nestedSymbol,

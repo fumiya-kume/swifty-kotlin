@@ -82,7 +82,12 @@ extension CoroutineLoweringPass {
             )
         )
 
-        for block in stateBlocks {
+        // Only the entry block and actual suspension continuations can be
+        // entered from the dispatcher. Ordinary CFG blocks depend on values
+        // defined by their predecessors and have no spill reload prologue.
+        for block in stateBlocks where block.resumeLabel == stateBlocks.first?.resumeLabel
+            || transitionsByResumeLabel[block.resumeLabel] != nil
+        {
             let expectedResumeExpr = module.arena.appendTemporary(type: intType
             )
             lowered.append(.constValue(result: expectedResumeExpr, value: .intLiteral(block.resumeLabel)))
