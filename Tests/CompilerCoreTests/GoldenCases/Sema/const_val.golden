@@ -1,20 +1,20 @@
-symbol fq=golden.sema.Constants kind=object vis=public flags=_
-symbol fq=golden.sema.FLAG kind=property vis=public flags=constValue type=Boolean
-symbol fq=golden.sema.MAX kind=property vis=public flags=constValue type=Int
-symbol fq=golden.sema.NAME kind=property vis=public flags=constValue type=String
-symbol fq=golden.sema.NEG kind=property vis=public flags=constValue type=Int
-symbol fq=golden.sema.RATE kind=property vis=public flags=constValue type=Double
-symbol fq=golden.sema.useConst kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useNegConst kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.Constants[kind=obj] kind=object vis=public flags=_
+symbol fq=golden.sema.FLAG[kind=prop] kind=property vis=public flags=constValue type=Boolean
+symbol fq=golden.sema.MAX[kind=prop] kind=property vis=public flags=constValue type=Int
+symbol fq=golden.sema.NAME[kind=prop] kind=property vis=public flags=constValue type=String
+symbol fq=golden.sema.NEG[kind=prop] kind=property vis=public flags=constValue type=Int
+symbol fq=golden.sema.RATE[kind=prop] kind=property vis=public flags=constValue type=Double
+symbol fq=golden.sema.useConst[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useNegConst[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fconst_val package=golden.sema
-  decl golden.sema.MAX property MAX var=0 sym=golden.sema.MAX
-  decl golden.sema.NAME property NAME var=0 sym=golden.sema.NAME
-  decl golden.sema.FLAG property FLAG var=0 sym=golden.sema.FLAG
-  decl golden.sema.RATE property RATE var=0 sym=golden.sema.RATE
-  decl golden.sema.NEG property NEG var=0 sym=golden.sema.NEG
-  decl golden.sema.Constants object Constants sym=golden.sema.Constants
-  decl golden.sema.useConst fun useConst sym=golden.sema.useConst
-  decl golden.sema.useNegConst fun useNegConst sym=golden.sema.useNegConst
+  decl golden.sema.MAX[kind=prop] property MAX var=0 sym=golden.sema.MAX[kind=prop]
+  decl golden.sema.NAME[kind=prop] property NAME var=0 sym=golden.sema.NAME[kind=prop]
+  decl golden.sema.FLAG[kind=prop] property FLAG var=0 sym=golden.sema.FLAG[kind=prop]
+  decl golden.sema.RATE[kind=prop] property RATE var=0 sym=golden.sema.RATE[kind=prop]
+  decl golden.sema.NEG[kind=prop] property NEG var=0 sym=golden.sema.NEG[kind=prop]
+  decl golden.sema.Constants[kind=obj] object Constants sym=golden.sema.Constants[kind=obj]
+  decl golden.sema.useConst[kind=fun;params=] fun useConst sym=golden.sema.useConst[kind=fun;params=]
+  decl golden.sema.useNegConst[kind=fun;params=] fun useNegConst sym=golden.sema.useNegConst[kind=fun;params=]
 expr e@3:17 int(100) type=Int
 expr e@4:18 string(hello) type=String
 expr e@5:18 bool(true) type=Boolean
@@ -23,7 +23,7 @@ expr e@7:18 int(42) type=Int
 expr e@7:17 unary(unaryMinus) operand=e@7:18 type=Int
 expr e@10:23 int(200) type=Int
 expr e@11:23 string(world) type=String
-expr e@14:27 name(MAX) type=Int ref=golden.sema.MAX
+expr e@14:27 name(MAX) type=Int ref=golden.sema.MAX[kind=prop]
 expr e@14:33 int(50) type=Int
 expr e@14:27#1 binary(greaterThan) lhs=e@14:27 rhs=e@14:33 type=Boolean
-expr e@16:26 name(NEG) type=Int ref=golden.sema.NEG
+expr e@16:26 name(NEG) type=Int ref=golden.sema.NEG[kind=prop]

@@ -1,24 +1,24 @@
-symbol fq=__local_0.p kind=local vis=private flags=_ type=golden.sema.PrivateCopy
-symbol fq=__local_1.p2 kind=local vis=private flags=_ type=golden.sema.PrivateCopy
-symbol fq=golden.sema.AnnotatedClass kind=class vis=public flags=_
-symbol fq=golden.sema.PrivateCopy kind=class vis=public flags=dataType
-symbol fq=golden.sema.PrivateCopy.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.PrivateCopy params=[Int] ret=golden.sema.PrivateCopy
-symbol fq=golden.sema.PrivateCopy.<init>.$0.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.PrivateCopy.copy kind=function vis=public flags=synthetic sig=recv=golden.sema.PrivateCopy params=[Int] ret=golden.sema.PrivateCopy defaults=[1]
-symbol fq=golden.sema.PrivateCopy.copy.$1.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.PrivateCopy.value kind=property vis=public flags=_ type=Int
-symbol fq=golden.sema.exerciseCopy kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.p[kind=local] kind=local vis=private flags=_ type=golden.sema.PrivateCopy
+symbol fq=__local_1.p2[kind=local] kind=local vis=private flags=_ type=golden.sema.PrivateCopy
+symbol fq=golden.sema.AnnotatedClass[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.PrivateCopy.<init>.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.PrivateCopy.<init>[kind=ctor;recv=golden.sema.PrivateCopy;params=Int] kind=constructor vis=public flags=_ sig=recv=golden.sema.PrivateCopy params=[Int] ret=golden.sema.PrivateCopy
+symbol fq=golden.sema.PrivateCopy.copy.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.PrivateCopy.copy[kind=fun;recv=golden.sema.PrivateCopy;params=Int] kind=function vis=public flags=synthetic sig=recv=golden.sema.PrivateCopy params=[Int] ret=golden.sema.PrivateCopy defaults=[1]
+symbol fq=golden.sema.PrivateCopy.value[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.PrivateCopy[kind=class] kind=class vis=public flags=dataType
+symbol fq=golden.sema.exerciseCopy[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_n_ConsistentCopyVisibility package=golden.sema
-  decl golden.sema.AnnotatedClass class AnnotatedClass sym=golden.sema.AnnotatedClass
-  decl golden.sema.PrivateCopy class PrivateCopy sym=golden.sema.PrivateCopy
-  decl golden.sema.exerciseCopy fun exerciseCopy sym=golden.sema.exerciseCopy
+  decl golden.sema.AnnotatedClass[kind=class] class AnnotatedClass sym=golden.sema.AnnotatedClass[kind=class]
+  decl golden.sema.PrivateCopy[kind=class] class PrivateCopy sym=golden.sema.PrivateCopy[kind=class]
+  decl golden.sema.exerciseCopy[kind=fun;params=] fun exerciseCopy sym=golden.sema.exerciseCopy[kind=fun;params=]
 expr e@10:25 int(1) type=Int
-expr e@10:13 call callee=e@10:13#1 args=[_:e@10:25] type=golden.sema.PrivateCopy call=golden.sema.PrivateCopy.<init>
-expr e@10:5 localDecl p mutable=0 type=_ init=e@10:13 type=Unit ref=__local_0.p
-expr e@11:14 name(p) type=golden.sema.PrivateCopy ref=__local_0.p
+expr e@10:13 call callee=e@10:13#1 args=[_:e@10:25] type=golden.sema.PrivateCopy call=golden.sema.PrivateCopy.<init>[kind=ctor;recv=golden.sema.PrivateCopy;params=Int]
+expr e@10:5 localDecl p mutable=0 type=_ init=e@10:13 type=Unit ref=__local_0.p[kind=local]
+expr e@11:14 name(p) type=golden.sema.PrivateCopy ref=__local_0.p[kind=local]
 expr e@11:29 int(2) type=Int
-expr e@11:14#1 memberCall recv=e@11:14 callee=copy args=[value:e@11:29] type=golden.sema.PrivateCopy call=golden.sema.PrivateCopy.copy
-expr e@11:5 localDecl p2 mutable=0 type=_ init=e@11:14#1 type=Unit ref=__local_1.p2
-expr e@12:13 name(p2) type=golden.sema.PrivateCopy ref=__local_1.p2
-expr e@12:13#1 memberCall recv=e@12:13 callee=value args=[] type=Int ref=golden.sema.PrivateCopy.value
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
+expr e@11:14#1 memberCall recv=e@11:14 callee=copy args=[value:e@11:29] type=golden.sema.PrivateCopy call=golden.sema.PrivateCopy.copy[kind=fun;recv=golden.sema.PrivateCopy;params=Int]
+expr e@11:5 localDecl p2 mutable=0 type=_ init=e@11:14#1 type=Unit ref=__local_1.p2[kind=local]
+expr e@12:13 name(p2) type=golden.sema.PrivateCopy ref=__local_1.p2[kind=local]
+expr e@12:13#1 memberCall recv=e@12:13 callee=value args=[] type=Int ref=golden.sema.PrivateCopy.value[kind=prop]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

@@ -1,0 +1,36 @@
+symbol fq=golden.sema.useReplaceFirstIgnoreCase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplaceFirst[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplaceRange[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplace[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSplit[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<String>
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
+file fstring_replace_split package=golden.sema
+  decl golden.sema.useReplace[kind=fun;params=] fun useReplace sym=golden.sema.useReplace[kind=fun;params=]
+  decl golden.sema.useReplaceFirst[kind=fun;params=] fun useReplaceFirst sym=golden.sema.useReplaceFirst[kind=fun;params=]
+  decl golden.sema.useReplaceFirstIgnoreCase[kind=fun;params=] fun useReplaceFirstIgnoreCase sym=golden.sema.useReplaceFirstIgnoreCase[kind=fun;params=]
+  decl golden.sema.useReplaceRange[kind=fun;params=] fun useReplaceRange sym=golden.sema.useReplaceRange[kind=fun;params=]
+  decl golden.sema.useSplit[kind=fun;params=] fun useSplit sym=golden.sema.useSplit[kind=fun;params=]
+expr e@4:28 string(abc) type=String
+expr e@4:42 string(a) type=String
+expr e@4:47 string(z) type=String
+expr e@4:28#1 memberCall recv=e@4:28 callee=replace args=[_:e@4:42,_:e@4:47] type=String call=kotlin.text.replace[kind=fun;recv=String;params=String,String,Boolean]
+expr e@6:33 string(abcabc) type=String
+expr e@6:55 string(abc) type=String
+expr e@6:62 string(X) type=String
+expr e@6:33#1 memberCall recv=e@6:33 callee=replaceFirst args=[_:e@6:55,_:e@6:62] type=String call=kotlin.text.replaceFirst[kind=fun;recv=String;params=String,String,Boolean]
+expr e@8:43 string(abcABC) type=String
+expr e@8:65 string(abc) type=String
+expr e@8:72 string(X) type=String
+expr e@8:90 bool(true) type=Boolean
+expr e@8:43#1 memberCall recv=e@8:43 callee=replaceFirst args=[_:e@8:65,_:e@8:72,ignoreCase:e@8:90] type=String call=kotlin.text.replaceFirst[kind=fun;recv=String;params=String,String,Boolean]
+expr e@10:33 string(hello) type=String
+expr e@10:54 int(0) type=Int
+expr e@10:57 int(2) type=Int
+expr e@10:54#1 binary(rangeTo) lhs=e@10:54 rhs=e@10:57 type=Int
+expr e@10:60 string(HE) type=String
+expr e@10:33#1 memberCall recv=e@10:33 callee=replaceRange args=[_:e@10:54#1,_:e@10:60] type=String call=kotlin.text.replaceRange[kind=fun;recv=String;params=kotlin.ranges.IntRange,kotlin.CharSequence]
+expr e@12:32 string(1,2,3) type=String
+expr e@12:46 string(,) type=String
+expr e@12:32#1 memberCall recv=e@12:32 callee=split args=[_:e@12:46] type=kotlin.collections.List<String> call=kotlin.text.split[kind=fun;recv=String;params=String]

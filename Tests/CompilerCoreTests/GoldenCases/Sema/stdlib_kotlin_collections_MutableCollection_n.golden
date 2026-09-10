@@ -1,270 +1,270 @@
-symbol fq=StableIterable kind=class vis=private flags=_
-symbol fq=StableIterable.<init> kind=constructor vis=private flags=_ sig=recv=StableIterable params=[kotlin.collections.List<Int>] ret=StableIterable
-symbol fq=StableIterable.<init>.$0.values kind=valueParameter vis=private flags=_
-symbol fq=StableIterable.values kind=property vis=public flags=_ type=kotlin.collections.List<Int>
-symbol fq=__local_0.addIterable kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_1.addSequence kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_2.addArray kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_3.plusTarget kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_4.removeElement kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_5.minusTarget kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_6.removeIterable kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_7.removeSequence kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_8.removeArray kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_9.removeCollection kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_10.collectionInput kind=local vis=private flags=_ type=kotlin.collections.Collection<Int>
-symbol fq=__local_11.retainIterable kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_12.retainSequence kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_13.retainArray kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_14.retainCollection kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_15.retainInput kind=local vis=private flags=_ type=kotlin.collections.Collection<Int>
-symbol fq=__local_16.emptyRetain kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=__local_17.nullable kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int?>
-symbol fq=__local_18.set kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableCollection.remove kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.MutableCollection.E] ret=Boolean
-symbol fq=kotlin.collections.MutableCollection.remove.element kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.MutableCollection.removeAll kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.Collection<out kotlin.collections.MutableCollection.E>] ret=Boolean
-symbol fq=kotlin.collections.MutableCollection.removeAll.elements kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.MutableCollection.retainAll kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.Collection<out kotlin.collections.MutableCollection.E>] ret=Boolean
-symbol fq=kotlin.collections.MutableCollection.retainAll.elements kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=StableIterable.<init>.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=StableIterable.<init>[kind=ctor;recv=StableIterable;params=kotlin.collections.List<Int>] kind=constructor vis=private flags=_ sig=recv=StableIterable params=[kotlin.collections.List<Int>] ret=StableIterable
+symbol fq=StableIterable.values[kind=prop] kind=property vis=public flags=_ type=kotlin.collections.List<Int>
+symbol fq=StableIterable[kind=class] kind=class vis=private flags=_
+symbol fq=__local_0.addIterable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_1.addSequence[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_2.addArray[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_3.plusTarget[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_4.removeElement[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_5.minusTarget[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_6.removeIterable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_7.removeSequence[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_8.removeArray[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_9.removeCollection[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_10.collectionInput[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Collection<Int>
+symbol fq=__local_11.retainIterable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_12.retainSequence[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_13.retainArray[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_14.retainCollection[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_15.retainInput[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Collection<Int>
+symbol fq=__local_16.emptyRetain[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=__local_17.nullable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int?>
+symbol fq=__local_18.set[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Int>
+symbol fq=kotlin.Array[kind=class;gen=1] kind=class vis=public flags=synthetic
+symbol fq=kotlin.collections.Collection.E[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableCollection.E[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableCollection.remove.element[kind=vparam] kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.collections.MutableCollection.removeAll.elements[kind=vparam] kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.collections.MutableCollection.removeAll[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=kotlin.collections.Collection<out T0>;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.Collection<out kotlin.collections.MutableCollection.E>] ret=Boolean
+symbol fq=kotlin.collections.MutableCollection.remove[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.MutableCollection.E] ret=Boolean
+symbol fq=kotlin.collections.MutableCollection.retainAll.elements[kind=vparam] kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.collections.MutableCollection.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=kotlin.collections.Collection<out T0>;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.Collection<out kotlin.collections.MutableCollection.E>] ret=Boolean
+symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_MutableCollection_n package=_
-  decl StableIterable class StableIterable sym=StableIterable
-  decl main fun main sym=main
-expr e@2:46 name(values) type=kotlin.collections.List<Int> ref=StableIterable.values
-expr e@2:46#1 memberCall recv=e@2:46 callee=iterator args=[] type=kotlin.collections.Iterator<out Int> call=kotlin.collections.Collection.iterator
+  decl StableIterable[kind=class] class StableIterable sym=StableIterable[kind=class]
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+expr e@2:46 name(values) type=kotlin.collections.List<Int> ref=StableIterable.values[kind=prop]
+expr e@2:46#1 memberCall recv=e@2:46 callee=iterator args=[] type=kotlin.collections.Iterator<Int> call=kotlin.collections.Collection.iterator[kind=fun;recv=kotlin.collections.Collection<T0>;params=;gen=1] targs=[Int]
 expr e@6:61 int(1) type=Int
-expr e@6:47 call callee=e@6:47#1 args=[_:e@6:61] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@6:5 localDecl addIterable mutable=0 type=MutableCollection<Int> init=e@6:47 type=Unit ref=__local_0.addIterable
-expr e@7:13 name(addIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_0.addIterable
+expr e@6:47 call callee=e@6:47#1 args=[_:e@6:61] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@6:5 localDecl addIterable mutable=0 type=MutableCollection<Int> init=e@6:47 type=Unit ref=__local_0.addIterable[kind=local]
+expr e@7:13 name(addIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_0.addIterable[kind=local]
 expr e@7:54 int(2) type=Int
 expr e@7:57 int(3) type=Int
-expr e@7:47 call callee=e@7:47#1 args=[_:e@7:54,_:e@7:57] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@7:32 call callee=e@7:32#1 args=[_:e@7:47] type=StableIterable call=StableIterable.<init>
-expr e@7:13#1 memberCall recv=e@7:13 callee=addAll args=[_:e@7:32] type=Boolean call=kotlin.collections.addAll#0 targs=[Int]
-expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println#1
-expr e@8:13 name(addIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_0.addIterable
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println#1
+expr e@7:47 call callee=e@7:47#1 args=[_:e@7:54,_:e@7:57] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@7:32 call callee=e@7:32#1 args=[_:e@7:47] type=StableIterable call=StableIterable.<init>[kind=ctor;recv=StableIterable;params=kotlin.collections.List<Int>]
+expr e@7:13#1 memberCall recv=e@7:13 callee=addAll args=[_:e@7:32] type=Boolean call=kotlin.collections.addAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.collections.Iterable<T0>;gen=1] targs=[Int]
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@8:13 name(addIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_0.addIterable[kind=local]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@10:61 int(1) type=Int
-expr e@10:47 call callee=e@10:47#1 args=[_:e@10:61] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@10:5 localDecl addSequence mutable=0 type=MutableCollection<Int> init=e@10:47 type=Unit ref=__local_1.addSequence
-expr e@11:13 name(addSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_1.addSequence
+expr e@10:47 call callee=e@10:47#1 args=[_:e@10:61] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@10:5 localDecl addSequence mutable=0 type=MutableCollection<Int> init=e@10:47 type=Unit ref=__local_1.addSequence[kind=local]
+expr e@11:13 name(addSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_1.addSequence[kind=local]
 expr e@11:43 int(2) type=Int
 expr e@11:46 int(3) type=Int
-expr e@11:32 call callee=e@11:32#1 args=[_:e@11:43,_:e@11:46] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
-expr e@11:13#1 memberCall recv=e@11:13 callee=addAll args=[_:e@11:32] type=Boolean call=kotlin.collections.addAll#1 targs=[Int]
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#1
-expr e@12:13 name(addSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_1.addSequence
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13] type=Unit call=kotlin.io.println#1
+expr e@11:32 call callee=e@11:32#1 args=[_:e@11:43,_:e@11:46] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@11:13#1 memberCall recv=e@11:13 callee=addAll args=[_:e@11:32] type=Boolean call=kotlin.collections.addAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.sequences.Sequence<T0>;gen=1] targs=[Int]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@12:13 name(addSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_1.addSequence[kind=local]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@14:58 int(1) type=Int
-expr e@14:44 call callee=e@14:44#1 args=[_:e@14:58] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@14:5 localDecl addArray mutable=0 type=MutableCollection<Int> init=e@14:44 type=Unit ref=__local_2.addArray
-expr e@15:13 name(addArray) type=kotlin.collections.MutableCollection<Int> ref=__local_2.addArray
+expr e@14:44 call callee=e@14:44#1 args=[_:e@14:58] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@14:5 localDecl addArray mutable=0 type=MutableCollection<Int> init=e@14:44 type=Unit ref=__local_2.addArray[kind=local]
+expr e@15:13 name(addArray) type=kotlin.collections.MutableCollection<Int> ref=__local_2.addArray[kind=local]
 expr e@15:37 int(2) type=Int
 expr e@15:40 int(3) type=Int
-expr e@15:29 call callee=e@15:29#1 args=[_:e@15:37,_:e@15:40] type=kotlin.Array<Int> call=kotlin.arrayOf targs=[Int]
-expr e@15:13#1 memberCall recv=e@15:13 callee=addAll args=[_:e@15:29] type=Boolean call=kotlin.collections.addAll#2 targs=[Int]
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println#1
-expr e@16:13 name(addArray) type=kotlin.collections.MutableCollection<Int> ref=__local_2.addArray
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13] type=Unit call=kotlin.io.println#1
+expr e@15:29 call callee=e@15:29#1 args=[_:e@15:37,_:e@15:40] type=kotlin.Array<Int> call=kotlin.arrayOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@15:13#1 memberCall recv=e@15:13 callee=addAll args=[_:e@15:29] type=Boolean call=kotlin.collections.addAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.Array<out T0>;gen=1] targs=[Int]
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@16:13 name(addArray) type=kotlin.collections.MutableCollection<Int> ref=__local_2.addArray[kind=local]
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@18:60 int(1) type=Int
-expr e@18:46 call callee=e@18:46#1 args=[_:e@18:60] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@18:5 localDecl plusTarget mutable=0 type=MutableCollection<Int> init=e@18:46 type=Unit ref=__local_3.plusTarget
+expr e@18:46 call callee=e@18:46#1 args=[_:e@18:60] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@18:5 localDecl plusTarget mutable=0 type=MutableCollection<Int> init=e@18:46 type=Unit ref=__local_3.plusTarget[kind=local]
 expr e@19:19 int(2) type=Int
-expr e@19:5 compoundAssign(plusAssign) name=plusTarget value=e@19:19 type=Unit ref=__local_3.plusTarget call=kotlin.collections.plusAssign#0 targs=[Int]
+expr e@19:5 compoundAssign(plusAssign) name=plusTarget value=e@19:19 type=Unit ref=__local_3.plusTarget[kind=local] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=T0;gen=1] targs=[Int]
 expr e@20:41 int(3) type=Int
-expr e@20:34 call callee=e@20:34#1 args=[_:e@20:41] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@20:19 call callee=e@20:19#1 args=[_:e@20:34] type=StableIterable call=StableIterable.<init>
-expr e@20:5 compoundAssign(plusAssign) name=plusTarget value=e@20:19 type=Unit ref=__local_3.plusTarget call=kotlin.collections.plusAssign#1 targs=[Int]
+expr e@20:34 call callee=e@20:34#1 args=[_:e@20:41] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@20:19 call callee=e@20:19#1 args=[_:e@20:34] type=StableIterable call=StableIterable.<init>[kind=ctor;recv=StableIterable;params=kotlin.collections.List<Int>]
+expr e@20:5 compoundAssign(plusAssign) name=plusTarget value=e@20:19 type=Unit ref=__local_3.plusTarget[kind=local] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.collections.Iterable<T0>;gen=1] targs=[Int]
 expr e@21:30 int(4) type=Int
-expr e@21:19 call callee=e@21:19#1 args=[_:e@21:30] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
-expr e@21:5 compoundAssign(plusAssign) name=plusTarget value=e@21:19 type=Unit ref=__local_3.plusTarget call=kotlin.collections.plusAssign#3 targs=[Int]
+expr e@21:19 call callee=e@21:19#1 args=[_:e@21:30] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@21:5 compoundAssign(plusAssign) name=plusTarget value=e@21:19 type=Unit ref=__local_3.plusTarget[kind=local] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.sequences.Sequence<T0>;gen=1] targs=[Int]
 expr e@22:27 int(5) type=Int
-expr e@22:19 call callee=e@22:19#1 args=[_:e@22:27] type=kotlin.Array<Int> call=kotlin.arrayOf targs=[Int]
-expr e@22:5 compoundAssign(plusAssign) name=plusTarget value=e@22:19 type=Unit ref=__local_3.plusTarget call=kotlin.collections.plusAssign#2 targs=[Int]
-expr e@23:13 name(plusTarget) type=kotlin.collections.MutableCollection<Int> ref=__local_3.plusTarget
-expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println#1
+expr e@22:19 call callee=e@22:19#1 args=[_:e@22:27] type=kotlin.Array<Int> call=kotlin.arrayOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@22:5 compoundAssign(plusAssign) name=plusTarget value=e@22:19 type=Unit ref=__local_3.plusTarget[kind=local] call=kotlin.collections.plusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.Array<T0>;gen=1] targs=[Int]
+expr e@23:13 name(plusTarget) type=kotlin.collections.MutableCollection<Int> ref=__local_3.plusTarget[kind=local]
+expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@25:63 int(1) type=Int
 expr e@25:66 int(2) type=Int
 expr e@25:69 int(2) type=Int
 expr e@25:72 int(3) type=Int
-expr e@25:49 call callee=e@25:49#1 args=[_:e@25:63,_:e@25:66,_:e@25:69,_:e@25:72] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@25:5 localDecl removeElement mutable=0 type=MutableCollection<Int> init=e@25:49 type=Unit ref=__local_4.removeElement
-expr e@26:13 name(removeElement) type=kotlin.collections.MutableCollection<Int> ref=__local_4.removeElement
+expr e@25:49 call callee=e@25:49#1 args=[_:e@25:63,_:e@25:66,_:e@25:69,_:e@25:72] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@25:5 localDecl removeElement mutable=0 type=MutableCollection<Int> init=e@25:49 type=Unit ref=__local_4.removeElement[kind=local]
+expr e@26:13 name(removeElement) type=kotlin.collections.MutableCollection<Int> ref=__local_4.removeElement[kind=local]
 expr e@26:34 int(2) type=Int
-expr e@26:13#1 memberCall recv=e@26:13 callee=remove args=[_:e@26:34] type=Boolean call=kotlin.collections.MutableCollection.remove targs=[Int]
-expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13#1] type=Unit call=kotlin.io.println#1
-expr e@27:13 name(removeElement) type=kotlin.collections.MutableCollection<Int> ref=__local_4.removeElement
-expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println#1
+expr e@26:13#1 memberCall recv=e@26:13 callee=remove args=[_:e@26:34] type=Boolean call=kotlin.collections.MutableCollection.remove[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=T0;gen=1] targs=[Int]
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@27:13 name(removeElement) type=kotlin.collections.MutableCollection<Int> ref=__local_4.removeElement[kind=local]
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@29:61 int(1) type=Int
 expr e@29:64 int(2) type=Int
 expr e@29:67 int(2) type=Int
 expr e@29:70 int(3) type=Int
 expr e@29:73 int(4) type=Int
 expr e@29:76 int(5) type=Int
-expr e@29:47 call callee=e@29:47#1 args=[_:e@29:61,_:e@29:64,_:e@29:67,_:e@29:70,_:e@29:73,_:e@29:76] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@29:5 localDecl minusTarget mutable=0 type=MutableCollection<Int> init=e@29:47 type=Unit ref=__local_5.minusTarget
+expr e@29:47 call callee=e@29:47#1 args=[_:e@29:61,_:e@29:64,_:e@29:67,_:e@29:70,_:e@29:73,_:e@29:76] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@29:5 localDecl minusTarget mutable=0 type=MutableCollection<Int> init=e@29:47 type=Unit ref=__local_5.minusTarget[kind=local]
 expr e@30:20 int(2) type=Int
-expr e@30:5 compoundAssign(minusAssign) name=minusTarget value=e@30:20 type=Unit ref=__local_5.minusTarget call=kotlin.collections.minusAssign#0 targs=[Int]
+expr e@30:5 compoundAssign(minusAssign) name=minusTarget value=e@30:20 type=Unit ref=__local_5.minusTarget[kind=local] call=kotlin.collections.minusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=T0;gen=1] targs=[Int]
 expr e@31:42 int(3) type=Int
-expr e@31:35 call callee=e@31:35#1 args=[_:e@31:42] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@31:20 call callee=e@31:20#1 args=[_:e@31:35] type=StableIterable call=StableIterable.<init>
-expr e@31:5 compoundAssign(minusAssign) name=minusTarget value=e@31:20 type=Unit ref=__local_5.minusTarget call=kotlin.collections.minusAssign#1 targs=[Int]
+expr e@31:35 call callee=e@31:35#1 args=[_:e@31:42] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@31:20 call callee=e@31:20#1 args=[_:e@31:35] type=StableIterable call=StableIterable.<init>[kind=ctor;recv=StableIterable;params=kotlin.collections.List<Int>]
+expr e@31:5 compoundAssign(minusAssign) name=minusTarget value=e@31:20 type=Unit ref=__local_5.minusTarget[kind=local] call=kotlin.collections.minusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.collections.Iterable<T0>;gen=1] targs=[Int]
 expr e@32:31 int(4) type=Int
-expr e@32:20 call callee=e@32:20#1 args=[_:e@32:31] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
-expr e@32:5 compoundAssign(minusAssign) name=minusTarget value=e@32:20 type=Unit ref=__local_5.minusTarget call=kotlin.collections.minusAssign#3 targs=[Int]
+expr e@32:20 call callee=e@32:20#1 args=[_:e@32:31] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@32:5 compoundAssign(minusAssign) name=minusTarget value=e@32:20 type=Unit ref=__local_5.minusTarget[kind=local] call=kotlin.collections.minusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.sequences.Sequence<T0>;gen=1] targs=[Int]
 expr e@33:28 int(5) type=Int
-expr e@33:20 call callee=e@33:20#1 args=[_:e@33:28] type=kotlin.Array<Int> call=kotlin.arrayOf targs=[Int]
-expr e@33:5 compoundAssign(minusAssign) name=minusTarget value=e@33:20 type=Unit ref=__local_5.minusTarget call=kotlin.collections.minusAssign#2 targs=[Int]
-expr e@34:13 name(minusTarget) type=kotlin.collections.MutableCollection<Int> ref=__local_5.minusTarget
-expr e@34:5 call callee=e@34:5#1 args=[_:e@34:13] type=Unit call=kotlin.io.println#1
+expr e@33:20 call callee=e@33:20#1 args=[_:e@33:28] type=kotlin.Array<Int> call=kotlin.arrayOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@33:5 compoundAssign(minusAssign) name=minusTarget value=e@33:20 type=Unit ref=__local_5.minusTarget[kind=local] call=kotlin.collections.minusAssign[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.Array<T0>;gen=1] targs=[Int]
+expr e@34:13 name(minusTarget) type=kotlin.collections.MutableCollection<Int> ref=__local_5.minusTarget[kind=local]
+expr e@34:5 call callee=e@34:5#1 args=[_:e@34:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@36:64 int(1) type=Int
 expr e@36:67 int(2) type=Int
 expr e@36:70 int(2) type=Int
 expr e@36:73 int(3) type=Int
-expr e@36:50 call callee=e@36:50#1 args=[_:e@36:64,_:e@36:67,_:e@36:70,_:e@36:73] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@36:5 localDecl removeIterable mutable=0 type=MutableCollection<Int> init=e@36:50 type=Unit ref=__local_6.removeIterable
-expr e@37:13 name(removeIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_6.removeIterable
+expr e@36:50 call callee=e@36:50#1 args=[_:e@36:64,_:e@36:67,_:e@36:70,_:e@36:73] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@36:5 localDecl removeIterable mutable=0 type=MutableCollection<Int> init=e@36:50 type=Unit ref=__local_6.removeIterable[kind=local]
+expr e@37:13 name(removeIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_6.removeIterable[kind=local]
 expr e@37:60 int(2) type=Int
-expr e@37:53 call callee=e@37:53#1 args=[_:e@37:60] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@37:38 call callee=e@37:38#1 args=[_:e@37:53] type=StableIterable call=StableIterable.<init>
-expr e@37:13#1 memberCall recv=e@37:13 callee=removeAll args=[_:e@37:38] type=Boolean call=kotlin.collections.removeAll#0 targs=[Int]
-expr e@37:5 call callee=e@37:5#1 args=[_:e@37:13#1] type=Unit call=kotlin.io.println#1
-expr e@38:13 name(removeIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_6.removeIterable
-expr e@38:5 call callee=e@38:5#1 args=[_:e@38:13] type=Unit call=kotlin.io.println#1
+expr e@37:53 call callee=e@37:53#1 args=[_:e@37:60] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@37:38 call callee=e@37:38#1 args=[_:e@37:53] type=StableIterable call=StableIterable.<init>[kind=ctor;recv=StableIterable;params=kotlin.collections.List<Int>]
+expr e@37:13#1 memberCall recv=e@37:13 callee=removeAll args=[_:e@37:38] type=Boolean call=kotlin.collections.removeAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.collections.Iterable<T0>;gen=1] targs=[Int]
+expr e@37:5 call callee=e@37:5#1 args=[_:e@37:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@38:13 name(removeIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_6.removeIterable[kind=local]
+expr e@38:5 call callee=e@38:5#1 args=[_:e@38:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@40:64 int(1) type=Int
 expr e@40:67 int(2) type=Int
 expr e@40:70 int(2) type=Int
 expr e@40:73 int(3) type=Int
-expr e@40:50 call callee=e@40:50#1 args=[_:e@40:64,_:e@40:67,_:e@40:70,_:e@40:73] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@40:5 localDecl removeSequence mutable=0 type=MutableCollection<Int> init=e@40:50 type=Unit ref=__local_7.removeSequence
-expr e@41:13 name(removeSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_7.removeSequence
+expr e@40:50 call callee=e@40:50#1 args=[_:e@40:64,_:e@40:67,_:e@40:70,_:e@40:73] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@40:5 localDecl removeSequence mutable=0 type=MutableCollection<Int> init=e@40:50 type=Unit ref=__local_7.removeSequence[kind=local]
+expr e@41:13 name(removeSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_7.removeSequence[kind=local]
 expr e@41:49 int(2) type=Int
-expr e@41:38 call callee=e@41:38#1 args=[_:e@41:49] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
-expr e@41:13#1 memberCall recv=e@41:13 callee=removeAll args=[_:e@41:38] type=Boolean call=kotlin.collections.removeAll#1 targs=[Int]
-expr e@41:5 call callee=e@41:5#1 args=[_:e@41:13#1] type=Unit call=kotlin.io.println#1
-expr e@42:13 name(removeSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_7.removeSequence
-expr e@42:5 call callee=e@42:5#1 args=[_:e@42:13] type=Unit call=kotlin.io.println#1
+expr e@41:38 call callee=e@41:38#1 args=[_:e@41:49] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@41:13#1 memberCall recv=e@41:13 callee=removeAll args=[_:e@41:38] type=Boolean call=kotlin.collections.removeAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.sequences.Sequence<T0>;gen=1] targs=[Int]
+expr e@41:5 call callee=e@41:5#1 args=[_:e@41:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@42:13 name(removeSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_7.removeSequence[kind=local]
+expr e@42:5 call callee=e@42:5#1 args=[_:e@42:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@44:61 int(1) type=Int
 expr e@44:64 int(2) type=Int
 expr e@44:67 int(2) type=Int
 expr e@44:70 int(3) type=Int
-expr e@44:47 call callee=e@44:47#1 args=[_:e@44:61,_:e@44:64,_:e@44:67,_:e@44:70] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@44:5 localDecl removeArray mutable=0 type=MutableCollection<Int> init=e@44:47 type=Unit ref=__local_8.removeArray
-expr e@45:13 name(removeArray) type=kotlin.collections.MutableCollection<Int> ref=__local_8.removeArray
+expr e@44:47 call callee=e@44:47#1 args=[_:e@44:61,_:e@44:64,_:e@44:67,_:e@44:70] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@44:5 localDecl removeArray mutable=0 type=MutableCollection<Int> init=e@44:47 type=Unit ref=__local_8.removeArray[kind=local]
+expr e@45:13 name(removeArray) type=kotlin.collections.MutableCollection<Int> ref=__local_8.removeArray[kind=local]
 expr e@45:43 int(2) type=Int
-expr e@45:35 call callee=e@45:35#1 args=[_:e@45:43] type=kotlin.Array<Int> call=kotlin.arrayOf targs=[Int]
-expr e@45:13#1 memberCall recv=e@45:13 callee=removeAll args=[_:e@45:35] type=Boolean call=kotlin.collections.removeAll#2 targs=[Int]
-expr e@45:5 call callee=e@45:5#1 args=[_:e@45:13#1] type=Unit call=kotlin.io.println#1
-expr e@46:13 name(removeArray) type=kotlin.collections.MutableCollection<Int> ref=__local_8.removeArray
-expr e@46:5 call callee=e@46:5#1 args=[_:e@46:13] type=Unit call=kotlin.io.println#1
+expr e@45:35 call callee=e@45:35#1 args=[_:e@45:43] type=kotlin.Array<Int> call=kotlin.arrayOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@45:13#1 memberCall recv=e@45:13 callee=removeAll args=[_:e@45:35] type=Boolean call=kotlin.collections.removeAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.Array<out T0>;gen=1] targs=[Int]
+expr e@45:5 call callee=e@45:5#1 args=[_:e@45:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@46:13 name(removeArray) type=kotlin.collections.MutableCollection<Int> ref=__local_8.removeArray[kind=local]
+expr e@46:5 call callee=e@46:5#1 args=[_:e@46:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@48:66 int(1) type=Int
 expr e@48:69 int(2) type=Int
 expr e@48:72 int(2) type=Int
 expr e@48:75 int(3) type=Int
-expr e@48:52 call callee=e@48:52#1 args=[_:e@48:66,_:e@48:69,_:e@48:72,_:e@48:75] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@48:5 localDecl removeCollection mutable=0 type=MutableCollection<Int> init=e@48:52 type=Unit ref=__local_9.removeCollection
+expr e@48:52 call callee=e@48:52#1 args=[_:e@48:66,_:e@48:69,_:e@48:72,_:e@48:75] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@48:5 localDecl removeCollection mutable=0 type=MutableCollection<Int> init=e@48:52 type=Unit ref=__local_9.removeCollection[kind=local]
 expr e@49:51 int(2) type=Int
-expr e@49:44 call callee=e@49:44#1 args=[_:e@49:51] type=kotlin.collections.Collection<Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@49:5 localDecl collectionInput mutable=0 type=Collection<Int> init=e@49:44 type=Unit ref=__local_10.collectionInput
-expr e@50:13 name(removeCollection) type=kotlin.collections.MutableCollection<Int> ref=__local_9.removeCollection
-expr e@50:40 name(collectionInput) type=kotlin.collections.Collection<Int> ref=__local_10.collectionInput
-expr e@50:13#1 memberCall recv=e@50:13 callee=removeAll args=[_:e@50:40] type=Boolean call=kotlin.collections.MutableCollection.removeAll targs=[Int]
-expr e@50:5 call callee=e@50:5#1 args=[_:e@50:13#1] type=Unit call=kotlin.io.println#1
-expr e@51:13 name(removeCollection) type=kotlin.collections.MutableCollection<Int> ref=__local_9.removeCollection
-expr e@51:5 call callee=e@51:5#1 args=[_:e@51:13] type=Unit call=kotlin.io.println#1
+expr e@49:44 call callee=e@49:44#1 args=[_:e@49:51] type=kotlin.collections.Collection<Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@49:5 localDecl collectionInput mutable=0 type=Collection<Int> init=e@49:44 type=Unit ref=__local_10.collectionInput[kind=local]
+expr e@50:13 name(removeCollection) type=kotlin.collections.MutableCollection<Int> ref=__local_9.removeCollection[kind=local]
+expr e@50:40 name(collectionInput) type=kotlin.collections.Collection<Int> ref=__local_10.collectionInput[kind=local]
+expr e@50:13#1 memberCall recv=e@50:13 callee=removeAll args=[_:e@50:40] type=Boolean call=kotlin.collections.MutableCollection.removeAll[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=kotlin.collections.Collection<out T0>;gen=1] targs=[Int]
+expr e@50:5 call callee=e@50:5#1 args=[_:e@50:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@51:13 name(removeCollection) type=kotlin.collections.MutableCollection<Int> ref=__local_9.removeCollection[kind=local]
+expr e@51:5 call callee=e@51:5#1 args=[_:e@51:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@53:64 int(1) type=Int
 expr e@53:67 int(2) type=Int
 expr e@53:70 int(3) type=Int
-expr e@53:50 call callee=e@53:50#1 args=[_:e@53:64,_:e@53:67,_:e@53:70] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@53:5 localDecl retainIterable mutable=0 type=MutableCollection<Int> init=e@53:50 type=Unit ref=__local_11.retainIterable
-expr e@54:13 name(retainIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_11.retainIterable
+expr e@53:50 call callee=e@53:50#1 args=[_:e@53:64,_:e@53:67,_:e@53:70] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@53:5 localDecl retainIterable mutable=0 type=MutableCollection<Int> init=e@53:50 type=Unit ref=__local_11.retainIterable[kind=local]
+expr e@54:13 name(retainIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_11.retainIterable[kind=local]
 expr e@54:60 int(2) type=Int
-expr e@54:53 call callee=e@54:53#1 args=[_:e@54:60] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@54:38 call callee=e@54:38#1 args=[_:e@54:53] type=StableIterable call=StableIterable.<init>
-expr e@54:13#1 memberCall recv=e@54:13 callee=retainAll args=[_:e@54:38] type=Boolean call=kotlin.collections.retainAll#0 targs=[Int]
-expr e@54:5 call callee=e@54:5#1 args=[_:e@54:13#1] type=Unit call=kotlin.io.println#1
-expr e@55:13 name(retainIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_11.retainIterable
-expr e@55:5 call callee=e@55:5#1 args=[_:e@55:13] type=Unit call=kotlin.io.println#1
+expr e@54:53 call callee=e@54:53#1 args=[_:e@54:60] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@54:38 call callee=e@54:38#1 args=[_:e@54:53] type=StableIterable call=StableIterable.<init>[kind=ctor;recv=StableIterable;params=kotlin.collections.List<Int>]
+expr e@54:13#1 memberCall recv=e@54:13 callee=retainAll args=[_:e@54:38] type=Boolean call=kotlin.collections.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.collections.Iterable<T0>;gen=1] targs=[Int]
+expr e@54:5 call callee=e@54:5#1 args=[_:e@54:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@55:13 name(retainIterable) type=kotlin.collections.MutableCollection<Int> ref=__local_11.retainIterable[kind=local]
+expr e@55:5 call callee=e@55:5#1 args=[_:e@55:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@57:64 int(1) type=Int
 expr e@57:67 int(2) type=Int
 expr e@57:70 int(3) type=Int
-expr e@57:50 call callee=e@57:50#1 args=[_:e@57:64,_:e@57:67,_:e@57:70] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@57:5 localDecl retainSequence mutable=0 type=MutableCollection<Int> init=e@57:50 type=Unit ref=__local_12.retainSequence
-expr e@58:13 name(retainSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_12.retainSequence
+expr e@57:50 call callee=e@57:50#1 args=[_:e@57:64,_:e@57:67,_:e@57:70] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@57:5 localDecl retainSequence mutable=0 type=MutableCollection<Int> init=e@57:50 type=Unit ref=__local_12.retainSequence[kind=local]
+expr e@58:13 name(retainSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_12.retainSequence[kind=local]
 expr e@58:49 int(2) type=Int
-expr e@58:38 call callee=e@58:38#1 args=[_:e@58:49] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
-expr e@58:13#1 memberCall recv=e@58:13 callee=retainAll args=[_:e@58:38] type=Boolean call=kotlin.collections.retainAll#2 targs=[Int]
-expr e@58:5 call callee=e@58:5#1 args=[_:e@58:13#1] type=Unit call=kotlin.io.println#1
-expr e@59:13 name(retainSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_12.retainSequence
-expr e@59:5 call callee=e@59:5#1 args=[_:e@59:13] type=Unit call=kotlin.io.println#1
+expr e@58:38 call callee=e@58:38#1 args=[_:e@58:49] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@58:13#1 memberCall recv=e@58:13 callee=retainAll args=[_:e@58:38] type=Boolean call=kotlin.collections.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.sequences.Sequence<T0>;gen=1] targs=[Int]
+expr e@58:5 call callee=e@58:5#1 args=[_:e@58:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@59:13 name(retainSequence) type=kotlin.collections.MutableCollection<Int> ref=__local_12.retainSequence[kind=local]
+expr e@59:5 call callee=e@59:5#1 args=[_:e@59:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@61:61 int(1) type=Int
 expr e@61:64 int(2) type=Int
 expr e@61:67 int(3) type=Int
-expr e@61:47 call callee=e@61:47#1 args=[_:e@61:61,_:e@61:64,_:e@61:67] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@61:5 localDecl retainArray mutable=0 type=MutableCollection<Int> init=e@61:47 type=Unit ref=__local_13.retainArray
-expr e@62:13 name(retainArray) type=kotlin.collections.MutableCollection<Int> ref=__local_13.retainArray
+expr e@61:47 call callee=e@61:47#1 args=[_:e@61:61,_:e@61:64,_:e@61:67] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@61:5 localDecl retainArray mutable=0 type=MutableCollection<Int> init=e@61:47 type=Unit ref=__local_13.retainArray[kind=local]
+expr e@62:13 name(retainArray) type=kotlin.collections.MutableCollection<Int> ref=__local_13.retainArray[kind=local]
 expr e@62:43 int(2) type=Int
-expr e@62:35 call callee=e@62:35#1 args=[_:e@62:43] type=kotlin.Array<Int> call=kotlin.arrayOf targs=[Int]
-expr e@62:13#1 memberCall recv=e@62:13 callee=retainAll args=[_:e@62:35] type=Boolean call=kotlin.collections.retainAll#1 targs=[Int]
-expr e@62:5 call callee=e@62:5#1 args=[_:e@62:13#1] type=Unit call=kotlin.io.println#1
-expr e@63:13 name(retainArray) type=kotlin.collections.MutableCollection<Int> ref=__local_13.retainArray
-expr e@63:5 call callee=e@63:5#1 args=[_:e@63:13] type=Unit call=kotlin.io.println#1
+expr e@62:35 call callee=e@62:35#1 args=[_:e@62:43] type=kotlin.Array<Int> call=kotlin.arrayOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@62:13#1 memberCall recv=e@62:13 callee=retainAll args=[_:e@62:35] type=Boolean call=kotlin.collections.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.Array<out T0>;gen=1] targs=[Int]
+expr e@62:5 call callee=e@62:5#1 args=[_:e@62:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@63:13 name(retainArray) type=kotlin.collections.MutableCollection<Int> ref=__local_13.retainArray[kind=local]
+expr e@63:5 call callee=e@63:5#1 args=[_:e@63:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@65:66 int(1) type=Int
 expr e@65:69 int(2) type=Int
 expr e@65:72 int(3) type=Int
-expr e@65:52 call callee=e@65:52#1 args=[_:e@65:66,_:e@65:69,_:e@65:72] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@65:5 localDecl retainCollection mutable=0 type=MutableCollection<Int> init=e@65:52 type=Unit ref=__local_14.retainCollection
+expr e@65:52 call callee=e@65:52#1 args=[_:e@65:66,_:e@65:69,_:e@65:72] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@65:5 localDecl retainCollection mutable=0 type=MutableCollection<Int> init=e@65:52 type=Unit ref=__local_14.retainCollection[kind=local]
 expr e@66:47 int(2) type=Int
-expr e@66:40 call callee=e@66:40#1 args=[_:e@66:47] type=kotlin.collections.Collection<Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@66:5 localDecl retainInput mutable=0 type=Collection<Int> init=e@66:40 type=Unit ref=__local_15.retainInput
-expr e@67:13 name(retainCollection) type=kotlin.collections.MutableCollection<Int> ref=__local_14.retainCollection
-expr e@67:40 name(retainInput) type=kotlin.collections.Collection<Int> ref=__local_15.retainInput
-expr e@67:13#1 memberCall recv=e@67:13 callee=retainAll args=[_:e@67:40] type=Boolean call=kotlin.collections.MutableCollection.retainAll targs=[Int]
-expr e@67:5 call callee=e@67:5#1 args=[_:e@67:13#1] type=Unit call=kotlin.io.println#1
-expr e@68:13 name(retainCollection) type=kotlin.collections.MutableCollection<Int> ref=__local_14.retainCollection
-expr e@68:5 call callee=e@68:5#1 args=[_:e@68:13] type=Unit call=kotlin.io.println#1
+expr e@66:40 call callee=e@66:40#1 args=[_:e@66:47] type=kotlin.collections.Collection<Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@66:5 localDecl retainInput mutable=0 type=Collection<Int> init=e@66:40 type=Unit ref=__local_15.retainInput[kind=local]
+expr e@67:13 name(retainCollection) type=kotlin.collections.MutableCollection<Int> ref=__local_14.retainCollection[kind=local]
+expr e@67:40 name(retainInput) type=kotlin.collections.Collection<Int> ref=__local_15.retainInput[kind=local]
+expr e@67:13#1 memberCall recv=e@67:13 callee=retainAll args=[_:e@67:40] type=Boolean call=kotlin.collections.MutableCollection.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=kotlin.collections.Collection<out T0>;gen=1] targs=[Int]
+expr e@67:5 call callee=e@67:5#1 args=[_:e@67:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@68:13 name(retainCollection) type=kotlin.collections.MutableCollection<Int> ref=__local_14.retainCollection[kind=local]
+expr e@68:5 call callee=e@68:5#1 args=[_:e@68:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@70:61 int(1) type=Int
 expr e@70:64 int(2) type=Int
-expr e@70:47 call callee=e@70:47#1 args=[_:e@70:61,_:e@70:64] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@70:5 localDecl emptyRetain mutable=0 type=MutableCollection<Int> init=e@70:47 type=Unit ref=__local_16.emptyRetain
-expr e@71:13 name(emptyRetain) type=kotlin.collections.MutableCollection<Int> ref=__local_16.emptyRetain
-expr e@71:35 call callee=e@71:35#1 args=[] type=kotlin.Array<Int> call=kotlin.emptyArray targs=[Int]
-expr e@71:13#1 memberCall recv=e@71:13 callee=retainAll args=[_:e@71:35] type=Boolean call=kotlin.collections.retainAll#1 targs=[Int]
-expr e@71:5 call callee=e@71:5#1 args=[_:e@71:13#1] type=Unit call=kotlin.io.println#1
-expr e@72:13 name(emptyRetain) type=kotlin.collections.MutableCollection<Int> ref=__local_16.emptyRetain
-expr e@72:5 call callee=e@72:5#1 args=[_:e@72:13] type=Unit call=kotlin.io.println#1
+expr e@70:47 call callee=e@70:47#1 args=[_:e@70:61,_:e@70:64] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@70:5 localDecl emptyRetain mutable=0 type=MutableCollection<Int> init=e@70:47 type=Unit ref=__local_16.emptyRetain[kind=local]
+expr e@71:13 name(emptyRetain) type=kotlin.collections.MutableCollection<Int> ref=__local_16.emptyRetain[kind=local]
+expr e@71:35 call callee=e@71:35#1 args=[] type=kotlin.Array<Int> call=kotlin.emptyArray[kind=fun;params=;gen=1] targs=[Int]
+expr e@71:13#1 memberCall recv=e@71:13 callee=retainAll args=[_:e@71:35] type=Boolean call=kotlin.collections.retainAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.Array<out T0>;gen=1] targs=[Int]
+expr e@71:5 call callee=e@71:5#1 args=[_:e@71:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@72:13 name(emptyRetain) type=kotlin.collections.MutableCollection<Int> ref=__local_16.emptyRetain[kind=local]
+expr e@72:5 call callee=e@72:5#1 args=[_:e@72:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@74:59 int(1) type=Int
 expr e@74:62 name(null) type=Nothing?
 expr e@74:68 int(1) type=Int
-expr e@74:45 call callee=e@74:45#1 args=[_:e@74:59,_:e@74:62,_:e@74:68] type=kotlin.collections.MutableCollection<Int?> call=kotlin.collections.mutableListOf#1 targs=[Int?]
-expr e@74:5 localDecl nullable mutable=0 type=MutableCollection<Int?> init=e@74:45 type=Unit ref=__local_17.nullable
-expr e@75:13 name(nullable) type=kotlin.collections.MutableCollection<Int?> ref=__local_17.nullable
+expr e@74:45 call callee=e@74:45#1 args=[_:e@74:59,_:e@74:62,_:e@74:68] type=kotlin.collections.MutableCollection<Int?> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int?]
+expr e@74:5 localDecl nullable mutable=0 type=MutableCollection<Int?> init=e@74:45 type=Unit ref=__local_17.nullable[kind=local]
+expr e@75:13 name(nullable) type=kotlin.collections.MutableCollection<Int?> ref=__local_17.nullable[kind=local]
 expr e@75:29 name(null) type=Nothing?
-expr e@75:13#1 memberCall recv=e@75:13 callee=remove args=[_:e@75:29] type=Boolean call=kotlin.collections.MutableCollection.remove targs=[Int?]
-expr e@75:5 call callee=e@75:5#1 args=[_:e@75:13#1] type=Unit call=kotlin.io.println#1
-expr e@76:13 name(nullable) type=kotlin.collections.MutableCollection<Int?> ref=__local_17.nullable
-expr e@76:5 call callee=e@76:5#1 args=[_:e@76:13] type=Unit call=kotlin.io.println#1
+expr e@75:13#1 memberCall recv=e@75:13 callee=remove args=[_:e@75:29] type=Boolean call=kotlin.collections.MutableCollection.remove[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=T0;gen=1] targs=[Int?]
+expr e@75:5 call callee=e@75:5#1 args=[_:e@75:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@76:13 name(nullable) type=kotlin.collections.MutableCollection<Int?> ref=__local_17.nullable[kind=local]
+expr e@76:5 call callee=e@76:5#1 args=[_:e@76:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@78:51 int(1) type=Int
 expr e@78:54 int(2) type=Int
 expr e@78:57 int(3) type=Int
-expr e@78:39 call callee=e@78:39#1 args=[_:e@78:51,_:e@78:54,_:e@78:57] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.linkedSetOf#1 targs=[Int]
-expr e@78:5 localDecl set mutable=0 type=MutableCollection<Int> init=e@78:39 type=Unit ref=__local_18.set
-expr e@79:13 name(set) type=kotlin.collections.MutableCollection<Int> ref=__local_18.set
+expr e@78:39 call callee=e@78:39#1 args=[_:e@78:51,_:e@78:54,_:e@78:57] type=kotlin.collections.MutableCollection<Int> call=kotlin.collections.linkedSetOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@78:5 localDecl set mutable=0 type=MutableCollection<Int> init=e@78:39 type=Unit ref=__local_18.set[kind=local]
+expr e@79:13 name(set) type=kotlin.collections.MutableCollection<Int> ref=__local_18.set[kind=local]
 expr e@79:35 int(2) type=Int
 expr e@79:38 int(4) type=Int
-expr e@79:27 call callee=e@79:27#1 args=[_:e@79:35,_:e@79:38] type=kotlin.Array<Int> call=kotlin.arrayOf targs=[Int]
-expr e@79:13#1 memberCall recv=e@79:13 callee=removeAll args=[_:e@79:27] type=Boolean call=kotlin.collections.removeAll#2 targs=[Int]
-expr e@79:5 call callee=e@79:5#1 args=[_:e@79:13#1] type=Unit call=kotlin.io.println#1
-expr e@80:13 name(set) type=kotlin.collections.MutableCollection<Int> ref=__local_18.set
-expr e@80:5 call callee=e@80:5#1 args=[_:e@80:13] type=Unit call=kotlin.io.println#1
+expr e@79:27 call callee=e@79:27#1 args=[_:e@79:35,_:e@79:38] type=kotlin.Array<Int> call=kotlin.arrayOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@79:13#1 memberCall recv=e@79:13 callee=removeAll args=[_:e@79:27] type=Boolean call=kotlin.collections.removeAll[kind=fun;recv=kotlin.collections.MutableCollection<in T0>;params=kotlin.Array<out T0>;gen=1] targs=[Int]
+expr e@79:5 call callee=e@79:5#1 args=[_:e@79:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@80:13 name(set) type=kotlin.collections.MutableCollection<Int> ref=__local_18.set[kind=local]
+expr e@80:5 call callee=e@80:5#1 args=[_:e@80:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

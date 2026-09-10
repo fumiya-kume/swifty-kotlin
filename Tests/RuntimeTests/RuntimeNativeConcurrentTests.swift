@@ -13,7 +13,7 @@ import Testing
 //             kk_worker_is_terminated / kk_worker_name
 //   - Worker.id: kk_worker_id (STDLIB-NATIVE-CONCURRENT-ABI-001)
 //   - Future<T>: kk_future_new / kk_future_complete / kk_future_result / kk_future_consume /
-//               kk_future_is_ready (STDLIB-NATIVE-CONCURRENT-ABI-002)
+//               kk_future_is_ready / kk_future_getState (STDLIB-NATIVE-CONCURRENT-ABI-002)
 //   - TransferMode: kk_transfer_object (STDLIB-NATIVE-CONCURRENT-ABI-003)
 //   - FreezableAtomicReference<T>: kk_freezable_atomic_ref_create / _load / _store / _is_frozen
 //               (STDLIB-NATIVE-CONCURRENT-ABI-004)
@@ -400,6 +400,17 @@ struct RuntimeFutureTests {
     @Test func futureIsNotReadyBeforeComplete() {
         let handle = kk_future_new()
         #expect(kk_future_is_ready(handle) == 0)
+    }
+
+    @Test func futureStateTracksScheduledComputedAndInvalid() {
+        let handle = kk_future_new()
+        #expect(kk_future_getState(handle) == 1) // FutureState.SCHEDULED
+
+        kk_future_complete(handle, 42)
+        #expect(kk_future_getState(handle) == 2) // FutureState.COMPUTED
+
+        _ = kk_future_consume(handle)
+        #expect(kk_future_getState(handle) == 0) // FutureState.INVALID
     }
 
     @Test func futureIsReadyAfterComplete() {

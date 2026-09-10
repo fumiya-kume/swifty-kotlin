@@ -8,7 +8,11 @@ final class StableRenderContext {
 
     private let sourceManager: SourceManager
     private let symbolFQ: [Int32: String]
-    private let overloadSuffix: [Int32: String]
+    /// Maps `SymbolID.rawValue` to a stable key derived from the declaration's
+    /// meaning (`<fq>[kind=…;recv=…;params=…]`), not from its position in the
+    /// candidate set. Adding or removing *unreferenced* same-FQName symbols
+    /// never renumbers existing references.
+    private let symbolKeys: [Int32: String]
     /// Maps `ExprID.rawValue` to a stable, source-position-derived key so that
     /// inserting an expression elsewhere in the file does not renumber every
     /// later expression in the golden dump.
@@ -30,57 +34,27 @@ final class StableRenderContext {
         self.fileKeys = Self.buildFileKeys(sourceManager: sourceManager)
 
         var fqMap: [Int32: String] = [:]
-        var fqGroups: [String: [SemanticSymbol]] = [:]
-
         for symbol in sema.symbols.allSymbols() {
-            let fq = GoldenHarnessSemaFormat.renderFQName(symbol.fqName, interner: interner)
-            fqMap[symbol.id.rawValue] = fq
-            fqGroups[fq, default: []].append(symbol)
+            fqMap[symbol.id.rawValue] = GoldenHarnessSemaFormat.renderFQName(symbol.fqName, interner: interner)
         }
-
-        var stableTypeParameterFQ: [Int32: String] = [:]
-        for symbol in sema.symbols.allSymbols() where symbol.kind == .typeParameter {
-            if let fq = fqMap[symbol.id.rawValue] {
-                stableTypeParameterFQ[symbol.id.rawValue] = Self.stabilizeTypeParameterFQName(fq)
-            }
-        }
-
         self.symbolFQ = fqMap
 
-        var suffixes: [Int32: String] = [:]
-        for (_, symbols) in fqGroups where symbols.count > 1 {
-            // Rendering and stabilizing a signature is independent of the
-            // comparison partner, so compute each key only once per symbol.
-            let keyedSymbols = symbols.map { symbol in
-                (
-                    id: symbol.id,
-                    key: Self.overloadSortKey(
-                        symbol,
-                        sema: sema,
-                        fqMap: fqMap,
-                        stableTypeParameterFQ: stableTypeParameterFQ
-                    )
-                )
-            }
-            let sorted = keyedSymbols.sorted { lhs, rhs in
-                Self.overloadSortKeyPrecedes(
-                    lhs.key,
-                    lhsSymbolID: lhs.id.rawValue,
-                    rhs.key,
-                    rhsSymbolID: rhs.id.rawValue
-                )
-            }
-            for (idx, sym) in sorted.enumerated() {
-                suffixes[sym.id.rawValue] = "#\(idx)"
-            }
-        }
-        self.overloadSuffix = suffixes
+        self.symbolKeys = StableSemanticKeyComputer(
+            sema: sema,
+            interner: interner,
+            symbolFQ: fqMap,
+            fileKeys: fileKeys,
+            sourceManager: sourceManager
+        ).computeKeys()
     }
 
+    /// Returns the stable, meaning-derived key for a symbol. The key combines the
+    /// rendered FQName with a bracketed descriptor of the declaration itself
+    /// (kind, receiver, parameter types, generic arity, and — only when needed —
+    /// a declaration-scope discriminator). It never depends on how many other
+    /// candidates share the FQName, their registration order, or SymbolIDs.
     func stableKey(for symbolID: SymbolID) -> String {
-        let fq = symbolFQ[symbolID.rawValue] ?? "_"
-        let suffix = overloadSuffix[symbolID.rawValue] ?? ""
-        return fq + suffix
+        symbolKeys[symbolID.rawValue] ?? "_"
     }
 
     /// Returns the stable, source-position-derived key for an expression.
@@ -301,103 +275,315 @@ final class StableRenderContext {
         }
     }
 
-    private static func overloadSortKey(
-        _ symbol: SemanticSymbol,
+}
+
+/// Computes the meaning-based stable key for every symbol in a compilation.
+///
+/// The previous scheme numbered same-FQName candidates `#0`, `#1`, … in
+/// signature order, so adding an *unreferenced* overload renumbered existing
+/// references and a 1→2 candidate transition toggled the suffix entirely.
+/// This computer instead derives each key from the declaration itself:
+///
+///     <fq>[kind=<k>;recv=<type>;params=<type,…>;susp;gen=<n>;scope=<disc>]
+///
+/// `kind` is always present. `recv`/`params`/`susp`/`gen` come from the
+/// function signature (a bare `params=` distinguishes `fun f()` from `val f`).
+/// `scope` is emitted only when several symbols would otherwise produce an
+/// identical key, using the declaration's source position or enclosing symbol —
+/// never a counter or a SymbolID.
+///
+/// Types are encoded structurally (`encodeTypeKey`) rather than reusing the
+/// display `renderType` string, so `(() -> String)?` and `() -> String?`,
+/// `T` / `T?` / `T!`, star/`in`/`out` projections, suspend and context
+/// receivers stay distinct. Type parameters normalize to `T<declarationIndex>`
+/// within their owner instead of names or symbol IDs. All memoization lives in
+/// this per-render computer; nothing crosses case or process boundaries.
+private final class StableSemanticKeyComputer {
+    private let sema: SemaModule
+    private let interner: StringInterner
+    private let symbolFQ: [Int32: String]
+    private let fileKeys: [Int32: String]
+    private let sourceManager: SourceManager
+
+    /// Per-render memoization of encoded types and type-parameter indices.
+    private var typeKeyMemo: [TypeID: String] = [:]
+    private var typeParamIndexMemo: [Int32: String] = [:]
+    /// Reverse map `typeParameter symbol → declaration index inside its owner`.
+    /// Built by scanning every signature / nominal parameter list, so a type
+    /// parameter resolves by its declared position even when `parentSymbol`
+    /// or its `fqName` parent is not resolvable (synthetic scopes, merged
+    /// stub declarations).
+    private var typeParamIndexBySymbol: [Int32: Int] = [:]
+
+    init(
         sema: SemaModule,
-        fqMap: [Int32: String],
-        stableTypeParameterFQ: [Int32: String]
-    ) -> String {
-        guard let sig = sema.symbols.functionSignature(for: symbol.id) else {
-            return ""
-        }
-        let recv = sig.receiverType.map {
-            stabilizeTypeRefsStatic(
-                sema.types.renderType($0),
-                fqMap: fqMap,
-                stableTypeParameterFQ: stableTypeParameterFQ
-            )
-        } ?? "_"
-        let params = sig.parameterTypes.map {
-            stabilizeTypeRefsStatic(
-                sema.types.renderType($0),
-                fqMap: fqMap,
-                stableTypeParameterFQ: stableTypeParameterFQ
-            )
-        }
-        return "\(recv)|\(params.joined(separator: ","))"
+        interner: StringInterner,
+        symbolFQ: [Int32: String],
+        fileKeys: [Int32: String],
+        sourceManager: SourceManager
+    ) {
+        self.sema = sema
+        self.interner = interner
+        self.symbolFQ = symbolFQ
+        self.fileKeys = fileKeys
+        self.sourceManager = sourceManager
     }
 
-    /// Orders overload keys numerically because generated generic-owner names
-    /// contain unpadded symbol IDs such as `$9999` and `$10001`.
-    static func overloadSortKeyPrecedes(
-        _ lhsKey: String,
-        lhsSymbolID: Int32,
-        _ rhsKey: String,
-        rhsSymbolID: Int32
-    ) -> Bool {
-        switch lhsKey.compare(rhsKey, options: .numeric) {
-        case .orderedAscending:
-            return true
-        case .orderedDescending:
-            return false
-        case .orderedSame:
-            if lhsKey != rhsKey {
-                return lhsKey < rhsKey
+    /// Returns `stableKey` for every symbol: `<displayFQ>[<inner>]`.
+    func computeKeys() -> [Int32: String] {
+        let allSymbols = sema.symbols.allSymbols()
+
+        for symbol in allSymbols {
+            // Nominal declarations first: a class-level type parameter keeps
+            // the same index whether it is seen through the class itself or
+            // through a member signature that lists class parameters first.
+            for (index, typeParam) in sema.types.nominalTypeParameterSymbols(for: symbol.id).enumerated() {
+                if typeParamIndexBySymbol[typeParam.rawValue] == nil {
+                    typeParamIndexBySymbol[typeParam.rawValue] = index
+                }
             }
-            return lhsSymbolID < rhsSymbolID
+            if let signature = sema.symbols.functionSignature(for: symbol.id) {
+                for (index, typeParam) in signature.typeParameterSymbols.enumerated() {
+                    if typeParamIndexBySymbol[typeParam.rawValue] == nil {
+                        typeParamIndexBySymbol[typeParam.rawValue] = index
+                    }
+                }
+            }
+        }
+
+        var inner: [Int32: String] = [:]
+        inner.reserveCapacity(allSymbols.count)
+        var fullKeyGroups: [String: [SemanticSymbol]] = [:]
+
+        for symbol in allSymbols {
+            let key = innerKey(for: symbol)
+            inner[symbol.id.rawValue] = key
+            let displayFQ = symbolFQ[symbol.id.rawValue] ?? "_"
+            fullKeyGroups["\(displayFQ)\u{0}\(key)", default: []].append(symbol)
+        }
+
+        // Two declarations can only share a full key when they are genuine
+        // same-scope redeclarations (e.g. shadowed locals) or synthetic stubs
+        // that duplicate one declaration. Distinguish them by declaration
+        // scope: source position first, then the enclosing symbol's key.
+        for (_, group) in fullKeyGroups where group.count > 1 {
+            for symbol in group {
+                guard let scope = scopeDiscriminator(for: symbol) else { continue }
+                inner[symbol.id.rawValue] = (inner[symbol.id.rawValue] ?? "") + ";scope=\(scope)"
+            }
+        }
+
+        var result: [Int32: String] = [:]
+        result.reserveCapacity(allSymbols.count)
+        for symbol in allSymbols {
+            let displayFQ = symbolFQ[symbol.id.rawValue] ?? "_"
+            result[symbol.id.rawValue] = "\(displayFQ)[\(inner[symbol.id.rawValue] ?? "kind=?")]"
+        }
+        return result
+    }
+
+    // MARK: - Inner key
+
+    private func innerKey(for symbol: SemanticSymbol) -> String {
+        var parts = ["kind=\(Self.kindToken(symbol.kind))"]
+        if let signature = sema.symbols.functionSignature(for: symbol.id) {
+            if let receiver = signature.receiverType {
+                parts.append("recv=\(encodeTypeKey(receiver))")
+            }
+            let params = signature.parameterTypes.enumerated().map { index, type in
+                let isVararg = index < signature.valueParameterIsVararg.count
+                    && signature.valueParameterIsVararg[index]
+                return (isVararg ? "*" : "") + encodeTypeKey(type)
+            }
+            parts.append("params=\(params.joined(separator: ","))")
+            if signature.isSuspend {
+                parts.append("susp")
+            }
+            if !signature.typeParameterSymbols.isEmpty {
+                parts.append("gen=\(signature.typeParameterSymbols.count)")
+            }
+        } else {
+            switch symbol.kind {
+            case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                let arity = sema.types.nominalTypeParameterSymbols(for: symbol.id).count
+                if arity > 0 {
+                    parts.append("gen=\(arity)")
+                }
+            default:
+                break
+            }
+        }
+        return parts.joined(separator: ";")
+    }
+
+    private static func kindToken(_ kind: SymbolKind) -> String {
+        switch kind {
+        case .package: "pkg"
+        case .class: "class"
+        case .interface: "iface"
+        case .object: "obj"
+        case .enumClass: "enum"
+        case .annotationClass: "anno"
+        case .typeAlias: "alias"
+        case .function: "fun"
+        case .constructor: "ctor"
+        case .property: "prop"
+        case .field: "field"
+        case .backingField: "bfield"
+        case .typeParameter: "tparam"
+        case .valueParameter: "vparam"
+        case .local: "local"
+        case .label: "label"
         }
     }
 
-    private static func stabilizeTypeRefsStatic(
-        _ text: String,
-        fqMap: [Int32: String],
-        stableTypeParameterFQ: [Int32: String]
-    ) -> String {
-        let nsText = text as NSString
-        let range = NSRange(location: 0, length: nsText.length)
-        let matches = typeRefRegex.matches(in: text, range: range)
-        guard !matches.isEmpty else { return text }
+    // MARK: - Structural type encoding
 
-        let mutable = NSMutableString(string: text)
-        for match in matches.reversed() {
-            let idRange = match.range(at: 2)
-            guard idRange.location != NSNotFound,
-                  let rawID = Int32(nsText.substring(with: idRange))
-            else { continue }
-            let prefix = nsText.substring(with: match.range(at: 1))
-            let stableFQ: String?
-            if prefix == "T#" {
-                stableFQ = stableTypeParameterFQ[rawID] ?? fqMap[rawID]
-            } else {
-                stableFQ = fqMap[rawID]
-            }
-            guard let stableFQ else {
-                continue
-            }
-            mutable.replaceCharacters(in: match.range, with: stableFQ)
+    /// Structural type key. Unlike `renderType`, nullability is part of the
+    /// encoded shape: a nullable function type renders `fn{…}?` while a
+    /// nullable return stays inside `ret=…?`, so the two never collapse.
+    private func encodeTypeKey(_ typeID: TypeID, depth: Int = 0) -> String {
+        if let cached = typeKeyMemo[typeID] {
+            return cached
         }
-        return mutable as String
+        guard depth < 64 else { return "…" }
+        let result: String
+        switch sema.types.kind(of: typeID) {
+        case .error:
+            result = "err"
+        case .unit:
+            result = "Unit"
+        case let .nothing(nullability):
+            result = "Nothing\(Self.nullabilityMark(nullability))"
+        case let .any(nullability):
+            result = "Any\(Self.nullabilityMark(nullability))"
+        case let .stringStruct(nullability):
+            result = "String\(Self.nullabilityMark(nullability))"
+        case let .primitive(primitive, nullability):
+            result = "\(Self.escapeKeyAtom(primitive.kotlinName))\(Self.nullabilityMark(nullability))"
+        case let .classType(classType):
+            let base = escapedFQName(of: classType.classSymbol)
+            let args = classType.args.isEmpty
+                ? ""
+                : "<\(classType.args.map { encodeTypeArg($0, depth: depth + 1) }.joined(separator: ","))>"
+            result = "\(base)\(args)\(Self.nullabilityMark(classType.nullability))"
+        case let .typeParam(typeParam):
+            result = "\(typeParamKey(typeParam.symbol))\(Self.nullabilityMark(typeParam.nullability))"
+        case let .functionType(functionType):
+            var inner = functionType.isSuspend ? "su;" : ""
+            if !functionType.contextReceivers.isEmpty {
+                let receivers = functionType.contextReceivers
+                    .map { encodeTypeKey($0, depth: depth + 1) }
+                    .joined(separator: ",")
+                inner += "ctx=\(receivers);"
+            }
+            if let receiver = functionType.receiver {
+                inner += "r=\(encodeTypeKey(receiver, depth: depth + 1));"
+            }
+            let params = functionType.params
+                .map { encodeTypeKey($0, depth: depth + 1) }
+                .joined(separator: ",")
+            inner += "p=\(params);ret=\(encodeTypeKey(functionType.returnType, depth: depth + 1))"
+            if !functionType.throws.isEmpty {
+                let thrown = functionType.throws
+                    .map { encodeTypeKey($0, depth: depth + 1) }
+                    .joined(separator: ",")
+                inner += ";thr=\(thrown)"
+            }
+            result = "fn{\(inner)}\(Self.nullabilityMark(functionType.nullability))"
+        case let .kClassType(kClassType):
+            result = "kclass{\(encodeTypeKey(kClassType.argument, depth: depth + 1))}\(Self.nullabilityMark(kClassType.nullability))"
+        case let .intersection(parts):
+            let encoded = parts.map { encodeTypeKey($0, depth: depth + 1) }.sorted()
+            result = "is{\(encoded.joined(separator: ";"))}"
+        }
+        typeKeyMemo[typeID] = result
+        return result
     }
 
-    private static func stabilizeTypeParameterFQName(_ fq: String) -> String {
-        let components = fq.split(separator: ".", omittingEmptySubsequences: false)
-        return components.map { component in
-            let characters = Array(component)
-            guard characters.first == "$" else { return String(component) }
+    private func encodeTypeArg(_ arg: TypeArg, depth: Int) -> String {
+        switch arg {
+        case let .invariant(type): encodeTypeKey(type, depth: depth)
+        case let .out(type): "out \(encodeTypeKey(type, depth: depth))"
+        case let .in(type): "in \(encodeTypeKey(type, depth: depth))"
+        case .star: "*"
+        }
+    }
 
-            var digitStart = 1
-            while digitStart < characters.count, characters[digitStart].isLetter {
-                digitStart += 1
-            }
-            guard digitStart < characters.count,
-                  characters[digitStart...].allSatisfy(\.isNumber),
-                  let ownerID = Int64(String(characters[digitStart...]))
-            else {
-                return String(component)
-            }
+    /// Type parameters key by declaration position (`T0`, `T1`, …) inside their
+    /// owner, so renaming a type parameter or regenerating symbol IDs cannot
+    /// shift references. When the owner scan did not record a position
+    /// (declarations detached from every parameter list), the declared name is
+    /// used as a last-resort discriminator rather than an index.
+    private func typeParamKey(_ symbol: SymbolID) -> String {
+        if let cached = typeParamIndexMemo[symbol.rawValue] {
+            return cached
+        }
+        let result: String
+        if let index = typeParamIndexBySymbol[symbol.rawValue] {
+            result = "T\(index)"
+        } else if let sym = sema.symbols.symbol(symbol) {
+            result = "T?\(Self.escapeKeyAtom(interner.resolve(sym.name)))"
+        } else {
+            result = "T?"
+        }
+        typeParamIndexMemo[symbol.rawValue] = result
+        return result
+    }
 
-            let prefix = String(characters[..<digitStart])
-            return prefix + String(format: "%010lld", ownerID)
-        }.joined(separator: ".")
+    // MARK: - Scope discriminator
+
+    /// Last-resort identity when the semantic key collides: the declaration's
+    /// own source position (stable across unrelated bundled-stdlib edits, same
+    /// convention as `e@line:col` expression keys), or the enclosing symbol's
+    /// key for position-less synthetic declarations.
+    private func scopeDiscriminator(for symbol: SemanticSymbol) -> String? {
+        if let site = symbol.declSite {
+            let position = sourceManager.lineColumn(of: site.start)
+            let file = fileKeys[site.start.file.rawValue] ?? "f?"
+            return "\(Self.escapeKeyAtom(file))@\(position.line).\(position.column)"
+        }
+        if let parent = sema.symbols.parentSymbol(for: symbol.id),
+           let parentSymbol = sema.symbols.symbol(parent) {
+            let parentFQ = symbolFQ[parent.rawValue] ?? "_"
+            return "up:\(parentFQ)[\(innerKey(for: parentSymbol))]"
+        }
+        return nil
+    }
+
+    // MARK: - Atoms
+
+    private static func nullabilityMark(_ nullability: Nullability) -> String {
+        switch nullability {
+        case .nonNull: ""
+        case .nullable: "?"
+        case .platformType: "!"
+        }
+    }
+
+    /// Escapes characters that are structural in the key grammar so that
+    /// backtick identifiers or synthetic names can never blur field, list, or
+    /// type boundaries.
+    private static let keyReservedCharacters: Set<Character> = [
+        "\\", ".", ";", ",", "[", "]", "{", "}", "<", ">", "=", "?", "!", "*", "(", ")", ":", " ",
+    ]
+
+    private static func escapeKeyAtom(_ text: String) -> String {
+        var output = ""
+        output.reserveCapacity(text.count)
+        for character in text {
+            if keyReservedCharacters.contains(character) {
+                output.append("\\")
+            }
+            output.append(character)
+        }
+        return output
+    }
+
+    private func escapedFQName(of symbolID: SymbolID) -> String {
+        guard let symbol = sema.symbols.symbol(symbolID) else { return "?" }
+        return symbol.fqName
+            .map { Self.escapeKeyAtom(interner.resolve($0)) }
+            .joined(separator: ".")
     }
 }

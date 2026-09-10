@@ -1,29 +1,29 @@
-symbol fq=__local_0.x kind=local vis=private flags=_ type=Long
-symbol fq=__local_1.y kind=local vis=private flags=_ type=Float
-symbol fq=__local_2.z kind=local vis=private flags=_ type=Double
-symbol fq=__local_3.c kind=local vis=private flags=_ type=Char
-symbol fq=printChar kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=printDouble kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=printFloat kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=printLong kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.x[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_1.y[kind=local] kind=local vis=private flags=_ type=Float
+symbol fq=__local_2.z[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=__local_3.c[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=printChar[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=printDouble[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=printFloat[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=printLong[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fliterals package=_
-  decl printLong fun printLong sym=printLong
-  decl printFloat fun printFloat sym=printFloat
-  decl printDouble fun printDouble sym=printDouble
-  decl printChar fun printChar sym=printChar
+  decl printLong[kind=fun;params=] fun printLong sym=printLong[kind=fun;params=]
+  decl printFloat[kind=fun;params=] fun printFloat sym=printFloat[kind=fun;params=]
+  decl printDouble[kind=fun;params=] fun printDouble sym=printDouble[kind=fun;params=]
+  decl printChar[kind=fun;params=] fun printChar sym=printChar[kind=fun;params=]
 expr e@2:19 long(42) type=Long
-expr e@2:5 localDecl x mutable=0 type=Long init=e@2:19 type=Unit ref=__local_0.x
-expr e@3:13 name(x) type=Long ref=__local_0.x
-expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13] type=Unit call=kotlin.io.println#1
+expr e@2:5 localDecl x mutable=0 type=Long init=e@2:19 type=Unit ref=__local_0.x[kind=local]
+expr e@3:13 name(x) type=Long ref=__local_0.x[kind=local]
+expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@7:20 float(3.14) type=Float
-expr e@7:5 localDecl y mutable=0 type=Float init=e@7:20 type=Unit ref=__local_1.y
-expr e@8:13 name(y) type=Float ref=__local_1.y
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println#1
+expr e@7:5 localDecl y mutable=0 type=Float init=e@7:20 type=Unit ref=__local_1.y[kind=local]
+expr e@8:13 name(y) type=Float ref=__local_1.y[kind=local]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@12:21 double(2.718) type=Double
-expr e@12:5 localDecl z mutable=0 type=Double init=e@12:21 type=Unit ref=__local_2.z
-expr e@13:13 name(z) type=Double ref=__local_2.z
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13] type=Unit call=kotlin.io.println#1
+expr e@12:5 localDecl z mutable=0 type=Double init=e@12:21 type=Unit ref=__local_2.z[kind=local]
+expr e@13:13 name(z) type=Double ref=__local_2.z[kind=local]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@17:19 char(65) type=Char
-expr e@17:5 localDecl c mutable=0 type=Char init=e@17:19 type=Unit ref=__local_3.c
-expr e@18:13 name(c) type=Char ref=__local_3.c
-expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println#1
+expr e@17:5 localDecl c mutable=0 type=Char init=e@17:19 type=Unit ref=__local_3.c[kind=local]
+expr e@18:13 name(c) type=Char ref=__local_3.c[kind=local]
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

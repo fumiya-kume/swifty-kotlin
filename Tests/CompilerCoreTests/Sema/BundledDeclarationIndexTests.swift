@@ -303,8 +303,8 @@ struct BundledDeclarationIndexTests {
         #expect(warnings.first?.message.contains("'kotlin.collections.List' (arity 1)") == true)
     }
 
-    @Test
-    func syntheticAliasForSourceBackedMemberDoesNotWarn() throws {
+    @Test(arguments: ["matching", "otherOwner", "otherSignature", "otherLink", "otherName"])
+    func syntheticAliasRequiresMatchingSourceMember(variant: String) throws {
         let sourceManager = SourceManager()
         let fileID = sourceManager.addFile(
             path: "__bundled_sequence_source.kt",
@@ -335,16 +335,32 @@ struct BundledDeclarationIndexTests {
             parameterTypes: [],
             returnType: types.anyType
         )
+        let sourceName = variant == "otherName" ? interner.intern("otherMember") : memberName
         let sourceSymbol = symbols.define(
             kind: .function,
-            name: memberName,
-            fqName: intern(["kotlin", "sequences", "toHashSet"], interner),
+            name: sourceName,
+            fqName: intern(["kotlin", "sequences"], interner) + [sourceName],
             declSite: range,
             visibility: .public
         )
         symbols.setParentSymbol(ownerSymbol, for: sourceSymbol)
-        symbols.setFunctionSignature(signature, for: sourceSymbol)
-        symbols.setExternalLinkName("kk_sequence_toHashSet", for: sourceSymbol)
+        if variant == "otherOwner" {
+            let otherOwner = symbols.define(
+                kind: .interface, name: interner.intern("Other"),
+                fqName: intern(["sample", "Other"], interner), declSite: range, visibility: .public
+            )
+            symbols.setParentSymbol(otherOwner, for: sourceSymbol)
+        }
+        symbols.setFunctionSignature(
+            variant == "otherSignature"
+                ? FunctionSignature(receiverType: receiverType, parameterTypes: [], returnType: types.intType)
+                : signature,
+            for: sourceSymbol
+        )
+        symbols.setExternalLinkName(
+            variant == "otherLink" ? "different_link_name" : "kk_sequence_toHashSet",
+            for: sourceSymbol
+        )
 
         let aliasSymbol = symbols.define(
             kind: .function,
@@ -370,7 +386,8 @@ struct BundledDeclarationIndexTests {
             interner: interner
         )
 
-        #expect(diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-0102" }.isEmpty)
+        let warnings = diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-0102" }
+        #expect(warnings.count == (variant == "matching" ? 0 : 1))
     }
 
     @Test
