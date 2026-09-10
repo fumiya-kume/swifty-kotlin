@@ -14,7 +14,10 @@ struct UuidPutUuidSemaTests {
 
     // MARK: - Shared fixture
 
-    private func makeSemaWithContext() throws -> (CompilationContext, SemaModule, StringInterner) {
+    private static nonisolated(unsafe) var _sharedSema: (CompilationContext, SemaModule, StringInterner)?
+
+    private func sharedSemaWithContext() throws -> (CompilationContext, SemaModule, StringInterner) {
+        if let cached = Self._sharedSema { return cached }
         var result: (CompilationContext, SemaModule, StringInterner)?
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
@@ -22,14 +25,7 @@ struct UuidPutUuidSemaTests {
             let sema = try #require(ctx.sema)
             result = (ctx, sema, ctx.interner)
         }
-        return try #require(result)
-    }
-
-    private static nonisolated(unsafe) var _sharedSema: (CompilationContext, SemaModule, StringInterner)?
-
-    private func sharedSemaWithContext() throws -> (CompilationContext, SemaModule, StringInterner) {
-        if let cached = Self._sharedSema { return cached }
-        let triple = try makeSemaWithContext()
+        let triple = try #require(result)
         Self._sharedSema = triple
         return triple
     }

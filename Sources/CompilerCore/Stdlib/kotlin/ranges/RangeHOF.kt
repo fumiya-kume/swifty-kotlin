@@ -661,6 +661,20 @@ public fun IntProgression.windowed(size: Int, step: Int = 1, partialWindows: Boo
 
 // MARK: - LongRange
 
+// KSP-1287: Kotlin exposes exact LongRange overloads for the other signed
+// primitive integer types; widening preserves their values before membership.
+@kotlin.internal.InlineOnly
+public inline operator fun LongRange.contains(value: Byte): Boolean =
+    this.contains(value.toLong())
+
+@kotlin.internal.InlineOnly
+public inline operator fun LongRange.contains(value: Int): Boolean =
+    this.contains(value.toLong())
+
+@kotlin.internal.InlineOnly
+public inline operator fun LongRange.contains(value: Short): Boolean =
+    this.contains(value.toLong())
+
 public fun LongRange.forEach(action: (Long) -> Unit) {
     for (element in this) { action(element) }
 }

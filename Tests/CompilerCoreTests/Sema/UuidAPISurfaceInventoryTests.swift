@@ -10,12 +10,6 @@ struct UuidAPISurfaceInventoryTests {
 
     private func sharedSema() throws -> (CompilationContext, SemaModule, StringInterner) {
         if let cached = Self._sharedSema { return cached }
-        let triple = try makeSemaWithContext()
-        Self._sharedSema = triple
-        return triple
-    }
-
-    private func makeSemaWithContext() throws -> (CompilationContext, SemaModule, StringInterner) {
         var result: (CompilationContext, SemaModule, StringInterner)?
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
@@ -23,7 +17,9 @@ struct UuidAPISurfaceInventoryTests {
             let sema = try #require(ctx.sema)
             result = (ctx, sema, ctx.interner)
         }
-        return try #require(result)
+        let triple = try #require(result)
+        Self._sharedSema = triple
+        return triple
     }
 
     private func symbols(
