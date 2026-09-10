@@ -1,133 +1,133 @@
-symbol fq=__local_0.mutable kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
-symbol fq=__local_1.mutableReversed kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
-symbol fq=__local_2.readOnly kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=__local_3.readOnlyReversed kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=__local_4.indexed kind=local vis=private flags=_ type=Int
-symbol fq=__local_5.element kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_6.first kind=local vis=private flags=_ type=Int
-symbol fq=__local_7.firstOrNull kind=local vis=private flags=_ type=Int?
-symbol fq=__local_8.last kind=local vis=private flags=_ type=Int
-symbol fq=__local_9.lastOrNull kind=local vis=private flags=_ type=Int?
-symbol fq=__local_10.removePredicate kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_11.retainPredicate kind=local vis=private flags=_ type=Boolean
-symbol fq=__local_12.reversed kind=local vis=private flags=_ type=Unit
-symbol fq=__local_13.shuffled kind=local vis=private flags=_ type=Unit
-symbol fq=__local_14.shuffledSeeded kind=local vis=private flags=_ type=Unit
-symbol fq=__local_15.nullableMutable kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>?
-symbol fq=__local_16.safeFirst kind=local vis=private flags=_ type=Int?
-symbol fq=__local_17.safeRemoveAll kind=local vis=private flags=_ type=Boolean?
-symbol fq=__local_18.safeReverse kind=local vis=private flags=_ type=Unit
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableCollection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableCollection.remove kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.MutableCollection.E] ret=Boolean
-symbol fq=kotlin.collections.MutableCollection.remove.element kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
+symbol fq=__local_0.mutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_1.mutableReversed[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_2.readOnly[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_3.readOnlyReversed[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_4.indexed[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_5.element[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_6.first[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_7.firstOrNull[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_8.last[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_9.lastOrNull[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_10.removePredicate[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_11.retainPredicate[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_12.reversed[kind=local] kind=local vis=private flags=_ type=Unit
+symbol fq=__local_13.shuffled[kind=local] kind=local vis=private flags=_ type=Unit
+symbol fq=__local_14.shuffledSeeded[kind=local] kind=local vis=private flags=_ type=Unit
+symbol fq=__local_15.nullableMutable[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>?
+symbol fq=__local_16.safeFirst[kind=local] kind=local vis=private flags=_ type=Int?
+symbol fq=__local_17.safeRemoveAll[kind=local] kind=local vis=private flags=_ type=Boolean?
+symbol fq=__local_18.safeReverse[kind=local] kind=local vis=private flags=_ type=Unit
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableCollection.E[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableCollection.remove.element[kind=vparam] kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.collections.MutableCollection.remove[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=T0;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.MutableCollection.E] ret=Boolean
+symbol fq=kotlin.collections.MutableCollection[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableList[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_MutableList_n package=golden.sema
-  decl golden.sema.main fun main sym=golden.sema.main
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@5:51 int(1) type=Int
 expr e@5:54 int(2) type=Int
 expr e@5:57 int(3) type=Int
-expr e@5:37 call callee=e@5:37#1 args=[_:e@5:51,_:e@5:54,_:e@5:57] type=kotlin.collections.MutableList<Int> call=kotlin.collections.mutableListOf#1 targs=[Int]
-expr e@5:5 localDecl mutable mutable=0 type=MutableList<Int> init=e@5:37 type=Unit ref=__local_0.mutable
-expr e@6:45 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
-expr e@6:45#1 memberCall recv=e@6:45 callee=asReversed args=[] type=kotlin.collections.MutableList<Int> call=kotlin.collections.asReversed#1 targs=[Int]
-expr e@6:5 localDecl mutableReversed mutable=0 type=MutableList<Int> init=e@6:45#1 type=Unit ref=__local_1.mutableReversed
-expr e@7:31 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
-expr e@7:5 localDecl readOnly mutable=0 type=List<Int> init=e@7:31 type=Unit ref=__local_2.readOnly
-expr e@8:39 name(readOnly) type=kotlin.collections.List<Int> ref=__local_2.readOnly
-expr e@8:39#1 memberCall recv=e@8:39 callee=asReversed args=[] type=kotlin.collections.List<Int> call=kotlin.collections.asReversed#0 targs=[Int]
-expr e@8:5 localDecl readOnlyReversed mutable=0 type=List<Int> init=e@8:39#1 type=Unit ref=__local_3.readOnlyReversed
-expr e@9:24 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
+expr e@5:37 call callee=e@5:37#1 args=[_:e@5:51,_:e@5:54,_:e@5:57] type=kotlin.collections.MutableList<Int> call=kotlin.collections.mutableListOf[kind=fun;params=*T0;gen=1] targs=[Int]
+expr e@5:5 localDecl mutable mutable=0 type=MutableList<Int> init=e@5:37 type=Unit ref=__local_0.mutable[kind=local]
+expr e@6:45 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
+expr e@6:45#1 memberCall recv=e@6:45 callee=asReversed args=[] type=kotlin.collections.MutableList<Int> call=kotlin.collections.asReversed[kind=fun;recv=kotlin.collections.MutableList<T0>;params=;gen=1] targs=[Int]
+expr e@6:5 localDecl mutableReversed mutable=0 type=MutableList<Int> init=e@6:45#1 type=Unit ref=__local_1.mutableReversed[kind=local]
+expr e@7:31 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
+expr e@7:5 localDecl readOnly mutable=0 type=List<Int> init=e@7:31 type=Unit ref=__local_2.readOnly[kind=local]
+expr e@8:39 name(readOnly) type=kotlin.collections.List<Int> ref=__local_2.readOnly[kind=local]
+expr e@8:39#1 memberCall recv=e@8:39 callee=asReversed args=[] type=kotlin.collections.List<Int> call=kotlin.collections.asReversed[kind=fun;recv=kotlin.collections.List<T0>;params=;gen=1] targs=[Int]
+expr e@8:5 localDecl readOnlyReversed mutable=0 type=List<Int> init=e@8:39#1 type=Unit ref=__local_3.readOnlyReversed[kind=local]
+expr e@9:24 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
 expr e@9:47 int(0) type=Int
-expr e@9:24#1 memberCall recv=e@9:24 callee=remove args=[index:e@9:47] type=Int call=kotlin.collections.remove#1 targs=[Int]
-expr e@9:5 localDecl indexed mutable=0 type=Int init=e@9:24#1 type=Unit ref=__local_4.indexed
-expr e@10:28 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
+expr e@9:24#1 memberCall recv=e@9:24 callee=remove args=[index:e@9:47] type=Int call=kotlin.collections.remove[kind=fun;recv=kotlin.collections.MutableList<T0>;params=Int;gen=1] targs=[Int]
+expr e@9:5 localDecl indexed mutable=0 type=Int init=e@9:24#1 type=Unit ref=__local_4.indexed[kind=local]
+expr e@10:28 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
 expr e@10:43 int(2) type=Int
-expr e@10:28#1 memberCall recv=e@10:28 callee=remove args=[_:e@10:43] type=Boolean call=kotlin.collections.MutableCollection.remove targs=[Int]
-expr e@10:5 localDecl element mutable=0 type=Boolean init=e@10:28#1 type=Unit ref=__local_5.element
-expr e@11:22 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
-expr e@11:22#1 memberCall recv=e@11:22 callee=removeFirst args=[] type=Int call=kotlin.collections.removeFirst targs=[Int]
-expr e@11:5 localDecl first mutable=0 type=Int init=e@11:22#1 type=Unit ref=__local_6.first
-expr e@12:29 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
-expr e@12:29#1 memberCall recv=e@12:29 callee=removeFirstOrNull args=[] type=Int? call=kotlin.collections.removeFirstOrNull targs=[Int]
-expr e@12:5 localDecl firstOrNull mutable=0 type=Int? init=e@12:29#1 type=Unit ref=__local_7.firstOrNull
-expr e@13:21 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
-expr e@13:21#1 memberCall recv=e@13:21 callee=removeLast args=[] type=Int call=kotlin.collections.removeLast targs=[Int]
-expr e@13:5 localDecl last mutable=0 type=Int init=e@13:21#1 type=Unit ref=__local_8.last
-expr e@14:28 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
-expr e@14:28#1 memberCall recv=e@14:28 callee=removeLastOrNull args=[] type=Int? call=kotlin.collections.removeLastOrNull targs=[Int]
-expr e@14:5 localDecl lastOrNull mutable=0 type=Int? init=e@14:28#1 type=Unit ref=__local_9.lastOrNull
-expr e@15:36 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
+expr e@10:28#1 memberCall recv=e@10:28 callee=remove args=[_:e@10:43] type=Boolean call=kotlin.collections.MutableCollection.remove[kind=fun;recv=kotlin.collections.MutableCollection<T0>;params=T0;gen=1] targs=[Int]
+expr e@10:5 localDecl element mutable=0 type=Boolean init=e@10:28#1 type=Unit ref=__local_5.element[kind=local]
+expr e@11:22 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
+expr e@11:22#1 memberCall recv=e@11:22 callee=removeFirst args=[] type=Int call=kotlin.collections.removeFirst[kind=fun;recv=kotlin.collections.MutableList<T0>;params=;gen=1] targs=[Int]
+expr e@11:5 localDecl first mutable=0 type=Int init=e@11:22#1 type=Unit ref=__local_6.first[kind=local]
+expr e@12:29 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
+expr e@12:29#1 memberCall recv=e@12:29 callee=removeFirstOrNull args=[] type=Int? call=kotlin.collections.removeFirstOrNull[kind=fun;recv=kotlin.collections.MutableList<T0>;params=;gen=1] targs=[Int]
+expr e@12:5 localDecl firstOrNull mutable=0 type=Int? init=e@12:29#1 type=Unit ref=__local_7.firstOrNull[kind=local]
+expr e@13:21 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
+expr e@13:21#1 memberCall recv=e@13:21 callee=removeLast args=[] type=Int call=kotlin.collections.removeLast[kind=fun;recv=kotlin.collections.MutableList<T0>;params=;gen=1] targs=[Int]
+expr e@13:5 localDecl last mutable=0 type=Int init=e@13:21#1 type=Unit ref=__local_8.last[kind=local]
+expr e@14:28 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
+expr e@14:28#1 memberCall recv=e@14:28 callee=removeLastOrNull args=[] type=Int? call=kotlin.collections.removeLastOrNull[kind=fun;recv=kotlin.collections.MutableList<T0>;params=;gen=1] targs=[Int]
+expr e@14:5 localDecl lastOrNull mutable=0 type=Int? init=e@14:28#1 type=Unit ref=__local_9.lastOrNull[kind=local]
+expr e@15:36 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
 expr e@15:56 name(it) type=Int ref=s-0
 expr e@15:61 int(0) type=Int
 expr e@15:56#1 binary(greaterThan) lhs=e@15:56 rhs=e@15:61 type=Boolean
 expr e@15:54 lambda params=[] body=e@15:56#1 label=removeAll type=(Int) -> Boolean
-expr e@15:36#1 memberCall recv=e@15:36 callee=removeAll args=[_:e@15:54] type=Boolean call=kotlin.collections.removeAll#5 targs=[Int]
-expr e@15:5 localDecl removePredicate mutable=0 type=Boolean init=e@15:36#1 type=Unit ref=__local_10.removePredicate
-expr e@16:36 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
+expr e@15:36#1 memberCall recv=e@15:36 callee=removeAll args=[_:e@15:54] type=Boolean call=kotlin.collections.removeAll[kind=fun;recv=kotlin.collections.MutableList<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
+expr e@15:5 localDecl removePredicate mutable=0 type=Boolean init=e@15:36#1 type=Unit ref=__local_10.removePredicate[kind=local]
+expr e@16:36 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
 expr e@16:56 name(it) type=Int ref=s-1
 expr e@16:61 int(0) type=Int
 expr e@16:56#1 binary(greaterThan) lhs=e@16:56 rhs=e@16:61 type=Boolean
 expr e@16:54 lambda params=[] body=e@16:56#1 label=retainAll type=(Int) -> Boolean
-expr e@16:36#1 memberCall recv=e@16:36 callee=retainAll args=[_:e@16:54] type=Boolean call=kotlin.collections.retainAll#5 targs=[Int]
-expr e@16:5 localDecl retainPredicate mutable=0 type=Boolean init=e@16:36#1 type=Unit ref=__local_11.retainPredicate
-expr e@17:26 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
-expr e@17:26#1 memberCall recv=e@17:26 callee=reverse args=[] type=Unit call=kotlin.collections.reverse targs=[Int]
-expr e@17:5 localDecl reversed mutable=0 type=Unit init=e@17:26#1 type=Unit ref=__local_12.reversed
-expr e@18:26 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
-expr e@18:26#1 memberCall recv=e@18:26 callee=shuffle args=[] type=Unit call=kotlin.collections.shuffle#0 targs=[Int]
-expr e@18:5 localDecl shuffled mutable=0 type=Unit init=e@18:26#1 type=Unit ref=__local_13.shuffled
-expr e@19:32 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable
+expr e@16:36#1 memberCall recv=e@16:36 callee=retainAll args=[_:e@16:54] type=Boolean call=kotlin.collections.retainAll[kind=fun;recv=kotlin.collections.MutableList<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
+expr e@16:5 localDecl retainPredicate mutable=0 type=Boolean init=e@16:36#1 type=Unit ref=__local_11.retainPredicate[kind=local]
+expr e@17:26 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
+expr e@17:26#1 memberCall recv=e@17:26 callee=reverse args=[] type=Unit call=kotlin.collections.reverse[kind=fun;recv=kotlin.collections.MutableList<T0>;params=;gen=1] targs=[Int]
+expr e@17:5 localDecl reversed mutable=0 type=Unit init=e@17:26#1 type=Unit ref=__local_12.reversed[kind=local]
+expr e@18:26 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
+expr e@18:26#1 memberCall recv=e@18:26 callee=shuffle args=[] type=Unit call=kotlin.collections.shuffle[kind=fun;recv=kotlin.collections.MutableList<T0>;params=;gen=1] targs=[Int]
+expr e@18:5 localDecl shuffled mutable=0 type=Unit init=e@18:26#1 type=Unit ref=__local_13.shuffled[kind=local]
+expr e@19:32 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_0.mutable[kind=local]
 expr e@19:69 int(1) type=Int
-expr e@19:48 memberCall recv=e@19:48#1 callee=Random args=[_:e@19:69] type=kotlin.random.Random call=kotlin.random.Random#1
-expr e@19:32#1 memberCall recv=e@19:32 callee=shuffle args=[_:e@19:48] type=Unit call=kotlin.collections.shuffle#1 targs=[Int]
-expr e@19:5 localDecl shuffledSeeded mutable=0 type=Unit init=e@19:32#1 type=Unit ref=__local_14.shuffledSeeded
+expr e@19:48 memberCall recv=e@19:48#1 callee=Random args=[_:e@19:69] type=kotlin.random.Random call=kotlin.random.Random[kind=fun;params=Int]
+expr e@19:32#1 memberCall recv=e@19:32 callee=shuffle args=[_:e@19:48] type=Unit call=kotlin.collections.shuffle[kind=fun;recv=kotlin.collections.MutableList<T0>;params=kotlin.random.Random;gen=1] targs=[Int]
+expr e@19:5 localDecl shuffledSeeded mutable=0 type=Unit init=e@19:32#1 type=Unit ref=__local_14.shuffledSeeded[kind=local]
 expr e@20:46 name(null) type=Nothing?
-expr e@20:5 localDecl nullableMutable mutable=0 type=MutableList<Int>? init=e@20:46 type=Unit ref=__local_15.nullableMutable
-expr e@21:21 name(nullableMutable) type=kotlin.collections.MutableList<Int>? ref=__local_15.nullableMutable
-expr e@21:21#1 safeMemberCall recv=e@21:21 callee=removeFirst args=[] type=Int? call=kotlin.collections.removeFirst targs=[Int]
-expr e@21:5 localDecl safeFirst mutable=0 type=_ init=e@21:21#1 type=Unit ref=__local_16.safeFirst
-expr e@22:25 name(nullableMutable) type=kotlin.collections.MutableList<Int>? ref=__local_15.nullableMutable
+expr e@20:5 localDecl nullableMutable mutable=0 type=MutableList<Int>? init=e@20:46 type=Unit ref=__local_15.nullableMutable[kind=local]
+expr e@21:21 name(nullableMutable) type=kotlin.collections.MutableList<Int>? ref=__local_15.nullableMutable[kind=local]
+expr e@21:21#1 safeMemberCall recv=e@21:21 callee=removeFirst args=[] type=Int? call=kotlin.collections.removeFirst[kind=fun;recv=kotlin.collections.MutableList<T0>;params=;gen=1] targs=[Int]
+expr e@21:5 localDecl safeFirst mutable=0 type=_ init=e@21:21#1 type=Unit ref=__local_16.safeFirst[kind=local]
+expr e@22:25 name(nullableMutable) type=kotlin.collections.MutableList<Int>? ref=__local_15.nullableMutable[kind=local]
 expr e@22:54 name(it) type=Int ref=s-2
 expr e@22:59 int(0) type=Int
 expr e@22:54#1 binary(greaterThan) lhs=e@22:54 rhs=e@22:59 type=Boolean
 expr e@22:52 lambda params=[] body=e@22:54#1 label=removeAll type=(Int) -> Boolean
-expr e@22:25#1 safeMemberCall recv=e@22:25 callee=removeAll args=[_:e@22:52] type=Boolean? call=kotlin.collections.removeAll#5 targs=[Int]
-expr e@22:5 localDecl safeRemoveAll mutable=0 type=_ init=e@22:25#1 type=Unit ref=__local_17.safeRemoveAll
-expr e@23:23 name(nullableMutable) type=kotlin.collections.MutableList<Int>? ref=__local_15.nullableMutable
-expr e@23:23#1 safeMemberCall recv=e@23:23 callee=reverse args=[] type=Unit call=kotlin.collections.reverse targs=[Int]
-expr e@23:5 localDecl safeReverse mutable=0 type=_ init=e@23:23#1 type=Unit ref=__local_18.safeReverse
-expr e@24:13 name(mutableReversed) type=kotlin.collections.MutableList<Int> ref=__local_1.mutableReversed
-expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println#1
-expr e@25:13 name(readOnlyReversed) type=kotlin.collections.List<Int> ref=__local_3.readOnlyReversed
-expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println#1
-expr e@26:13 name(indexed) type=Int ref=__local_4.indexed
-expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println#1
-expr e@27:13 name(element) type=Boolean ref=__local_5.element
-expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println#1
-expr e@28:13 name(first) type=Int ref=__local_6.first
-expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println#1
-expr e@29:13 name(firstOrNull) type=Int? ref=__local_7.firstOrNull
-expr e@29:5 call callee=e@29:5#1 args=[_:e@29:13] type=Unit call=kotlin.io.println#1
-expr e@30:13 name(last) type=Int ref=__local_8.last
-expr e@30:5 call callee=e@30:5#1 args=[_:e@30:13] type=Unit call=kotlin.io.println#1
-expr e@31:13 name(lastOrNull) type=Int? ref=__local_9.lastOrNull
-expr e@31:5 call callee=e@31:5#1 args=[_:e@31:13] type=Unit call=kotlin.io.println#1
-expr e@32:13 name(removePredicate) type=Boolean ref=__local_10.removePredicate
-expr e@32:5 call callee=e@32:5#1 args=[_:e@32:13] type=Unit call=kotlin.io.println#1
-expr e@33:13 name(retainPredicate) type=Boolean ref=__local_11.retainPredicate
-expr e@33:5 call callee=e@33:5#1 args=[_:e@33:13] type=Unit call=kotlin.io.println#1
-expr e@34:13 name(reversed) type=Unit ref=__local_12.reversed
-expr e@34:5 call callee=e@34:5#1 args=[_:e@34:13] type=Unit call=kotlin.io.println#1
-expr e@35:13 name(shuffled) type=Unit ref=__local_13.shuffled
-expr e@35:5 call callee=e@35:5#1 args=[_:e@35:13] type=Unit call=kotlin.io.println#1
-expr e@36:13 name(shuffledSeeded) type=Unit ref=__local_14.shuffledSeeded
-expr e@36:5 call callee=e@36:5#1 args=[_:e@36:13] type=Unit call=kotlin.io.println#1
-expr e@37:13 name(safeFirst) type=Int? ref=__local_16.safeFirst
-expr e@37:5 call callee=e@37:5#1 args=[_:e@37:13] type=Unit call=kotlin.io.println#1
-expr e@38:13 name(safeRemoveAll) type=Boolean? ref=__local_17.safeRemoveAll
-expr e@38:5 call callee=e@38:5#1 args=[_:e@38:13] type=Unit call=kotlin.io.println#1
-expr e@39:13 name(safeReverse) type=Unit ref=__local_18.safeReverse
-expr e@39:5 call callee=e@39:5#1 args=[_:e@39:13] type=Unit call=kotlin.io.println#1
+expr e@22:25#1 safeMemberCall recv=e@22:25 callee=removeAll args=[_:e@22:52] type=Boolean? call=kotlin.collections.removeAll[kind=fun;recv=kotlin.collections.MutableList<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
+expr e@22:5 localDecl safeRemoveAll mutable=0 type=_ init=e@22:25#1 type=Unit ref=__local_17.safeRemoveAll[kind=local]
+expr e@23:23 name(nullableMutable) type=kotlin.collections.MutableList<Int>? ref=__local_15.nullableMutable[kind=local]
+expr e@23:23#1 safeMemberCall recv=e@23:23 callee=reverse args=[] type=Unit call=kotlin.collections.reverse[kind=fun;recv=kotlin.collections.MutableList<T0>;params=;gen=1] targs=[Int]
+expr e@23:5 localDecl safeReverse mutable=0 type=_ init=e@23:23#1 type=Unit ref=__local_18.safeReverse[kind=local]
+expr e@24:13 name(mutableReversed) type=kotlin.collections.MutableList<Int> ref=__local_1.mutableReversed[kind=local]
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@25:13 name(readOnlyReversed) type=kotlin.collections.List<Int> ref=__local_3.readOnlyReversed[kind=local]
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@26:13 name(indexed) type=Int ref=__local_4.indexed[kind=local]
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@27:13 name(element) type=Boolean ref=__local_5.element[kind=local]
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@28:13 name(first) type=Int ref=__local_6.first[kind=local]
+expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@29:13 name(firstOrNull) type=Int? ref=__local_7.firstOrNull[kind=local]
+expr e@29:5 call callee=e@29:5#1 args=[_:e@29:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@30:13 name(last) type=Int ref=__local_8.last[kind=local]
+expr e@30:5 call callee=e@30:5#1 args=[_:e@30:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@31:13 name(lastOrNull) type=Int? ref=__local_9.lastOrNull[kind=local]
+expr e@31:5 call callee=e@31:5#1 args=[_:e@31:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@32:13 name(removePredicate) type=Boolean ref=__local_10.removePredicate[kind=local]
+expr e@32:5 call callee=e@32:5#1 args=[_:e@32:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@33:13 name(retainPredicate) type=Boolean ref=__local_11.retainPredicate[kind=local]
+expr e@33:5 call callee=e@33:5#1 args=[_:e@33:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@34:13 name(reversed) type=Unit ref=__local_12.reversed[kind=local]
+expr e@34:5 call callee=e@34:5#1 args=[_:e@34:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@35:13 name(shuffled) type=Unit ref=__local_13.shuffled[kind=local]
+expr e@35:5 call callee=e@35:5#1 args=[_:e@35:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@36:13 name(shuffledSeeded) type=Unit ref=__local_14.shuffledSeeded[kind=local]
+expr e@36:5 call callee=e@36:5#1 args=[_:e@36:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@37:13 name(safeFirst) type=Int? ref=__local_16.safeFirst[kind=local]
+expr e@37:5 call callee=e@37:5#1 args=[_:e@37:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@38:13 name(safeRemoveAll) type=Boolean? ref=__local_17.safeRemoveAll[kind=local]
+expr e@38:5 call callee=e@38:5#1 args=[_:e@38:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@39:13 name(safeReverse) type=Unit ref=__local_18.safeReverse[kind=local]
+expr e@39:5 call callee=e@39:5#1 args=[_:e@39:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

@@ -14,4 +14,9 @@ fun main() {
     val primitiveArr = intArrayOf(10, 20, 30)
     println(primitiveArr.get(0))
     println(primitiveArr.size)
+
+    // argument-less arrayOf(): element type comes from the expected type
+    val emptyStrArr: Array<String> = arrayOf()
+    println(emptyStrArr.size)
+    println(emptyStrArr.isEmpty())
 }

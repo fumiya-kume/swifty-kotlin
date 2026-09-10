@@ -1,65 +1,65 @@
-symbol fq=golden.sema.threeArgMaxDouble kind=function vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double
-symbol fq=golden.sema.threeArgMaxDouble.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxDouble.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxDouble.$0.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxInt kind=function vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int
-symbol fq=golden.sema.threeArgMaxInt.$1.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxInt.$1.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxInt.$1.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxLong kind=function vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long
-symbol fq=golden.sema.threeArgMaxLong.$2.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxLong.$2.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMaxLong.$2.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMinDouble kind=function vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double
-symbol fq=golden.sema.threeArgMinDouble.$3.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMinDouble.$3.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMinDouble.$3.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMinInt kind=function vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int
-symbol fq=golden.sema.threeArgMinInt.$4.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMinInt.$4.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMinInt.$4.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMinLong kind=function vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long
-symbol fq=golden.sema.threeArgMinLong.$5.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMinLong.$5.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.threeArgMinLong.$5.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.twoArgInt kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.twoArgMinInt kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.threeArgMaxDouble.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxDouble.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxDouble.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxDouble[kind=fun;params=Double,Double,Double] kind=function vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double
+symbol fq=golden.sema.threeArgMaxInt.$1.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxInt.$1.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxInt.$1.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxInt[kind=fun;params=Int,Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int
+symbol fq=golden.sema.threeArgMaxLong.$2.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxLong.$2.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxLong.$2.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMaxLong[kind=fun;params=Long,Long,Long] kind=function vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long
+symbol fq=golden.sema.threeArgMinDouble.$3.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinDouble.$3.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinDouble.$3.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinDouble[kind=fun;params=Double,Double,Double] kind=function vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double
+symbol fq=golden.sema.threeArgMinInt.$4.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinInt.$4.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinInt.$4.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinInt[kind=fun;params=Int,Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int
+symbol fq=golden.sema.threeArgMinLong.$5.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinLong.$5.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinLong.$5.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.threeArgMinLong[kind=fun;params=Long,Long,Long] kind=function vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long
+symbol fq=golden.sema.twoArgInt[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.twoArgMinInt[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fminof_maxof_3args package=golden.sema
-  decl golden.sema.twoArgInt fun twoArgInt sym=golden.sema.twoArgInt
-  decl golden.sema.twoArgMinInt fun twoArgMinInt sym=golden.sema.twoArgMinInt
-  decl golden.sema.threeArgMaxInt fun threeArgMaxInt sym=golden.sema.threeArgMaxInt
-  decl golden.sema.threeArgMinInt fun threeArgMinInt sym=golden.sema.threeArgMinInt
-  decl golden.sema.threeArgMaxLong fun threeArgMaxLong sym=golden.sema.threeArgMaxLong
-  decl golden.sema.threeArgMinLong fun threeArgMinLong sym=golden.sema.threeArgMinLong
-  decl golden.sema.threeArgMaxDouble fun threeArgMaxDouble sym=golden.sema.threeArgMaxDouble
-  decl golden.sema.threeArgMinDouble fun threeArgMinDouble sym=golden.sema.threeArgMinDouble
+  decl golden.sema.twoArgInt[kind=fun;params=] fun twoArgInt sym=golden.sema.twoArgInt[kind=fun;params=]
+  decl golden.sema.twoArgMinInt[kind=fun;params=] fun twoArgMinInt sym=golden.sema.twoArgMinInt[kind=fun;params=]
+  decl golden.sema.threeArgMaxInt[kind=fun;params=Int,Int,Int] fun threeArgMaxInt sym=golden.sema.threeArgMaxInt[kind=fun;params=Int,Int,Int]
+  decl golden.sema.threeArgMinInt[kind=fun;params=Int,Int,Int] fun threeArgMinInt sym=golden.sema.threeArgMinInt[kind=fun;params=Int,Int,Int]
+  decl golden.sema.threeArgMaxLong[kind=fun;params=Long,Long,Long] fun threeArgMaxLong sym=golden.sema.threeArgMaxLong[kind=fun;params=Long,Long,Long]
+  decl golden.sema.threeArgMinLong[kind=fun;params=Long,Long,Long] fun threeArgMinLong sym=golden.sema.threeArgMinLong[kind=fun;params=Long,Long,Long]
+  decl golden.sema.threeArgMaxDouble[kind=fun;params=Double,Double,Double] fun threeArgMaxDouble sym=golden.sema.threeArgMaxDouble[kind=fun;params=Double,Double,Double]
+  decl golden.sema.threeArgMinDouble[kind=fun;params=Double,Double,Double] fun threeArgMinDouble sym=golden.sema.threeArgMinDouble[kind=fun;params=Double,Double,Double]
 expr e@3:30 int(3) type=Int
 expr e@3:33 int(7) type=Int
-expr e@3:24 call callee=e@3:24#1 args=[_:e@3:30,_:e@3:33] type=Int call=kotlin.comparisons.maxOf#9
+expr e@3:24 call callee=e@3:24#1 args=[_:e@3:30,_:e@3:33] type=Int call=kotlin.comparisons.maxOf[kind=fun;params=Int,Int]
 expr e@4:33 int(3) type=Int
 expr e@4:36 int(7) type=Int
-expr e@4:27 call callee=e@4:27#1 args=[_:e@4:33,_:e@4:36] type=Int call=kotlin.comparisons.minOf#9
-expr e@6:57 name(a) type=Int ref=golden.sema.threeArgMaxInt.$1.a
-expr e@6:60 name(b) type=Int ref=golden.sema.threeArgMaxInt.$1.b
-expr e@6:63 name(c) type=Int ref=golden.sema.threeArgMaxInt.$1.c
-expr e@6:51 call callee=e@6:51#1 args=[_:e@6:57,_:e@6:60,_:e@6:63] type=Int call=kotlin.comparisons.maxOf#11
-expr e@7:57 name(a) type=Int ref=golden.sema.threeArgMinInt.$4.a
-expr e@7:60 name(b) type=Int ref=golden.sema.threeArgMinInt.$4.b
-expr e@7:63 name(c) type=Int ref=golden.sema.threeArgMinInt.$4.c
-expr e@7:51 call callee=e@7:51#1 args=[_:e@7:57,_:e@7:60,_:e@7:63] type=Int call=kotlin.comparisons.minOf#11
-expr e@9:62 name(a) type=Long ref=golden.sema.threeArgMaxLong.$2.a
-expr e@9:65 name(b) type=Long ref=golden.sema.threeArgMaxLong.$2.b
-expr e@9:68 name(c) type=Long ref=golden.sema.threeArgMaxLong.$2.c
-expr e@9:56 call callee=e@9:56#1 args=[_:e@9:62,_:e@9:65,_:e@9:68] type=Long call=kotlin.comparisons.maxOf#14
-expr e@10:62 name(a) type=Long ref=golden.sema.threeArgMinLong.$5.a
-expr e@10:65 name(b) type=Long ref=golden.sema.threeArgMinLong.$5.b
-expr e@10:68 name(c) type=Long ref=golden.sema.threeArgMinLong.$5.c
-expr e@10:56 call callee=e@10:56#1 args=[_:e@10:62,_:e@10:65,_:e@10:68] type=Long call=kotlin.comparisons.minOf#14
-expr e@12:72 name(a) type=Double ref=golden.sema.threeArgMaxDouble.$0.a
-expr e@12:75 name(b) type=Double ref=golden.sema.threeArgMaxDouble.$0.b
-expr e@12:78 name(c) type=Double ref=golden.sema.threeArgMaxDouble.$0.c
-expr e@12:66 call callee=e@12:66#1 args=[_:e@12:72,_:e@12:75,_:e@12:78] type=Double call=kotlin.comparisons.maxOf#5
-expr e@13:72 name(a) type=Double ref=golden.sema.threeArgMinDouble.$3.a
-expr e@13:75 name(b) type=Double ref=golden.sema.threeArgMinDouble.$3.b
-expr e@13:78 name(c) type=Double ref=golden.sema.threeArgMinDouble.$3.c
-expr e@13:66 call callee=e@13:66#1 args=[_:e@13:72,_:e@13:75,_:e@13:78] type=Double call=kotlin.comparisons.minOf#5
+expr e@4:27 call callee=e@4:27#1 args=[_:e@4:33,_:e@4:36] type=Int call=kotlin.comparisons.minOf[kind=fun;params=Int,Int]
+expr e@6:57 name(a) type=Int ref=golden.sema.threeArgMaxInt.$1.a[kind=vparam]
+expr e@6:60 name(b) type=Int ref=golden.sema.threeArgMaxInt.$1.b[kind=vparam]
+expr e@6:63 name(c) type=Int ref=golden.sema.threeArgMaxInt.$1.c[kind=vparam]
+expr e@6:51 call callee=e@6:51#1 args=[_:e@6:57,_:e@6:60,_:e@6:63] type=Int call=kotlin.comparisons.maxOf[kind=fun;params=Int,Int,Int]
+expr e@7:57 name(a) type=Int ref=golden.sema.threeArgMinInt.$4.a[kind=vparam]
+expr e@7:60 name(b) type=Int ref=golden.sema.threeArgMinInt.$4.b[kind=vparam]
+expr e@7:63 name(c) type=Int ref=golden.sema.threeArgMinInt.$4.c[kind=vparam]
+expr e@7:51 call callee=e@7:51#1 args=[_:e@7:57,_:e@7:60,_:e@7:63] type=Int call=kotlin.comparisons.minOf[kind=fun;params=Int,Int,Int]
+expr e@9:62 name(a) type=Long ref=golden.sema.threeArgMaxLong.$2.a[kind=vparam]
+expr e@9:65 name(b) type=Long ref=golden.sema.threeArgMaxLong.$2.b[kind=vparam]
+expr e@9:68 name(c) type=Long ref=golden.sema.threeArgMaxLong.$2.c[kind=vparam]
+expr e@9:56 call callee=e@9:56#1 args=[_:e@9:62,_:e@9:65,_:e@9:68] type=Long call=kotlin.comparisons.maxOf[kind=fun;params=Long,Long,Long]
+expr e@10:62 name(a) type=Long ref=golden.sema.threeArgMinLong.$5.a[kind=vparam]
+expr e@10:65 name(b) type=Long ref=golden.sema.threeArgMinLong.$5.b[kind=vparam]
+expr e@10:68 name(c) type=Long ref=golden.sema.threeArgMinLong.$5.c[kind=vparam]
+expr e@10:56 call callee=e@10:56#1 args=[_:e@10:62,_:e@10:65,_:e@10:68] type=Long call=kotlin.comparisons.minOf[kind=fun;params=Long,Long,Long]
+expr e@12:72 name(a) type=Double ref=golden.sema.threeArgMaxDouble.$0.a[kind=vparam]
+expr e@12:75 name(b) type=Double ref=golden.sema.threeArgMaxDouble.$0.b[kind=vparam]
+expr e@12:78 name(c) type=Double ref=golden.sema.threeArgMaxDouble.$0.c[kind=vparam]
+expr e@12:66 call callee=e@12:66#1 args=[_:e@12:72,_:e@12:75,_:e@12:78] type=Double call=kotlin.comparisons.maxOf[kind=fun;params=Double,Double,Double]
+expr e@13:72 name(a) type=Double ref=golden.sema.threeArgMinDouble.$3.a[kind=vparam]
+expr e@13:75 name(b) type=Double ref=golden.sema.threeArgMinDouble.$3.b[kind=vparam]
+expr e@13:78 name(c) type=Double ref=golden.sema.threeArgMinDouble.$3.c[kind=vparam]
+expr e@13:66 call callee=e@13:66#1 args=[_:e@13:72,_:e@13:75,_:e@13:78] type=Double call=kotlin.comparisons.minOf[kind=fun;params=Double,Double,Double]

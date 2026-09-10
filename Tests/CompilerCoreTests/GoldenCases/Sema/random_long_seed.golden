@@ -1,15 +1,15 @@
-symbol fq=__local_0.r kind=local vis=private flags=_ type=kotlin.random.Random
-symbol fq=__local_1.a kind=local vis=private flags=_ type=Int
-symbol fq=__local_2.b kind=local vis=private flags=_ type=Long
-symbol fq=useRandomLongSeed kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.r[kind=local] kind=local vis=private flags=_ type=kotlin.random.Random
+symbol fq=__local_1.a[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.b[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=useRandomLongSeed[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file frandom_long_seed package=_
-  decl useRandomLongSeed fun useRandomLongSeed sym=useRandomLongSeed
+  decl useRandomLongSeed[kind=fun;params=] fun useRandomLongSeed sym=useRandomLongSeed[kind=fun;params=]
 expr e@4:20 long(42) type=Long
-expr e@4:13 call callee=e@4:13#1 args=[_:e@4:20] type=kotlin.random.Random call=kotlin.random.Random#2
-expr e@4:5 localDecl r mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.r
-expr e@5:13 name(r) type=kotlin.random.Random ref=__local_0.r
-expr e@5:13#1 memberCall recv=e@5:13 callee=nextInt args=[] type=Int call=kotlin.random.Random.nextInt#0
-expr e@5:5 localDecl a mutable=0 type=_ init=e@5:13#1 type=Unit ref=__local_1.a
-expr e@6:13 name(r) type=kotlin.random.Random ref=__local_0.r
-expr e@6:13#1 memberCall recv=e@6:13 callee=nextLong args=[] type=Long call=kotlin.random.Random.nextLong#0
-expr e@6:5 localDecl b mutable=0 type=_ init=e@6:13#1 type=Unit ref=__local_2.b
+expr e@4:13 call callee=e@4:13#1 args=[_:e@4:20] type=kotlin.random.Random call=kotlin.random.Random[kind=fun;params=Long]
+expr e@4:5 localDecl r mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.r[kind=local]
+expr e@5:13 name(r) type=kotlin.random.Random ref=__local_0.r[kind=local]
+expr e@5:13#1 memberCall recv=e@5:13 callee=nextInt args=[] type=Int call=kotlin.random.Random.nextInt[kind=fun;recv=kotlin.random.Random;params=]
+expr e@5:5 localDecl a mutable=0 type=_ init=e@5:13#1 type=Unit ref=__local_1.a[kind=local]
+expr e@6:13 name(r) type=kotlin.random.Random ref=__local_0.r[kind=local]
+expr e@6:13#1 memberCall recv=e@6:13 callee=nextLong args=[] type=Long call=kotlin.random.Random.nextLong[kind=fun;recv=kotlin.random.Random;params=]
+expr e@6:5 localDecl b mutable=0 type=_ init=e@6:13#1 type=Unit ref=__local_2.b[kind=local]

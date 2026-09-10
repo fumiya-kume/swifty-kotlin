@@ -86,16 +86,20 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
-        let cpuArchitectureSymbol = ensureSyntheticPlatformEnumClass(
-            named: "CpuArchitecture",
-            entries: [
-                "UNKNOWN", "X86", "X64", "ARM32",
-                "ARM64", "MIPS32", "MIPSEL32", "WASM32",
-            ],
-            in: kotlinNativePkg,
-            symbols: symbols,
-            interner: interner
-        )
+        // KSP-1198: use the bundled declaration when available so bitness,
+        // enum entry order, and generated enum APIs follow the source contract.
+        let cpuArchitectureFQName = kotlinNativePkg + [interner.intern("CpuArchitecture")]
+        let cpuArchitectureSymbol = symbols.lookup(fqName: cpuArchitectureFQName)
+            ?? ensureSyntheticPlatformEnumClass(
+                named: "CpuArchitecture",
+                entries: [
+                    "UNKNOWN", "ARM32", "ARM64", "X86",
+                    "X64", "MIPS32", "MIPSEL32", "WASM32",
+                ],
+                in: kotlinNativePkg,
+                symbols: symbols,
+                interner: interner
+            )
         let cpuArchitectureType = types.make(.classType(ClassType(
             classSymbol: cpuArchitectureSymbol,
             args: [],

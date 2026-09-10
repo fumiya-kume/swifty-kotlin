@@ -1,36 +1,36 @@
-symbol fq=golden.sema.CustomMap kind=class vis=public flags=abstractType|openType
-symbol fq=golden.sema.customMapAsSequence kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.CustomMap] ret=kotlin.sequences.Sequence<kotlin.collections.Map.Entry<String?, Int?>>
-symbol fq=golden.sema.customMapAsSequence.$0.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.genericMapAsIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<out golden.sema.genericMapAsIterable.$1.K, golden.sema.genericMapAsIterable.$1.V>] ret=kotlin.collections.Iterable<out kotlin.collections.Map.Entry<out golden.sema.genericMapAsIterable.$1.K, out golden.sema.genericMapAsIterable.$1.V>>
-symbol fq=golden.sema.genericMapAsIterable.$1.K kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.genericMapAsIterable.$1.V kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.genericMapAsIterable.$1.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.genericMapAsSequence kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<out golden.sema.genericMapAsSequence.$2.K, golden.sema.genericMapAsSequence.$2.V>] ret=kotlin.sequences.Sequence<out kotlin.collections.Map.Entry<out golden.sema.genericMapAsSequence.$2.K, out golden.sema.genericMapAsSequence.$2.V>>
-symbol fq=golden.sema.genericMapAsSequence.$2.K kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.genericMapAsSequence.$2.V kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.genericMapAsSequence.$2.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapAsIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=kotlin.collections.Iterable<out kotlin.collections.Map.Entry<out String?, out Int?>>
-symbol fq=golden.sema.mapAsIterable.$3.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.mapAsSequence kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=kotlin.sequences.Sequence<out kotlin.collections.Map.Entry<out String?, out Int?>>
-symbol fq=golden.sema.mapAsSequence.$4.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+symbol fq=golden.sema.CustomMap[kind=class] kind=class vis=public flags=abstractType|openType
+symbol fq=golden.sema.customMapAsSequence.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.customMapAsSequence[kind=fun;params=golden.sema.CustomMap] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.CustomMap] ret=kotlin.sequences.Sequence<kotlin.collections.Map.Entry<String?, Int?>>
+symbol fq=golden.sema.genericMapAsIterable.$1.K[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.genericMapAsIterable.$1.V[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.genericMapAsIterable.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.genericMapAsIterable[kind=fun;params=kotlin.collections.Map<out T0,T1>;gen=2] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<out golden.sema.genericMapAsIterable.$1.K, golden.sema.genericMapAsIterable.$1.V>] ret=kotlin.collections.Iterable<out kotlin.collections.Map.Entry<out golden.sema.genericMapAsIterable.$1.K, out golden.sema.genericMapAsIterable.$1.V>>
+symbol fq=golden.sema.genericMapAsSequence.$2.K[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.genericMapAsSequence.$2.V[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.genericMapAsSequence.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.genericMapAsSequence[kind=fun;params=kotlin.collections.Map<out T0,T1>;gen=2] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<out golden.sema.genericMapAsSequence.$2.K, golden.sema.genericMapAsSequence.$2.V>] ret=kotlin.sequences.Sequence<out kotlin.collections.Map.Entry<out golden.sema.genericMapAsSequence.$2.K, out golden.sema.genericMapAsSequence.$2.V>>
+symbol fq=golden.sema.mapAsIterable.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapAsIterable[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=kotlin.collections.Iterable<out kotlin.collections.Map.Entry<out String?, out Int?>>
+symbol fq=golden.sema.mapAsSequence.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.mapAsSequence[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=kotlin.sequences.Sequence<out kotlin.collections.Map.Entry<out String?, out Int?>>
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Map_as package=golden.sema
-  decl golden.sema.CustomMap class CustomMap sym=golden.sema.CustomMap
-  decl golden.sema.mapAsIterable fun mapAsIterable sym=golden.sema.mapAsIterable
-  decl golden.sema.mapAsSequence fun mapAsSequence sym=golden.sema.mapAsSequence
-  decl golden.sema.genericMapAsIterable fun genericMapAsIterable sym=golden.sema.genericMapAsIterable
-  decl golden.sema.genericMapAsSequence fun genericMapAsSequence sym=golden.sema.genericMapAsSequence
-  decl golden.sema.customMapAsSequence fun customMapAsSequence sym=golden.sema.customMapAsSequence
-expr e@5:49 name(values) type=kotlin.collections.Map<String?, Int?> ref=golden.sema.mapAsIterable.$3.values
-expr e@5:49#1 memberCall recv=e@5:49 callee=asIterable args=[] type=kotlin.collections.Iterable<out kotlin.collections.Map.Entry<out String?, out Int?>> call=kotlin.collections.asIterable#1
-expr e@7:49 name(values) type=kotlin.collections.Map<String?, Int?> ref=golden.sema.mapAsSequence.$4.values
-expr e@7:49#1 memberCall recv=e@7:49 callee=asSequence args=[] type=kotlin.sequences.Sequence<out kotlin.collections.Map.Entry<out String?, out Int?>> call=kotlin.collections.asSequence#1 targs=[String?,Int?]
-expr e@9:58 name(values) type=kotlin.collections.Map<out golden.sema.genericMapAsIterable.$1.K, golden.sema.genericMapAsIterable.$1.V> ref=golden.sema.genericMapAsIterable.$1.values
-expr e@9:58#1 memberCall recv=e@9:58 callee=asIterable args=[] type=kotlin.collections.Iterable<out kotlin.collections.Map.Entry<out golden.sema.genericMapAsIterable.$1.K, out golden.sema.genericMapAsIterable.$1.V>> call=kotlin.collections.asIterable#1
-expr e@11:58 name(values) type=kotlin.collections.Map<out golden.sema.genericMapAsSequence.$2.K, golden.sema.genericMapAsSequence.$2.V> ref=golden.sema.genericMapAsSequence.$2.values
-expr e@11:58#1 memberCall recv=e@11:58 callee=asSequence args=[] type=kotlin.sequences.Sequence<out kotlin.collections.Map.Entry<out golden.sema.genericMapAsSequence.$2.K, out golden.sema.genericMapAsSequence.$2.V>> call=kotlin.collections.asSequence#1 targs=[golden.sema.genericMapAsSequence.$2.K,golden.sema.genericMapAsSequence.$2.V]
-expr e@13:46 name(values) type=golden.sema.CustomMap ref=golden.sema.customMapAsSequence.$0.values
-expr e@13:46#1 memberCall recv=e@13:46 callee=asSequence args=[] type=kotlin.sequences.Sequence<kotlin.collections.Map.Entry<String?, Int?>> call=kotlin.collections.asSequence#1 targs=[String?,Int?]
+  decl golden.sema.CustomMap[kind=class] class CustomMap sym=golden.sema.CustomMap[kind=class]
+  decl golden.sema.mapAsIterable[kind=fun;params=kotlin.collections.Map<String?,Int?>] fun mapAsIterable sym=golden.sema.mapAsIterable[kind=fun;params=kotlin.collections.Map<String?,Int?>]
+  decl golden.sema.mapAsSequence[kind=fun;params=kotlin.collections.Map<String?,Int?>] fun mapAsSequence sym=golden.sema.mapAsSequence[kind=fun;params=kotlin.collections.Map<String?,Int?>]
+  decl golden.sema.genericMapAsIterable[kind=fun;params=kotlin.collections.Map<out T0,T1>;gen=2] fun genericMapAsIterable sym=golden.sema.genericMapAsIterable[kind=fun;params=kotlin.collections.Map<out T0,T1>;gen=2]
+  decl golden.sema.genericMapAsSequence[kind=fun;params=kotlin.collections.Map<out T0,T1>;gen=2] fun genericMapAsSequence sym=golden.sema.genericMapAsSequence[kind=fun;params=kotlin.collections.Map<out T0,T1>;gen=2]
+  decl golden.sema.customMapAsSequence[kind=fun;params=golden.sema.CustomMap] fun customMapAsSequence sym=golden.sema.customMapAsSequence[kind=fun;params=golden.sema.CustomMap]
+expr e@5:49 name(values) type=kotlin.collections.Map<String?, Int?> ref=golden.sema.mapAsIterable.$3.values[kind=vparam]
+expr e@5:49#1 memberCall recv=e@5:49 callee=asIterable args=[] type=kotlin.collections.Iterable<out kotlin.collections.Map.Entry<out String?, out Int?>> call=kotlin.collections.asIterable[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=;gen=2]
+expr e@7:49 name(values) type=kotlin.collections.Map<String?, Int?> ref=golden.sema.mapAsSequence.$4.values[kind=vparam]
+expr e@7:49#1 memberCall recv=e@7:49 callee=asSequence args=[] type=kotlin.sequences.Sequence<out kotlin.collections.Map.Entry<out String?, out Int?>> call=kotlin.collections.asSequence[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=;gen=2] targs=[String?,Int?]
+expr e@9:58 name(values) type=kotlin.collections.Map<out golden.sema.genericMapAsIterable.$1.K, golden.sema.genericMapAsIterable.$1.V> ref=golden.sema.genericMapAsIterable.$1.values[kind=vparam]
+expr e@9:58#1 memberCall recv=e@9:58 callee=asIterable args=[] type=kotlin.collections.Iterable<out kotlin.collections.Map.Entry<out golden.sema.genericMapAsIterable.$1.K, out golden.sema.genericMapAsIterable.$1.V>> call=kotlin.collections.asIterable[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=;gen=2]
+expr e@11:58 name(values) type=kotlin.collections.Map<out golden.sema.genericMapAsSequence.$2.K, golden.sema.genericMapAsSequence.$2.V> ref=golden.sema.genericMapAsSequence.$2.values[kind=vparam]
+expr e@11:58#1 memberCall recv=e@11:58 callee=asSequence args=[] type=kotlin.sequences.Sequence<out kotlin.collections.Map.Entry<out golden.sema.genericMapAsSequence.$2.K, out golden.sema.genericMapAsSequence.$2.V>> call=kotlin.collections.asSequence[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=;gen=2] targs=[golden.sema.genericMapAsSequence.$2.K,golden.sema.genericMapAsSequence.$2.V]
+expr e@13:46 name(values) type=golden.sema.CustomMap ref=golden.sema.customMapAsSequence.$0.values[kind=vparam]
+expr e@13:46#1 memberCall recv=e@13:46 callee=asSequence args=[] type=kotlin.sequences.Sequence<kotlin.collections.Map.Entry<String?, Int?>> call=kotlin.collections.asSequence[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=;gen=2] targs=[String?,Int?]

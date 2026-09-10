@@ -1,11 +1,11 @@
-symbol fq=golden.sema.minOfComparable3ArgString kind=function vis=public flags=_ sig=recv=_ params=[String,String,String] ret=String
-symbol fq=golden.sema.minOfComparable3ArgString.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.minOfComparable3ArgString.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.minOfComparable3ArgString.$0.c kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
+symbol fq=golden.sema.minOfComparable3ArgString.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfComparable3ArgString.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfComparable3ArgString.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfComparable3ArgString[kind=fun;params=String,String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String,String] ret=String
+symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fminof_comparable_3arg package=golden.sema
-  decl golden.sema.minOfComparable3ArgString fun minOfComparable3ArgString sym=golden.sema.minOfComparable3ArgString
-expr e@4:80 name(a) type=String ref=golden.sema.minOfComparable3ArgString.$0.a
-expr e@4:83 name(b) type=String ref=golden.sema.minOfComparable3ArgString.$0.b
-expr e@4:86 name(c) type=String ref=golden.sema.minOfComparable3ArgString.$0.c
-expr e@4:74 call callee=e@4:74#1 args=[_:e@4:80,_:e@4:83,_:e@4:86] type=String call=kotlin.comparisons.minOf#31 targs=[String]
+  decl golden.sema.minOfComparable3ArgString[kind=fun;params=String,String,String] fun minOfComparable3ArgString sym=golden.sema.minOfComparable3ArgString[kind=fun;params=String,String,String]
+expr e@4:80 name(a) type=String ref=golden.sema.minOfComparable3ArgString.$0.a[kind=vparam]
+expr e@4:83 name(b) type=String ref=golden.sema.minOfComparable3ArgString.$0.b[kind=vparam]
+expr e@4:86 name(c) type=String ref=golden.sema.minOfComparable3ArgString.$0.c[kind=vparam]
+expr e@4:74 call callee=e@4:74#1 args=[_:e@4:80,_:e@4:83,_:e@4:86] type=String call=kotlin.comparisons.minOf[kind=fun;params=T0,T0,T0;gen=1] targs=[String]

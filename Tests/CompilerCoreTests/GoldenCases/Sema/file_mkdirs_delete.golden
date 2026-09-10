@@ -1,0 +1,24 @@
+symbol fq=__local_0.result[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_2.result[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_3.checked[kind=local] kind=local vis=private flags=_ type=Boolean
+symbol fq=deleteFile.$0.file[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=deleteFile[kind=fun;params=java.io.File] kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=Unit
+symbol fq=java.io.File.delete[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=Boolean
+symbol fq=java.io.File.mkdirs[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=Boolean
+symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
+symbol fq=makeDirectories.$1.dir[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=makeDirectories[kind=fun;params=java.io.File] kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=Unit
+file ffile_mkdirs_delete package=_
+  decl makeDirectories[kind=fun;params=java.io.File] fun makeDirectories sym=makeDirectories[kind=fun;params=java.io.File]
+  decl deleteFile[kind=fun;params=java.io.File] fun deleteFile sym=deleteFile[kind=fun;params=java.io.File]
+expr e@7:18 name(dir) type=java.io.File ref=makeDirectories.$1.dir[kind=vparam]
+expr e@7:18#1 memberCall recv=e@7:18 callee=mkdirs args=[] type=Boolean call=java.io.File.mkdirs[kind=fun;recv=java.io.File;params=]
+expr e@7:5 localDecl result mutable=0 type=_ init=e@7:18#1 type=Unit ref=__local_0.result[kind=local]
+expr e@8:28 name(result) type=Boolean ref=__local_0.result[kind=local]
+expr e@8:5 localDecl checked mutable=0 type=Boolean init=e@8:28 type=Unit ref=__local_1.checked[kind=local]
+expr e@12:18 name(file) type=java.io.File ref=deleteFile.$0.file[kind=vparam]
+expr e@12:18#1 memberCall recv=e@12:18 callee=delete args=[] type=Boolean call=java.io.File.delete[kind=fun;recv=java.io.File;params=]
+expr e@12:5 localDecl result mutable=0 type=_ init=e@12:18#1 type=Unit ref=__local_2.result[kind=local]
+expr e@13:28 name(result) type=Boolean ref=__local_2.result[kind=local]
+expr e@13:5 localDecl checked mutable=0 type=Boolean init=e@13:28 type=Unit ref=__local_3.checked[kind=local]

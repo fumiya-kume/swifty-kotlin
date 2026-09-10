@@ -1090,19 +1090,13 @@ extension DataFlowSemaPhase {
             classSymbol: kTypeSymbol, args: [], nullability: .nonNull
         )))
 
-        let kTypeProjectionSymbol = ensureClassSymbol(
+        // KType properties and KTypeProjection members are declared by the bundled sources.
+        // Registering legacy properties here leaves runtime links on those source symbols.
+        _ = ensureClassSymbol(
             named: "KTypeProjection", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
 
         registerSyntheticKVarianceStub(
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            kotlinReflectPkg: kotlinReflectPkg
-        )
-        registerSyntheticKTypeProjectionSurface(
-            kTypeProjectionSymbol: kTypeProjectionSymbol,
-            kTypeSymbol: kTypeSymbol,
             symbols: symbols,
             types: types,
             interner: interner,
@@ -1362,74 +1356,6 @@ extension DataFlowSemaPhase {
             typeSupertypes.append(supertype)
         }
         types.setNominalDirectSupertypes(typeSupertypes, for: symbol)
-    }
-
-    // STDLIB-REFLECT-074: Register KTypeProjection data-class properties.
-    private func registerSyntheticKTypeProjectionSurface(
-        kTypeProjectionSymbol: SymbolID,
-        kTypeSymbol: SymbolID,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        kotlinReflectPkg: [InternedString]
-    ) {
-        guard let kTypeProjectionInfo = symbols.symbol(kTypeProjectionSymbol) else { return }
-        let nullableKType = types.makeNullable(types.make(.classType(ClassType(
-            classSymbol: kTypeSymbol,
-            args: [],
-            nullability: .nonNull
-        ))))
-        let nullableKVariance: TypeID = if let kVarianceSymbol = symbols.lookup(
-            fqName: kotlinReflectPkg + [interner.intern("KVariance")]
-        ) {
-            types.makeNullable(types.make(.classType(ClassType(
-                classSymbol: kVarianceSymbol,
-                args: [],
-                nullability: .nonNull
-            ))))
-        } else {
-            types.nullableAnyType
-        }
-
-        registerSyntheticKTypeProjectionProperty(
-            named: "variance",
-            ownerSymbol: kTypeProjectionSymbol,
-            ownerFQName: kTypeProjectionInfo.fqName,
-            propertyType: nullableKVariance,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSyntheticKTypeProjectionProperty(
-            named: "type",
-            ownerSymbol: kTypeProjectionSymbol,
-            ownerFQName: kTypeProjectionInfo.fqName,
-            propertyType: nullableKType,
-            symbols: symbols,
-            interner: interner
-        )
-    }
-
-    private func registerSyntheticKTypeProjectionProperty(
-        named name: String,
-        ownerSymbol: SymbolID,
-        ownerFQName: [InternedString],
-        propertyType: TypeID,
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        let propertyName = interner.intern(name)
-        let propertyFQName = ownerFQName + [propertyName]
-        guard symbols.lookup(fqName: propertyFQName) == nil else { return }
-        let propertySymbol = symbols.define(
-            kind: .property,
-            name: propertyName,
-            fqName: propertyFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
-        symbols.setPropertyType(propertyType, for: propertySymbol)
     }
 
     // STDLIB-REFLECT-073: Register KVariance enum with declaration/use-site variance entries.

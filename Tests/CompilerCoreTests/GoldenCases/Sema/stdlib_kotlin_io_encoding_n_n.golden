@@ -1,7 +1,7 @@
-symbol fq=golden.sema.experimentalEncodingApiSurface kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useExperimentalEncodingApiSurface kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.experimentalEncodingApiSurface[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useExperimentalEncodingApiSurface[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstdlib_kotlin_io_encoding_n_n package=golden.sema
-  decl golden.sema.experimentalEncodingApiSurface fun experimentalEncodingApiSurface sym=golden.sema.experimentalEncodingApiSurface
-  decl golden.sema.useExperimentalEncodingApiSurface fun useExperimentalEncodingApiSurface sym=golden.sema.useExperimentalEncodingApiSurface
+  decl golden.sema.experimentalEncodingApiSurface[kind=fun;params=] fun experimentalEncodingApiSurface sym=golden.sema.experimentalEncodingApiSurface[kind=fun;params=]
+  decl golden.sema.useExperimentalEncodingApiSurface[kind=fun;params=] fun useExperimentalEncodingApiSurface sym=golden.sema.useExperimentalEncodingApiSurface[kind=fun;params=]
 expr e@6:48 string(ok) type=String
-expr e@9:51 call callee=e@9:51#1 args=[] type=String call=golden.sema.experimentalEncodingApiSurface
+expr e@9:51 call callee=e@9:51#1 args=[] type=String call=golden.sema.experimentalEncodingApiSurface[kind=fun;params=]

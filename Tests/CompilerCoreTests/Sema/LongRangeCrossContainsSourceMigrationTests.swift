@@ -140,10 +140,11 @@ struct LongRangeCrossContainsSourceMigrationTests {
             }
         }
 
-        // The LongRange base-element `in` calls use the existing runtime dispatch
-        // and therefore do not carry a source-level CallBinding.
-        #expect(parameterTypes.count == 11, "Expected source bindings for cross-type/direct calls, got \(parameterTypes.count)")
-        #expect(parameterTypes.filter { $0 == sema.types.longType }.count == 5)
+        // Direct calls and `in` share the same source-level overload: literals
+        // and Long operands select LongRange.contains(Long), while explicit
+        // Byte/Int/Short operands keep the cross-type source wrappers.
+        #expect(parameterTypes.count == 12, "Expected source bindings for all LongRange contains/in calls, got \(parameterTypes.count)")
+        #expect(parameterTypes.filter { $0 == sema.types.longType }.count == 6)
         #expect(parameterTypes.filter { $0 == sema.types.intType }.count == 2)
         #expect(parameterTypes.filter { $0 == sema.types.byteType }.count == 2)
         #expect(parameterTypes.filter { $0 == sema.types.shortType }.count == 2)

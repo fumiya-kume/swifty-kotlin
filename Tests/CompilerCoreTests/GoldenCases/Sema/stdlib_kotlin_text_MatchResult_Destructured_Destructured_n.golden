@@ -1,28 +1,28 @@
-symbol fq=__local_0.match kind=local vis=private flags=_ type=kotlin.text.MatchResult
-symbol fq=__local_1.destructured kind=local vis=private flags=_ type=kotlin.text.MatchResult.Destructured
-symbol fq=__local_2.captures kind=local vis=private flags=_ type=kotlin.collections.List<String>
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String?
-symbol fq=probe.$0.input kind=valueParameter vis=private flags=_
+symbol fq=__local_0.match[kind=local] kind=local vis=private flags=_ type=kotlin.text.MatchResult
+symbol fq=__local_1.destructured[kind=local] kind=local vis=private flags=_ type=kotlin.text.MatchResult.Destructured
+symbol fq=__local_2.captures[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=probe.$0.input[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe[kind=fun;params=String] kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String?
 file fstdlib_kotlin_text_MatchResult_Destructured_Destructured_n package=_
-  decl probe fun probe sym=probe
+  decl probe[kind=fun;params=String] fun probe sym=probe[kind=fun;params=String]
 expr e@2:23 string((a)(b)?(c)(d)(e)(f)(g)(h)(i)(j)) type=String
-expr e@2:17 call callee=e@2:17#1 args=[_:e@2:23] type=kotlin.text.Regex call=kotlin.text.Regex.<init>#0
-expr e@2:63 name(input) type=String ref=probe.$0.input
-expr e@2:17#2 memberCall recv=e@2:17 callee=find args=[_:e@2:63] type=kotlin.text.MatchResult? call=kotlin.text.Regex.find
+expr e@2:17 call callee=e@2:17#1 args=[_:e@2:23] type=kotlin.text.Regex call=kotlin.text.Regex.<init>[kind=ctor;recv=kotlin.text.Regex;params=String]
+expr e@2:63 name(input) type=String ref=probe.$0.input[kind=vparam]
+expr e@2:17#2 memberCall recv=e@2:17 callee=find args=[_:e@2:63] type=kotlin.text.MatchResult? call=kotlin.text.Regex.find[kind=fun;recv=kotlin.text.Regex;params=String]
 expr e@2:80 name(null) type=Nothing?
 expr e@2:73 return value=e@2:80 type=Nothing
 expr e@2:17#3 binary(elvis) lhs=e@2:17#2 rhs=e@2:73 type=kotlin.text.MatchResult
-expr e@2:5 localDecl match mutable=0 type=_ init=e@2:17#3 type=Unit ref=__local_0.match
-expr e@3:24 name(match) type=kotlin.text.MatchResult ref=__local_0.match
-expr e@3:24#1 memberCall recv=e@3:24 callee=destructured args=[] type=kotlin.text.MatchResult.Destructured call=kotlin.text.destructured.$get
-expr e@3:5 localDecl destructured mutable=0 type=_ init=e@3:24#1 type=Unit ref=__local_1.destructured
-expr e@4:20 name(destructured) type=kotlin.text.MatchResult.Destructured ref=__local_1.destructured
-expr e@4:20#1 memberCall recv=e@4:20 callee=toList args=[] type=kotlin.collections.List<String> call=kotlin.text.toList#1
-expr e@4:5 localDecl captures mutable=0 type=_ init=e@4:20#1 type=Unit ref=__local_2.captures
-expr e@5:12 name(destructured) type=kotlin.text.MatchResult.Destructured ref=__local_1.destructured
-expr e@5:12#1 memberCall recv=e@5:12 callee=component10 args=[] type=String call=kotlin.text.component10
-expr e@5:41 name(captures) type=kotlin.collections.List<String> ref=__local_2.captures
-expr e@5:41#1 memberCall recv=e@5:41 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@2:5 localDecl match mutable=0 type=_ init=e@2:17#3 type=Unit ref=__local_0.match[kind=local]
+expr e@3:24 name(match) type=kotlin.text.MatchResult ref=__local_0.match[kind=local]
+expr e@3:24#1 memberCall recv=e@3:24 callee=destructured args=[] type=kotlin.text.MatchResult.Destructured call=kotlin.text.destructured.$get[kind=fun;recv=kotlin.text.MatchResult;params=]
+expr e@3:5 localDecl destructured mutable=0 type=_ init=e@3:24#1 type=Unit ref=__local_1.destructured[kind=local]
+expr e@4:20 name(destructured) type=kotlin.text.MatchResult.Destructured ref=__local_1.destructured[kind=local]
+expr e@4:20#1 memberCall recv=e@4:20 callee=toList args=[] type=kotlin.collections.List<String> call=kotlin.text.toList[kind=fun;recv=kotlin.text.MatchResult.Destructured;params=]
+expr e@4:5 localDecl captures mutable=0 type=_ init=e@4:20#1 type=Unit ref=__local_2.captures[kind=local]
+expr e@5:12 name(destructured) type=kotlin.text.MatchResult.Destructured ref=__local_1.destructured[kind=local]
+expr e@5:12#1 memberCall recv=e@5:12 callee=component10 args=[] type=String call=kotlin.text.component10[kind=fun;recv=kotlin.text.MatchResult.Destructured;params=]
+expr e@5:41 name(captures) type=kotlin.collections.List<String> ref=__local_2.captures[kind=local]
+expr e@5:41#1 memberCall recv=e@5:41 callee=size args=[] type=Int ref=kotlin.collections.Collection.size[kind=prop]
 expr e@5:12#2 binary(add) lhs=e@5:12#1 rhs=e@5:41#1 type=String
 expr e@5:5 return value=e@5:12#2 type=Nothing

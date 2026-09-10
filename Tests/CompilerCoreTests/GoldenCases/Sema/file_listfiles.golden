@@ -1,0 +1,14 @@
+symbol fq=__local_0.children[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<out java.io.File>?
+symbol fq=__local_1.checked[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<out java.io.File>?
+symbol fq=java.io.File.listFiles[kind=fun;recv=java.io.File;params=] kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=kotlin.collections.List<out java.io.File>?
+symbol fq=java.io.File[kind=class] kind=class vis=public flags=synthetic type=java.io.File
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=listChildren.$0.dir[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=listChildren[kind=fun;params=java.io.File] kind=function vis=public flags=_ sig=recv=_ params=[java.io.File] ret=Unit
+file ffile_listfiles package=_
+  decl listChildren[kind=fun;params=java.io.File] fun listChildren sym=listChildren[kind=fun;params=java.io.File]
+expr e@7:20 name(dir) type=java.io.File ref=listChildren.$0.dir[kind=vparam]
+expr e@7:20#1 memberCall recv=e@7:20 callee=listFiles args=[] type=kotlin.collections.List<out java.io.File>? call=java.io.File.listFiles[kind=fun;recv=java.io.File;params=]
+expr e@7:5 localDecl children mutable=0 type=_ init=e@7:20#1 type=Unit ref=__local_0.children[kind=local]
+expr e@8:36 name(children) type=kotlin.collections.List<out java.io.File>? ref=__local_0.children[kind=local]
+expr e@8:5 localDecl checked mutable=0 type=List<out File>? init=e@8:36 type=Unit ref=__local_1.checked[kind=local]
