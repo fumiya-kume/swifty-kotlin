@@ -1,217 +1,217 @@
-symbol fq=__local_0.directMaxCodePoint kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.directMaxHighSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_2.directMaxLowSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_3.directMaxRadix kind=local vis=private flags=_ type=Int
-symbol fq=__local_4.directMaxSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_5.directMaxValue kind=local vis=private flags=_ type=Char
-symbol fq=__local_6.directMinCodePoint kind=local vis=private flags=_ type=Int
-symbol fq=__local_7.directMinHighSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_8.directMinLowSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_9.directMinRadix kind=local vis=private flags=_ type=Int
-symbol fq=__local_10.directMinSupplementaryCodePoint kind=local vis=private flags=_ type=Int
-symbol fq=__local_11.directMinSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_12.directMinValue kind=local vis=private flags=_ type=Char
-symbol fq=__local_13.directSizeBits kind=local vis=private flags=_ type=Int
-symbol fq=__local_14.directSizeBytes kind=local vis=private flags=_ type=Int
-symbol fq=__local_15.explicitMaxCodePoint kind=local vis=private flags=_ type=Int
-symbol fq=__local_16.explicitMaxHighSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_17.explicitMaxLowSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_18.explicitMaxRadix kind=local vis=private flags=_ type=Int
-symbol fq=__local_19.explicitMaxSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_20.explicitMaxValue kind=local vis=private flags=_ type=Char
-symbol fq=__local_21.explicitMinCodePoint kind=local vis=private flags=_ type=Int
-symbol fq=__local_22.explicitMinHighSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_23.explicitMinLowSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_24.explicitMinRadix kind=local vis=private flags=_ type=Int
-symbol fq=__local_25.explicitMinSupplementaryCodePoint kind=local vis=private flags=_ type=Int
-symbol fq=__local_26.explicitMinSurrogate kind=local vis=private flags=_ type=Char
-symbol fq=__local_27.explicitMinValue kind=local vis=private flags=_ type=Char
-symbol fq=__local_28.explicitSizeBits kind=local vis=private flags=_ type=Int
-symbol fq=__local_29.explicitSizeBytes kind=local vis=private flags=_ type=Int
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Char#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.Char.Companion kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.text.code kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=Int
+symbol fq=__local_0.directMaxCodePoint[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.directMaxHighSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_2.directMaxLowSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_3.directMaxRadix[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_4.directMaxSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_5.directMaxValue[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_6.directMinCodePoint[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_7.directMinHighSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_8.directMinLowSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_9.directMinRadix[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_10.directMinSupplementaryCodePoint[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_11.directMinSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_12.directMinValue[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_13.directSizeBits[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_14.directSizeBytes[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_15.explicitMaxCodePoint[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_16.explicitMaxHighSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_17.explicitMaxLowSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_18.explicitMaxRadix[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_19.explicitMaxSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_20.explicitMaxValue[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_21.explicitMinCodePoint[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_22.explicitMinHighSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_23.explicitMinLowSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_24.explicitMinRadix[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_25.explicitMinSupplementaryCodePoint[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_26.explicitMinSurrogate[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_27.explicitMinValue[kind=local] kind=local vis=private flags=_ type=Char
+symbol fq=__local_28.explicitSizeBits[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_29.explicitSizeBytes[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.Char.Companion[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.Char[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.text.code[kind=fun;recv=Char;params=] kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=Int
 file fstdlib_kotlin_Char_Companion_Companion_n package=golden.sema
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@4:35 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@4:35#1 memberCall recv=e@4:35 callee=MAX_CODE_POINT args=[] type=Int call=kotlin.MAX_CODE_POINT.$get
-expr e@4:5 localDecl directMaxCodePoint mutable=0 type=Int init=e@4:35#1 type=Unit ref=__local_0.directMaxCodePoint
-expr e@5:40 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@5:40#1 memberCall recv=e@5:40 callee=MAX_HIGH_SURROGATE args=[] type=Char call=kotlin.MAX_HIGH_SURROGATE.$get
-expr e@5:5 localDecl directMaxHighSurrogate mutable=0 type=Char init=e@5:40#1 type=Unit ref=__local_1.directMaxHighSurrogate
-expr e@6:39 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@6:39#1 memberCall recv=e@6:39 callee=MAX_LOW_SURROGATE args=[] type=Char call=kotlin.MAX_LOW_SURROGATE.$get
-expr e@6:5 localDecl directMaxLowSurrogate mutable=0 type=Char init=e@6:39#1 type=Unit ref=__local_2.directMaxLowSurrogate
-expr e@7:31 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@7:31#1 memberCall recv=e@7:31 callee=MAX_RADIX args=[] type=Int call=kotlin.MAX_RADIX.$get
-expr e@7:5 localDecl directMaxRadix mutable=0 type=Int init=e@7:31#1 type=Unit ref=__local_3.directMaxRadix
-expr e@8:36 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@8:36#1 memberCall recv=e@8:36 callee=MAX_SURROGATE args=[] type=Char call=kotlin.MAX_SURROGATE.$get
-expr e@8:5 localDecl directMaxSurrogate mutable=0 type=Char init=e@8:36#1 type=Unit ref=__local_4.directMaxSurrogate
-expr e@9:32 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@9:32#1 memberCall recv=e@9:32 callee=MAX_VALUE args=[] type=Char call=kotlin.MAX_VALUE.$get#1
-expr e@9:5 localDecl directMaxValue mutable=0 type=Char init=e@9:32#1 type=Unit ref=__local_5.directMaxValue
-expr e@10:35 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@10:35#1 memberCall recv=e@10:35 callee=MIN_CODE_POINT args=[] type=Int call=kotlin.MIN_CODE_POINT.$get
-expr e@10:5 localDecl directMinCodePoint mutable=0 type=Int init=e@10:35#1 type=Unit ref=__local_6.directMinCodePoint
-expr e@11:40 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@11:40#1 memberCall recv=e@11:40 callee=MIN_HIGH_SURROGATE args=[] type=Char call=kotlin.MIN_HIGH_SURROGATE.$get
-expr e@11:5 localDecl directMinHighSurrogate mutable=0 type=Char init=e@11:40#1 type=Unit ref=__local_7.directMinHighSurrogate
-expr e@12:39 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@12:39#1 memberCall recv=e@12:39 callee=MIN_LOW_SURROGATE args=[] type=Char call=kotlin.MIN_LOW_SURROGATE.$get
-expr e@12:5 localDecl directMinLowSurrogate mutable=0 type=Char init=e@12:39#1 type=Unit ref=__local_8.directMinLowSurrogate
-expr e@13:31 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@13:31#1 memberCall recv=e@13:31 callee=MIN_RADIX args=[] type=Int call=kotlin.MIN_RADIX.$get
-expr e@13:5 localDecl directMinRadix mutable=0 type=Int init=e@13:31#1 type=Unit ref=__local_9.directMinRadix
-expr e@14:48 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@14:48#1 memberCall recv=e@14:48 callee=MIN_SUPPLEMENTARY_CODE_POINT args=[] type=Int call=kotlin.MIN_SUPPLEMENTARY_CODE_POINT.$get
-expr e@14:5 localDecl directMinSupplementaryCodePoint mutable=0 type=Int init=e@14:48#1 type=Unit ref=__local_10.directMinSupplementaryCodePoint
-expr e@15:36 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@15:36#1 memberCall recv=e@15:36 callee=MIN_SURROGATE args=[] type=Char call=kotlin.MIN_SURROGATE.$get
-expr e@15:5 localDecl directMinSurrogate mutable=0 type=Char init=e@15:36#1 type=Unit ref=__local_11.directMinSurrogate
-expr e@16:32 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@16:32#1 memberCall recv=e@16:32 callee=MIN_VALUE args=[] type=Char call=kotlin.MIN_VALUE.$get#1
-expr e@16:5 localDecl directMinValue mutable=0 type=Char init=e@16:32#1 type=Unit ref=__local_12.directMinValue
-expr e@17:31 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@17:31#1 memberCall recv=e@17:31 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#1
-expr e@17:5 localDecl directSizeBits mutable=0 type=Int init=e@17:31#1 type=Unit ref=__local_13.directSizeBits
-expr e@18:32 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@18:32#1 memberCall recv=e@18:32 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#1
-expr e@18:5 localDecl directSizeBytes mutable=0 type=Int init=e@18:32#1 type=Unit ref=__local_14.directSizeBytes
-expr e@20:37 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@20:37#1 memberCall recv=e@20:37 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@20:37#2 memberCall recv=e@20:37#1 callee=MAX_CODE_POINT args=[] type=Int call=kotlin.MAX_CODE_POINT.$get
-expr e@20:5 localDecl explicitMaxCodePoint mutable=0 type=Int init=e@20:37#2 type=Unit ref=__local_15.explicitMaxCodePoint
-expr e@21:42 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@21:42#1 memberCall recv=e@21:42 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@21:42#2 memberCall recv=e@21:42#1 callee=MAX_HIGH_SURROGATE args=[] type=Char call=kotlin.MAX_HIGH_SURROGATE.$get
-expr e@21:5 localDecl explicitMaxHighSurrogate mutable=0 type=Char init=e@21:42#2 type=Unit ref=__local_16.explicitMaxHighSurrogate
-expr e@22:41 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@22:41#1 memberCall recv=e@22:41 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@22:41#2 memberCall recv=e@22:41#1 callee=MAX_LOW_SURROGATE args=[] type=Char call=kotlin.MAX_LOW_SURROGATE.$get
-expr e@22:5 localDecl explicitMaxLowSurrogate mutable=0 type=Char init=e@22:41#2 type=Unit ref=__local_17.explicitMaxLowSurrogate
-expr e@23:33 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@23:33#1 memberCall recv=e@23:33 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@23:33#2 memberCall recv=e@23:33#1 callee=MAX_RADIX args=[] type=Int call=kotlin.MAX_RADIX.$get
-expr e@23:5 localDecl explicitMaxRadix mutable=0 type=Int init=e@23:33#2 type=Unit ref=__local_18.explicitMaxRadix
-expr e@24:38 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@24:38#1 memberCall recv=e@24:38 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@24:38#2 memberCall recv=e@24:38#1 callee=MAX_SURROGATE args=[] type=Char call=kotlin.MAX_SURROGATE.$get
-expr e@24:5 localDecl explicitMaxSurrogate mutable=0 type=Char init=e@24:38#2 type=Unit ref=__local_19.explicitMaxSurrogate
-expr e@25:34 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@25:34#1 memberCall recv=e@25:34 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@25:34#2 memberCall recv=e@25:34#1 callee=MAX_VALUE args=[] type=Char call=kotlin.MAX_VALUE.$get#1
-expr e@25:5 localDecl explicitMaxValue mutable=0 type=Char init=e@25:34#2 type=Unit ref=__local_20.explicitMaxValue
-expr e@26:37 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@26:37#1 memberCall recv=e@26:37 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@26:37#2 memberCall recv=e@26:37#1 callee=MIN_CODE_POINT args=[] type=Int call=kotlin.MIN_CODE_POINT.$get
-expr e@26:5 localDecl explicitMinCodePoint mutable=0 type=Int init=e@26:37#2 type=Unit ref=__local_21.explicitMinCodePoint
-expr e@27:42 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@27:42#1 memberCall recv=e@27:42 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@27:42#2 memberCall recv=e@27:42#1 callee=MIN_HIGH_SURROGATE args=[] type=Char call=kotlin.MIN_HIGH_SURROGATE.$get
-expr e@27:5 localDecl explicitMinHighSurrogate mutable=0 type=Char init=e@27:42#2 type=Unit ref=__local_22.explicitMinHighSurrogate
-expr e@28:41 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@28:41#1 memberCall recv=e@28:41 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@28:41#2 memberCall recv=e@28:41#1 callee=MIN_LOW_SURROGATE args=[] type=Char call=kotlin.MIN_LOW_SURROGATE.$get
-expr e@28:5 localDecl explicitMinLowSurrogate mutable=0 type=Char init=e@28:41#2 type=Unit ref=__local_23.explicitMinLowSurrogate
-expr e@29:33 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@29:33#1 memberCall recv=e@29:33 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@29:33#2 memberCall recv=e@29:33#1 callee=MIN_RADIX args=[] type=Int call=kotlin.MIN_RADIX.$get
-expr e@29:5 localDecl explicitMinRadix mutable=0 type=Int init=e@29:33#2 type=Unit ref=__local_24.explicitMinRadix
-expr e@30:50 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@30:50#1 memberCall recv=e@30:50 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@30:50#2 memberCall recv=e@30:50#1 callee=MIN_SUPPLEMENTARY_CODE_POINT args=[] type=Int call=kotlin.MIN_SUPPLEMENTARY_CODE_POINT.$get
-expr e@30:5 localDecl explicitMinSupplementaryCodePoint mutable=0 type=Int init=e@30:50#2 type=Unit ref=__local_25.explicitMinSupplementaryCodePoint
-expr e@31:38 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@31:38#1 memberCall recv=e@31:38 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@31:38#2 memberCall recv=e@31:38#1 callee=MIN_SURROGATE args=[] type=Char call=kotlin.MIN_SURROGATE.$get
-expr e@31:5 localDecl explicitMinSurrogate mutable=0 type=Char init=e@31:38#2 type=Unit ref=__local_26.explicitMinSurrogate
-expr e@32:34 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@32:34#1 memberCall recv=e@32:34 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@32:34#2 memberCall recv=e@32:34#1 callee=MIN_VALUE args=[] type=Char call=kotlin.MIN_VALUE.$get#1
-expr e@32:5 localDecl explicitMinValue mutable=0 type=Char init=e@32:34#2 type=Unit ref=__local_27.explicitMinValue
-expr e@33:33 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@33:33#1 memberCall recv=e@33:33 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@33:33#2 memberCall recv=e@33:33#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#1
-expr e@33:5 localDecl explicitSizeBits mutable=0 type=Int init=e@33:33#2 type=Unit ref=__local_28.explicitSizeBits
-expr e@34:34 name(Char) type=kotlin.Char ref=kotlin.Char#0
-expr e@34:34#1 memberCall recv=e@34:34 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@34:34#2 memberCall recv=e@34:34#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#1
-expr e@34:5 localDecl explicitSizeBytes mutable=0 type=Int init=e@34:34#2 type=Unit ref=__local_29.explicitSizeBytes
-expr e@36:13 name(directMaxCodePoint) type=Int ref=__local_0.directMaxCodePoint
-expr e@36:5 call callee=e@36:5#1 args=[_:e@36:13] type=Unit call=kotlin.io.println#1
-expr e@37:13 name(directMaxHighSurrogate) type=Char ref=__local_1.directMaxHighSurrogate
-expr e@37:13#1 memberCall recv=e@37:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@37:5 call callee=e@37:5#1 args=[_:e@37:13#1] type=Unit call=kotlin.io.println#1
-expr e@38:13 name(directMaxLowSurrogate) type=Char ref=__local_2.directMaxLowSurrogate
-expr e@38:13#1 memberCall recv=e@38:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@38:5 call callee=e@38:5#1 args=[_:e@38:13#1] type=Unit call=kotlin.io.println#1
-expr e@39:13 name(directMaxRadix) type=Int ref=__local_3.directMaxRadix
-expr e@39:5 call callee=e@39:5#1 args=[_:e@39:13] type=Unit call=kotlin.io.println#1
-expr e@40:13 name(directMaxSurrogate) type=Char ref=__local_4.directMaxSurrogate
-expr e@40:13#1 memberCall recv=e@40:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@40:5 call callee=e@40:5#1 args=[_:e@40:13#1] type=Unit call=kotlin.io.println#1
-expr e@41:13 name(directMaxValue) type=Char ref=__local_5.directMaxValue
-expr e@41:13#1 memberCall recv=e@41:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@41:5 call callee=e@41:5#1 args=[_:e@41:13#1] type=Unit call=kotlin.io.println#1
-expr e@42:13 name(directMinCodePoint) type=Int ref=__local_6.directMinCodePoint
-expr e@42:5 call callee=e@42:5#1 args=[_:e@42:13] type=Unit call=kotlin.io.println#1
-expr e@43:13 name(directMinHighSurrogate) type=Char ref=__local_7.directMinHighSurrogate
-expr e@43:13#1 memberCall recv=e@43:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@43:5 call callee=e@43:5#1 args=[_:e@43:13#1] type=Unit call=kotlin.io.println#1
-expr e@44:13 name(directMinLowSurrogate) type=Char ref=__local_8.directMinLowSurrogate
-expr e@44:13#1 memberCall recv=e@44:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@44:5 call callee=e@44:5#1 args=[_:e@44:13#1] type=Unit call=kotlin.io.println#1
-expr e@45:13 name(directMinRadix) type=Int ref=__local_9.directMinRadix
-expr e@45:5 call callee=e@45:5#1 args=[_:e@45:13] type=Unit call=kotlin.io.println#1
-expr e@46:13 name(directMinSupplementaryCodePoint) type=Int ref=__local_10.directMinSupplementaryCodePoint
-expr e@46:5 call callee=e@46:5#1 args=[_:e@46:13] type=Unit call=kotlin.io.println#1
-expr e@47:13 name(directMinSurrogate) type=Char ref=__local_11.directMinSurrogate
-expr e@47:13#1 memberCall recv=e@47:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@47:5 call callee=e@47:5#1 args=[_:e@47:13#1] type=Unit call=kotlin.io.println#1
-expr e@48:13 name(directMinValue) type=Char ref=__local_12.directMinValue
-expr e@48:13#1 memberCall recv=e@48:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@48:5 call callee=e@48:5#1 args=[_:e@48:13#1] type=Unit call=kotlin.io.println#1
-expr e@49:13 name(directSizeBits) type=Int ref=__local_13.directSizeBits
-expr e@49:5 call callee=e@49:5#1 args=[_:e@49:13] type=Unit call=kotlin.io.println#1
-expr e@50:13 name(directSizeBytes) type=Int ref=__local_14.directSizeBytes
-expr e@50:5 call callee=e@50:5#1 args=[_:e@50:13] type=Unit call=kotlin.io.println#1
-expr e@52:13 name(explicitMaxCodePoint) type=Int ref=__local_15.explicitMaxCodePoint
-expr e@52:5 call callee=e@52:5#1 args=[_:e@52:13] type=Unit call=kotlin.io.println#1
-expr e@53:13 name(explicitMaxHighSurrogate) type=Char ref=__local_16.explicitMaxHighSurrogate
-expr e@53:13#1 memberCall recv=e@53:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@53:5 call callee=e@53:5#1 args=[_:e@53:13#1] type=Unit call=kotlin.io.println#1
-expr e@54:13 name(explicitMaxLowSurrogate) type=Char ref=__local_17.explicitMaxLowSurrogate
-expr e@54:13#1 memberCall recv=e@54:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@54:5 call callee=e@54:5#1 args=[_:e@54:13#1] type=Unit call=kotlin.io.println#1
-expr e@55:13 name(explicitMaxRadix) type=Int ref=__local_18.explicitMaxRadix
-expr e@55:5 call callee=e@55:5#1 args=[_:e@55:13] type=Unit call=kotlin.io.println#1
-expr e@56:13 name(explicitMaxSurrogate) type=Char ref=__local_19.explicitMaxSurrogate
-expr e@56:13#1 memberCall recv=e@56:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@56:5 call callee=e@56:5#1 args=[_:e@56:13#1] type=Unit call=kotlin.io.println#1
-expr e@57:13 name(explicitMaxValue) type=Char ref=__local_20.explicitMaxValue
-expr e@57:13#1 memberCall recv=e@57:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@57:5 call callee=e@57:5#1 args=[_:e@57:13#1] type=Unit call=kotlin.io.println#1
-expr e@58:13 name(explicitMinCodePoint) type=Int ref=__local_21.explicitMinCodePoint
-expr e@58:5 call callee=e@58:5#1 args=[_:e@58:13] type=Unit call=kotlin.io.println#1
-expr e@59:13 name(explicitMinHighSurrogate) type=Char ref=__local_22.explicitMinHighSurrogate
-expr e@59:13#1 memberCall recv=e@59:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@59:5 call callee=e@59:5#1 args=[_:e@59:13#1] type=Unit call=kotlin.io.println#1
-expr e@60:13 name(explicitMinLowSurrogate) type=Char ref=__local_23.explicitMinLowSurrogate
-expr e@60:13#1 memberCall recv=e@60:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@60:5 call callee=e@60:5#1 args=[_:e@60:13#1] type=Unit call=kotlin.io.println#1
-expr e@61:13 name(explicitMinRadix) type=Int ref=__local_24.explicitMinRadix
-expr e@61:5 call callee=e@61:5#1 args=[_:e@61:13] type=Unit call=kotlin.io.println#1
-expr e@62:13 name(explicitMinSupplementaryCodePoint) type=Int ref=__local_25.explicitMinSupplementaryCodePoint
-expr e@62:5 call callee=e@62:5#1 args=[_:e@62:13] type=Unit call=kotlin.io.println#1
-expr e@63:13 name(explicitMinSurrogate) type=Char ref=__local_26.explicitMinSurrogate
-expr e@63:13#1 memberCall recv=e@63:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@63:5 call callee=e@63:5#1 args=[_:e@63:13#1] type=Unit call=kotlin.io.println#1
-expr e@64:13 name(explicitMinValue) type=Char ref=__local_27.explicitMinValue
-expr e@64:13#1 memberCall recv=e@64:13 callee=code args=[] type=Int call=kotlin.text.code
-expr e@64:5 call callee=e@64:5#1 args=[_:e@64:13#1] type=Unit call=kotlin.io.println#1
-expr e@65:13 name(explicitSizeBits) type=Int ref=__local_28.explicitSizeBits
-expr e@65:5 call callee=e@65:5#1 args=[_:e@65:13] type=Unit call=kotlin.io.println#1
-expr e@66:13 name(explicitSizeBytes) type=Int ref=__local_29.explicitSizeBytes
-expr e@66:5 call callee=e@66:5#1 args=[_:e@66:13] type=Unit call=kotlin.io.println#1
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@4:35 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@4:35#1 memberCall recv=e@4:35 callee=MAX_CODE_POINT args=[] type=Int call=kotlin.MAX_CODE_POINT.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@4:5 localDecl directMaxCodePoint mutable=0 type=Int init=e@4:35#1 type=Unit ref=__local_0.directMaxCodePoint[kind=local]
+expr e@5:40 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@5:40#1 memberCall recv=e@5:40 callee=MAX_HIGH_SURROGATE args=[] type=Char call=kotlin.MAX_HIGH_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@5:5 localDecl directMaxHighSurrogate mutable=0 type=Char init=e@5:40#1 type=Unit ref=__local_1.directMaxHighSurrogate[kind=local]
+expr e@6:39 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@6:39#1 memberCall recv=e@6:39 callee=MAX_LOW_SURROGATE args=[] type=Char call=kotlin.MAX_LOW_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@6:5 localDecl directMaxLowSurrogate mutable=0 type=Char init=e@6:39#1 type=Unit ref=__local_2.directMaxLowSurrogate[kind=local]
+expr e@7:31 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@7:31#1 memberCall recv=e@7:31 callee=MAX_RADIX args=[] type=Int call=kotlin.MAX_RADIX.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@7:5 localDecl directMaxRadix mutable=0 type=Int init=e@7:31#1 type=Unit ref=__local_3.directMaxRadix[kind=local]
+expr e@8:36 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@8:36#1 memberCall recv=e@8:36 callee=MAX_SURROGATE args=[] type=Char call=kotlin.MAX_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@8:5 localDecl directMaxSurrogate mutable=0 type=Char init=e@8:36#1 type=Unit ref=__local_4.directMaxSurrogate[kind=local]
+expr e@9:32 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@9:32#1 memberCall recv=e@9:32 callee=MAX_VALUE args=[] type=Char call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@9:5 localDecl directMaxValue mutable=0 type=Char init=e@9:32#1 type=Unit ref=__local_5.directMaxValue[kind=local]
+expr e@10:35 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@10:35#1 memberCall recv=e@10:35 callee=MIN_CODE_POINT args=[] type=Int call=kotlin.MIN_CODE_POINT.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@10:5 localDecl directMinCodePoint mutable=0 type=Int init=e@10:35#1 type=Unit ref=__local_6.directMinCodePoint[kind=local]
+expr e@11:40 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@11:40#1 memberCall recv=e@11:40 callee=MIN_HIGH_SURROGATE args=[] type=Char call=kotlin.MIN_HIGH_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@11:5 localDecl directMinHighSurrogate mutable=0 type=Char init=e@11:40#1 type=Unit ref=__local_7.directMinHighSurrogate[kind=local]
+expr e@12:39 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@12:39#1 memberCall recv=e@12:39 callee=MIN_LOW_SURROGATE args=[] type=Char call=kotlin.MIN_LOW_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@12:5 localDecl directMinLowSurrogate mutable=0 type=Char init=e@12:39#1 type=Unit ref=__local_8.directMinLowSurrogate[kind=local]
+expr e@13:31 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@13:31#1 memberCall recv=e@13:31 callee=MIN_RADIX args=[] type=Int call=kotlin.MIN_RADIX.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@13:5 localDecl directMinRadix mutable=0 type=Int init=e@13:31#1 type=Unit ref=__local_9.directMinRadix[kind=local]
+expr e@14:48 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@14:48#1 memberCall recv=e@14:48 callee=MIN_SUPPLEMENTARY_CODE_POINT args=[] type=Int call=kotlin.MIN_SUPPLEMENTARY_CODE_POINT.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@14:5 localDecl directMinSupplementaryCodePoint mutable=0 type=Int init=e@14:48#1 type=Unit ref=__local_10.directMinSupplementaryCodePoint[kind=local]
+expr e@15:36 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@15:36#1 memberCall recv=e@15:36 callee=MIN_SURROGATE args=[] type=Char call=kotlin.MIN_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@15:5 localDecl directMinSurrogate mutable=0 type=Char init=e@15:36#1 type=Unit ref=__local_11.directMinSurrogate[kind=local]
+expr e@16:32 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@16:32#1 memberCall recv=e@16:32 callee=MIN_VALUE args=[] type=Char call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@16:5 localDecl directMinValue mutable=0 type=Char init=e@16:32#1 type=Unit ref=__local_12.directMinValue[kind=local]
+expr e@17:31 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@17:31#1 memberCall recv=e@17:31 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@17:5 localDecl directSizeBits mutable=0 type=Int init=e@17:31#1 type=Unit ref=__local_13.directSizeBits[kind=local]
+expr e@18:32 name(Char) type=kotlin.Char.Companion ref=kotlin.Char[kind=class]
+expr e@18:32#1 memberCall recv=e@18:32 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@18:5 localDecl directSizeBytes mutable=0 type=Int init=e@18:32#1 type=Unit ref=__local_14.directSizeBytes[kind=local]
+expr e@20:37 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@20:37#1 memberCall recv=e@20:37 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@20:37#2 memberCall recv=e@20:37#1 callee=MAX_CODE_POINT args=[] type=Int call=kotlin.MAX_CODE_POINT.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@20:5 localDecl explicitMaxCodePoint mutable=0 type=Int init=e@20:37#2 type=Unit ref=__local_15.explicitMaxCodePoint[kind=local]
+expr e@21:42 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@21:42#1 memberCall recv=e@21:42 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@21:42#2 memberCall recv=e@21:42#1 callee=MAX_HIGH_SURROGATE args=[] type=Char call=kotlin.MAX_HIGH_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@21:5 localDecl explicitMaxHighSurrogate mutable=0 type=Char init=e@21:42#2 type=Unit ref=__local_16.explicitMaxHighSurrogate[kind=local]
+expr e@22:41 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@22:41#1 memberCall recv=e@22:41 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@22:41#2 memberCall recv=e@22:41#1 callee=MAX_LOW_SURROGATE args=[] type=Char call=kotlin.MAX_LOW_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@22:5 localDecl explicitMaxLowSurrogate mutable=0 type=Char init=e@22:41#2 type=Unit ref=__local_17.explicitMaxLowSurrogate[kind=local]
+expr e@23:33 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@23:33#1 memberCall recv=e@23:33 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@23:33#2 memberCall recv=e@23:33#1 callee=MAX_RADIX args=[] type=Int call=kotlin.MAX_RADIX.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@23:5 localDecl explicitMaxRadix mutable=0 type=Int init=e@23:33#2 type=Unit ref=__local_18.explicitMaxRadix[kind=local]
+expr e@24:38 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@24:38#1 memberCall recv=e@24:38 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@24:38#2 memberCall recv=e@24:38#1 callee=MAX_SURROGATE args=[] type=Char call=kotlin.MAX_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@24:5 localDecl explicitMaxSurrogate mutable=0 type=Char init=e@24:38#2 type=Unit ref=__local_19.explicitMaxSurrogate[kind=local]
+expr e@25:34 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@25:34#1 memberCall recv=e@25:34 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@25:34#2 memberCall recv=e@25:34#1 callee=MAX_VALUE args=[] type=Char call=kotlin.MAX_VALUE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@25:5 localDecl explicitMaxValue mutable=0 type=Char init=e@25:34#2 type=Unit ref=__local_20.explicitMaxValue[kind=local]
+expr e@26:37 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@26:37#1 memberCall recv=e@26:37 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@26:37#2 memberCall recv=e@26:37#1 callee=MIN_CODE_POINT args=[] type=Int call=kotlin.MIN_CODE_POINT.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@26:5 localDecl explicitMinCodePoint mutable=0 type=Int init=e@26:37#2 type=Unit ref=__local_21.explicitMinCodePoint[kind=local]
+expr e@27:42 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@27:42#1 memberCall recv=e@27:42 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@27:42#2 memberCall recv=e@27:42#1 callee=MIN_HIGH_SURROGATE args=[] type=Char call=kotlin.MIN_HIGH_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@27:5 localDecl explicitMinHighSurrogate mutable=0 type=Char init=e@27:42#2 type=Unit ref=__local_22.explicitMinHighSurrogate[kind=local]
+expr e@28:41 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@28:41#1 memberCall recv=e@28:41 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@28:41#2 memberCall recv=e@28:41#1 callee=MIN_LOW_SURROGATE args=[] type=Char call=kotlin.MIN_LOW_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@28:5 localDecl explicitMinLowSurrogate mutable=0 type=Char init=e@28:41#2 type=Unit ref=__local_23.explicitMinLowSurrogate[kind=local]
+expr e@29:33 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@29:33#1 memberCall recv=e@29:33 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@29:33#2 memberCall recv=e@29:33#1 callee=MIN_RADIX args=[] type=Int call=kotlin.MIN_RADIX.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@29:5 localDecl explicitMinRadix mutable=0 type=Int init=e@29:33#2 type=Unit ref=__local_24.explicitMinRadix[kind=local]
+expr e@30:50 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@30:50#1 memberCall recv=e@30:50 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@30:50#2 memberCall recv=e@30:50#1 callee=MIN_SUPPLEMENTARY_CODE_POINT args=[] type=Int call=kotlin.MIN_SUPPLEMENTARY_CODE_POINT.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@30:5 localDecl explicitMinSupplementaryCodePoint mutable=0 type=Int init=e@30:50#2 type=Unit ref=__local_25.explicitMinSupplementaryCodePoint[kind=local]
+expr e@31:38 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@31:38#1 memberCall recv=e@31:38 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@31:38#2 memberCall recv=e@31:38#1 callee=MIN_SURROGATE args=[] type=Char call=kotlin.MIN_SURROGATE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@31:5 localDecl explicitMinSurrogate mutable=0 type=Char init=e@31:38#2 type=Unit ref=__local_26.explicitMinSurrogate[kind=local]
+expr e@32:34 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@32:34#1 memberCall recv=e@32:34 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@32:34#2 memberCall recv=e@32:34#1 callee=MIN_VALUE args=[] type=Char call=kotlin.MIN_VALUE.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@32:5 localDecl explicitMinValue mutable=0 type=Char init=e@32:34#2 type=Unit ref=__local_27.explicitMinValue[kind=local]
+expr e@33:33 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@33:33#1 memberCall recv=e@33:33 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@33:33#2 memberCall recv=e@33:33#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@33:5 localDecl explicitSizeBits mutable=0 type=Int init=e@33:33#2 type=Unit ref=__local_28.explicitSizeBits[kind=local]
+expr e@34:34 name(Char) type=kotlin.Char ref=kotlin.Char[kind=class]
+expr e@34:34#1 memberCall recv=e@34:34 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion[kind=obj]
+expr e@34:34#2 memberCall recv=e@34:34#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get[kind=fun;recv=kotlin.Char.Companion;params=]
+expr e@34:5 localDecl explicitSizeBytes mutable=0 type=Int init=e@34:34#2 type=Unit ref=__local_29.explicitSizeBytes[kind=local]
+expr e@36:13 name(directMaxCodePoint) type=Int ref=__local_0.directMaxCodePoint[kind=local]
+expr e@36:5 call callee=e@36:5#1 args=[_:e@36:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@37:13 name(directMaxHighSurrogate) type=Char ref=__local_1.directMaxHighSurrogate[kind=local]
+expr e@37:13#1 memberCall recv=e@37:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@37:5 call callee=e@37:5#1 args=[_:e@37:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@38:13 name(directMaxLowSurrogate) type=Char ref=__local_2.directMaxLowSurrogate[kind=local]
+expr e@38:13#1 memberCall recv=e@38:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@38:5 call callee=e@38:5#1 args=[_:e@38:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@39:13 name(directMaxRadix) type=Int ref=__local_3.directMaxRadix[kind=local]
+expr e@39:5 call callee=e@39:5#1 args=[_:e@39:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@40:13 name(directMaxSurrogate) type=Char ref=__local_4.directMaxSurrogate[kind=local]
+expr e@40:13#1 memberCall recv=e@40:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@40:5 call callee=e@40:5#1 args=[_:e@40:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@41:13 name(directMaxValue) type=Char ref=__local_5.directMaxValue[kind=local]
+expr e@41:13#1 memberCall recv=e@41:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@41:5 call callee=e@41:5#1 args=[_:e@41:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@42:13 name(directMinCodePoint) type=Int ref=__local_6.directMinCodePoint[kind=local]
+expr e@42:5 call callee=e@42:5#1 args=[_:e@42:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@43:13 name(directMinHighSurrogate) type=Char ref=__local_7.directMinHighSurrogate[kind=local]
+expr e@43:13#1 memberCall recv=e@43:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@43:5 call callee=e@43:5#1 args=[_:e@43:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@44:13 name(directMinLowSurrogate) type=Char ref=__local_8.directMinLowSurrogate[kind=local]
+expr e@44:13#1 memberCall recv=e@44:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@44:5 call callee=e@44:5#1 args=[_:e@44:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@45:13 name(directMinRadix) type=Int ref=__local_9.directMinRadix[kind=local]
+expr e@45:5 call callee=e@45:5#1 args=[_:e@45:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@46:13 name(directMinSupplementaryCodePoint) type=Int ref=__local_10.directMinSupplementaryCodePoint[kind=local]
+expr e@46:5 call callee=e@46:5#1 args=[_:e@46:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@47:13 name(directMinSurrogate) type=Char ref=__local_11.directMinSurrogate[kind=local]
+expr e@47:13#1 memberCall recv=e@47:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@47:5 call callee=e@47:5#1 args=[_:e@47:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@48:13 name(directMinValue) type=Char ref=__local_12.directMinValue[kind=local]
+expr e@48:13#1 memberCall recv=e@48:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@48:5 call callee=e@48:5#1 args=[_:e@48:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@49:13 name(directSizeBits) type=Int ref=__local_13.directSizeBits[kind=local]
+expr e@49:5 call callee=e@49:5#1 args=[_:e@49:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@50:13 name(directSizeBytes) type=Int ref=__local_14.directSizeBytes[kind=local]
+expr e@50:5 call callee=e@50:5#1 args=[_:e@50:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@52:13 name(explicitMaxCodePoint) type=Int ref=__local_15.explicitMaxCodePoint[kind=local]
+expr e@52:5 call callee=e@52:5#1 args=[_:e@52:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@53:13 name(explicitMaxHighSurrogate) type=Char ref=__local_16.explicitMaxHighSurrogate[kind=local]
+expr e@53:13#1 memberCall recv=e@53:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@53:5 call callee=e@53:5#1 args=[_:e@53:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@54:13 name(explicitMaxLowSurrogate) type=Char ref=__local_17.explicitMaxLowSurrogate[kind=local]
+expr e@54:13#1 memberCall recv=e@54:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@54:5 call callee=e@54:5#1 args=[_:e@54:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@55:13 name(explicitMaxRadix) type=Int ref=__local_18.explicitMaxRadix[kind=local]
+expr e@55:5 call callee=e@55:5#1 args=[_:e@55:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@56:13 name(explicitMaxSurrogate) type=Char ref=__local_19.explicitMaxSurrogate[kind=local]
+expr e@56:13#1 memberCall recv=e@56:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@56:5 call callee=e@56:5#1 args=[_:e@56:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@57:13 name(explicitMaxValue) type=Char ref=__local_20.explicitMaxValue[kind=local]
+expr e@57:13#1 memberCall recv=e@57:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@57:5 call callee=e@57:5#1 args=[_:e@57:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@58:13 name(explicitMinCodePoint) type=Int ref=__local_21.explicitMinCodePoint[kind=local]
+expr e@58:5 call callee=e@58:5#1 args=[_:e@58:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@59:13 name(explicitMinHighSurrogate) type=Char ref=__local_22.explicitMinHighSurrogate[kind=local]
+expr e@59:13#1 memberCall recv=e@59:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@59:5 call callee=e@59:5#1 args=[_:e@59:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@60:13 name(explicitMinLowSurrogate) type=Char ref=__local_23.explicitMinLowSurrogate[kind=local]
+expr e@60:13#1 memberCall recv=e@60:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@60:5 call callee=e@60:5#1 args=[_:e@60:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@61:13 name(explicitMinRadix) type=Int ref=__local_24.explicitMinRadix[kind=local]
+expr e@61:5 call callee=e@61:5#1 args=[_:e@61:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@62:13 name(explicitMinSupplementaryCodePoint) type=Int ref=__local_25.explicitMinSupplementaryCodePoint[kind=local]
+expr e@62:5 call callee=e@62:5#1 args=[_:e@62:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@63:13 name(explicitMinSurrogate) type=Char ref=__local_26.explicitMinSurrogate[kind=local]
+expr e@63:13#1 memberCall recv=e@63:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@63:5 call callee=e@63:5#1 args=[_:e@63:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@64:13 name(explicitMinValue) type=Char ref=__local_27.explicitMinValue[kind=local]
+expr e@64:13#1 memberCall recv=e@64:13 callee=code args=[] type=Int call=kotlin.text.code[kind=fun;recv=Char;params=]
+expr e@64:5 call callee=e@64:5#1 args=[_:e@64:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@65:13 name(explicitSizeBits) type=Int ref=__local_28.explicitSizeBits[kind=local]
+expr e@65:5 call callee=e@65:5#1 args=[_:e@65:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@66:13 name(explicitSizeBytes) type=Int ref=__local_29.explicitSizeBytes[kind=local]
+expr e@66:5 call callee=e@66:5#1 args=[_:e@66:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
