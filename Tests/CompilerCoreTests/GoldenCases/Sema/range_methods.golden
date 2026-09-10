@@ -1,4 +1,4 @@
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
 symbol fq=rangeContains kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean
 symbol fq=rangeContains.$0.x kind=valueParameter vis=private flags=_

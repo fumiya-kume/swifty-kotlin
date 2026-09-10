@@ -4,7 +4,7 @@ symbol fq=golden.sema.useReplaceFirstIgnoreCase kind=function vis=public flags=_
 symbol fq=golden.sema.useReplaceRange kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.useSplit kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<String>
 symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
 file fstring_replace_split package=golden.sema
   decl golden.sema.useReplace fun useReplace sym=golden.sema.useReplace

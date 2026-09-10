@@ -9,7 +9,7 @@ symbol fq=flattenInts kind=function vis=public flags=_ sig=recv=_ params=[kotlin
 symbol fq=flattenInts.$0.lists kind=valueParameter vis=private flags=_
 symbol fq=flattenStrings kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<kotlin.collections.List<String>>] ret=Unit
 symbol fq=flattenStrings.$1.lists kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 file fflatten_stdlib package=_
   decl flattenInts fun flattenInts sym=flattenInts
   decl flattenStrings fun flattenStrings sym=flattenStrings

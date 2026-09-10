@@ -4,7 +4,7 @@ symbol fq=golden.sema.countLines kind=function vis=public flags=_ sig=recv=_ par
 symbol fq=golden.sema.countLines.$1.file kind=valueParameter vis=private flags=_
 symbol fq=java.io.File kind=class vis=public flags=synthetic type=java.io.File
 symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 file ffile_use_lines package=golden.sema
   decl golden.sema.collectLines fun collectLines sym=golden.sema.collectLines
   decl golden.sema.countLines fun countLines sym=golden.sema.countLines

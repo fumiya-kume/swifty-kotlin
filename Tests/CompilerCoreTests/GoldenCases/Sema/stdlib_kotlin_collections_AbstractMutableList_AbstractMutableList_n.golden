@@ -11,7 +11,7 @@ symbol fq=kotlin.collections.AbstractMutableList kind=class vis=public flags=abs
 symbol fq=kotlin.collections.AbstractMutableList.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableIterator kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableListIterator kind=interface vis=public flags=_

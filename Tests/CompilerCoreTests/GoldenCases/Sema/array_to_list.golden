@@ -5,7 +5,7 @@ symbol fq=__local_3.checkedSize kind=local vis=private flags=_ type=Int
 symbol fq=golden.sema.genericArrayList kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Array<Int>] ret=Unit
 symbol fq=golden.sema.genericArrayList.$0.objects kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List#0 kind=interface vis=public flags=_
 file farray_to_list package=golden.sema
   decl golden.sema.genericArrayList fun genericArrayList sym=golden.sema.genericArrayList
 expr e@5:16 name(objects) type=kotlin.Array<Int> ref=golden.sema.genericArrayList.$0.objects
