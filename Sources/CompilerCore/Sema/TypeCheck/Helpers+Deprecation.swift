@@ -40,9 +40,15 @@ private struct KotlinCompilerVersion: Comparable {
     }
 }
 
-// Keep this in sync with the Kotlin target used by the bundled stdlib
-// artifact (currently 2.3.10).
-private let kotlinCompilerTargetVersion = KotlinCompilerVersion(major: 2, minor: 3, patch: 10)
+// @DeprecatedSinceKotlin thresholds are evaluated against the compiler's
+// default -api-version, not its build version. kotlinc 2.3.10 (the reference
+// compiler pinned by CI, see KOTLIN_VERSION in ci.yml) still defaults to
+// apiVersion 2.2: confirmed empirically via Scripts/diff_kotlinc.sh — it
+// emits no diagnostic for `Number.toChar()` (errorSince = "2.3") at the call
+// site, while `StringBuilder.appendln()` (errorSince = "2.1") matches this
+// compiler's error diagnostic. Keep in sync if the pinned kotlinc's default
+// api-version changes.
+private let kotlinApiVersion = KotlinCompilerVersion(major: 2, minor: 2, patch: 0)
 
 extension TypeCheckHelpers {
     private enum DeprecatedLevel {
@@ -252,10 +258,10 @@ extension TypeCheckHelpers {
     }
 
     private func deprecatedSeverity(for arguments: DeprecatedSinceKotlinArguments) -> DeprecatedSeverity {
-        if let errorSince = arguments.errorSince, kotlinCompilerTargetVersion >= errorSince {
+        if let errorSince = arguments.errorSince, kotlinApiVersion >= errorSince {
             return .error
         }
-        if let warningSince = arguments.warningSince, kotlinCompilerTargetVersion >= warningSince {
+        if let warningSince = arguments.warningSince, kotlinApiVersion >= warningSince {
             return .warning
         }
         // A SinceKotlin annotation keeps the declaration available without a

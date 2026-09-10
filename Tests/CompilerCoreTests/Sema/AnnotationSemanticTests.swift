@@ -146,7 +146,7 @@ struct AnnotationSemanticTests {
 
             """,
 
-            // testSyntheticDeprecatedToCharEmitsError
+            // testSyntheticDeprecatedToCharEmitsWarning
             """
             package sample11
                     fun caller(): Char = 65L.toChar()
@@ -548,8 +548,8 @@ struct AnnotationSemanticTests {
                 let diagnostics = sampleDiags.filter { $0.code == "KSWIFTK-SEMA-DEPRECATED" }
 
                 #expect(diagnostics.count == 1, "Expected one deprecated diagnostic for toChar(), got: \(sampleDiags)")
-                let v8 = diagnostics.contains(where: isError)
-                #expect(v8, "Expected deprecated error for toChar(), got: \(sampleDiags)")
+                let v8 = diagnostics.contains(where: isWarning)
+                #expect(v8, "Expected deprecated warning for toChar(), got: \(sampleDiags)")
                 #expect(diagnostics[0].message.contains("toChar"), "Expected toChar() in message, got: \(diagnostics[0].message)")
             }
             // testSyntheticDeprecatedStringSubSequenceEmitsWarning
