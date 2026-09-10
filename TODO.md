@@ -829,7 +829,8 @@
 - 現 HEAD の `stdlib_kotlin_collections_n_Set_interface.golden` には Set receiver の `call=kotlin.collections.containsAll#2` がある。報告された Collection overload 追加時の `#1` → `#2` という特定の履歴差分は今回の first-parent 調査では直接確認できず、この fixture は追加コミット `24f091058` の時点で `#2`。番号が他の候補に依存する構造はコードで確認できるため、選択対象を固定して未参照候補だけを追加する最小テストで再現する。
 - 表示イメージ: `call=kotlin.collections.containsAll[recv=Set<T0>;params=Collection<T0>]`。これは省略表示例であり、実際のキーには宣言の種別・完全な型名・必要な型パラメータ / スコープ情報等を含める。単に `#番号` を削除する方式は採用しない。
 
-- [ ] RF-GOLDEN-010: **P0 / 最優先** — 候補集合のソート順位ではなく、宣言の意味に基づく安定キーを Golden ハーネスに導入する（001〜009・RF-FIXTURE より先行、stdlib 検証移管の完了待ちは不要）
+- [x] RF-GOLDEN-010: **P0 / 最優先** — 候補集合のソート順位ではなく、宣言の意味に基づく安定キーを Golden ハーネスに導入する（001〜009・RF-FIXTURE より先行、stdlib 検証移管の完了待ちは不要）
+  - 実施済み: `stableKey` を `<fq>[kind=…;recv=…;params=…;susp;gen=N;scope=…]` 形式の意味キーへ変更し、`#N` 序数を全廃。型は `fn{…}` / `T<宣言順>` / `?`/`!`・`out`/`in`/`*` を含む構造符号化で、`(() -> String)?` と `() -> String?` を区別。キー衝突時のみ `scope=<file>@<line>.<col>` / `up:<親キー>` で区別。`GoldenHarnessStableKeyTests` に不変・感度・正規化非同一化テストを追加し、`GoldenHarnessPersistenceTests` の数値ソートテストを意味契約回帰へ置換。Sema golden 全件を新キーへ再生成（Lexer / Parser / Diagnostics は変更なし）。検証: `GoldenHarness*` 全スイート・`Golden.Sema` 全74バッチ green（更新モードなし）。
   - 対象: `GoldenHarnessStableRenderContext.swift` の FQName grouping / overloadSuffix / stableKey / overloadSortKey、`GoldenHarnessDump.swift` の宣言・`call=` / `ref=`、対応する GoldenHarness tests。stdlib に限らず同 FQName の各宣言を区別し、コンパイラ本体の overload 選択・SymbolID・flags・declSite・ABI は変えない。
   - キーは FQName・symbol kind・必要な owner / 宣言スコープ・receiver・引数型・generic arity 等に基づく構造とする。**overload が1件でも同じ形式**を使い、候補件数・登録順・全候補中の順位を表記の条件にしない。callable / constructor / property / accessor の区別と、owner を含むローカル・ネストした宣言の識別もケースに含める。
   - 型は `TypeKind` 等から構造的に符号化し、既存の `renderType` 文字列をそのままキーに流用しない。現 `Substitution.swift` の関数型表示は nullable な関数型と nullable 戻り型を同形にし得るため、`(() -> String)?` と `() -> String?` を区別する回帰を必須にする。`T` / `T?` / `T!`、star / in / out、関数の receiver / contextReceivers / suspend、KClass・intersection・再帰的境界を扱い、ABI 用の型消去や `erasedForMetadata` を識別に使わない。型構造にある追加属性は意味に必要なものを保持し、残りの検証先を001で明示する。
@@ -862,8 +863,9 @@
 
 ### タスク
 
-- [ ] RF-GOLDEN-001: 通常 Golden に残す情報と専用テストへ移す情報の契約をテストケースで固定する（前提: 010）
-  - 対象: `GoldenHarnessPersistenceTests.swift` / `GoldenHarnessSemaComparisonNormalizationTests.swift` と既存 stdlib Sema suites。`linkedhashmap_alias`、`map_hofs`、Pair / List を含む型、ユーザーの data / enum / object literal / accessor を代表ケースに、宣言・型・callee・診断・由来・flags・ABI の検証先を列挙する。
+- [x] RF-GOLDEN-001: 通常 Golden に残す情報と専用テストへ移す情報の契約をテストケースで固定する（前提: 010）
+  - 実施済み: `GoldenHarnessMetadataContractTests` 新設。情報区分→検証先の対応表をテストヘッダに固定（fixture 宣言 binding / expr 型 / ref=・call=・targs= / fixture 所有 symbol の kind・vis・flags・sig・type は通常出力に残す。外部 symbol の推移的 sig/type/flags・由来・nominal 宣言 variance・supertype・typealias underlyingType・symbol 注釈は専用節（011）へ。canThrow/throwing・ABI/externalLinkName は RuntimeABI 等の専用テスト（005）へ）。error diagnostic 15件・`<error>` 型3件の inventory を列挙固定し、正例 fixture への新規 error の機械受理を検出。flag 語彙19件を完全一致で固定し `throwingFunction` 非出力を確認。代表ケース（linkedhashmap_alias / stdlib_kotlin_collections_Map_map / Pair / data class / enum / object literal / accessor）で情報区分の維持を検証。既定 renderer・既存 golden は未変更。
+  - 対象: `GoldenHarnessPersistenceTests.swift` / `GoldenHarnessSemaComparisonNormalizationTests.swift` と既存 stdlib Sema suites。`linkedhashmap_alias`、`stdlib_kotlin_collections_Map_map`、Pair / List を含む型、ユーザーの data / enum / object literal / accessor を代表ケースに、宣言・型・callee・診断・由来・flags・ABI の検証先を列挙する。
   - 「削る出力項目 → 具体的な既存 assertion または追加する assertion」を対応付ける。source / synthetic の実装差と、公開 signature / 解決先 / 診断の意味差を分け、現出力の特徴を固定する。既存 Golden に出ない throwingFunction / canThrow 等も専用契約側の監査対象として区別する。
   - メタデータ契約を kind 別に棚卸しする。現 formatter の flags / functionSignature / propertyType だけでは nominal の型パラメータ・宣言側 variance・上限・supertype と型引数、typealias の underlyingType / 型パラメータ、注釈等を網羅しない。既に出力される visibility も保持し、callable の reified / default / vararg / non-local-return 許可等と併せて、専用節か既存 Sema / Lowering / ABI assertion のどちらで検証するか明示する。全項目を無条件にキーへ詰めず、宣言の識別条件と検証したいメタデータを分ける。
   - 正例 fixture の新規 error diagnostic を機械的な golden 更新で受理しない基準を用意する。既存の error / `<error>` は基準時点で列挙し、意図した診断ケースか不具合かを確認してから扱う。特定の flag / API の不在が正しい契約は既存の残存 stub 検査等へ割り当て、存在すべき対象の解決失敗と混同しない。

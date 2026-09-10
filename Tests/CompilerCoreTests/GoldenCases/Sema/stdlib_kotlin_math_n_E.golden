@@ -1,15 +1,15 @@
-symbol fq=__local_0.copied kind=local vis=private flags=_ type=Double
-symbol fq=golden.sema.readE kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double
-symbol fq=golden.sema.readECopy kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double
-symbol fq=golden.sema.readERawBits kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
+symbol fq=__local_0.copied[kind=local] kind=local vis=private flags=_ type=Double
+symbol fq=golden.sema.readECopy[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double
+symbol fq=golden.sema.readERawBits[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
+symbol fq=golden.sema.readE[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double
 file fstdlib_kotlin_math_n_E package=golden.sema
-  decl golden.sema.readE fun readE sym=golden.sema.readE
-  decl golden.sema.readECopy fun readECopy sym=golden.sema.readECopy
-  decl golden.sema.readERawBits fun readERawBits sym=golden.sema.readERawBits
-expr e@5:23 name(E) type=Double ref=kotlin.math.E
-expr e@8:18 name(E) type=Double ref=kotlin.math.E
-expr e@8:5 localDecl copied mutable=0 type=_ init=e@8:18 type=Unit ref=__local_0.copied
-expr e@9:12 name(copied) type=Double ref=__local_0.copied
+  decl golden.sema.readE[kind=fun;params=] fun readE sym=golden.sema.readE[kind=fun;params=]
+  decl golden.sema.readECopy[kind=fun;params=] fun readECopy sym=golden.sema.readECopy[kind=fun;params=]
+  decl golden.sema.readERawBits[kind=fun;params=] fun readERawBits sym=golden.sema.readERawBits[kind=fun;params=]
+expr e@5:23 name(E) type=Double ref=kotlin.math.E[kind=prop]
+expr e@8:18 name(E) type=Double ref=kotlin.math.E[kind=prop]
+expr e@8:5 localDecl copied mutable=0 type=_ init=e@8:18 type=Unit ref=__local_0.copied[kind=local]
+expr e@9:12 name(copied) type=Double ref=__local_0.copied[kind=local]
 expr e@9:5 return value=e@9:12 type=Nothing
-expr e@12:28 name(E) type=Double ref=kotlin.math.E
-expr e@12:28#1 memberCall recv=e@12:28 callee=toRawBits args=[] type=Long call=kotlin.toRawBits#0
+expr e@12:28 name(E) type=Double ref=kotlin.math.E[kind=prop]
+expr e@12:28#1 memberCall recv=e@12:28 callee=toRawBits args=[] type=Long call=kotlin.toRawBits[kind=fun;recv=Double;params=]

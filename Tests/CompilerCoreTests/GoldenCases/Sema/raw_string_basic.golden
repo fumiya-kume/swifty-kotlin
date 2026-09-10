@@ -1,17 +1,17 @@
-symbol fq=__local_0.s kind=local vis=private flags=_ type=String
-symbol fq=__local_1.multi kind=local vis=private flags=_ type=String
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.s[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_1.multi[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fraw_string_basic package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:13 string(hello world) type=String
-expr e@2:5 localDecl s mutable=0 type=_ init=e@2:13 type=Unit ref=__local_0.s
-expr e@3:13 name(s) type=String ref=__local_0.s
-expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13] type=Unit call=kotlin.io.println#2
+expr e@2:5 localDecl s mutable=0 type=_ init=e@2:13 type=Unit ref=__local_0.s[kind=local]
+expr e@3:13 name(s) type=String ref=__local_0.s[kind=local]
+expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13] type=Unit call=kotlin.io.println[kind=fun;params=String]
 expr e@4:17 string(
         line1
         line2
     ) type=String
-expr e@4:17#1 memberCall recv=e@4:17 callee=trimIndent args=[] type=String call=kotlin.text.trimIndent
-expr e@4:5 localDecl multi mutable=0 type=_ init=e@4:17#1 type=Unit ref=__local_1.multi
-expr e@8:13 name(multi) type=String ref=__local_1.multi
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println#2
+expr e@4:17#1 memberCall recv=e@4:17 callee=trimIndent args=[] type=String call=kotlin.text.trimIndent[kind=fun;recv=String;params=]
+expr e@4:5 localDecl multi mutable=0 type=_ init=e@4:17#1 type=Unit ref=__local_1.multi[kind=local]
+expr e@8:13 name(multi) type=String ref=__local_1.multi[kind=local]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println[kind=fun;params=String]

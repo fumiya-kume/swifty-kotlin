@@ -1,3 +1,3 @@
-symbol fq=golden.sema.Greeter kind=interface vis=public flags=_
+symbol fq=golden.sema.Greeter[kind=iface] kind=interface vis=public flags=_
 file finterfaces package=golden.sema
-  decl golden.sema.Greeter interface Greeter sym=golden.sema.Greeter
+  decl golden.sema.Greeter[kind=iface] interface Greeter sym=golden.sema.Greeter[kind=iface]

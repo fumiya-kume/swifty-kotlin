@@ -1,24 +1,24 @@
-symbol fq=golden.sema.charSequenceNone kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
-symbol fq=golden.sema.charSequenceNone.$0.cs kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.charSequenceNonePredicate kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
-symbol fq=golden.sema.charSequenceNonePredicate.$1.cs kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.emptyNone kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.stringNone kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=golden.sema.charSequenceNone.$0.cs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceNonePredicate.$1.cs[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceNonePredicate[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.charSequenceNone[kind=fun;params=kotlin.CharSequence] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Boolean
+symbol fq=golden.sema.emptyNone[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.stringNone[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_none package=golden.sema
-  decl golden.sema.charSequenceNone fun charSequenceNone sym=golden.sema.charSequenceNone
-  decl golden.sema.stringNone fun stringNone sym=golden.sema.stringNone
-  decl golden.sema.emptyNone fun emptyNone sym=golden.sema.emptyNone
-  decl golden.sema.charSequenceNonePredicate fun charSequenceNonePredicate sym=golden.sema.charSequenceNonePredicate
-expr e@3:51 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceNone.$0.cs
-expr e@3:51#1 memberCall recv=e@3:51 callee=none args=[] type=Boolean call=kotlin.text.none#0
+  decl golden.sema.charSequenceNone[kind=fun;params=kotlin.CharSequence] fun charSequenceNone sym=golden.sema.charSequenceNone[kind=fun;params=kotlin.CharSequence]
+  decl golden.sema.stringNone[kind=fun;params=] fun stringNone sym=golden.sema.stringNone[kind=fun;params=]
+  decl golden.sema.emptyNone[kind=fun;params=] fun emptyNone sym=golden.sema.emptyNone[kind=fun;params=]
+  decl golden.sema.charSequenceNonePredicate[kind=fun;params=kotlin.CharSequence] fun charSequenceNonePredicate sym=golden.sema.charSequenceNonePredicate[kind=fun;params=kotlin.CharSequence]
+expr e@3:51 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceNone.$0.cs[kind=vparam]
+expr e@3:51#1 memberCall recv=e@3:51 callee=none args=[] type=Boolean call=kotlin.text.none[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@5:29 string(x) type=String
-expr e@5:29#1 memberCall recv=e@5:29 callee=none args=[] type=Boolean call=kotlin.text.none#0
+expr e@5:29#1 memberCall recv=e@5:29 callee=none args=[] type=Boolean call=kotlin.text.none[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@7:28 string() type=String
-expr e@7:28#1 memberCall recv=e@7:28 callee=none args=[] type=Boolean call=kotlin.text.none#0
-expr e@9:60 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceNonePredicate.$1.cs
+expr e@7:28#1 memberCall recv=e@7:28 callee=none args=[] type=Boolean call=kotlin.text.none[kind=fun;recv=kotlin.CharSequence;params=]
+expr e@9:60 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceNonePredicate.$1.cs[kind=vparam]
 expr e@9:70 name(it) type=Char ref=s-0
 expr e@9:76 char(120) type=Char
 expr e@9:70#1 binary(equal) lhs=e@9:70 rhs=e@9:76 type=Boolean
 expr e@9:68 lambda params=[] body=e@9:70#1 label=none type=(Char) -> Boolean
-expr e@9:60#1 memberCall recv=e@9:60 callee=none args=[_:e@9:68] type=Boolean call=kotlin.text.none#1
+expr e@9:60#1 memberCall recv=e@9:60 callee=none args=[_:e@9:68] type=Boolean call=kotlin.text.none[kind=fun;recv=kotlin.CharSequence;params=fn{p=Char;ret=Boolean}]

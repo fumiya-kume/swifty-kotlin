@@ -1,13 +1,13 @@
-symbol fq=golden.sema.countOverflowAsStatement kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.countOverflowReturnsUnit kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.indexOverflowAsStatement kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.indexOverflowReturnsUnit kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.countOverflowAsStatement[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.countOverflowReturnsUnit[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.indexOverflowAsStatement[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.indexOverflowReturnsUnit[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_n_throw package=golden.sema
-  decl golden.sema.countOverflowReturnsUnit fun countOverflowReturnsUnit sym=golden.sema.countOverflowReturnsUnit
-  decl golden.sema.indexOverflowReturnsUnit fun indexOverflowReturnsUnit sym=golden.sema.indexOverflowReturnsUnit
-  decl golden.sema.countOverflowAsStatement fun countOverflowAsStatement sym=golden.sema.countOverflowAsStatement
-  decl golden.sema.indexOverflowAsStatement fun indexOverflowAsStatement sym=golden.sema.indexOverflowAsStatement
-expr e@3:40 memberCall recv=e@3:40#1 callee=throwCountOverflow args=[] type=Unit call=kotlin.collections.throwCountOverflow
-expr e@5:40 memberCall recv=e@5:40#1 callee=throwIndexOverflow args=[] type=Unit call=kotlin.collections.throwIndexOverflow
-expr e@8:5 memberCall recv=e@8:5#1 callee=throwCountOverflow args=[] type=Unit call=kotlin.collections.throwCountOverflow
-expr e@12:5 memberCall recv=e@12:5#1 callee=throwIndexOverflow args=[] type=Unit call=kotlin.collections.throwIndexOverflow
+  decl golden.sema.countOverflowReturnsUnit[kind=fun;params=] fun countOverflowReturnsUnit sym=golden.sema.countOverflowReturnsUnit[kind=fun;params=]
+  decl golden.sema.indexOverflowReturnsUnit[kind=fun;params=] fun indexOverflowReturnsUnit sym=golden.sema.indexOverflowReturnsUnit[kind=fun;params=]
+  decl golden.sema.countOverflowAsStatement[kind=fun;params=] fun countOverflowAsStatement sym=golden.sema.countOverflowAsStatement[kind=fun;params=]
+  decl golden.sema.indexOverflowAsStatement[kind=fun;params=] fun indexOverflowAsStatement sym=golden.sema.indexOverflowAsStatement[kind=fun;params=]
+expr e@3:40 memberCall recv=e@3:40#1 callee=throwCountOverflow args=[] type=Unit call=kotlin.collections.throwCountOverflow[kind=fun;params=]
+expr e@5:40 memberCall recv=e@5:40#1 callee=throwIndexOverflow args=[] type=Unit call=kotlin.collections.throwIndexOverflow[kind=fun;params=]
+expr e@8:5 memberCall recv=e@8:5#1 callee=throwCountOverflow args=[] type=Unit call=kotlin.collections.throwCountOverflow[kind=fun;params=]
+expr e@12:5 memberCall recv=e@12:5#1 callee=throwIndexOverflow args=[] type=Unit call=kotlin.collections.throwIndexOverflow[kind=fun;params=]

@@ -1,55 +1,55 @@
-symbol fq=__local_0.iterator kind=local vis=private flags=_ type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<String?, Int?>>
-symbol fq=__local_1.entry kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<String?, Int?>
-symbol fq=__local_2.projected kind=local vis=private flags=_ type=kotlin.collections.Map<Any?, kotlin.Number?>
-symbol fq=__local_3.projectedIterator kind=local vis=private flags=_ type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<Any?, kotlin.Number?>>
-symbol fq=__local_4.projectedEntry kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<Any?, kotlin.Number?>
-symbol fq=inspect kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Unit
-symbol fq=inspect.$0.map kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Iterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.hasNext kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
-symbol fq=kotlin.collections.Iterator.next kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
+symbol fq=__local_0.iterator[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<String?, Int?>>
+symbol fq=__local_1.entry[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<String?, Int?>
+symbol fq=__local_2.projected[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map<Any?, kotlin.Number?>
+symbol fq=__local_3.projectedIterator[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<Any?, kotlin.Number?>>
+symbol fq=__local_4.projectedEntry[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<Any?, kotlin.Number?>
+symbol fq=inspect.$0.map[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=inspect[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Unit
+symbol fq=kotlin.collections.Iterator.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Iterator.hasNext[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
+symbol fq=kotlin.collections.Iterator.next[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
+symbol fq=kotlin.collections.Iterator[kind=iface;gen=1] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
+symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
+symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_collections_Map_iterator package=_
-  decl inspect fun inspect sym=inspect
-expr e@2:20 name(map) type=kotlin.collections.Map<String?, Int?> ref=inspect.$0.map
-expr e@2:20#1 memberCall recv=e@2:20 callee=iterator args=[] type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<String?, Int?>> call=kotlin.collections.__kspMapIterator targs=[String?,Int?]
-expr e@2:5 localDecl iterator mutable=0 type=_ init=e@2:20#1 type=Unit ref=__local_0.iterator
-expr e@3:13 name(iterator) type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<String?, Int?>> ref=__local_0.iterator
-expr e@3:13#1 memberCall recv=e@3:13 callee=hasNext args=[] type=Boolean call=kotlin.collections.Iterator.hasNext targs=[kotlin.collections.Map.Entry<String?, Int?>]
-expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13#1] type=Unit call=kotlin.io.println#1
-expr e@4:17 name(iterator) type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<String?, Int?>> ref=__local_0.iterator
-expr e@4:17#1 memberCall recv=e@4:17 callee=next args=[] type=kotlin.collections.Map.Entry<String?, Int?> call=kotlin.collections.Iterator.next targs=[kotlin.collections.Map.Entry<String?, Int?>]
-expr e@4:5 localDecl entry mutable=0 type=_ init=e@4:17#1 type=Unit ref=__local_1.entry
-expr e@5:13 name(entry) type=kotlin.collections.Map.Entry<String?, Int?> ref=__local_1.entry
-expr e@5:13#1 memberCall recv=e@5:13 callee=key args=[] type=String? call=kotlin.collections.Map.Entry.key targs=[String?,Int?]
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println#1
-expr e@6:13 name(entry) type=kotlin.collections.Map.Entry<String?, Int?> ref=__local_1.entry
-expr e@6:13#1 memberCall recv=e@6:13 callee=value args=[] type=Int? call=kotlin.collections.Map.Entry.value targs=[String?,Int?]
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println#1
-expr e@7:13 name(iterator) type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<String?, Int?>> ref=__local_0.iterator
-expr e@7:13#1 memberCall recv=e@7:13 callee=hasNext args=[] type=Boolean call=kotlin.collections.Iterator.hasNext targs=[kotlin.collections.Map.Entry<String?, Int?>]
-expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println#1
-expr e@9:41 name(map) type=kotlin.collections.Map<String?, Int?> ref=inspect.$0.map
-expr e@9:5 localDecl projected mutable=0 type=Map<Any?,Number?> init=e@9:41 type=Unit ref=__local_2.projected
-expr e@10:65 name(projected) type=kotlin.collections.Map<Any?, kotlin.Number?> ref=__local_2.projected
-expr e@10:65#1 memberCall recv=e@10:65 callee=iterator args=[] type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<Any?, kotlin.Number?>> call=kotlin.collections.__kspMapIterator targs=[Any?,kotlin.Number?]
-expr e@10:5 localDecl projectedIterator mutable=0 type=Iterator<Map.Entry<Any?,Number?>> init=e@10:65#1 type=Unit ref=__local_3.projectedIterator
-expr e@11:13 name(projectedIterator) type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<Any?, kotlin.Number?>> ref=__local_3.projectedIterator
-expr e@11:13#1 memberCall recv=e@11:13 callee=hasNext args=[] type=Boolean call=kotlin.collections.Iterator.hasNext targs=[kotlin.collections.Map.Entry<Any?, kotlin.Number?>]
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#1
-expr e@12:26 name(projectedIterator) type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<Any?, kotlin.Number?>> ref=__local_3.projectedIterator
-expr e@12:26#1 memberCall recv=e@12:26 callee=next args=[] type=kotlin.collections.Map.Entry<Any?, kotlin.Number?> call=kotlin.collections.Iterator.next targs=[kotlin.collections.Map.Entry<Any?, kotlin.Number?>]
-expr e@12:5 localDecl projectedEntry mutable=0 type=_ init=e@12:26#1 type=Unit ref=__local_4.projectedEntry
-expr e@13:13 name(projectedEntry) type=kotlin.collections.Map.Entry<Any?, kotlin.Number?> ref=__local_4.projectedEntry
-expr e@13:13#1 memberCall recv=e@13:13 callee=key args=[] type=Any? call=kotlin.collections.Map.Entry.key targs=[Any?,kotlin.Number?]
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println#1
-expr e@14:13 name(projectedEntry) type=kotlin.collections.Map.Entry<Any?, kotlin.Number?> ref=__local_4.projectedEntry
-expr e@14:13#1 memberCall recv=e@14:13 callee=value args=[] type=kotlin.Number? call=kotlin.collections.Map.Entry.value targs=[Any?,kotlin.Number?]
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println#1
+  decl inspect[kind=fun;params=kotlin.collections.Map<String?,Int?>] fun inspect sym=inspect[kind=fun;params=kotlin.collections.Map<String?,Int?>]
+expr e@2:20 name(map) type=kotlin.collections.Map<String?, Int?> ref=inspect.$0.map[kind=vparam]
+expr e@2:20#1 memberCall recv=e@2:20 callee=iterator args=[] type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<String?, Int?>> call=kotlin.collections.__kspMapIterator[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=;gen=2] targs=[String?,Int?]
+expr e@2:5 localDecl iterator mutable=0 type=_ init=e@2:20#1 type=Unit ref=__local_0.iterator[kind=local]
+expr e@3:13 name(iterator) type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<String?, Int?>> ref=__local_0.iterator[kind=local]
+expr e@3:13#1 memberCall recv=e@3:13 callee=hasNext args=[] type=Boolean call=kotlin.collections.Iterator.hasNext[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] targs=[kotlin.collections.Map.Entry<String?, Int?>]
+expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@4:17 name(iterator) type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<String?, Int?>> ref=__local_0.iterator[kind=local]
+expr e@4:17#1 memberCall recv=e@4:17 callee=next args=[] type=kotlin.collections.Map.Entry<String?, Int?> call=kotlin.collections.Iterator.next[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] targs=[kotlin.collections.Map.Entry<String?, Int?>]
+expr e@4:5 localDecl entry mutable=0 type=_ init=e@4:17#1 type=Unit ref=__local_1.entry[kind=local]
+expr e@5:13 name(entry) type=kotlin.collections.Map.Entry<String?, Int?> ref=__local_1.entry[kind=local]
+expr e@5:13#1 memberCall recv=e@5:13 callee=key args=[] type=String? call=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String?,Int?]
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@6:13 name(entry) type=kotlin.collections.Map.Entry<String?, Int?> ref=__local_1.entry[kind=local]
+expr e@6:13#1 memberCall recv=e@6:13 callee=value args=[] type=Int? call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String?,Int?]
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@7:13 name(iterator) type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<String?, Int?>> ref=__local_0.iterator[kind=local]
+expr e@7:13#1 memberCall recv=e@7:13 callee=hasNext args=[] type=Boolean call=kotlin.collections.Iterator.hasNext[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] targs=[kotlin.collections.Map.Entry<String?, Int?>]
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@9:41 name(map) type=kotlin.collections.Map<String?, Int?> ref=inspect.$0.map[kind=vparam]
+expr e@9:5 localDecl projected mutable=0 type=Map<Any?,Number?> init=e@9:41 type=Unit ref=__local_2.projected[kind=local]
+expr e@10:65 name(projected) type=kotlin.collections.Map<Any?, kotlin.Number?> ref=__local_2.projected[kind=local]
+expr e@10:65#1 memberCall recv=e@10:65 callee=iterator args=[] type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<Any?, kotlin.Number?>> call=kotlin.collections.__kspMapIterator[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=;gen=2] targs=[Any?,kotlin.Number?]
+expr e@10:5 localDecl projectedIterator mutable=0 type=Iterator<Map.Entry<Any?,Number?>> init=e@10:65#1 type=Unit ref=__local_3.projectedIterator[kind=local]
+expr e@11:13 name(projectedIterator) type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<Any?, kotlin.Number?>> ref=__local_3.projectedIterator[kind=local]
+expr e@11:13#1 memberCall recv=e@11:13 callee=hasNext args=[] type=Boolean call=kotlin.collections.Iterator.hasNext[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] targs=[kotlin.collections.Map.Entry<Any?, kotlin.Number?>]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@12:26 name(projectedIterator) type=kotlin.collections.Iterator<kotlin.collections.Map.Entry<Any?, kotlin.Number?>> ref=__local_3.projectedIterator[kind=local]
+expr e@12:26#1 memberCall recv=e@12:26 callee=next args=[] type=kotlin.collections.Map.Entry<Any?, kotlin.Number?> call=kotlin.collections.Iterator.next[kind=fun;recv=kotlin.collections.Iterator<out T0>;params=;gen=1] targs=[kotlin.collections.Map.Entry<Any?, kotlin.Number?>]
+expr e@12:5 localDecl projectedEntry mutable=0 type=_ init=e@12:26#1 type=Unit ref=__local_4.projectedEntry[kind=local]
+expr e@13:13 name(projectedEntry) type=kotlin.collections.Map.Entry<Any?, kotlin.Number?> ref=__local_4.projectedEntry[kind=local]
+expr e@13:13#1 memberCall recv=e@13:13 callee=key args=[] type=Any? call=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[Any?,kotlin.Number?]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@14:13 name(projectedEntry) type=kotlin.collections.Map.Entry<Any?, kotlin.Number?> ref=__local_4.projectedEntry[kind=local]
+expr e@14:13#1 memberCall recv=e@14:13 callee=value args=[] type=kotlin.Number? call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[Any?,kotlin.Number?]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 diagnostic severity=error code=KSWIFTK-TYPE-0001 at=9:5 msg=Type constraint could not be satisfied.

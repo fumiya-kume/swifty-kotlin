@@ -1,30 +1,30 @@
-symbol fq=golden.sema.useIndexOfIgnoreCase kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useIndexOfIgnoreCaseFalse kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useLastIndexOfIgnoreCase kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useLastIndexOfIgnoreCaseFalse kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=golden.sema.useIndexOfIgnoreCaseFalse[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useIndexOfIgnoreCase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useLastIndexOfIgnoreCaseFalse[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useLastIndexOfIgnoreCase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstring_indexof_ignorecase package=golden.sema
-  decl golden.sema.useIndexOfIgnoreCase fun useIndexOfIgnoreCase sym=golden.sema.useIndexOfIgnoreCase
-  decl golden.sema.useLastIndexOfIgnoreCase fun useLastIndexOfIgnoreCase sym=golden.sema.useLastIndexOfIgnoreCase
-  decl golden.sema.useIndexOfIgnoreCaseFalse fun useIndexOfIgnoreCaseFalse sym=golden.sema.useIndexOfIgnoreCaseFalse
-  decl golden.sema.useLastIndexOfIgnoreCaseFalse fun useLastIndexOfIgnoreCaseFalse sym=golden.sema.useLastIndexOfIgnoreCaseFalse
+  decl golden.sema.useIndexOfIgnoreCase[kind=fun;params=] fun useIndexOfIgnoreCase sym=golden.sema.useIndexOfIgnoreCase[kind=fun;params=]
+  decl golden.sema.useLastIndexOfIgnoreCase[kind=fun;params=] fun useLastIndexOfIgnoreCase sym=golden.sema.useLastIndexOfIgnoreCase[kind=fun;params=]
+  decl golden.sema.useIndexOfIgnoreCaseFalse[kind=fun;params=] fun useIndexOfIgnoreCaseFalse sym=golden.sema.useIndexOfIgnoreCaseFalse[kind=fun;params=]
+  decl golden.sema.useLastIndexOfIgnoreCaseFalse[kind=fun;params=] fun useLastIndexOfIgnoreCaseFalse sym=golden.sema.useLastIndexOfIgnoreCaseFalse[kind=fun;params=]
 expr e@3:35 string(Hello World) type=String
 expr e@3:57 string(world) type=String
 expr e@3:66 int(0) type=Int
 expr e@3:82 bool(true) type=Boolean
-expr e@3:35#1 memberCall recv=e@3:35 callee=indexOf args=[_:e@3:57,_:e@3:66,ignoreCase:e@3:82] type=Int call=kotlin.text.indexOf#1
+expr e@3:35#1 memberCall recv=e@3:35 callee=indexOf args=[_:e@3:57,_:e@3:66,ignoreCase:e@3:82] type=Int call=kotlin.text.indexOf[kind=fun;recv=kotlin.CharSequence;params=String,Int,Boolean]
 expr e@5:39 string(Hello World Hello) type=String
 expr e@5:71 string(hello) type=String
 expr e@5:80 int(20) type=Int
 expr e@5:97 bool(true) type=Boolean
-expr e@5:39#1 memberCall recv=e@5:39 callee=lastIndexOf args=[_:e@5:71,_:e@5:80,ignoreCase:e@5:97] type=Int call=kotlin.text.lastIndexOf#3
+expr e@5:39#1 memberCall recv=e@5:39 callee=lastIndexOf args=[_:e@5:71,_:e@5:80,ignoreCase:e@5:97] type=Int call=kotlin.text.lastIndexOf[kind=fun;recv=kotlin.CharSequence;params=String,Int,Boolean]
 expr e@7:40 string(Hello World) type=String
 expr e@7:62 string(world) type=String
 expr e@7:71 int(0) type=Int
 expr e@7:87 bool(false) type=Boolean
-expr e@7:40#1 memberCall recv=e@7:40 callee=indexOf args=[_:e@7:62,_:e@7:71,ignoreCase:e@7:87] type=Int call=kotlin.text.indexOf#1
+expr e@7:40#1 memberCall recv=e@7:40 callee=indexOf args=[_:e@7:62,_:e@7:71,ignoreCase:e@7:87] type=Int call=kotlin.text.indexOf[kind=fun;recv=kotlin.CharSequence;params=String,Int,Boolean]
 expr e@9:44 string(Hello World Hello) type=String
 expr e@9:76 string(Hello) type=String
 expr e@9:85 int(20) type=Int
 expr e@9:102 bool(false) type=Boolean
-expr e@9:44#1 memberCall recv=e@9:44 callee=lastIndexOf args=[_:e@9:76,_:e@9:85,ignoreCase:e@9:102] type=Int call=kotlin.text.lastIndexOf#3
+expr e@9:44#1 memberCall recv=e@9:44 callee=lastIndexOf args=[_:e@9:76,_:e@9:85,ignoreCase:e@9:102] type=Int call=kotlin.text.lastIndexOf[kind=fun;recv=kotlin.CharSequence;params=String,Int,Boolean]

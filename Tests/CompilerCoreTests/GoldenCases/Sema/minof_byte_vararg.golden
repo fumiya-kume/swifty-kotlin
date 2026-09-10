@@ -1,12 +1,12 @@
-symbol fq=golden.sema.varargMinByte kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte,Byte,Byte] ret=Byte
-symbol fq=golden.sema.varargMinByte.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinByte.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinByte.$0.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.varargMinByte.$0.d kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinByte.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinByte.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinByte.$0.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinByte.$0.d[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varargMinByte[kind=fun;params=Byte,Byte,Byte,Byte] kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte,Byte,Byte] ret=Byte
 file fminof_byte_vararg package=golden.sema
-  decl golden.sema.varargMinByte fun varargMinByte sym=golden.sema.varargMinByte
-expr e@3:69 name(a) type=Byte ref=golden.sema.varargMinByte.$0.a
-expr e@3:72 name(b) type=Byte ref=golden.sema.varargMinByte.$0.b
-expr e@3:75 name(c) type=Byte ref=golden.sema.varargMinByte.$0.c
-expr e@3:78 name(d) type=Byte ref=golden.sema.varargMinByte.$0.d
-expr e@3:63 call callee=e@3:63#1 args=[_:e@3:69,_:e@3:72,_:e@3:75,_:e@3:78] type=Byte call=kotlin.comparisons.minOf#1
+  decl golden.sema.varargMinByte[kind=fun;params=Byte,Byte,Byte,Byte] fun varargMinByte sym=golden.sema.varargMinByte[kind=fun;params=Byte,Byte,Byte,Byte]
+expr e@3:69 name(a) type=Byte ref=golden.sema.varargMinByte.$0.a[kind=vparam]
+expr e@3:72 name(b) type=Byte ref=golden.sema.varargMinByte.$0.b[kind=vparam]
+expr e@3:75 name(c) type=Byte ref=golden.sema.varargMinByte.$0.c[kind=vparam]
+expr e@3:78 name(d) type=Byte ref=golden.sema.varargMinByte.$0.d[kind=vparam]
+expr e@3:63 call callee=e@3:63#1 args=[_:e@3:69,_:e@3:72,_:e@3:75,_:e@3:78] type=Byte call=kotlin.comparisons.minOf[kind=fun;params=Byte,*Byte]

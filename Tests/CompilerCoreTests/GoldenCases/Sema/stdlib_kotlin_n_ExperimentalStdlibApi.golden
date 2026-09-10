@@ -1,3 +1,3 @@
-symbol fq=golden.sema.useExperimentalStdlibApi kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.useExperimentalStdlibApi[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_n_ExperimentalStdlibApi package=golden.sema annotations=[@file:OptIn(kotlin.ExperimentalStdlibApi::class)]
-  decl golden.sema.useExperimentalStdlibApi fun useExperimentalStdlibApi sym=golden.sema.useExperimentalStdlibApi
+  decl golden.sema.useExperimentalStdlibApi[kind=fun;params=] fun useExperimentalStdlibApi sym=golden.sema.useExperimentalStdlibApi[kind=fun;params=]

@@ -1,19 +1,19 @@
-symbol fq=golden.sema.AnnotatedAlias kind=typeAlias vis=public flags=_
-symbol fq=golden.sema.AnnotatedClass kind=class vis=public flags=_
-symbol fq=golden.sema.DefaultRuntimeRetention kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.SourceBackedAnnotation kind=annotationClass vis=public flags=_
-symbol fq=golden.sema.annotatedFunction kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.annotationRetentionSurface kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.annotation.AnnotationRetention
-symbol fq=golden.sema.annotationTargetSurface kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.annotation.AnnotationTarget
+symbol fq=golden.sema.AnnotatedAlias[kind=alias] kind=typeAlias vis=public flags=_
+symbol fq=golden.sema.AnnotatedClass[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.DefaultRuntimeRetention[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.SourceBackedAnnotation[kind=anno] kind=annotationClass vis=public flags=_
+symbol fq=golden.sema.annotatedFunction[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.annotationRetentionSurface[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.annotation.AnnotationRetention
+symbol fq=golden.sema.annotationTargetSurface[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.annotation.AnnotationTarget
 file fstdlib_kotlin_annotation_n_n package=golden.sema
-  decl golden.sema.SourceBackedAnnotation class SourceBackedAnnotation sym=golden.sema.SourceBackedAnnotation
-  decl golden.sema.DefaultRuntimeRetention class DefaultRuntimeRetention sym=golden.sema.DefaultRuntimeRetention
-  decl golden.sema.AnnotatedClass class AnnotatedClass sym=golden.sema.AnnotatedClass
-  decl golden.sema.annotatedFunction fun annotatedFunction sym=golden.sema.annotatedFunction
-  decl golden.sema.AnnotatedAlias typealias AnnotatedAlias sym=golden.sema.AnnotatedAlias
-  decl golden.sema.annotationRetentionSurface fun annotationRetentionSurface sym=golden.sema.annotationRetentionSurface
-  decl golden.sema.annotationTargetSurface fun annotationTargetSurface sym=golden.sema.annotationTargetSurface
-expr e@25:57 name(AnnotationRetention) type=kotlin.annotation.AnnotationRetention ref=kotlin.annotation.AnnotationRetention
-expr e@25:57#1 memberCall recv=e@25:57 callee=RUNTIME args=[] type=kotlin.annotation.AnnotationRetention ref=kotlin.annotation.AnnotationRetention.RUNTIME
-expr e@27:51 name(AnnotationTarget) type=kotlin.annotation.AnnotationTarget ref=kotlin.annotation.AnnotationTarget
-expr e@27:51#1 memberCall recv=e@27:51 callee=TYPEALIAS args=[] type=kotlin.annotation.AnnotationTarget ref=kotlin.annotation.AnnotationTarget.TYPEALIAS
+  decl golden.sema.SourceBackedAnnotation[kind=anno] class SourceBackedAnnotation sym=golden.sema.SourceBackedAnnotation[kind=anno]
+  decl golden.sema.DefaultRuntimeRetention[kind=anno] class DefaultRuntimeRetention sym=golden.sema.DefaultRuntimeRetention[kind=anno]
+  decl golden.sema.AnnotatedClass[kind=class] class AnnotatedClass sym=golden.sema.AnnotatedClass[kind=class]
+  decl golden.sema.annotatedFunction[kind=fun;params=] fun annotatedFunction sym=golden.sema.annotatedFunction[kind=fun;params=]
+  decl golden.sema.AnnotatedAlias[kind=alias] typealias AnnotatedAlias sym=golden.sema.AnnotatedAlias[kind=alias]
+  decl golden.sema.annotationRetentionSurface[kind=fun;params=] fun annotationRetentionSurface sym=golden.sema.annotationRetentionSurface[kind=fun;params=]
+  decl golden.sema.annotationTargetSurface[kind=fun;params=] fun annotationTargetSurface sym=golden.sema.annotationTargetSurface[kind=fun;params=]
+expr e@25:57 name(AnnotationRetention) type=kotlin.annotation.AnnotationRetention ref=kotlin.annotation.AnnotationRetention[kind=enum]
+expr e@25:57#1 memberCall recv=e@25:57 callee=RUNTIME args=[] type=kotlin.annotation.AnnotationRetention ref=kotlin.annotation.AnnotationRetention.RUNTIME[kind=field]
+expr e@27:51 name(AnnotationTarget) type=kotlin.annotation.AnnotationTarget ref=kotlin.annotation.AnnotationTarget[kind=enum]
+expr e@27:51#1 memberCall recv=e@27:51 callee=TYPEALIAS args=[] type=kotlin.annotation.AnnotationTarget ref=kotlin.annotation.AnnotationTarget.TYPEALIAS[kind=field]
