@@ -442,7 +442,7 @@ struct CodegenBackendKotlinTextSplittingEdgeCasesTests {
                 [3, 3]
                 [2, 2, 2, 2]
                 [3, 3]
-                size must be positive, but was 0
+                size 0 must be greater than zero.
                 size must be positive, but was 0
                 step must be positive, but was 0
                 size must be positive, but was 0

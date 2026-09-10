@@ -1,8 +1,8 @@
-symbol fq=golden.sema.minOfDoubleTwoArg kind=function vis=public flags=_ sig=recv=_ params=[Double,Double] ret=Double
-symbol fq=golden.sema.minOfDoubleTwoArg.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.minOfDoubleTwoArg.$0.b kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfDoubleTwoArg.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfDoubleTwoArg.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.minOfDoubleTwoArg[kind=fun;params=Double,Double] kind=function vis=public flags=_ sig=recv=_ params=[Double,Double] ret=Double
 file fminof_double_2args package=golden.sema
-  decl golden.sema.minOfDoubleTwoArg fun minOfDoubleTwoArg sym=golden.sema.minOfDoubleTwoArg
-expr e@3:61 name(a) type=Double ref=golden.sema.minOfDoubleTwoArg.$0.a
-expr e@3:64 name(b) type=Double ref=golden.sema.minOfDoubleTwoArg.$0.b
-expr e@3:55 call callee=e@3:55#1 args=[_:e@3:61,_:e@3:64] type=Double call=kotlin.comparisons.minOf#3
+  decl golden.sema.minOfDoubleTwoArg[kind=fun;params=Double,Double] fun minOfDoubleTwoArg sym=golden.sema.minOfDoubleTwoArg[kind=fun;params=Double,Double]
+expr e@3:61 name(a) type=Double ref=golden.sema.minOfDoubleTwoArg.$0.a[kind=vparam]
+expr e@3:64 name(b) type=Double ref=golden.sema.minOfDoubleTwoArg.$0.b[kind=vparam]
+expr e@3:55 call callee=e@3:55#1 args=[_:e@3:61,_:e@3:64] type=Double call=kotlin.comparisons.minOf[kind=fun;params=Double,Double]

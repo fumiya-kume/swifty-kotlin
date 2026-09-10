@@ -1,58 +1,69 @@
-symbol fq=ProbeListIterator kind=class vis=private flags=_
-symbol fq=ProbeListIterator.<init> kind=constructor vis=private flags=_ sig=recv=ProbeListIterator params=[] ret=ProbeListIterator
-symbol fq=ProbeListIterator.cursor kind=property vis=private flags=mutable type=Int
-symbol fq=__local_0.value kind=local vis=private flags=_ type=Int
-symbol fq=__local_1.iterator kind=local vis=private flags=_ type=kotlin.collections.ListIterator<Int>
-symbol fq=inspect kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.ListIterator<Int>] ret=Int
-symbol fq=inspect.$0.iterator kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.List.listIterator#0 kind=function vis=public flags=synthetic sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[] ret=kotlin.collections.ListIterator<out kotlin.collections.List.E> type=() -> kotlin.collections.ListIterator<out kotlin.collections.List.E>
-symbol fq=kotlin.collections.ListIterator kind=interface vis=public flags=_
-symbol fq=kotlin.collections.ListIterator.T kind=typeParameter vis=private flags=_
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=ProbeListIterator.<init>[kind=ctor;recv=ProbeListIterator;params=] kind=constructor vis=private flags=_ sig=recv=ProbeListIterator params=[] ret=ProbeListIterator
+symbol fq=ProbeListIterator.cursor[kind=prop] kind=property vis=private flags=mutable type=Int
+symbol fq=ProbeListIterator[kind=class] kind=class vis=private flags=_
+symbol fq=__local_0.value[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_1.next[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.iterator[kind=local] kind=local vis=private flags=_ type=kotlin.collections.ListIterator<Int>
+symbol fq=inspect.$0.iterator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=inspect[kind=fun;params=kotlin.collections.ListIterator<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.ListIterator<Int>] ret=Int
+symbol fq=kotlin.collections.List.E[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.List.listIterator[kind=fun;recv=kotlin.collections.List<out T0>;params=;gen=1] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[] ret=kotlin.collections.ListIterator<out kotlin.collections.List.E> type=() -> kotlin.collections.ListIterator<out kotlin.collections.List.E>
+symbol fq=kotlin.collections.ListIterator.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.ListIterator[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_n_ListIterator package=_
-  decl ProbeListIterator class ProbeListIterator sym=ProbeListIterator
-  decl inspect fun inspect sym=inspect
-  decl main fun main sym=main
+  decl ProbeListIterator[kind=class] class ProbeListIterator sym=ProbeListIterator[kind=class]
+  decl inspect[kind=fun;params=kotlin.collections.ListIterator<Int>] fun inspect sym=inspect[kind=fun;params=kotlin.collections.ListIterator<Int>]
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:26 int(0) type=Int
-expr e@4:39 name(cursor) type=Int ref=ProbeListIterator.cursor
+expr e@4:39 name(cursor) type=Int ref=ProbeListIterator.cursor[kind=prop]
 expr e@4:48 int(2) type=Int
 expr e@4:39#1 binary(lessThan) lhs=e@4:39 rhs=e@4:48 type=Boolean
-expr e@6:21 name(cursor) type=Int ref=ProbeListIterator.cursor
+expr e@6:21 name(cursor) type=Int ref=ProbeListIterator.cursor[kind=prop]
 expr e@6:30 int(10) type=Int
 expr e@6:21#1 binary(add) lhs=e@6:21 rhs=e@6:30 type=Int
-expr e@6:9 localDecl value mutable=0 type=_ init=e@6:21#1 type=Unit ref=__local_0.value
+expr e@6:9 localDecl value mutable=0 type=_ init=e@6:21#1 type=Unit ref=__local_0.value[kind=local]
 expr e@7:19 int(1) type=Int
-expr e@7:9 compoundAssign(plusAssign) name=cursor value=e@7:19 type=Unit ref=ProbeListIterator.cursor
-expr e@8:16 name(value) type=Int ref=__local_0.value
+expr e@7:9 compoundAssign(plusAssign) name=cursor value=e@7:19 type=Unit ref=ProbeListIterator.cursor[kind=prop]
+expr e@8:16 name(value) type=Int ref=__local_0.value[kind=local]
 expr e@8:9 return value=e@8:16 type=Nothing
-expr e@10:43 name(cursor) type=Int ref=ProbeListIterator.cursor
+expr e@10:43 name(cursor) type=Int ref=ProbeListIterator.cursor[kind=prop]
 expr e@10:52 int(0) type=Int
 expr e@10:43#1 binary(greaterThan) lhs=e@10:43 rhs=e@10:52 type=Boolean
 expr e@12:19 int(1) type=Int
-expr e@12:9 compoundAssign(minusAssign) name=cursor value=e@12:19 type=Unit ref=ProbeListIterator.cursor
-expr e@13:16 name(cursor) type=Int ref=ProbeListIterator.cursor
+expr e@12:9 compoundAssign(minusAssign) name=cursor value=e@12:19 type=Unit ref=ProbeListIterator.cursor[kind=prop]
+expr e@13:16 name(cursor) type=Int ref=ProbeListIterator.cursor[kind=prop]
 expr e@13:25 int(10) type=Int
 expr e@13:16#1 binary(add) lhs=e@13:16 rhs=e@13:25 type=Int
 expr e@13:9 return value=e@13:16#1 type=Nothing
-expr e@15:37 name(cursor) type=Int ref=ProbeListIterator.cursor
-expr e@16:41 name(cursor) type=Int ref=ProbeListIterator.cursor
+expr e@15:37 name(cursor) type=Int ref=ProbeListIterator.cursor[kind=prop]
+expr e@16:41 name(cursor) type=Int ref=ProbeListIterator.cursor[kind=prop]
 expr e@16:50 int(1) type=Int
 expr e@16:41#1 binary(subtract) lhs=e@16:41 rhs=e@16:50 type=Int
-expr e@20:12 name(iterator) type=kotlin.collections.ListIterator<Int> ref=inspect.$0.iterator
-expr e@20:12#1 memberCall recv=e@20:12 callee=nextIndex args=[] type=Int call=kotlin.collections.ListIterator.nextIndex targs=[Int]
-expr e@20:35 name(iterator) type=kotlin.collections.ListIterator<Int> ref=inspect.$0.iterator
-expr e@20:35#1 memberCall recv=e@20:35 callee=previousIndex args=[] type=Int call=kotlin.collections.ListIterator.previousIndex targs=[Int]
-expr e@20:12#2 binary(add) lhs=e@20:12#1 rhs=e@20:35#1 type=Int
-expr e@20:5 return value=e@20:12#2 type=Nothing
-expr e@24:46 int(10) type=Int
-expr e@24:50 int(20) type=Int
-expr e@24:54 int(30) type=Int
-expr e@24:39 call callee=e@24:39#1 args=[_:e@24:46,_:e@24:50,_:e@24:54] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@24:39#2 memberCall recv=e@24:39 callee=listIterator args=[] type=kotlin.collections.ListIterator<out Int> call=kotlin.collections.List.listIterator#0 targs=[Int]
-expr e@24:5 localDecl iterator mutable=0 type=ListIterator<Int> init=e@24:39#2 type=Unit ref=__local_1.iterator
-expr e@25:13 name(iterator) type=kotlin.collections.ListIterator<Int> ref=__local_1.iterator
-expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Int call=inspect
-expr e@26:13 call callee=e@26:13#1 args=[] type=ProbeListIterator call=ProbeListIterator.<init>
-expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Int call=inspect
+expr e@20:20 name(iterator) type=kotlin.collections.ListIterator<Int> ref=inspect.$0.iterator[kind=vparam]
+expr e@20:20#1 memberCall recv=e@20:20 callee=hasNext args=[] type=Boolean call=kotlin.collections.ListIterator.hasNext[kind=fun;recv=kotlin.collections.ListIterator<T0>;params=;gen=1] targs=[Int]
+expr e@20:40 name(iterator) type=kotlin.collections.ListIterator<Int> ref=inspect.$0.iterator[kind=vparam]
+expr e@20:40#1 memberCall recv=e@20:40 callee=next args=[] type=Int call=kotlin.collections.ListIterator.next[kind=fun;recv=kotlin.collections.ListIterator<T0>;params=;gen=1] targs=[Int]
+expr e@20:61 name(iterator) type=kotlin.collections.ListIterator<Int> ref=inspect.$0.iterator[kind=vparam]
+expr e@20:61#1 memberCall recv=e@20:61 callee=previous args=[] type=Int call=kotlin.collections.ListIterator.previous[kind=fun;recv=kotlin.collections.ListIterator<T0>;params=;gen=1] targs=[Int]
+expr e@20:16 if cond=e@20:20#1 then=e@20:40#1 else=e@20:61#1 type=Int
+expr e@20:5 localDecl next mutable=0 type=_ init=e@20:16 type=Unit ref=__local_1.next[kind=local]
+expr e@21:12 name(next) type=Int ref=__local_1.next[kind=local]
+expr e@21:19 name(iterator) type=kotlin.collections.ListIterator<Int> ref=inspect.$0.iterator[kind=vparam]
+expr e@21:19#1 memberCall recv=e@21:19 callee=nextIndex args=[] type=Int call=kotlin.collections.ListIterator.nextIndex[kind=fun;recv=kotlin.collections.ListIterator<T0>;params=;gen=1] targs=[Int]
+expr e@21:12#1 binary(add) lhs=e@21:12 rhs=e@21:19#1 type=Int
+expr e@21:42 name(iterator) type=kotlin.collections.ListIterator<Int> ref=inspect.$0.iterator[kind=vparam]
+expr e@21:42#1 memberCall recv=e@21:42 callee=previousIndex args=[] type=Int call=kotlin.collections.ListIterator.previousIndex[kind=fun;recv=kotlin.collections.ListIterator<T0>;params=;gen=1] targs=[Int]
+expr e@21:12#2 binary(add) lhs=e@21:12#1 rhs=e@21:42#1 type=Int
+expr e@21:5 return value=e@21:12#2 type=Nothing
+expr e@25:46 int(10) type=Int
+expr e@25:50 int(20) type=Int
+expr e@25:54 int(30) type=Int
+expr e@25:39 call callee=e@25:39#1 args=[_:e@25:46,_:e@25:50,_:e@25:54] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@25:39#2 memberCall recv=e@25:39 callee=listIterator args=[] type=kotlin.collections.ListIterator<out Int> call=kotlin.collections.List.listIterator[kind=fun;recv=kotlin.collections.List<out T0>;params=;gen=1] targs=[Int]
+expr e@25:5 localDecl iterator mutable=0 type=ListIterator<Int> init=e@25:39#2 type=Unit ref=__local_2.iterator[kind=local]
+expr e@26:13 name(iterator) type=kotlin.collections.ListIterator<Int> ref=__local_2.iterator[kind=local]
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Int call=inspect[kind=fun;params=kotlin.collections.ListIterator<Int>]
+expr e@27:13 call callee=e@27:13#1 args=[] type=ProbeListIterator call=ProbeListIterator.<init>[kind=ctor;recv=ProbeListIterator;params=]
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Int call=inspect[kind=fun;params=kotlin.collections.ListIterator<Int>]

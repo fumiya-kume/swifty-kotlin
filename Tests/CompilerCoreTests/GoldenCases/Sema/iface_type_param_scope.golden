@@ -1,10 +1,10 @@
-symbol fq=golden.sema.Holder kind=interface vis=public flags=_
-symbol fq=golden.sema.Holder.$iface0.T kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.Holder.get kind=function vis=public flags=abstractType sig=recv=golden.sema.Holder<golden.sema.Holder.$iface0.T> params=[] ret=golden.sema.Holder.$iface0.T
-symbol fq=golden.sema.useHolder kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Holder<Int>] ret=Int
-symbol fq=golden.sema.useHolder.$0.h kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.Holder.$iface0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.Holder.get[kind=fun;recv=golden.sema.Holder<T0>;params=;gen=1] kind=function vis=public flags=abstractType sig=recv=golden.sema.Holder<golden.sema.Holder.$iface0.T> params=[] ret=golden.sema.Holder.$iface0.T
+symbol fq=golden.sema.Holder[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=golden.sema.useHolder.$0.h[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useHolder[kind=fun;params=golden.sema.Holder<Int>] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Holder<Int>] ret=Int
 file fiface_type_param_scope package=golden.sema
-  decl golden.sema.Holder interface Holder sym=golden.sema.Holder
-  decl golden.sema.useHolder fun useHolder sym=golden.sema.useHolder
-expr e@7:38 name(h) type=golden.sema.Holder<Int> ref=golden.sema.useHolder.$0.h
-expr e@7:38#1 memberCall recv=e@7:38 callee=get args=[] type=Int call=golden.sema.Holder.get targs=[Int]
+  decl golden.sema.Holder[kind=iface;gen=1] interface Holder sym=golden.sema.Holder[kind=iface;gen=1]
+  decl golden.sema.useHolder[kind=fun;params=golden.sema.Holder<Int>] fun useHolder sym=golden.sema.useHolder[kind=fun;params=golden.sema.Holder<Int>]
+expr e@7:38 name(h) type=golden.sema.Holder<Int> ref=golden.sema.useHolder.$0.h[kind=vparam]
+expr e@7:38#1 memberCall recv=e@7:38 callee=get args=[] type=Int call=golden.sema.Holder.get[kind=fun;recv=golden.sema.Holder<T0>;params=;gen=1] targs=[Int]

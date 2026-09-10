@@ -150,7 +150,7 @@ struct NativePlatformBridgeTests {
                 ]
                 let symbol = try #require(
                     sema.symbols.lookup(fqName: fqName).flatMap { sema.symbols.symbol($0) },
-                    "kotlin.native.CpuArchitecture must be registered as a synthetic enum class"
+                    "kotlin.native.CpuArchitecture must be registered as an enum class"
                 )
                 #expect(symbol.kind == .enumClass)
             }
@@ -163,8 +163,8 @@ struct NativePlatformBridgeTests {
                     interner.intern("native"),
                     interner.intern("CpuArchitecture"),
                 ]
-                let expectedEntries = ["UNKNOWN", "X86", "X64", "ARM32",
-                                       "ARM64", "MIPS32", "MIPSEL32", "WASM32"]
+                let expectedEntries = ["UNKNOWN", "ARM32", "ARM64", "X86",
+                                       "X64", "MIPS32", "MIPSEL32", "WASM32"]
                 for entry in expectedEntries {
                     let entryFQName = baseFQName + [interner.intern(entry)]
                     let sym = sema.symbols.lookup(fqName: entryFQName).flatMap { sema.symbols.symbol($0) }

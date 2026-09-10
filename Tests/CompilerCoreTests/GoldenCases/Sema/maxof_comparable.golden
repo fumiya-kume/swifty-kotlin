@@ -1,25 +1,25 @@
-symbol fq=golden.sema.maxOf2ArgString kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=String
-symbol fq=golden.sema.maxOf2ArgString.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOf2ArgString.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOf3ArgString kind=function vis=public flags=_ sig=recv=_ params=[String,String,String] ret=String
-symbol fq=golden.sema.maxOf3ArgString.$1.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOf3ArgString.$1.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOf3ArgString.$1.c kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.maxOfVarargString kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
+symbol fq=golden.sema.maxOf2ArgString.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOf2ArgString.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOf2ArgString[kind=fun;params=String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=String
+symbol fq=golden.sema.maxOf3ArgString.$1.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOf3ArgString.$1.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOf3ArgString.$1.c[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.maxOf3ArgString[kind=fun;params=String,String,String] kind=function vis=public flags=_ sig=recv=_ params=[String,String,String] ret=String
+symbol fq=golden.sema.maxOfVarargString[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
 file fmaxof_comparable package=golden.sema
-  decl golden.sema.maxOf2ArgString fun maxOf2ArgString sym=golden.sema.maxOf2ArgString
-  decl golden.sema.maxOf3ArgString fun maxOf3ArgString sym=golden.sema.maxOf3ArgString
-  decl golden.sema.maxOfVarargString fun maxOfVarargString sym=golden.sema.maxOfVarargString
-expr e@5:59 name(a) type=String ref=golden.sema.maxOf2ArgString.$0.a
-expr e@5:62 name(b) type=String ref=golden.sema.maxOf2ArgString.$0.b
-expr e@5:53 call callee=e@5:53#1 args=[_:e@5:59,_:e@5:62] type=String call=kotlin.comparisons.maxOf#30 targs=[String]
-expr e@6:70 name(a) type=String ref=golden.sema.maxOf3ArgString.$1.a
-expr e@6:73 name(b) type=String ref=golden.sema.maxOf3ArgString.$1.b
-expr e@6:76 name(c) type=String ref=golden.sema.maxOf3ArgString.$1.c
-expr e@6:64 call callee=e@6:64#1 args=[_:e@6:70,_:e@6:73,_:e@6:76] type=String call=kotlin.comparisons.maxOf#31 targs=[String]
+  decl golden.sema.maxOf2ArgString[kind=fun;params=String,String] fun maxOf2ArgString sym=golden.sema.maxOf2ArgString[kind=fun;params=String,String]
+  decl golden.sema.maxOf3ArgString[kind=fun;params=String,String,String] fun maxOf3ArgString sym=golden.sema.maxOf3ArgString[kind=fun;params=String,String,String]
+  decl golden.sema.maxOfVarargString[kind=fun;params=] fun maxOfVarargString sym=golden.sema.maxOfVarargString[kind=fun;params=]
+expr e@5:59 name(a) type=String ref=golden.sema.maxOf2ArgString.$0.a[kind=vparam]
+expr e@5:62 name(b) type=String ref=golden.sema.maxOf2ArgString.$0.b[kind=vparam]
+expr e@5:53 call callee=e@5:53#1 args=[_:e@5:59,_:e@5:62] type=String call=kotlin.comparisons.maxOf[kind=fun;params=T0,T0;gen=1] targs=[String]
+expr e@6:70 name(a) type=String ref=golden.sema.maxOf3ArgString.$1.a[kind=vparam]
+expr e@6:73 name(b) type=String ref=golden.sema.maxOf3ArgString.$1.b[kind=vparam]
+expr e@6:76 name(c) type=String ref=golden.sema.maxOf3ArgString.$1.c[kind=vparam]
+expr e@6:64 call callee=e@6:64#1 args=[_:e@6:70,_:e@6:73,_:e@6:76] type=String call=kotlin.comparisons.maxOf[kind=fun;params=T0,T0,T0;gen=1] targs=[String]
 expr e@7:41 string(d) type=String
 expr e@7:46 string(b) type=String
 expr e@7:51 string(a) type=String
 expr e@7:56 string(c) type=String
-expr e@7:35 call callee=e@7:35#1 args=[_:e@7:41,_:e@7:46,_:e@7:51,_:e@7:56] type=String call=kotlin.comparisons.maxOf#32 targs=[String]
+expr e@7:35 call callee=e@7:35#1 args=[_:e@7:41,_:e@7:46,_:e@7:51,_:e@7:56] type=String call=kotlin.comparisons.maxOf[kind=fun;params=T0,*T0;gen=1] targs=[String]

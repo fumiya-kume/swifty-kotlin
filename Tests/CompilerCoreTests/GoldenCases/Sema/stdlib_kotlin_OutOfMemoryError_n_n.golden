@@ -1,7 +1,7 @@
-symbol fq=golden.sema.constructOutOfMemoryError kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.OutOfMemoryError
+symbol fq=golden.sema.constructOutOfMemoryError[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.OutOfMemoryError
 file fstdlib_kotlin_OutOfMemoryError_n_n package=golden.sema
-  decl golden.sema.constructOutOfMemoryError fun constructOutOfMemoryError sym=golden.sema.constructOutOfMemoryError
-expr e@4:5 call callee=e@4:5#1 args=[] type=kotlin.OutOfMemoryError call=kotlin.OutOfMemoryError.<init>#0
+  decl golden.sema.constructOutOfMemoryError[kind=fun;params=] fun constructOutOfMemoryError sym=golden.sema.constructOutOfMemoryError[kind=fun;params=]
+expr e@4:5 call callee=e@4:5#1 args=[] type=kotlin.OutOfMemoryError call=kotlin.OutOfMemoryError.<init>[kind=ctor;recv=kotlin.OutOfMemoryError;params=]
 expr e@5:29 string(message) type=String
-expr e@5:12 call callee=e@5:12#1 args=[_:e@5:29] type=kotlin.OutOfMemoryError call=kotlin.OutOfMemoryError.<init>#1
+expr e@5:12 call callee=e@5:12#1 args=[_:e@5:29] type=kotlin.OutOfMemoryError call=kotlin.OutOfMemoryError.<init>[kind=ctor;recv=kotlin.OutOfMemoryError;params=String?]
 expr e@5:5 return value=e@5:12 type=Nothing

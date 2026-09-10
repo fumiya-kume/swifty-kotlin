@@ -1,11 +1,11 @@
-symbol fq=__local_0.x kind=local vis=private flags=_ type=Int
-symbol fq=useMeasureTimeMicros kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
+symbol fq=__local_0.x[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=useMeasureTimeMicros[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
 file fmeasure_time_micros package=_
-  decl useMeasureTimeMicros fun useMeasureTimeMicros sym=useMeasureTimeMicros
+  decl useMeasureTimeMicros[kind=fun;params=] fun useMeasureTimeMicros sym=useMeasureTimeMicros[kind=fun;params=]
 expr e@4:13 int(1) type=Int
 expr e@4:17 int(2) type=Int
 expr e@4:13#1 binary(add) lhs=e@4:13 rhs=e@4:17 type=Int
-expr e@4:5 localDecl x mutable=0 type=_ init=e@4:13#1 type=Unit ref=__local_0.x
+expr e@4:5 localDecl x mutable=0 type=_ init=e@4:13#1 type=Unit ref=__local_0.x[kind=local]
 expr e@4:5#1 blockExpr stmts=[e@4:5] trailing=_ type=Unit
 expr e@3:54 lambda params=[] body=e@4:5#1 label=measureTimeMicros type=() -> Unit
-expr e@3:36 call callee=e@3:36#1 args=[_:e@3:54] type=Long call=kotlin.system.measureTimeMicros
+expr e@3:36 call callee=e@3:36#1 args=[_:e@3:54] type=Long call=kotlin.system.measureTimeMicros[kind=fun;params=fn{p=;ret=Unit}]

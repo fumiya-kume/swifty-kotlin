@@ -5,7 +5,7 @@
 // now Kotlin source (Sources/CompilerCore/Stdlib/kotlin/random/Random.kt) with
 // no native ABI surface beyond __kk_random_seed_entropy. asKotlinRandom/
 // asJavaRandom/java.util.Random are also real Kotlin source now (JavaUtilRandom.kt/
-// JavaRandomInterop.kt) — a raw pointer passthrough between the two Random
+// PlatformRandom.kt) — a raw pointer passthrough between the two Random
 // representations stopped being safe once kotlin.random.Random became a genuine
 // compiled object instead of sharing java.util.Random's native SeededRandomBox.
 // The entries below are what remains native: the IntRange/LongRange/UIntRange/

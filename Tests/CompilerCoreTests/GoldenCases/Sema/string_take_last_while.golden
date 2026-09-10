@@ -1,12 +1,12 @@
-symbol fq=__local_0.suffix kind=local vis=private flags=_ type=String
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.suffix[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstring_take_last_while package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:26 string(abc123) type=String
 expr e@2:51 name(it) type=Char ref=s-0
-expr e@2:51#1 memberCall recv=e@2:51 callee=isDigit args=[] type=Boolean call=kotlin.text.isDigit
+expr e@2:51#1 memberCall recv=e@2:51 callee=isDigit args=[] type=Boolean call=kotlin.text.isDigit[kind=fun;recv=Char;params=]
 expr e@2:49 lambda params=[] body=e@2:51#1 label=takeLastWhile type=(Char) -> Boolean
-expr e@2:26#1 memberCall recv=e@2:26 callee=takeLastWhile args=[_:e@2:49] type=String call=kotlin.text.takeLastWhile
-expr e@2:5 localDecl suffix mutable=0 type=String init=e@2:26#1 type=Unit ref=__local_0.suffix
-expr e@3:13 name(suffix) type=String ref=__local_0.suffix
-expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13] type=Unit call=kotlin.io.println#2
+expr e@2:26#1 memberCall recv=e@2:26 callee=takeLastWhile args=[_:e@2:49] type=String call=kotlin.text.takeLastWhile[kind=fun;recv=String;params=fn{p=Char;ret=Boolean}]
+expr e@2:5 localDecl suffix mutable=0 type=String init=e@2:26#1 type=Unit ref=__local_0.suffix[kind=local]
+expr e@3:13 name(suffix) type=String ref=__local_0.suffix[kind=local]
+expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13] type=Unit call=kotlin.io.println[kind=fun;params=String]

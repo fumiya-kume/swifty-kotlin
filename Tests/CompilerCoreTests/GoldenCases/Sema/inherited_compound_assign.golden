@@ -1,27 +1,27 @@
-symbol fq=golden.sema.Base kind=class vis=public flags=openType
-symbol fq=golden.sema.Base.baseField kind=property vis=protected flags=mutable type=Int
-symbol fq=golden.sema.Child kind=class vis=public flags=_
-symbol fq=golden.sema.Derived kind=class vis=public flags=_
-symbol fq=golden.sema.GrandParent kind=class vis=public flags=openType
-symbol fq=golden.sema.GrandParent.gpField kind=property vis=protected flags=mutable type=Int
-symbol fq=golden.sema.Parent kind=class vis=public flags=openType
+symbol fq=golden.sema.Base.baseField[kind=prop] kind=property vis=protected flags=mutable type=Int
+symbol fq=golden.sema.Base[kind=class] kind=class vis=public flags=openType
+symbol fq=golden.sema.Child[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.Derived[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.GrandParent.gpField[kind=prop] kind=property vis=protected flags=mutable type=Int
+symbol fq=golden.sema.GrandParent[kind=class] kind=class vis=public flags=openType
+symbol fq=golden.sema.Parent[kind=class] kind=class vis=public flags=openType
 file finherited_compound_assign package=golden.sema
-  decl golden.sema.Base class Base sym=golden.sema.Base
-  decl golden.sema.Derived class Derived sym=golden.sema.Derived
-  decl golden.sema.GrandParent class GrandParent sym=golden.sema.GrandParent
-  decl golden.sema.Parent class Parent sym=golden.sema.Parent
-  decl golden.sema.Child class Child sym=golden.sema.Child
+  decl golden.sema.Base[kind=class] class Base sym=golden.sema.Base[kind=class]
+  decl golden.sema.Derived[kind=class] class Derived sym=golden.sema.Derived[kind=class]
+  decl golden.sema.GrandParent[kind=class] class GrandParent sym=golden.sema.GrandParent[kind=class]
+  decl golden.sema.Parent[kind=class] class Parent sym=golden.sema.Parent[kind=class]
+  decl golden.sema.Child[kind=class] class Child sym=golden.sema.Child[kind=class]
 expr e@4:36 int(1) type=Int
 expr e@9:22 int(41) type=Int
-expr e@9:9 compoundAssign(plusAssign) name=baseField value=e@9:22 type=Unit ref=golden.sema.Base.baseField
-expr e@10:16 name(baseField) type=Int ref=golden.sema.Base.baseField
+expr e@9:9 compoundAssign(plusAssign) name=baseField value=e@9:22 type=Unit ref=golden.sema.Base.baseField[kind=prop]
+expr e@10:16 name(baseField) type=Int ref=golden.sema.Base.baseField[kind=prop]
 expr e@10:9 return value=e@10:16 type=Nothing
 expr e@14:18 int(1) type=Int
-expr e@14:9 compoundAssign(plusAssign) name=baseField value=e@14:18 type=Unit ref=golden.sema.Base.baseField
-expr e@15:16 name(baseField) type=Int ref=golden.sema.Base.baseField
+expr e@14:9 compoundAssign(plusAssign) name=baseField value=e@14:18 type=Unit ref=golden.sema.Base.baseField[kind=prop]
+expr e@15:16 name(baseField) type=Int ref=golden.sema.Base.baseField[kind=prop]
 expr e@15:9 return value=e@15:16 type=Nothing
 expr e@20:34 int(1) type=Int
 expr e@27:20 int(1) type=Int
-expr e@27:9 compoundAssign(plusAssign) name=gpField value=e@27:20 type=Unit ref=golden.sema.GrandParent.gpField
-expr e@28:16 name(gpField) type=Int ref=golden.sema.GrandParent.gpField
+expr e@27:9 compoundAssign(plusAssign) name=gpField value=e@27:20 type=Unit ref=golden.sema.GrandParent.gpField[kind=prop]
+expr e@28:16 name(gpField) type=Int ref=golden.sema.GrandParent.gpField[kind=prop]
 expr e@28:9 return value=e@28:16 type=Nothing

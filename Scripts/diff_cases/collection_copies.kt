@@ -63,4 +63,10 @@ fun main() {
     mutableSet.add(2)
     println(mutableSet)
     println(mutableSet.size)
+
+    // toHashSet result supports mutation and membership checks
+    val hashSet = listOf(1, 2, 3).toHashSet()
+    hashSet.add(4)
+    println(hashSet.contains(4))
+    println(hashSet.size)
 }

@@ -214,6 +214,7 @@ struct RuntimeABIExternalLinkValidationTests {
         let functionTypedParameterCount: Int
         let hasReceiver: Bool
         let isInObjectScope: Bool
+        let isSuspend: Bool
         let receiverType: String?
         let valueParameterTypes: [String]
         let valueParameterIsVararg: [Bool]
@@ -312,6 +313,7 @@ struct RuntimeABIExternalLinkValidationTests {
             let isInObjectScope = scopeKind == .objectLike
             let hasReceiver = !isConstructor
                 && ((scopeKind == .classLike) || functionHeaderHasExtensionReceiver(functionHeader))
+            let isSuspend = functionHeader.contains("suspend fun")
             for linkName in pendingLinkNames {
                 declarations.append(
                     BundledKsSymbolNameDeclaration(
@@ -320,6 +322,7 @@ struct RuntimeABIExternalLinkValidationTests {
                         functionTypedParameterCount: signature.functionTypedParameterCount,
                         hasReceiver: hasReceiver,
                         isInObjectScope: isInObjectScope,
+                        isSuspend: isSuspend,
                         receiverType: signature.receiverType,
                         valueParameterTypes: signature.valueParameterTypes,
                         valueParameterIsVararg: signature.valueParameterIsVararg,
@@ -527,6 +530,11 @@ struct RuntimeABIExternalLinkValidationTests {
         // pair in the runtime ABI (see CallSupportLowerer's kk_array_of path),
         // so each vararg contributes one extra count parameter.
         loweredArity += declaration.valueParameterIsVararg.filter { $0 }.count
+        // Suspend functions carry the opaque continuation as the final ABI
+        // argument after their source-level receiver and value parameters.
+        if declaration.isSuspend {
+            loweredArity += 1
+        }
         if specs.contains(where: \.isThrowing) {
             loweredArity += 1
         }
@@ -647,6 +655,12 @@ struct RuntimeABIExternalLinkValidationTests {
                 continue
             }
             types.append(contentsOf: expectedRuntimeABIParameterTypes(for: parameterType, isFlat: isFlat))
+        }
+        // The coroutine lowering appends the continuation after all source
+        // parameters. Throwing declarations may append their outThrown slot
+        // after this continuation; that slot is stripped by the caller above.
+        if declaration.isSuspend {
+            types.append(RuntimeABICType.intptr.rawValue)
         }
         return types
     }

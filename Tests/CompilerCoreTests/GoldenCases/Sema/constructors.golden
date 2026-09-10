@@ -1,26 +1,26 @@
-symbol fq=Named kind=class vis=public flags=_
-symbol fq=Named.<init>#0 kind=constructor vis=public flags=_ sig=recv=Named params=[] ret=Named
-symbol fq=Named.<init>#1 kind=constructor vis=public flags=_ sig=recv=Named params=[String] ret=Named
-symbol fq=Named.<init>.$0.name kind=valueParameter vis=private flags=_
-symbol fq=Point kind=class vis=public flags=_
-symbol fq=Point.<init> kind=constructor vis=public flags=_ sig=recv=Point params=[Int,Int] ret=Point
-symbol fq=Point.<init>.$1.x kind=valueParameter vis=private flags=_
-symbol fq=Point.<init>.$1.y kind=valueParameter vis=private flags=_
-symbol fq=__local_0.p kind=local vis=private flags=_ type=Point
-symbol fq=__local_1.n kind=local vis=private flags=_ type=Named
-symbol fq=__local_2.d kind=local vis=private flags=_ type=Named
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=Named.<init>.$0.name[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Named.<init>[kind=ctor;recv=Named;params=String] kind=constructor vis=public flags=_ sig=recv=Named params=[String] ret=Named
+symbol fq=Named.<init>[kind=ctor;recv=Named;params=] kind=constructor vis=public flags=_ sig=recv=Named params=[] ret=Named
+symbol fq=Named[kind=class] kind=class vis=public flags=_
+symbol fq=Point.<init>.$1.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Point.<init>.$1.y[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Point.<init>[kind=ctor;recv=Point;params=Int,Int] kind=constructor vis=public flags=_ sig=recv=Point params=[Int,Int] ret=Point
+symbol fq=Point[kind=class] kind=class vis=public flags=_
+symbol fq=__local_0.p[kind=local] kind=local vis=private flags=_ type=Point
+symbol fq=__local_1.n[kind=local] kind=local vis=private flags=_ type=Named
+symbol fq=__local_2.d[kind=local] kind=local vis=private flags=_ type=Named
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fconstructors package=_
-  decl Point class Point sym=Point
-  decl Named class Named sym=Named
-  decl main fun main sym=main
+  decl Point[kind=class] class Point sym=Point[kind=class]
+  decl Named[kind=class] class Named sym=Named[kind=class]
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@4:26 string(default) type=String
 expr e@8:19 int(1) type=Int
 expr e@8:22 int(2) type=Int
-expr e@8:13 call callee=e@8:13#1 args=[_:e@8:19,_:e@8:22] type=Point call=Point.<init>
-expr e@8:5 localDecl p mutable=0 type=_ init=e@8:13 type=Unit ref=__local_0.p
+expr e@8:13 call callee=e@8:13#1 args=[_:e@8:19,_:e@8:22] type=Point call=Point.<init>[kind=ctor;recv=Point;params=Int,Int]
+expr e@8:5 localDecl p mutable=0 type=_ init=e@8:13 type=Unit ref=__local_0.p[kind=local]
 expr e@9:19 string(hello) type=String
-expr e@9:13 call callee=e@9:13#1 args=[_:e@9:19] type=Named call=Named.<init>#1
-expr e@9:5 localDecl n mutable=0 type=_ init=e@9:13 type=Unit ref=__local_1.n
-expr e@10:13 call callee=e@10:13#1 args=[] type=Named call=Named.<init>#0
-expr e@10:5 localDecl d mutable=0 type=_ init=e@10:13 type=Unit ref=__local_2.d
+expr e@9:13 call callee=e@9:13#1 args=[_:e@9:19] type=Named call=Named.<init>[kind=ctor;recv=Named;params=String]
+expr e@9:5 localDecl n mutable=0 type=_ init=e@9:13 type=Unit ref=__local_1.n[kind=local]
+expr e@10:13 call callee=e@10:13#1 args=[] type=Named call=Named.<init>[kind=ctor;recv=Named;params=]
+expr e@10:5 localDecl d mutable=0 type=_ init=e@10:13 type=Unit ref=__local_2.d[kind=local]

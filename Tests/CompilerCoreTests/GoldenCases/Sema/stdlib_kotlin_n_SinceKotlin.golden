@@ -1,18 +1,18 @@
-symbol fq=golden.sema.SinceKotlinHost kind=class vis=public flags=_
-symbol fq=golden.sema.SinceKotlinHost.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.SinceKotlinHost params=[] ret=golden.sema.SinceKotlinHost
-symbol fq=golden.sema.SinceKotlinHost.expose kind=function vis=public flags=_ sig=recv=golden.sema.SinceKotlinHost params=[] ret=Int
-symbol fq=golden.sema.SinceKotlinHost.value kind=property vis=public flags=_ type=Int
-symbol fq=golden.sema.SinceKotlinHostAlias kind=typeAlias vis=public flags=_
-symbol fq=golden.sema.createSinceKotlinHost kind=function vis=public flags=_ sig=recv=_ params=[] ret=golden.sema.SinceKotlinHost
-symbol fq=golden.sema.useSinceKotlinHost kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.SinceKotlinHost] ret=Int
-symbol fq=golden.sema.useSinceKotlinHost.$0.host kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.SinceKotlinHost.<init>[kind=ctor;recv=golden.sema.SinceKotlinHost;params=] kind=constructor vis=public flags=_ sig=recv=golden.sema.SinceKotlinHost params=[] ret=golden.sema.SinceKotlinHost
+symbol fq=golden.sema.SinceKotlinHost.expose[kind=fun;recv=golden.sema.SinceKotlinHost;params=] kind=function vis=public flags=_ sig=recv=golden.sema.SinceKotlinHost params=[] ret=Int
+symbol fq=golden.sema.SinceKotlinHost.value[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.SinceKotlinHostAlias[kind=alias] kind=typeAlias vis=public flags=_
+symbol fq=golden.sema.SinceKotlinHost[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.createSinceKotlinHost[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=golden.sema.SinceKotlinHost
+symbol fq=golden.sema.useSinceKotlinHost.$0.host[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useSinceKotlinHost[kind=fun;params=golden.sema.SinceKotlinHost] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.SinceKotlinHost] ret=Int
 file fstdlib_kotlin_n_SinceKotlin package=golden.sema
-  decl golden.sema.SinceKotlinHost class SinceKotlinHost sym=golden.sema.SinceKotlinHost
-  decl golden.sema.SinceKotlinHostAlias typealias SinceKotlinHostAlias sym=golden.sema.SinceKotlinHostAlias
-  decl golden.sema.useSinceKotlinHost fun useSinceKotlinHost sym=golden.sema.useSinceKotlinHost
-  decl golden.sema.createSinceKotlinHost fun createSinceKotlinHost sym=golden.sema.createSinceKotlinHost
+  decl golden.sema.SinceKotlinHost[kind=class] class SinceKotlinHost sym=golden.sema.SinceKotlinHost[kind=class]
+  decl golden.sema.SinceKotlinHostAlias[kind=alias] typealias SinceKotlinHostAlias sym=golden.sema.SinceKotlinHostAlias[kind=alias]
+  decl golden.sema.useSinceKotlinHost[kind=fun;params=golden.sema.SinceKotlinHost] fun useSinceKotlinHost sym=golden.sema.useSinceKotlinHost[kind=fun;params=golden.sema.SinceKotlinHost]
+  decl golden.sema.createSinceKotlinHost[kind=fun;params=] fun createSinceKotlinHost sym=golden.sema.createSinceKotlinHost[kind=fun;params=]
 expr e@6:22 int(1) type=Int
-expr e@9:25 name(value) type=Int ref=golden.sema.SinceKotlinHost.value
-expr e@16:54 name(host) type=golden.sema.SinceKotlinHost ref=golden.sema.useSinceKotlinHost.$0.host
-expr e@16:54#1 memberCall recv=e@16:54 callee=expose args=[] type=Int call=golden.sema.SinceKotlinHost.expose
-expr e@18:53 call callee=e@18:53#1 args=[] type=golden.sema.SinceKotlinHost call=golden.sema.SinceKotlinHost.<init>
+expr e@9:25 name(value) type=Int ref=golden.sema.SinceKotlinHost.value[kind=prop]
+expr e@16:54 name(host) type=golden.sema.SinceKotlinHost ref=golden.sema.useSinceKotlinHost.$0.host[kind=vparam]
+expr e@16:54#1 memberCall recv=e@16:54 callee=expose args=[] type=Int call=golden.sema.SinceKotlinHost.expose[kind=fun;recv=golden.sema.SinceKotlinHost;params=]
+expr e@18:53 call callee=e@18:53#1 args=[] type=golden.sema.SinceKotlinHost call=golden.sema.SinceKotlinHost.<init>[kind=ctor;recv=golden.sema.SinceKotlinHost;params=]
