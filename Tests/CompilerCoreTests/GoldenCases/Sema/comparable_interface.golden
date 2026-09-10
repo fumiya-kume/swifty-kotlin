@@ -1,54 +1,53 @@
-symbol fq=Temperature kind=class vis=public flags=_
-symbol fq=Temperature.compareTo kind=function vis=public flags=overrideMember sig=recv=Temperature params=[Temperature] ret=Int
-symbol fq=Temperature.compareTo.$0.other kind=valueParameter vis=private flags=_
-symbol fq=Temperature.degrees kind=property vis=public flags=_ type=Int
-symbol fq=compareGe kind=function vis=public flags=_ sig=recv=_ params=[Temperature,Temperature] ret=Boolean
-symbol fq=compareGe.$1.a kind=valueParameter vis=private flags=_
-symbol fq=compareGe.$1.b kind=valueParameter vis=private flags=_
-symbol fq=compareInts kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean
-symbol fq=compareInts.$2.a kind=valueParameter vis=private flags=_
-symbol fq=compareInts.$2.b kind=valueParameter vis=private flags=_
-symbol fq=compareTemperatures kind=function vis=public flags=_ sig=recv=_ params=[Temperature,Temperature] ret=Boolean
-symbol fq=compareTemperatures.$3.a kind=valueParameter vis=private flags=_
-symbol fq=compareTemperatures.$3.b kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
-symbol fq=max kind=function vis=public flags=_ sig=recv=_ params=[max.$4.T,max.$4.T] ret=max.$4.T bounds=[kotlin.Comparable<max.$4.T>]
-symbol fq=max.$4.T kind=typeParameter vis=private flags=_
-symbol fq=max.$4.a kind=valueParameter vis=private flags=_
-symbol fq=max.$4.b kind=valueParameter vis=private flags=_
-symbol fq=nullSafeCompare kind=function vis=public flags=_ sig=recv=_ params=[Temperature?,Temperature] ret=Int
-symbol fq=nullSafeCompare.$5.a kind=valueParameter vis=private flags=_
-symbol fq=nullSafeCompare.$5.b kind=valueParameter vis=private flags=_
+symbol fq=Temperature.compareTo.$0.other[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Temperature.compareTo[kind=fun;recv=Temperature;params=Temperature] kind=function vis=public flags=overrideMember sig=recv=Temperature params=[Temperature] ret=Int
+symbol fq=Temperature.degrees[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=Temperature[kind=class] kind=class vis=public flags=_
+symbol fq=compareGe.$1.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=compareGe.$1.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=compareGe[kind=fun;params=Temperature,Temperature] kind=function vis=public flags=_ sig=recv=_ params=[Temperature,Temperature] ret=Boolean
+symbol fq=compareInts.$2.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=compareInts.$2.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=compareInts[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean
+symbol fq=compareTemperatures.$3.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=compareTemperatures.$3.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=compareTemperatures[kind=fun;params=Temperature,Temperature] kind=function vis=public flags=_ sig=recv=_ params=[Temperature,Temperature] ret=Boolean
+symbol fq=max.$4.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=max.$4.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=max.$4.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=max[kind=fun;params=T0,T0;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[max.$4.T,max.$4.T] ret=max.$4.T bounds=[kotlin.Comparable<max.$4.T>]
+symbol fq=nullSafeCompare.$5.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=nullSafeCompare.$5.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=nullSafeCompare[kind=fun;params=Temperature?,Temperature] kind=function vis=public flags=_ sig=recv=_ params=[Temperature?,Temperature] ret=Int
 file fcomparable_interface package=_
-  decl Temperature class Temperature sym=Temperature
-  decl max fun max sym=max
-  decl nullSafeCompare fun nullSafeCompare sym=nullSafeCompare
-  decl compareInts fun compareInts sym=compareInts
-  decl compareTemperatures fun compareTemperatures sym=compareTemperatures
-  decl compareGe fun compareGe sym=compareGe
+  decl Temperature[kind=class] class Temperature sym=Temperature[kind=class]
+  decl max[kind=fun;params=T0,T0;gen=1] fun max sym=max[kind=fun;params=T0,T0;gen=1]
+  decl nullSafeCompare[kind=fun;params=Temperature?,Temperature] fun nullSafeCompare sym=nullSafeCompare[kind=fun;params=Temperature?,Temperature]
+  decl compareInts[kind=fun;params=Int,Int] fun compareInts sym=compareInts[kind=fun;params=Int,Int]
+  decl compareTemperatures[kind=fun;params=Temperature,Temperature] fun compareTemperatures sym=compareTemperatures[kind=fun;params=Temperature,Temperature]
+  decl compareGe[kind=fun;params=Temperature,Temperature] fun compareGe sym=compareGe[kind=fun;params=Temperature,Temperature]
 expr e@5:55 this type=Temperature
-expr e@5:55#1 memberCall recv=e@5:55 callee=degrees args=[] type=Int ref=Temperature.degrees
-expr e@5:70 name(other) type=Temperature ref=Temperature.compareTo.$0.other
-expr e@5:70#1 memberCall recv=e@5:70 callee=degrees args=[] type=Int ref=Temperature.degrees
+expr e@5:55#1 memberCall recv=e@5:55 callee=degrees args=[] type=Int ref=Temperature.degrees[kind=prop]
+expr e@5:70 name(other) type=Temperature ref=Temperature.compareTo.$0.other[kind=vparam]
+expr e@5:70#1 memberCall recv=e@5:70 callee=degrees args=[] type=Int ref=Temperature.degrees[kind=prop]
 expr e@5:55#2 binary(subtract) lhs=e@5:55#1 rhs=e@5:70#1 type=Int
-expr e@8:50 name(a) type=max.$4.T ref=max.$4.a
-expr e@8:54 name(b) type=max.$4.T ref=max.$4.b
-expr e@8:50#1 binary(greaterThan) lhs=e@8:50 rhs=e@8:54 type=Boolean call=kotlin.Comparable.compareTo targs=[max.$4.T]
-expr e@8:57 name(a) type=max.$4.T ref=max.$4.a
-expr e@8:64 name(b) type=max.$4.T ref=max.$4.b
+expr e@8:50 name(a) type=max.$4.T ref=max.$4.a[kind=vparam]
+expr e@8:54 name(b) type=max.$4.T ref=max.$4.b[kind=vparam]
+expr e@8:50#1 binary(greaterThan) lhs=e@8:50 rhs=e@8:54 type=Boolean call=kotlin.Comparable.compareTo[kind=fun;recv=kotlin.Comparable<T0>;params=T0;gen=1] targs=[max.$4.T]
+expr e@8:57 name(a) type=max.$4.T ref=max.$4.a[kind=vparam]
+expr e@8:64 name(b) type=max.$4.T ref=max.$4.b[kind=vparam]
 expr e@8:46 if cond=e@8:50#1 then=e@8:57 else=e@8:64 type=max.$4.T
-expr e@10:61 name(a) type=Temperature? ref=nullSafeCompare.$5.a
-expr e@10:74 name(b) type=Temperature ref=nullSafeCompare.$5.b
-expr e@10:61#1 safeMemberCall recv=e@10:61 callee=compareTo args=[_:e@10:74] type=Int? call=Temperature.compareTo
+expr e@10:61 name(a) type=Temperature? ref=nullSafeCompare.$5.a[kind=vparam]
+expr e@10:74 name(b) type=Temperature ref=nullSafeCompare.$5.b[kind=vparam]
+expr e@10:61#1 safeMemberCall recv=e@10:61 callee=compareTo args=[_:e@10:74] type=Int? call=Temperature.compareTo[kind=fun;recv=Temperature;params=Temperature]
 expr e@10:81 int(1) type=Int
 expr e@10:80 unary(unaryMinus) operand=e@10:81 type=Int
 expr e@10:61#2 binary(elvis) lhs=e@10:61#1 rhs=e@10:80 type=Int
-expr e@12:44 name(a) type=Int ref=compareInts.$2.a
-expr e@12:48 name(b) type=Int ref=compareInts.$2.b
+expr e@12:44 name(a) type=Int ref=compareInts.$2.a[kind=vparam]
+expr e@12:48 name(b) type=Int ref=compareInts.$2.b[kind=vparam]
 expr e@12:44#1 binary(lessThan) lhs=e@12:44 rhs=e@12:48 type=Boolean
-expr e@14:68 name(a) type=Temperature ref=compareTemperatures.$3.a
-expr e@14:72 name(b) type=Temperature ref=compareTemperatures.$3.b
-expr e@14:68#1 binary(lessThan) lhs=e@14:68 rhs=e@14:72 type=Boolean call=Temperature.compareTo
-expr e@16:58 name(a) type=Temperature ref=compareGe.$1.a
-expr e@16:63 name(b) type=Temperature ref=compareGe.$1.b
-expr e@16:58#1 binary(greaterOrEqual) lhs=e@16:58 rhs=e@16:63 type=Boolean call=Temperature.compareTo
+expr e@14:68 name(a) type=Temperature ref=compareTemperatures.$3.a[kind=vparam]
+expr e@14:72 name(b) type=Temperature ref=compareTemperatures.$3.b[kind=vparam]
+expr e@14:68#1 binary(lessThan) lhs=e@14:68 rhs=e@14:72 type=Boolean call=Temperature.compareTo[kind=fun;recv=Temperature;params=Temperature]
+expr e@16:58 name(a) type=Temperature ref=compareGe.$1.a[kind=vparam]
+expr e@16:63 name(b) type=Temperature ref=compareGe.$1.b[kind=vparam]
+expr e@16:58#1 binary(greaterOrEqual) lhs=e@16:58 rhs=e@16:63 type=Boolean call=Temperature.compareTo[kind=fun;recv=Temperature;params=Temperature]

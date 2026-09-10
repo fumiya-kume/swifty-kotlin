@@ -329,7 +329,7 @@ enum MemberRuntimeDispatch {
                 )
             }
             if kind.isULongRangeLike { return "__kk_ulong_step" }
-            if kind.isUIntRangeLike { return "__kk_uint_step" }
+            if kind.isUIntRangeLike { return nil }
             if kind.isCharRangeLike { return "__kk_char_range_step" }
             return "__kk_op_step"
         default:
@@ -401,6 +401,7 @@ enum MemberRuntimeDispatch {
         }
         if kind == .uintRange {
             let sourceBacked: Set<String> = [
+                "iterator", "chunked", "windowed", "take", "drop",
                 "map", "mapIndexed", "mapNotNull",
                 "filter", "filterIndexed", "filterNot",
                 "forEach",
@@ -416,6 +417,8 @@ enum MemberRuntimeDispatch {
         }
         if kind == .uintProgression {
             let sourceBacked: Set<String> = [
+                "first", "firstOrNull", "last", "lastOrNull",
+                "iterator", "chunked", "windowed", "take", "drop",
                 "map", "mapIndexed", "mapNotNull",
                 "filter", "filterIndexed", "filterNot",
             ]
@@ -442,6 +445,20 @@ enum MemberRuntimeDispatch {
                 "chunked", "windowed",
                 "take", "drop", "average", "sorted",
             ]
+            if sourceBacked.contains(member) {
+                return nil
+            }
+        }
+
+        if kind == .longProgression {
+            let sourceBacked: Set<String> = ["first", "firstOrNull", "last", "lastOrNull"]
+            if sourceBacked.contains(member) {
+                return nil
+            }
+        }
+
+        if kind == .ulongProgression {
+            let sourceBacked: Set<String> = ["first", "firstOrNull", "last", "lastOrNull"]
             if sourceBacked.contains(member) {
                 return nil
             }

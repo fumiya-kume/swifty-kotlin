@@ -1,8 +1,7 @@
-symbol fq=golden.sema.Direction kind=enumClass vis=public flags=_
-symbol fq=golden.sema.enumCompanion kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
-symbol fq=kotlin.Enum kind=class vis=public flags=abstractType|openType
+symbol fq=golden.sema.Direction[kind=enum] kind=enumClass vis=public flags=_
+symbol fq=golden.sema.enumCompanion[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
 file fstdlib_kotlin_Enum_n_n package=golden.sema
-  decl golden.sema.Direction class Direction sym=golden.sema.Direction
-  decl golden.sema.enumCompanion fun enumCompanion sym=golden.sema.enumCompanion
-expr e@5:28 name(Enum) type=kotlin.Enum ref=kotlin.Enum
-expr e@5:28#1 memberCall recv=e@5:28 callee=Companion args=[] type=kotlin.Enum.Companion ref=kotlin.Enum.Companion
+  decl golden.sema.Direction[kind=enum] class Direction sym=golden.sema.Direction[kind=enum]
+  decl golden.sema.enumCompanion[kind=fun;params=] fun enumCompanion sym=golden.sema.enumCompanion[kind=fun;params=]
+expr e@5:28 name(Enum) type=kotlin.Enum ref=kotlin.Enum[kind=class;gen=1]
+expr e@5:28#1 memberCall recv=e@5:28 callee=Companion args=[] type=kotlin.Enum.Companion ref=kotlin.Enum.Companion[kind=obj]

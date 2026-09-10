@@ -1,8 +1,8 @@
-symbol fq=golden.sema.defaultCapacity kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.MutableData
-symbol fq=golden.sema.explicitCapacity kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.MutableData
+symbol fq=golden.sema.defaultCapacity[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.MutableData
+symbol fq=golden.sema.explicitCapacity[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.MutableData
 file fstdlib_kotlin_native_concurrent_MutableData_n_n package=golden.sema annotations=[@file:Suppress("DEPRECATION_ERROR")]
-  decl golden.sema.defaultCapacity fun defaultCapacity sym=golden.sema.defaultCapacity
-  decl golden.sema.explicitCapacity fun explicitCapacity sym=golden.sema.explicitCapacity
-expr e@7:38 call callee=e@7:38#1 args=[] type=kotlin.native.concurrent.MutableData call=kotlin.native.concurrent.MutableData.<init>
+  decl golden.sema.defaultCapacity[kind=fun;params=] fun defaultCapacity sym=golden.sema.defaultCapacity[kind=fun;params=]
+  decl golden.sema.explicitCapacity[kind=fun;params=] fun explicitCapacity sym=golden.sema.explicitCapacity[kind=fun;params=]
+expr e@7:38 call callee=e@7:38#1 args=[] type=kotlin.native.concurrent.MutableData call=kotlin.native.concurrent.MutableData.<init>[kind=ctor;recv=kotlin.native.concurrent.MutableData;params=Int]
 expr e@9:51 int(4) type=Int
-expr e@9:39 call callee=e@9:39#1 args=[_:e@9:51] type=kotlin.native.concurrent.MutableData call=kotlin.native.concurrent.MutableData.<init>
+expr e@9:39 call callee=e@9:39#1 args=[_:e@9:51] type=kotlin.native.concurrent.MutableData call=kotlin.native.concurrent.MutableData.<init>[kind=ctor;recv=kotlin.native.concurrent.MutableData;params=Int]

@@ -137,31 +137,6 @@ public extension RuntimeABISpec {
             section: "Duration"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_timedvalue_new",
-            parameters: [
-                RuntimeABIParameter(name: "valueRaw", type: .intptr),
-                RuntimeABIParameter(name: "durationRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Duration"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_timedvalue_value",
-            parameters: [
-                RuntimeABIParameter(name: "timedValueRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Duration"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_timedvalue_duration",
-            parameters: [
-                RuntimeABIParameter(name: "timedValueRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Duration"
-        ),
-        RuntimeABIFunctionSpec(
             name: "kk_time_source_mark_now",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),

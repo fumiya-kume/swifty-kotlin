@@ -1,28 +1,28 @@
-symbol fq=__local_0.text kind=local vis=private flags=_ type=String?
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.requireNotNullDefault kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=String
-symbol fq=golden.sema.requireNotNullDefault.$0.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.requireNotNullWithMessage kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=String
-symbol fq=golden.sema.requireNotNullWithMessage.$1.value kind=valueParameter vis=private flags=_
+symbol fq=__local_0.text[kind=local] kind=local vis=private flags=_ type=String?
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.requireNotNullDefault.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.requireNotNullDefault[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=String
+symbol fq=golden.sema.requireNotNullWithMessage.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.requireNotNullWithMessage[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=String
 file fstdlib_kotlin_n_require package=golden.sema
-  decl golden.sema.requireNotNullDefault fun requireNotNullDefault sym=golden.sema.requireNotNullDefault
-  decl golden.sema.requireNotNullWithMessage fun requireNotNullWithMessage sym=golden.sema.requireNotNullWithMessage
-  decl golden.sema.main fun main sym=golden.sema.main
-expr e@4:27 name(value) type=String? ref=golden.sema.requireNotNullDefault.$0.value
-expr e@4:12 call callee=e@4:12#1 args=[_:e@4:27] type=String call=kotlin.requireNotNull#0 targs=[String]
+  decl golden.sema.requireNotNullDefault[kind=fun;params=String?] fun requireNotNullDefault sym=golden.sema.requireNotNullDefault[kind=fun;params=String?]
+  decl golden.sema.requireNotNullWithMessage[kind=fun;params=String?] fun requireNotNullWithMessage sym=golden.sema.requireNotNullWithMessage[kind=fun;params=String?]
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
+expr e@4:27 name(value) type=String? ref=golden.sema.requireNotNullDefault.$0.value[kind=vparam]
+expr e@4:12 call callee=e@4:12#1 args=[_:e@4:27] type=String call=kotlin.requireNotNull[kind=fun;params=T0?;gen=1] targs=[String]
 expr e@4:5 return value=e@4:12 type=Nothing
-expr e@8:27 name(value) type=String? ref=golden.sema.requireNotNullWithMessage.$1.value
+expr e@8:27 name(value) type=String? ref=golden.sema.requireNotNullWithMessage.$1.value[kind=vparam]
 expr e@8:36 string(value was null) type=String
 expr e@8:34 lambda params=[] body=e@8:36 label=requireNotNull type=() -> Any
-expr e@8:12 call callee=e@8:12#1 args=[_:e@8:27,_:e@8:34] type=String call=kotlin.requireNotNull#1 targs=[String]
+expr e@8:12 call callee=e@8:12#1 args=[_:e@8:27,_:e@8:34] type=String call=kotlin.requireNotNull[kind=fun;params=T0?,fn{p=;ret=Any};gen=1] targs=[String]
 expr e@8:5 return value=e@8:12 type=Nothing
 expr e@12:25 string(hello) type=String
-expr e@12:5 localDecl text mutable=0 type=String? init=e@12:25 type=Unit ref=__local_0.text
-expr e@13:35 name(text) type=String? ref=__local_0.text
-expr e@13:13 call callee=e@13:13#1 args=[_:e@13:35] type=String call=golden.sema.requireNotNullDefault
-expr e@13:13#2 memberCall recv=e@13:13 callee=length args=[] type=Int call=kotlin.length.$get
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#2] type=Unit call=kotlin.io.println#1
-expr e@14:39 name(text) type=String? ref=__local_0.text
-expr e@14:13 call callee=e@14:13#1 args=[_:e@14:39] type=String call=golden.sema.requireNotNullWithMessage
-expr e@14:13#2 memberCall recv=e@14:13 callee=length args=[] type=Int call=kotlin.length.$get
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#2] type=Unit call=kotlin.io.println#1
+expr e@12:5 localDecl text mutable=0 type=String? init=e@12:25 type=Unit ref=__local_0.text[kind=local]
+expr e@13:35 name(text) type=String? ref=__local_0.text[kind=local]
+expr e@13:13 call callee=e@13:13#1 args=[_:e@13:35] type=String call=golden.sema.requireNotNullDefault[kind=fun;params=String?]
+expr e@13:13#2 memberCall recv=e@13:13 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@14:39 name(text) type=String? ref=__local_0.text[kind=local]
+expr e@14:13 call callee=e@14:13#1 args=[_:e@14:39] type=String call=golden.sema.requireNotNullWithMessage[kind=fun;params=String?]
+expr e@14:13#2 memberCall recv=e@14:13 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

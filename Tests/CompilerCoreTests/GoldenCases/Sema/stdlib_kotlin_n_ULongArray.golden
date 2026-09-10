@@ -1,17 +1,15 @@
-symbol fq=__local_0.values kind=local vis=private flags=_ type=kotlin.ULongArray
-symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.ULongArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=__local_0.values[kind=local] kind=local vis=private flags=_ type=kotlin.ULongArray
+symbol fq=golden.sema.main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_n_ULongArray package=golden.sema
-  decl golden.sema.main fun main sym=golden.sema.main
+  decl golden.sema.main[kind=fun;params=] fun main sym=golden.sema.main[kind=fun;params=]
 expr e@4:29 int(4) type=Int
 expr e@4:35 name(it) type=Int ref=s-0
 expr e@4:40 int(1) type=Int
 expr e@4:35#1 binary(add) lhs=e@4:35 rhs=e@4:40 type=Int
 expr e@4:35#2 memberCall recv=e@4:35#1 callee=toULong args=[] type=ULong
 expr e@4:32 lambda params=[] body=e@4:35#2 label=ULongArray type=(Int) -> ULong
-expr e@4:18 call callee=e@4:18#1 args=[_:e@4:29,_:e@4:32] type=kotlin.ULongArray call=kotlin.ULongArray#1
-expr e@4:5 localDecl values mutable=0 type=_ init=e@4:18 type=Unit ref=__local_0.values
-expr e@5:13 name(values) type=kotlin.ULongArray ref=__local_0.values
-expr e@5:13#1 memberCall recv=e@5:13 callee=toList args=[] type=kotlin.collections.List<ULong> call=kotlin.collections.toList#11
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println#1
+expr e@4:18 call callee=e@4:18#1 args=[_:e@4:29,_:e@4:32] type=kotlin.ULongArray call=kotlin.ULongArray[kind=fun;params=Int,fn{p=Int;ret=ULong}]
+expr e@4:5 localDecl values mutable=0 type=_ init=e@4:18 type=Unit ref=__local_0.values[kind=local]
+expr e@5:13 name(values) type=kotlin.ULongArray ref=__local_0.values[kind=local]
+expr e@5:13#1 memberCall recv=e@5:13 callee=toList args=[] type=kotlin.collections.List<ULong> call=kotlin.collections.toList[kind=fun;recv=kotlin.ULongArray;params=]
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

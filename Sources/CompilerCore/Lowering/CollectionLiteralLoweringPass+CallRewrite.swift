@@ -7,11 +7,15 @@ extension CollectionLiteralConstructionLoweringPass {
         lookup: CollectionLiteralLookupTables,
         ctx: KIRContext
     ) -> Bool {
-        // KSP-1513: source-backed Array<T>/primitive-array `size` and `toList`
-        // calls on literal arrays must keep their selected Kotlin declaration.
-        // The source body delegates to the typed private runtime bridge.
-        if (callee == lookup.sizeName || callee == lookup.toListName),
-           arguments.count == 1,
+        // KSP-1513/KSP-1516: source-backed Array<T>/primitive-array members on
+        // literal arrays must keep their selected Kotlin declaration. The
+        // source body may delegate to a typed private runtime bridge.
+        let sourceBackedArrayConversionNames: Set<InternedString> = [
+            lookup.sizeName, lookup.toListName, lookup.sliceArrayName,
+            lookup.reversedArrayName, lookup.asListName, lookup.toTypedArrayName,
+        ]
+        if sourceBackedArrayConversionNames.contains(callee),
+           !arguments.isEmpty,
            state.arrayExprIDs.contains(arguments[0].rawValue),
            let symbol,
            let sema = ctx.sema,
@@ -203,6 +207,20 @@ extension CollectionLiteralConstructionLoweringPass {
             state: &state,
             loweredBody: &loweredBody
         ) {
+            // Concrete-class collection constructors (`LinkedHashSet()`,
+            // `HashMap()`, ...) are rewritten to runtime factories whose
+            // returned boxes never pass `kk_object_new`, so the
+            // constructor-site vtable registrations never ran for them.
+            // Register the nominal vtable implementations on the box so an
+            // open member dispatch (e.g. `LinkedHashSet.size`) resolves
+            // instead of trapping at `kk_vtable_lookup`. No-ops for
+            // interface-typed results.
+            appendFactoryResultVtableRegistrations(
+                result: result,
+                module: module,
+                ctx: ctx,
+                loweredBody: &loweredBody
+            )
             return
         }
 

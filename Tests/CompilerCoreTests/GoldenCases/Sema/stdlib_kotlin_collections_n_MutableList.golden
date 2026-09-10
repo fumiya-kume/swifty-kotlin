@@ -1,20 +1,18 @@
-symbol fq=CustomMutableList kind=class vis=public flags=abstractType|openType
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
-symbol fq=mutableListFactoryProbe kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.MutableList<Int>
-symbol fq=mutableListProbe kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableList<Int>] ret=kotlin.collections.List<kotlin.Number>
-symbol fq=mutableListProbe.$0.values kind=valueParameter vis=private flags=_
-symbol fq=mutableListTypeProbe kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
-symbol fq=mutableListTypeProbe.$1.value kind=valueParameter vis=private flags=_
+symbol fq=CustomMutableList[kind=class] kind=class vis=public flags=abstractType|openType
+symbol fq=mutableListFactoryProbe[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.MutableList<Int>
+symbol fq=mutableListProbe.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=mutableListProbe[kind=fun;params=kotlin.collections.MutableList<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableList<Int>] ret=kotlin.collections.List<kotlin.Number>
+symbol fq=mutableListTypeProbe.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=mutableListTypeProbe[kind=fun;params=Any] kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
 file fstdlib_kotlin_collections_n_MutableList package=_
-  decl CustomMutableList class CustomMutableList sym=CustomMutableList
-  decl mutableListProbe fun mutableListProbe sym=mutableListProbe
-  decl mutableListFactoryProbe fun mutableListFactoryProbe sym=mutableListFactoryProbe
-  decl mutableListTypeProbe fun mutableListTypeProbe sym=mutableListTypeProbe
-expr e@4:64 name(values) type=kotlin.collections.MutableList<Int> ref=mutableListProbe.$0.values
+  decl CustomMutableList[kind=class] class CustomMutableList sym=CustomMutableList[kind=class]
+  decl mutableListProbe[kind=fun;params=kotlin.collections.MutableList<Int>] fun mutableListProbe sym=mutableListProbe[kind=fun;params=kotlin.collections.MutableList<Int>]
+  decl mutableListFactoryProbe[kind=fun;params=] fun mutableListFactoryProbe sym=mutableListFactoryProbe[kind=fun;params=]
+  decl mutableListTypeProbe[kind=fun;params=Any] fun mutableListTypeProbe sym=mutableListTypeProbe[kind=fun;params=Any]
+expr e@4:64 name(values) type=kotlin.collections.MutableList<Int> ref=mutableListProbe.$0.values[kind=vparam]
 expr e@6:63 int(3) type=Int
 expr e@6:68 name(it) type=Int ref=s-0
 expr e@6:66 lambda params=[] body=e@6:68 label=MutableList type=(Int) -> Int
-expr e@6:51 call callee=e@6:51#1 args=[_:e@6:63,_:e@6:66] type=kotlin.collections.MutableList<Int> call=kotlin.collections.MutableList#1 targs=[Int]
-expr e@8:49 name(value) type=Any ref=mutableListTypeProbe.$1.value
+expr e@6:51 call callee=e@6:51#1 args=[_:e@6:63,_:e@6:66] type=kotlin.collections.MutableList<Int> call=kotlin.collections.MutableList[kind=fun;params=Int,fn{p=Int;ret=T0};gen=1] targs=[Int]
+expr e@8:49 name(value) type=Any ref=mutableListTypeProbe.$1.value[kind=vparam]
 expr e@8:49#1 isCheck expr=e@8:49 type=kotlin.collections.MutableList<*> type=Boolean

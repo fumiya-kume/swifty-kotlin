@@ -1,0 +1,9 @@
+symbol fq=readNamedGroup.$0.collection[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=readNamedGroup.$0.name[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=readNamedGroup[kind=fun;params=kotlin.text.MatchNamedGroupCollection,String] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.MatchNamedGroupCollection,String] ret=kotlin.text.MatchGroup?
+file fstdlib_kotlin_text_MatchNamedGroupCollection_MatchNamedGroupCollection_n package=_
+  decl readNamedGroup[kind=fun;params=kotlin.text.MatchNamedGroupCollection,String] fun readNamedGroup sym=readNamedGroup[kind=fun;params=kotlin.text.MatchNamedGroupCollection,String]
+expr e@2:12 name(collection) type=kotlin.text.MatchNamedGroupCollection ref=readNamedGroup.$0.collection[kind=vparam]
+expr e@2:23 name(name) type=String ref=readNamedGroup.$0.name[kind=vparam]
+expr e@2:12#1 indexedAccess receiver=e@2:12 indices=[e@2:23] type=kotlin.text.MatchGroup? call=kotlin.text.MatchNamedGroupCollection.get[kind=fun;recv=kotlin.text.MatchNamedGroupCollection;params=String]
+expr e@2:5 return value=e@2:12#1 type=Nothing

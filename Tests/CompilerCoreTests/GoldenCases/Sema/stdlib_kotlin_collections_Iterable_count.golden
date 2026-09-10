@@ -1,18 +1,17 @@
-symbol fq=countIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
-symbol fq=countIterable.$0.values kind=valueParameter vis=private flags=_
-symbol fq=countIterablePredicate kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int?>] ret=Int
-symbol fq=countIterablePredicate.$1.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
+symbol fq=countIterable.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=countIterablePredicate.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=countIterablePredicate[kind=fun;params=kotlin.collections.Iterable<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int?>] ret=Int
+symbol fq=countIterable[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int
 file fstdlib_kotlin_collections_Iterable_count package=_
-  decl countIterable fun countIterable sym=countIterable
-  decl countIterablePredicate fun countIterablePredicate sym=countIterablePredicate
-expr e@2:12 name(values) type=kotlin.collections.Iterable<Int> ref=countIterable.$0.values
-expr e@2:12#1 memberCall recv=e@2:12 callee=count args=[] type=Int call=kotlin.collections.count#27 targs=[Int]
+  decl countIterable[kind=fun;params=kotlin.collections.Iterable<Int>] fun countIterable sym=countIterable[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl countIterablePredicate[kind=fun;params=kotlin.collections.Iterable<Int?>] fun countIterablePredicate sym=countIterablePredicate[kind=fun;params=kotlin.collections.Iterable<Int?>]
+expr e@2:12 name(values) type=kotlin.collections.Iterable<Int> ref=countIterable.$0.values[kind=vparam]
+expr e@2:12#1 memberCall recv=e@2:12 callee=count args=[] type=Int call=kotlin.collections.count[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
 expr e@2:5 return value=e@2:12#1 type=Nothing
-expr e@6:12 name(values) type=kotlin.collections.Iterable<Int?> ref=countIterablePredicate.$1.values
+expr e@6:12 name(values) type=kotlin.collections.Iterable<Int?> ref=countIterablePredicate.$1.values[kind=vparam]
 expr e@6:27 name(it) type=Int? ref=s-0
 expr e@6:33 name(null) type=Nothing?
 expr e@6:27#1 binary(equal) lhs=e@6:27 rhs=e@6:33 type=Boolean
 expr e@6:25 lambda params=[] body=e@6:27#1 label=count type=(Int?) -> Boolean
-expr e@6:12#1 memberCall recv=e@6:12 callee=count args=[_:e@6:25] type=Int call=kotlin.collections.count#28 targs=[Int?]
+expr e@6:12#1 memberCall recv=e@6:12 callee=count args=[_:e@6:25] type=Int call=kotlin.collections.count[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int?]
 expr e@6:5 return value=e@6:12#1 type=Nothing

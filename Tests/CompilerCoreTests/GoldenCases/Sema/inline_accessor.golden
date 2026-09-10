@@ -1,13 +1,13 @@
-symbol fq=test.Rect kind=class vis=public flags=_
-symbol fq=test.Rect.$backing_label kind=backingField vis=private flags=mutable type=String
-symbol fq=test.Rect.height kind=property vis=public flags=_ type=Int
-symbol fq=test.Rect.width kind=property vis=public flags=_ type=Int
+symbol fq=test.Rect.$backing_label[kind=bfield] kind=backingField vis=private flags=mutable type=String
+symbol fq=test.Rect.height[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=test.Rect.width[kind=prop] kind=property vis=public flags=_ type=Int
+symbol fq=test.Rect[kind=class] kind=class vis=public flags=_
 file finline_accessor package=test
-  decl test.Rect class Rect sym=test.Rect
-expr e@5:17 name(width) type=Int ref=test.Rect.width
-expr e@5:25 name(height) type=Int ref=test.Rect.height
+  decl test.Rect[kind=class] class Rect sym=test.Rect[kind=class]
+expr e@5:17 name(width) type=Int ref=test.Rect.width[kind=prop]
+expr e@5:25 name(height) type=Int ref=test.Rect.height[kind=prop]
 expr e@5:17#1 binary(multiply) lhs=e@5:17 rhs=e@5:25 type=Int
 expr e@9:30 name(value) type=String ref=s-0
-expr e@9:22 localAssign field value=e@9:30 type=Unit ref=test.Rect.$backing_label
-expr e@8:17 name(field) type=String ref=test.Rect.$backing_label
+expr e@9:22 localAssign field value=e@9:30 type=Unit ref=test.Rect.$backing_label[kind=bfield]
+expr e@8:17 name(field) type=String ref=test.Rect.$backing_label[kind=bfield]
 expr e@7:25 string() type=String

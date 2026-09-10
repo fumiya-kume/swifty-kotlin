@@ -1,28 +1,26 @@
-symbol fq=__destructuring_0.evens kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=__destructuring_0.odds kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=__local_0.list kind=local vis=private flags=_ type=kotlin.collections.List<out Int>
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__destructuring_0.evens[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__destructuring_0.odds[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_0.list[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<out Int>
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file flist_partition package=_
-  decl main fun main sym=main
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
 expr e@2:23 int(1) type=Int
 expr e@2:26 int(2) type=Int
 expr e@2:29 int(3) type=Int
 expr e@2:32 int(4) type=Int
 expr e@2:35 int(5) type=Int
-expr e@2:16 call callee=e@2:16#1 args=[_:e@2:23,_:e@2:26,_:e@2:29,_:e@2:32,_:e@2:35] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@2:5 localDecl list mutable=0 type=_ init=e@2:16 type=Unit ref=__local_0.list
-expr e@3:25 name(list) type=kotlin.collections.List<out Int> ref=__local_0.list
+expr e@2:16 call callee=e@2:16#1 args=[_:e@2:23,_:e@2:26,_:e@2:29,_:e@2:32,_:e@2:35] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf[kind=fun;params=T0;gen=1] targs=[Int]
+expr e@2:5 localDecl list mutable=0 type=_ init=e@2:16 type=Unit ref=__local_0.list[kind=local]
+expr e@3:25 name(list) type=kotlin.collections.List<out Int> ref=__local_0.list[kind=local]
 expr e@3:42 name(it) type=Int ref=s-0
 expr e@3:47 int(2) type=Int
 expr e@3:42#1 binary(modulo) lhs=e@3:42 rhs=e@3:47 type=Int
 expr e@3:52 int(0) type=Int
 expr e@3:42#2 binary(equal) lhs=e@3:42#1 rhs=e@3:52 type=Boolean
 expr e@3:40 lambda params=[] body=e@3:42#2 label=partition type=(Int) -> Boolean
-expr e@3:25#1 memberCall recv=e@3:25 callee=partition args=[_:e@3:40] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<Int>> call=kotlin.collections.partition#1 targs=[Int]
+expr e@3:25#1 memberCall recv=e@3:25 callee=partition args=[_:e@3:40] type=kotlin.Pair<kotlin.collections.List<Int>, kotlin.collections.List<Int>> call=kotlin.collections.partition[kind=fun;recv=kotlin.collections.List<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
 expr e@3:5 destructuringDecl names=[evens,odds] mutable=0 init=e@3:25#1 type=Unit
-expr e@4:13 name(evens) type=kotlin.collections.List<Int> ref=__destructuring_0.evens
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13] type=Unit call=kotlin.io.println#1
-expr e@5:13 name(odds) type=kotlin.collections.List<Int> ref=__destructuring_0.odds
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13] type=Unit call=kotlin.io.println#1
+expr e@4:13 name(evens) type=kotlin.collections.List<Int> ref=__destructuring_0.evens[kind=local]
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@5:13 name(odds) type=kotlin.collections.List<Int> ref=__destructuring_0.odds[kind=local]
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

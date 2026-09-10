@@ -10,12 +10,17 @@ struct BundledMemberKey: Hashable, Sendable {
 
 /// Index of member declarations originating from bundled stdlib virtual sources (`__bundled_*.kt`).
 struct BundledDeclarationIndex: Sendable {
-    static let empty = BundledDeclarationIndex(keys: [])
+    static let empty = BundledDeclarationIndex(keys: [], nominalFQNames: [])
 
     private let keys: Set<BundledMemberKey>
+    private let nominalFQNames: Set<[InternedString]>
 
-    init(keys: Set<BundledMemberKey> = []) {
+    init(
+        keys: Set<BundledMemberKey> = [],
+        nominalFQNames: Set<[InternedString]> = []
+    ) {
         self.keys = keys
+        self.nominalFQNames = nominalFQNames
     }
 
     func contains(_ key: BundledMemberKey) -> Bool {
@@ -30,8 +35,15 @@ struct BundledDeclarationIndex: Sendable {
         contains(owner: ownerFQName, name: name, arity: arity)
     }
 
+    func containsNominal(fqName: [InternedString]) -> Bool {
+        nominalFQNames.contains(fqName)
+    }
+
     mutating func insert(_ key: BundledMemberKey) {
-        self = BundledDeclarationIndex(keys: keys.union([key]))
+        self = BundledDeclarationIndex(
+            keys: keys.union([key]),
+            nominalFQNames: nominalFQNames
+        )
     }
 
     mutating func insertImportedStdlibSymbols(
@@ -40,7 +52,10 @@ struct BundledDeclarationIndex: Sendable {
     ) {
         var merged = self.keys.union(keys)
         Self.addListIterableAliases(to: &merged, interner: interner)
-        self = BundledDeclarationIndex(keys: merged)
+        self = BundledDeclarationIndex(
+            keys: merged,
+            nominalFQNames: nominalFQNames
+        )
     }
 
     /// Build from AST bundled sources before SymbolTable header collection.
@@ -49,7 +64,10 @@ struct BundledDeclarationIndex: Sendable {
     static func build(ast: ASTModule, sourceManager: SourceManager, interner: StringInterner) -> BundledDeclarationIndex {
         var keys = buildKeys(ast: ast, sourceManager: sourceManager, interner: interner)
         addListIterableAliases(to: &keys, interner: interner)
-        return BundledDeclarationIndex(keys: keys)
+        return BundledDeclarationIndex(
+            keys: keys,
+            nominalFQNames: buildNominalFQNames(ast: ast, sourceManager: sourceManager)
+        )
     }
 
     static func build(
@@ -61,7 +79,10 @@ struct BundledDeclarationIndex: Sendable {
     ) -> BundledDeclarationIndex {
         var keys = buildKeys(ast: ast, sourceManager: sourceManager, interner: interner)
         addListIterableAliases(to: &keys, interner: interner)
-        return BundledDeclarationIndex(keys: keys)
+        return BundledDeclarationIndex(
+            keys: keys,
+            nominalFQNames: buildNominalFQNames(ast: ast, sourceManager: sourceManager)
+        )
     }
 
     /// Build from SymbolTable symbols whose `declSite` is in bundled virtual files.
@@ -167,8 +188,20 @@ struct BundledDeclarationIndex: Sendable {
             // A Kotlin property and an extension function may share the same
             // owner, name, and arity. Do not report the retained synthetic
             // property when the bundled declaration is the source-backed
-            // function being migrated (for example CharProgression.first).
+            // function being migrated (for example IntProgression.first).
             if Self.hasSourceBackedFunctionOverlap(symbol, key: key, symbols: symbols, types: types, interner: interner) {
+                continue
+            }
+            // KSP-1288: OpenEndRange keeps its generic residual `contains(T)`
+            // member while source-backed cross-type overloads share the same
+            // owner/name/arity key. This is an intentional arity-only overlap.
+            if Self.isSyntheticOpenEndRangeGenericContainsRetainedOverlap(
+                symbol,
+                key: key,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ) {
                 continue
             }
             guard contains(key) else { continue }
@@ -228,8 +261,9 @@ struct BundledDeclarationIndex: Sendable {
         }
 
         let sourceFunctionFQName = kotlinCollections + [symbol.name]
-        return symbols.allSymbols().contains { candidate in
-            guard candidate.kind == .function,
+        return symbols.lookupAll(fqName: sourceFunctionFQName).contains { candidateID in
+            guard let candidate = symbols.symbol(candidateID),
+                  candidate.kind == .function,
                   (!candidate.flags.contains(.synthetic) || candidate.flags.contains(.importedLibrary)),
                   candidate.name == symbol.name,
                   candidate.fqName == sourceFunctionFQName,
@@ -262,8 +296,9 @@ struct BundledDeclarationIndex: Sendable {
             return false
         }
 
-        return symbols.allSymbols().contains { candidate in
-            guard candidate.id != symbol.id,
+        return symbols.lookupByShortName(symbol.name).contains { candidateID in
+            guard let candidate = symbols.symbol(candidateID),
+                  candidate.id != symbol.id,
                   candidate.kind == .function,
                   !candidate.flags.contains(.synthetic),
                   candidate.declSite != nil,
@@ -343,18 +378,22 @@ struct BundledDeclarationIndex: Sendable {
         types: TypeSystem,
         interner: StringInterner
     ) -> Bool {
-        let charProgressionFQName = ["kotlin", "ranges", "CharProgression"].map { interner.intern($0) }
+        let progressionFQNames = [
+            "IntProgression", "LongProgression", "CharProgression",
+            "UIntProgression", "ULongProgression",
+        ].map { ["kotlin", "ranges", $0].map { interner.intern($0) } }
         let migratedNames = Set(["first", "firstOrNull", "last", "lastOrNull"].map { interner.intern($0) })
         guard symbol.kind == .property,
-              key.ownerFQName == charProgressionFQName,
+              progressionFQNames.contains(key.ownerFQName),
               migratedNames.contains(key.name)
         else {
             return false
         }
         return symbols.allSymbols().contains { candidate in
+            // Imported library members have no declSite but stand in for the
+            // bundled source declaration, so accept either source form.
             guard candidate.kind == .function,
-                  !candidate.flags.contains(.synthetic),
-                  candidate.declSite != nil,
+                  symbols.isSourceBackedSymbol(candidate.id),
                   let candidateKey = memberKey(
                       for: candidate,
                       symbolID: candidate.id,
@@ -366,6 +405,50 @@ struct BundledDeclarationIndex: Sendable {
                 return false
             }
             return candidateKey == key
+        }
+    }
+
+    private static func isSyntheticOpenEndRangeGenericContainsRetainedOverlap(
+        _ symbol: SemanticSymbol,
+        key: BundledMemberKey,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> Bool {
+        let openEndRangeFQName = ["kotlin", "ranges", "OpenEndRange"].map { interner.intern($0) }
+        guard symbol.kind == .function,
+              key.ownerFQName == openEndRangeFQName,
+              interner.resolve(key.name) == "contains",
+              key.arity == 1,
+              let signature = symbols.functionSignature(for: symbol.id),
+              signature.classTypeParameterCount == 1,
+              let receiverType = signature.receiverType,
+              receiverOwnerFQName(
+                  for: receiverType,
+                  symbols: symbols,
+                  types: types,
+                  interner: interner
+              ) == openEndRangeFQName
+        else {
+            return false
+        }
+
+        return symbols.allSymbols().contains { candidate in
+            guard candidate.kind == .function,
+                  symbols.isSourceBackedSymbol(candidate.id),
+                  candidate.name == key.name,
+                  let candidateKey = memberKey(
+                      for: candidate,
+                      symbolID: candidate.id,
+                      symbols: symbols,
+                      types: types,
+                      interner: interner
+                  )
+            else {
+                return false
+            }
+            return candidateKey.ownerFQName == openEndRangeFQName
+                && candidateKey.arity == key.arity
         }
     }
 
@@ -542,6 +625,27 @@ struct BundledDeclarationIndex: Sendable {
         }
 
         return BundledDeclarationIndex(keys: keys)
+    }
+
+    private static func buildNominalFQNames(
+        ast: ASTModule,
+        sourceManager: SourceManager
+    ) -> Set<[InternedString]> {
+        let bundledFileIDs = bundledFileIDs(in: sourceManager)
+        guard !bundledFileIDs.isEmpty else {
+            return []
+        }
+
+        var fqNames: Set<[InternedString]> = []
+        for file in ast.sortedFiles where bundledFileIDs.contains(file.fileID) {
+            for declID in file.topLevelDecls {
+                guard let name = topLevelNominalName(declID: declID, ast: ast) else {
+                    continue
+                }
+                fqNames.insert(file.packageFQName + [name])
+            }
+        }
+        return fqNames
     }
 
     private static func makeMemberKey(

@@ -1,33 +1,44 @@
-symbol fq=Point kind=class vis=public flags=dataType
-symbol fq=Point.<init> kind=constructor vis=public flags=_ sig=recv=Point params=[Int,Int] ret=Point
-symbol fq=Point.<init>.$0.x kind=valueParameter vis=private flags=_
-symbol fq=Point.<init>.$0.y kind=valueParameter vis=private flags=_
-symbol fq=__destructuring_0.a kind=local vis=private flags=_ type=Int
-symbol fq=__destructuring_0.b kind=local vis=private flags=_ type=Int
-symbol fq=__destructuring_1.second kind=local vis=private flags=_ type=Int
-symbol fq=__local_0.p kind=local vis=private flags=_ type=Point
-symbol fq=__local_1.p kind=local vis=private flags=_ type=Point
-symbol fq=basicDestructuring kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=destructuringWithUnderscore kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=Point.<init>.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Point.<init>.$0.y[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=Point.<init>[kind=ctor;recv=Point;params=Int,Int] kind=constructor vis=public flags=_ sig=recv=Point params=[Int,Int] ret=Point
+symbol fq=Point[kind=class] kind=class vis=public flags=dataType
+symbol fq=__destructuring_0.a[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__destructuring_0.b[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__destructuring_1.second[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__destructuring_2.field[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__destructuring_2.value[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=__local_0.p[kind=local] kind=local vis=private flags=_ type=Point
+symbol fq=__local_1.p[kind=local] kind=local vis=private flags=_ type=Point
+symbol fq=basicDestructuring[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=destructuringWithContextualKeywordNames.$1.pair[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=destructuringWithContextualKeywordNames[kind=fun;params=kotlin.Pair<Int,String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Pair<Int, String>] ret=Unit
+symbol fq=destructuringWithUnderscore[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fdestructuring_decl package=_
-  decl Point class Point sym=Point
-  decl basicDestructuring fun basicDestructuring sym=basicDestructuring
-  decl destructuringWithUnderscore fun destructuringWithUnderscore sym=destructuringWithUnderscore
+  decl Point[kind=class] class Point sym=Point[kind=class]
+  decl basicDestructuring[kind=fun;params=] fun basicDestructuring sym=basicDestructuring[kind=fun;params=]
+  decl destructuringWithUnderscore[kind=fun;params=] fun destructuringWithUnderscore sym=destructuringWithUnderscore[kind=fun;params=]
+  decl destructuringWithContextualKeywordNames[kind=fun;params=kotlin.Pair<Int,String>] fun destructuringWithContextualKeywordNames sym=destructuringWithContextualKeywordNames[kind=fun;params=kotlin.Pair<Int,String>]
 expr e@4:19 int(1) type=Int
 expr e@4:22 int(2) type=Int
-expr e@4:13 call callee=e@4:13#1 args=[_:e@4:19,_:e@4:22] type=Point call=Point.<init>
-expr e@4:5 localDecl p mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.p
-expr e@5:18 name(p) type=Point ref=__local_0.p
+expr e@4:13 call callee=e@4:13#1 args=[_:e@4:19,_:e@4:22] type=Point call=Point.<init>[kind=ctor;recv=Point;params=Int,Int]
+expr e@4:5 localDecl p mutable=0 type=_ init=e@4:13 type=Unit ref=__local_0.p[kind=local]
+expr e@5:18 name(p) type=Point ref=__local_0.p[kind=local]
 expr e@5:5 destructuringDecl names=[a,b] mutable=0 init=e@5:18 type=Unit
-expr e@6:13 name(a) type=Int ref=__destructuring_0.a
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println#1
-expr e@7:13 name(b) type=Int ref=__destructuring_0.b
-expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13] type=Unit call=kotlin.io.println#1
+expr e@6:13 name(a) type=Int ref=__destructuring_0.a[kind=local]
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@7:13 name(b) type=Int ref=__destructuring_0.b[kind=local]
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@11:19 int(3) type=Int
 expr e@11:22 int(4) type=Int
-expr e@11:13 call callee=e@11:13#1 args=[_:e@11:19,_:e@11:22] type=Point call=Point.<init>
-expr e@11:5 localDecl p mutable=0 type=_ init=e@11:13 type=Unit ref=__local_1.p
-expr e@12:23 name(p) type=Point ref=__local_1.p
+expr e@11:13 call callee=e@11:13#1 args=[_:e@11:19,_:e@11:22] type=Point call=Point.<init>[kind=ctor;recv=Point;params=Int,Int]
+expr e@11:5 localDecl p mutable=0 type=_ init=e@11:13 type=Unit ref=__local_1.p[kind=local]
+expr e@12:23 name(p) type=Point ref=__local_1.p[kind=local]
 expr e@12:5 destructuringDecl names=[_,second] mutable=0 init=e@12:23 type=Unit
-expr e@13:13 name(second) type=Int ref=__destructuring_1.second
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13] type=Unit call=kotlin.io.println#1
+expr e@13:13 name(second) type=Int ref=__destructuring_1.second[kind=local]
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@17:26 name(pair) type=kotlin.Pair<Int, String> ref=destructuringWithContextualKeywordNames.$1.pair[kind=vparam]
+expr e@17:5 destructuringDecl names=[value,field] mutable=0 init=e@17:26 type=Unit
+expr e@18:13 name(value) type=Int ref=__destructuring_2.value[kind=local]
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@19:13 name(field) type=String ref=__destructuring_2.field[kind=local]
+expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13] type=Unit call=kotlin.io.println[kind=fun;params=String]

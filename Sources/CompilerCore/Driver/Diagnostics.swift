@@ -399,7 +399,16 @@ public final class DiagnosticEngine: @unchecked Sendable {
         }
 
         let actionsJSON = actions.map { action in
-            "{ \"title\": \(escapeJSON(action.title)), \"kind\": \(escapeJSON(action.kind)) }"
+            let header = "{ \"title\": \(escapeJSON(action.title)), \"kind\": \(escapeJSON(action.kind))"
+            guard !action.edits.isEmpty else {
+                return header + " }"
+            }
+            let editsJSON = action.edits.map { edit in
+                let editStart = sourceManager.lspPosition(of: edit.range.start)
+                let editEnd = sourceManager.lspPosition(of: edit.range.end)
+                return "{ \"range\": { \"start\": { \"line\": \(editStart.line), \"character\": \(editStart.character) }, \"end\": { \"line\": \(editEnd.line), \"character\": \(editEnd.character) } }, \"newText\": \(escapeJSON(edit.newText)) }"
+            }.joined(separator: ", ")
+            return header + ", \"edits\": [\(editsJSON)] }"
         }.joined(separator: ", ")
 
         return """

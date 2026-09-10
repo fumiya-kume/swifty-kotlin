@@ -1,18 +1,16 @@
-symbol fq=golden.sema.ProbeSet kind=class vis=public flags=abstractType|openType
-symbol fq=golden.sema.acceptCollection kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>] ret=Unit
-symbol fq=golden.sema.acceptCollection.$0.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.acceptSet kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int>] ret=Unit
-symbol fq=golden.sema.acceptSet.$1.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.probe kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.ProbeSet] ret=Unit
-symbol fq=golden.sema.probe.$2.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
+symbol fq=golden.sema.ProbeSet[kind=class] kind=class vis=public flags=abstractType|openType
+symbol fq=golden.sema.acceptCollection.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptCollection[kind=fun;params=kotlin.collections.Collection<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>] ret=Unit
+symbol fq=golden.sema.acceptSet.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.acceptSet[kind=fun;params=kotlin.collections.Set<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int>] ret=Unit
+symbol fq=golden.sema.probe.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.probe[kind=fun;params=golden.sema.ProbeSet] kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.ProbeSet] ret=Unit
 file fstdlib_kotlin_collections_n_AbstractSet package=golden.sema
-  decl golden.sema.ProbeSet class ProbeSet sym=golden.sema.ProbeSet
-  decl golden.sema.acceptCollection fun acceptCollection sym=golden.sema.acceptCollection
-  decl golden.sema.acceptSet fun acceptSet sym=golden.sema.acceptSet
-  decl golden.sema.probe fun probe sym=golden.sema.probe
-expr e@15:22 name(values) type=golden.sema.ProbeSet ref=golden.sema.probe.$2.values
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:22] type=Unit call=golden.sema.acceptCollection
-expr e@16:15 name(values) type=golden.sema.ProbeSet ref=golden.sema.probe.$2.values
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:15] type=Unit call=golden.sema.acceptSet
+  decl golden.sema.ProbeSet[kind=class] class ProbeSet sym=golden.sema.ProbeSet[kind=class]
+  decl golden.sema.acceptCollection[kind=fun;params=kotlin.collections.Collection<Int>] fun acceptCollection sym=golden.sema.acceptCollection[kind=fun;params=kotlin.collections.Collection<Int>]
+  decl golden.sema.acceptSet[kind=fun;params=kotlin.collections.Set<Int>] fun acceptSet sym=golden.sema.acceptSet[kind=fun;params=kotlin.collections.Set<Int>]
+  decl golden.sema.probe[kind=fun;params=golden.sema.ProbeSet] fun probe sym=golden.sema.probe[kind=fun;params=golden.sema.ProbeSet]
+expr e@15:22 name(values) type=golden.sema.ProbeSet ref=golden.sema.probe.$2.values[kind=vparam]
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:22] type=Unit call=golden.sema.acceptCollection[kind=fun;params=kotlin.collections.Collection<Int>]
+expr e@16:15 name(values) type=golden.sema.ProbeSet ref=golden.sema.probe.$2.values[kind=vparam]
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:15] type=Unit call=golden.sema.acceptSet[kind=fun;params=kotlin.collections.Set<Int>]

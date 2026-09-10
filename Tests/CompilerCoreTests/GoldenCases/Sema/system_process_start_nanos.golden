@@ -1,22 +1,19 @@
-symbol fq=__local_0.startNanos kind=local vis=private flags=_ type=Long
-symbol fq=__local_1.now kind=local vis=private flags=_ type=Long
-symbol fq=kotlin.system.System kind=object vis=public flags=synthetic type=kotlin.system.System
-symbol fq=kotlin.system.System.nanoTime kind=function vis=public flags=synthetic sig=recv=kotlin.system.System params=[] ret=Long
-symbol fq=kotlin.system.System.processStartNanos kind=function vis=public flags=synthetic sig=recv=kotlin.system.System params=[] ret=Long
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.startNanos[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=__local_1.now[kind=local] kind=local vis=private flags=_ type=Long
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fsystem_process_start_nanos package=_
-  decl main fun main sym=main
-expr e@2:28 name(System) type=kotlin.system.System ref=kotlin.system.System
-expr e@2:28#1 memberCall recv=e@2:28 callee=processStartNanos args=[] type=Long call=kotlin.system.System.processStartNanos
-expr e@2:5 localDecl startNanos mutable=0 type=Long init=e@2:28#1 type=Unit ref=__local_0.startNanos
-expr e@3:21 name(System) type=kotlin.system.System ref=kotlin.system.System
-expr e@3:21#1 memberCall recv=e@3:21 callee=nanoTime args=[] type=Long call=kotlin.system.System.nanoTime
-expr e@3:5 localDecl now mutable=0 type=Long init=e@3:21#1 type=Unit ref=__local_1.now
-expr e@4:13 name(startNanos) type=Long ref=__local_0.startNanos
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+expr e@2:28 name(System) type=kotlin.system.System ref=kotlin.system.System[kind=obj]
+expr e@2:28#1 memberCall recv=e@2:28 callee=processStartNanos args=[] type=Long call=kotlin.system.System.processStartNanos[kind=fun;recv=kotlin.system.System;params=]
+expr e@2:5 localDecl startNanos mutable=0 type=Long init=e@2:28#1 type=Unit ref=__local_0.startNanos[kind=local]
+expr e@3:21 name(System) type=kotlin.system.System ref=kotlin.system.System[kind=obj]
+expr e@3:21#1 memberCall recv=e@3:21 callee=nanoTime args=[] type=Long call=kotlin.system.System.nanoTime[kind=fun;recv=kotlin.system.System;params=]
+expr e@3:5 localDecl now mutable=0 type=Long init=e@3:21#1 type=Unit ref=__local_1.now[kind=local]
+expr e@4:13 name(startNanos) type=Long ref=__local_0.startNanos[kind=local]
 expr e@4:26 int(0) type=Int
 expr e@4:13#1 binary(greaterThan) lhs=e@4:13 rhs=e@4:26 type=Boolean
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13#1] type=Unit call=kotlin.io.println#1
-expr e@5:13 name(now) type=Long ref=__local_1.now
-expr e@5:20 name(startNanos) type=Long ref=__local_0.startNanos
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@5:13 name(now) type=Long ref=__local_1.now[kind=local]
+expr e@5:20 name(startNanos) type=Long ref=__local_0.startNanos[kind=local]
 expr e@5:13#1 binary(greaterOrEqual) lhs=e@5:13 rhs=e@5:20 type=Boolean
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println#1
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

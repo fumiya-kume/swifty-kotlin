@@ -1,13 +1,12 @@
-symbol fq=golden.sema.typeNameOf kind=function vis=public flags=inlineFunction sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.typeNameOf.$0.T kind=typeParameter vis=private flags=reifiedTypeParameter
-symbol fq=golden.sema.useReified kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.reflect.KClass kind=interface vis=public flags=synthetic
+symbol fq=golden.sema.typeNameOf.$0.T[kind=tparam] kind=typeParameter vis=private flags=reifiedTypeParameter
+symbol fq=golden.sema.typeNameOf[kind=fun;params=;gen=1] kind=function vis=public flags=inlineFunction sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReified[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file freified_type package=golden.sema
-  decl golden.sema.typeNameOf fun typeNameOf inline=1 sym=golden.sema.typeNameOf
-  decl golden.sema.useReified fun useReified sym=golden.sema.useReified
-expr e@3:47 name(T) type=Any ref=golden.sema.typeNameOf.$0.T
+  decl golden.sema.typeNameOf[kind=fun;params=;gen=1] fun typeNameOf inline=1 sym=golden.sema.typeNameOf[kind=fun;params=;gen=1]
+  decl golden.sema.useReified[kind=fun;params=] fun useReified sym=golden.sema.useReified[kind=fun;params=]
+expr e@3:47 name(T) type=Any ref=golden.sema.typeNameOf.$0.T[kind=tparam]
 expr e@3:47#1 callableRef recv=e@3:47 member=class type=KClass<golden.sema.typeNameOf.$0.T>
-expr e@3:47#2 memberCall recv=e@3:47#1 callee=simpleName args=[] type=String? call=kotlin.reflect.simpleName.$get
+expr e@3:47#2 memberCall recv=e@3:47#1 callee=simpleName args=[] type=String? call=kotlin.reflect.simpleName.$get[kind=fun;recv=kotlin.reflect.KClass<*>;params=]
 expr e@3:70 string(unknown) type=String
 expr e@3:47#3 binary(elvis) lhs=e@3:47#2 rhs=e@3:70 type=String
-expr e@5:28 call callee=e@5:28#1 args=[] type=String call=golden.sema.typeNameOf targs=[Int]
+expr e@5:28 call callee=e@5:28#1 args=[] type=String call=golden.sema.typeNameOf[kind=fun;params=;gen=1] targs=[Int]

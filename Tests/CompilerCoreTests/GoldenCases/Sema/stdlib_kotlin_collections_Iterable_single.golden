@@ -1,37 +1,36 @@
-symbol fq=__local_0.single kind=local vis=private flags=_ type=String?
-symbol fq=__local_1.singlePredicate kind=local vis=private flags=_ type=String?
-symbol fq=__local_2.singleOrNull kind=local vis=private flags=_ type=String?
-symbol fq=__local_3.singleOrNullPredicate kind=local vis=private flags=_ type=String?
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>] ret=Unit
-symbol fq=probe.$0.values kind=valueParameter vis=private flags=_
+symbol fq=__local_0.single[kind=local] kind=local vis=private flags=_ type=String?
+symbol fq=__local_1.singlePredicate[kind=local] kind=local vis=private flags=_ type=String?
+symbol fq=__local_2.singleOrNull[kind=local] kind=local vis=private flags=_ type=String?
+symbol fq=__local_3.singleOrNullPredicate[kind=local] kind=local vis=private flags=_ type=String?
+symbol fq=probe.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe[kind=fun;params=kotlin.collections.Iterable<String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>] ret=Unit
 file fstdlib_kotlin_collections_Iterable_single package=_
-  decl probe fun probe sym=probe
-expr e@4:27 name(values) type=kotlin.collections.Iterable<String?> ref=probe.$0.values
-expr e@4:27#1 memberCall recv=e@4:27 callee=single args=[] type=String? call=kotlin.collections.single#0 targs=[String?]
-expr e@4:5 localDecl single mutable=0 type=String? init=e@4:27#1 type=Unit ref=__local_0.single
-expr e@5:36 name(values) type=kotlin.collections.Iterable<String?> ref=probe.$0.values
+  decl probe[kind=fun;params=kotlin.collections.Iterable<String?>] fun probe sym=probe[kind=fun;params=kotlin.collections.Iterable<String?>]
+expr e@4:27 name(values) type=kotlin.collections.Iterable<String?> ref=probe.$0.values[kind=vparam]
+expr e@4:27#1 memberCall recv=e@4:27 callee=single args=[] type=String? call=kotlin.collections.single[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[String?]
+expr e@4:5 localDecl single mutable=0 type=String? init=e@4:27#1 type=Unit ref=__local_0.single[kind=local]
+expr e@5:36 name(values) type=kotlin.collections.Iterable<String?> ref=probe.$0.values[kind=vparam]
 expr e@5:52 name(it) type=String? ref=s-0
 expr e@5:58 name(null) type=Nothing?
 expr e@5:52#1 binary(notEqual) lhs=e@5:52 rhs=e@5:58 type=Boolean
 expr e@5:50 lambda params=[] body=e@5:52#1 label=single type=(String?) -> Boolean
-expr e@5:36#1 memberCall recv=e@5:36 callee=single args=[_:e@5:50] type=String? call=kotlin.collections.single#1 targs=[String?]
-expr e@5:5 localDecl singlePredicate mutable=0 type=String? init=e@5:36#1 type=Unit ref=__local_1.singlePredicate
-expr e@6:33 name(values) type=kotlin.collections.Iterable<String?> ref=probe.$0.values
-expr e@6:33#1 memberCall recv=e@6:33 callee=singleOrNull args=[] type=String? call=kotlin.collections.singleOrNull#0 targs=[String?]
-expr e@6:5 localDecl singleOrNull mutable=0 type=String? init=e@6:33#1 type=Unit ref=__local_2.singleOrNull
-expr e@7:42 name(values) type=kotlin.collections.Iterable<String?> ref=probe.$0.values
+expr e@5:36#1 memberCall recv=e@5:36 callee=single args=[_:e@5:50] type=String? call=kotlin.collections.single[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[String?]
+expr e@5:5 localDecl singlePredicate mutable=0 type=String? init=e@5:36#1 type=Unit ref=__local_1.singlePredicate[kind=local]
+expr e@6:33 name(values) type=kotlin.collections.Iterable<String?> ref=probe.$0.values[kind=vparam]
+expr e@6:33#1 memberCall recv=e@6:33 callee=singleOrNull args=[] type=String? call=kotlin.collections.singleOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[String?]
+expr e@6:5 localDecl singleOrNull mutable=0 type=String? init=e@6:33#1 type=Unit ref=__local_2.singleOrNull[kind=local]
+expr e@7:42 name(values) type=kotlin.collections.Iterable<String?> ref=probe.$0.values[kind=vparam]
 expr e@7:64 name(it) type=String? ref=s-1
 expr e@7:70 name(null) type=Nothing?
 expr e@7:64#1 binary(equal) lhs=e@7:64 rhs=e@7:70 type=Boolean
 expr e@7:62 lambda params=[] body=e@7:64#1 label=singleOrNull type=(String?) -> Boolean
-expr e@7:42#1 memberCall recv=e@7:42 callee=singleOrNull args=[_:e@7:62] type=String? call=kotlin.collections.singleOrNull#1 targs=[String?]
-expr e@7:5 localDecl singleOrNullPredicate mutable=0 type=String? init=e@7:42#1 type=Unit ref=__local_3.singleOrNullPredicate
-expr e@8:13 name(single) type=String? ref=__local_0.single
-expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println#1
-expr e@9:13 name(singlePredicate) type=String? ref=__local_1.singlePredicate
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println#1
-expr e@10:13 name(singleOrNull) type=String? ref=__local_2.singleOrNull
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println#1
-expr e@11:13 name(singleOrNullPredicate) type=String? ref=__local_3.singleOrNullPredicate
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13] type=Unit call=kotlin.io.println#1
+expr e@7:42#1 memberCall recv=e@7:42 callee=singleOrNull args=[_:e@7:62] type=String? call=kotlin.collections.singleOrNull[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[String?]
+expr e@7:5 localDecl singleOrNullPredicate mutable=0 type=String? init=e@7:42#1 type=Unit ref=__local_3.singleOrNullPredicate[kind=local]
+expr e@8:13 name(single) type=String? ref=__local_0.single[kind=local]
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@9:13 name(singlePredicate) type=String? ref=__local_1.singlePredicate[kind=local]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@10:13 name(singleOrNull) type=String? ref=__local_2.singleOrNull[kind=local]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@11:13 name(singleOrNullPredicate) type=String? ref=__local_3.singleOrNullPredicate[kind=local]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

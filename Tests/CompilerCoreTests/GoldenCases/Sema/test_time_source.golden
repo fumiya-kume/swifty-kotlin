@@ -1,25 +1,22 @@
-symbol fq=__local_0.source kind=local vis=private flags=_ type=kotlin.time.TestTimeSource
-symbol fq=__local_1.mark1 kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
-symbol fq=__local_2.mark2 kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
-symbol fq=kotlin.time.AbstractLongTimeSource kind=class vis=public flags=abstractType|openType
-symbol fq=kotlin.time.ComparableTimeMark kind=interface vis=public flags=synthetic
-symbol fq=kotlin.time.TestTimeSource kind=class vis=public flags=_
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.source[kind=local] kind=local vis=private flags=_ type=kotlin.time.TestTimeSource
+symbol fq=__local_1.mark1[kind=local] kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
+symbol fq=__local_2.mark2[kind=local] kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ftest_time_source package=_
-  decl main fun main sym=main
-expr e@8:18 call callee=e@8:18#1 args=[] type=kotlin.time.TestTimeSource call=kotlin.time.TestTimeSource.<init>
-expr e@8:5 localDecl source mutable=0 type=_ init=e@8:18 type=Unit ref=__local_0.source
-expr e@9:17 name(source) type=kotlin.time.TestTimeSource ref=__local_0.source
-expr e@9:17#1 memberCall recv=e@9:17 callee=markNow args=[] type=kotlin.time.ComparableTimeMark call=kotlin.time.AbstractLongTimeSource.markNow
-expr e@9:5 localDecl mark1 mutable=0 type=_ init=e@9:17#1 type=Unit ref=__local_1.mark1
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+expr e@8:18 call callee=e@8:18#1 args=[] type=kotlin.time.TestTimeSource call=kotlin.time.TestTimeSource.<init>[kind=ctor;recv=kotlin.time.TestTimeSource;params=]
+expr e@8:5 localDecl source mutable=0 type=_ init=e@8:18 type=Unit ref=__local_0.source[kind=local]
+expr e@9:17 name(source) type=kotlin.time.TestTimeSource ref=__local_0.source[kind=local]
+expr e@9:17#1 memberCall recv=e@9:17 callee=markNow args=[] type=kotlin.time.ComparableTimeMark call=kotlin.time.AbstractLongTimeSource.markNow[kind=fun;recv=kotlin.time.AbstractLongTimeSource;params=]
+expr e@9:5 localDecl mark1 mutable=0 type=_ init=e@9:17#1 type=Unit ref=__local_1.mark1[kind=local]
 expr e@10:15 int(5) type=Int
-expr e@10:15#1 memberCall recv=e@10:15 callee=milliseconds args=[] type=kotlin.time.Duration call=kotlin.time.milliseconds.$get#1
-expr e@10:5 compoundAssign(plusAssign) name=source value=e@10:15#1 type=Unit ref=__local_0.source call=kotlin.time.TestTimeSource.plusAssign
-expr e@11:17 name(source) type=kotlin.time.TestTimeSource ref=__local_0.source
-expr e@11:17#1 memberCall recv=e@11:17 callee=markNow args=[] type=kotlin.time.ComparableTimeMark call=kotlin.time.AbstractLongTimeSource.markNow
-expr e@11:5 localDecl mark2 mutable=0 type=_ init=e@11:17#1 type=Unit ref=__local_2.mark2
-expr e@12:14 name(mark2) type=kotlin.time.ComparableTimeMark ref=__local_2.mark2
-expr e@12:22 name(mark1) type=kotlin.time.ComparableTimeMark ref=__local_1.mark1
-expr e@12:14#1 binary(subtract) lhs=e@12:14 rhs=e@12:22 type=kotlin.time.Duration call=kotlin.time.minus#0
-expr e@12:14#2 memberCall recv=e@12:14#1 callee=inWholeMilliseconds args=[] type=Long call=kotlin.time.inWholeMilliseconds.$get
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:14#2] type=Unit call=kotlin.io.println#1
+expr e@10:15#1 memberCall recv=e@10:15 callee=milliseconds args=[] type=kotlin.time.Duration call=kotlin.time.milliseconds.$get[kind=fun;recv=Int;params=]
+expr e@10:5 compoundAssign(plusAssign) name=source value=e@10:15#1 type=Unit ref=__local_0.source[kind=local] call=kotlin.time.TestTimeSource.plusAssign[kind=fun;recv=kotlin.time.TestTimeSource;params=kotlin.time.Duration]
+expr e@11:17 name(source) type=kotlin.time.TestTimeSource ref=__local_0.source[kind=local]
+expr e@11:17#1 memberCall recv=e@11:17 callee=markNow args=[] type=kotlin.time.ComparableTimeMark call=kotlin.time.AbstractLongTimeSource.markNow[kind=fun;recv=kotlin.time.AbstractLongTimeSource;params=]
+expr e@11:5 localDecl mark2 mutable=0 type=_ init=e@11:17#1 type=Unit ref=__local_2.mark2[kind=local]
+expr e@12:14 name(mark2) type=kotlin.time.ComparableTimeMark ref=__local_2.mark2[kind=local]
+expr e@12:22 name(mark1) type=kotlin.time.ComparableTimeMark ref=__local_1.mark1[kind=local]
+expr e@12:14#1 binary(subtract) lhs=e@12:14 rhs=e@12:22 type=kotlin.time.Duration call=kotlin.time.minus[kind=fun;recv=kotlin.time.ComparableTimeMark;params=kotlin.time.ComparableTimeMark]
+expr e@12:14#2 memberCall recv=e@12:14#1 callee=inWholeMilliseconds args=[] type=Long call=kotlin.time.inWholeMilliseconds.$get[kind=fun;recv=kotlin.time.Duration;params=]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:14#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

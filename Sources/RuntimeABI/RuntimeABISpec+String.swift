@@ -1713,25 +1713,6 @@ public extension RuntimeABISpec {
             section: "String",
             isThrowing: false
         ),
-        RuntimeABIFunctionSpec(
-            name: "__kk_string_random",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "__kk_string_random_random",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "randomRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
         // KSP-406: replaceRange_indices/slice_iterable/slice_range removed;
         // now bundled Kotlin source (StringSubstringSlice.kt).
     ]

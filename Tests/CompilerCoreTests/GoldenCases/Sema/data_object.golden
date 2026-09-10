@@ -1,8 +1,8 @@
-symbol fq=golden.sema.None kind=object vis=public flags=dataType
-symbol fq=golden.sema.useDataObject kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.None[kind=obj] kind=object vis=public flags=dataType
+symbol fq=golden.sema.useDataObject[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 file fdata_object package=golden.sema
-  decl golden.sema.None object None sym=golden.sema.None
-  decl golden.sema.useDataObject fun useDataObject sym=golden.sema.useDataObject
-expr e@5:32 name(None) type=golden.sema.None ref=golden.sema.None
-expr e@5:40 name(None) type=golden.sema.None ref=golden.sema.None
+  decl golden.sema.None[kind=obj] object None sym=golden.sema.None[kind=obj]
+  decl golden.sema.useDataObject[kind=fun;params=] fun useDataObject sym=golden.sema.useDataObject[kind=fun;params=]
+expr e@5:32 name(None) type=golden.sema.None ref=golden.sema.None[kind=obj]
+expr e@5:40 name(None) type=golden.sema.None ref=golden.sema.None[kind=obj]
 expr e@5:32#1 binary(equal) lhs=e@5:32 rhs=e@5:40 type=Boolean

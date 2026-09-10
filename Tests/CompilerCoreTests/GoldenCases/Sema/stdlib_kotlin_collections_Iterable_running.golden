@@ -1,49 +1,45 @@
-symbol fq=__local_0.reduced kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=__local_1.indexed kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=inspectOverloads kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=Unit
-symbol fq=inspectOverloads.$0.values kind=valueParameter vis=private flags=_
-symbol fq=inspectRunning kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
-symbol fq=inspectRunning.$1.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence.toList kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.toList.$2.T> params=[] ret=kotlin.collections.List<kotlin.sequences.toList.$2.T>
+symbol fq=__local_0.reduced[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=__local_1.indexed[kind=local] kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=inspectOverloads.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=inspectOverloads[kind=fun;params=kotlin.collections.List<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=Unit
+symbol fq=inspectRunning.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=inspectRunning[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Unit
 file fstdlib_kotlin_collections_Iterable_running package=_
-  decl inspectRunning fun inspectRunning sym=inspectRunning
-  decl inspectOverloads fun inspectOverloads sym=inspectOverloads
-expr e@2:19 name(values) type=kotlin.collections.Iterable<Int> ref=inspectRunning.$1.values
+  decl inspectRunning[kind=fun;params=kotlin.collections.Iterable<Int>] fun inspectRunning sym=inspectRunning[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl inspectOverloads[kind=fun;params=kotlin.collections.List<Int>] fun inspectOverloads sym=inspectOverloads[kind=fun;params=kotlin.collections.List<Int>]
+expr e@2:19 name(values) type=kotlin.collections.Iterable<Int> ref=inspectRunning.$1.values[kind=vparam]
 expr e@2:56 name(acc) type=Int ref=s-0
 expr e@2:62 name(value) type=Int ref=s-1
 expr e@2:56#1 binary(add) lhs=e@2:56 rhs=e@2:62 type=Int
 expr e@2:40 lambda params=[acc,value] body=e@2:56#1 label=runningReduce type=(Int, Int) -> Int
-expr e@2:19#1 memberCall recv=e@2:19 callee=runningReduce args=[_:e@2:40] type=kotlin.collections.List<Int> call=kotlin.collections.runningReduce#0 targs=[Int,Int]
-expr e@2:5 localDecl reduced mutable=0 type=_ init=e@2:19#1 type=Unit ref=__local_0.reduced
-expr e@3:19 name(values) type=kotlin.collections.Iterable<Int> ref=inspectRunning.$1.values
+expr e@2:19#1 memberCall recv=e@2:19 callee=runningReduce args=[_:e@2:40] type=kotlin.collections.List<Int> call=kotlin.collections.runningReduce[kind=fun;recv=kotlin.collections.Iterable<T1>;params=fn{p=T0,T1;ret=T0};gen=2] targs=[Int,Int]
+expr e@2:5 localDecl reduced mutable=0 type=_ init=e@2:19#1 type=Unit ref=__local_0.reduced[kind=local]
+expr e@3:19 name(values) type=kotlin.collections.Iterable<Int> ref=inspectRunning.$1.values[kind=vparam]
 expr e@3:70 name(acc) type=Int ref=s-2
 expr e@3:76 name(index) type=Int ref=s-3
 expr e@3:70#1 binary(add) lhs=e@3:70 rhs=e@3:76 type=Int
 expr e@3:84 name(value) type=Int ref=s-4
 expr e@3:70#2 binary(add) lhs=e@3:70#1 rhs=e@3:84 type=Int
 expr e@3:47 lambda params=[index,acc,value] body=e@3:70#2 label=runningReduceIndexed type=(Int, Int, Int) -> Int
-expr e@3:19#1 memberCall recv=e@3:19 callee=runningReduceIndexed args=[_:e@3:47] type=kotlin.collections.List<Int> call=kotlin.collections.runningReduceIndexed#0 targs=[Int,Int]
-expr e@3:5 localDecl indexed mutable=0 type=_ init=e@3:19#1 type=Unit ref=__local_1.indexed
-expr e@4:13 name(reduced) type=kotlin.collections.List<Int> ref=__local_0.reduced
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13] type=Unit call=kotlin.io.println#1
-expr e@5:13 name(indexed) type=kotlin.collections.List<Int> ref=__local_1.indexed
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13] type=Unit call=kotlin.io.println#1
-expr e@9:13 name(values) type=kotlin.collections.List<Int> ref=inspectOverloads.$0.values
+expr e@3:19#1 memberCall recv=e@3:19 callee=runningReduceIndexed args=[_:e@3:47] type=kotlin.collections.List<Int> call=kotlin.collections.runningReduceIndexed[kind=fun;recv=kotlin.collections.Iterable<T1>;params=fn{p=Int,T0,T1;ret=T0};gen=2] targs=[Int,Int]
+expr e@3:5 localDecl indexed mutable=0 type=_ init=e@3:19#1 type=Unit ref=__local_1.indexed[kind=local]
+expr e@4:13 name(reduced) type=kotlin.collections.List<Int> ref=__local_0.reduced[kind=local]
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@5:13 name(indexed) type=kotlin.collections.List<Int> ref=__local_1.indexed[kind=local]
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@9:13 name(values) type=kotlin.collections.List<Int> ref=inspectOverloads.$0.values[kind=vparam]
 expr e@9:50 name(acc) type=Int ref=s-5
 expr e@9:56 name(value) type=Int ref=s-6
 expr e@9:50#1 binary(add) lhs=e@9:50 rhs=e@9:56 type=Int
 expr e@9:34 lambda params=[acc,value] body=e@9:50#1 label=runningReduce type=(Int, Int) -> Int
-expr e@9:13#1 memberCall recv=e@9:13 callee=runningReduce args=[_:e@9:34] type=kotlin.collections.List<Int> call=kotlin.collections.runningReduce#1 targs=[Int]
-expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#1
-expr e@10:13 name(values) type=kotlin.collections.List<Int> ref=inspectOverloads.$0.values
-expr e@10:13#1 memberCall recv=e@10:13 callee=asSequence args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.asSequence#0 targs=[Int]
+expr e@9:13#1 memberCall recv=e@9:13 callee=runningReduce args=[_:e@9:34] type=kotlin.collections.List<Int> call=kotlin.collections.runningReduce[kind=fun;recv=kotlin.collections.List<T0>;params=fn{p=T0,T0;ret=T0};gen=1] targs=[Int]
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@10:13 name(values) type=kotlin.collections.List<Int> ref=inspectOverloads.$0.values[kind=vparam]
+expr e@10:13#1 memberCall recv=e@10:13 callee=asSequence args=[] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.asSequence[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
 expr e@10:63 name(acc) type=Int ref=s-7
 expr e@10:69 name(value) type=Int ref=s-8
 expr e@10:63#1 binary(add) lhs=e@10:63 rhs=e@10:69 type=Int
 expr e@10:47 lambda params=[acc,value] body=e@10:63#1 label=runningReduce type=(Int, Int) -> Int
-expr e@10:13#2 memberCall recv=e@10:13#1 callee=runningReduce args=[_:e@10:47] type=kotlin.sequences.Sequence<out Int> call=kotlin.collections.runningReduce#2 targs=[Int]
-expr e@10:13#3 memberCall recv=e@10:13#2 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.Sequence.toList
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#3] type=Unit call=kotlin.io.println#1
+expr e@10:13#2 memberCall recv=e@10:13#1 callee=runningReduce args=[_:e@10:47] type=kotlin.sequences.Sequence<out Int> call=kotlin.collections.runningReduce[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=fn{p=T0,T0;ret=T0};gen=1] targs=[Int]
+expr e@10:13#3 memberCall recv=e@10:13#2 callee=toList args=[] type=kotlin.collections.List<Int> call=kotlin.sequences.toList[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#3] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

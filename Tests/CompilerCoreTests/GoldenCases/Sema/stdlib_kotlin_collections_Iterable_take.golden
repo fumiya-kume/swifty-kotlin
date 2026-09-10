@@ -1,57 +1,51 @@
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=kotlinx.coroutines.flow.Flow kind=interface vis=public flags=synthetic type=kotlinx.coroutines.flow.Flow<out kotlinx.coroutines.flow.Flow.T>
-symbol fq=kotlinx.coroutines.flow.Flow.T kind=typeParameter vis=private flags=_
-symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.collections.List<Int>,kotlin.sequences.Sequence<Int>,kotlin.ranges.IntRange,String,kotlinx.coroutines.flow.Flow<Int>] ret=Unit
-symbol fq=probe.$0.flow kind=valueParameter vis=private flags=_
-symbol fq=probe.$0.iterable kind=valueParameter vis=private flags=_
-symbol fq=probe.$0.list kind=valueParameter vis=private flags=_
-symbol fq=probe.$0.range kind=valueParameter vis=private flags=_
-symbol fq=probe.$0.sequence kind=valueParameter vis=private flags=_
-symbol fq=probe.$0.text kind=valueParameter vis=private flags=_
+symbol fq=probe.$0.flow[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe.$0.iterable[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe.$0.list[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe.$0.range[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe.$0.sequence[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe.$0.text[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=probe[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.List<Int>,kotlin.sequences.Sequence<Int>,kotlin.ranges.IntRange,String,kotlinx.coroutines.flow.Flow<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.collections.List<Int>,kotlin.sequences.Sequence<Int>,kotlin.ranges.IntRange,String,kotlinx.coroutines.flow.Flow<Int>] ret=Unit
 file fstdlib_kotlin_collections_Iterable_take package=_
-  decl probe fun probe sym=probe
-expr e@11:5 name(iterable) type=kotlin.collections.Iterable<Int> ref=probe.$0.iterable
+  decl probe[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.List<Int>,kotlin.sequences.Sequence<Int>,kotlin.ranges.IntRange,String,kotlinx.coroutines.flow.Flow<Int>] fun probe sym=probe[kind=fun;params=kotlin.collections.Iterable<Int>,kotlin.collections.List<Int>,kotlin.sequences.Sequence<Int>,kotlin.ranges.IntRange,String,kotlinx.coroutines.flow.Flow<Int>]
+expr e@11:5 name(iterable) type=kotlin.collections.Iterable<Int> ref=probe.$0.iterable[kind=vparam]
 expr e@11:19 int(2) type=Int
-expr e@11:5#1 memberCall recv=e@11:5 callee=take args=[_:e@11:19] type=kotlin.collections.List<Int> call=kotlin.collections.take#0 targs=[Int]
-expr e@12:5 name(iterable) type=kotlin.collections.Iterable<Int> ref=probe.$0.iterable
+expr e@11:5#1 memberCall recv=e@11:5 callee=take args=[_:e@11:19] type=kotlin.collections.List<Int> call=kotlin.collections.take[kind=fun;recv=kotlin.collections.Iterable<T0>;params=Int;gen=1] targs=[Int]
+expr e@12:5 name(iterable) type=kotlin.collections.Iterable<Int> ref=probe.$0.iterable[kind=vparam]
 expr e@12:26 name(it) type=Int ref=s-0
 expr e@12:31 int(0) type=Int
 expr e@12:26#1 binary(greaterThan) lhs=e@12:26 rhs=e@12:31 type=Boolean
 expr e@12:24 lambda params=[] body=e@12:26#1 label=takeWhile type=(Int) -> Boolean
-expr e@12:5#1 memberCall recv=e@12:5 callee=takeWhile args=[_:e@12:24] type=kotlin.collections.List<Int> call=kotlin.collections.takeWhile#0 targs=[Int]
-expr e@13:5 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list
+expr e@12:5#1 memberCall recv=e@12:5 callee=takeWhile args=[_:e@12:24] type=kotlin.collections.List<Int> call=kotlin.collections.takeWhile[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
+expr e@13:5 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list[kind=vparam]
 expr e@13:15 int(2) type=Int
-expr e@13:5#1 memberCall recv=e@13:5 callee=take args=[_:e@13:15] type=kotlin.collections.List<Int> call=kotlin.collections.take#1 targs=[Int]
-expr e@14:5 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list
+expr e@13:5#1 memberCall recv=e@13:5 callee=take args=[_:e@13:15] type=kotlin.collections.List<Int> call=kotlin.collections.take[kind=fun;recv=kotlin.collections.List<T0>;params=Int;gen=1] targs=[Int]
+expr e@14:5 name(list) type=kotlin.collections.List<Int> ref=probe.$0.list[kind=vparam]
 expr e@14:22 name(it) type=Int ref=s-1
 expr e@14:27 int(0) type=Int
 expr e@14:22#1 binary(greaterThan) lhs=e@14:22 rhs=e@14:27 type=Boolean
 expr e@14:20 lambda params=[] body=e@14:22#1 label=takeWhile type=(Int) -> Boolean
-expr e@14:5#1 memberCall recv=e@14:5 callee=takeWhile args=[_:e@14:20] type=kotlin.collections.List<Int> call=kotlin.collections.takeWhile#1 targs=[Int]
-expr e@15:5 name(sequence) type=kotlin.sequences.Sequence<Int> ref=probe.$0.sequence
+expr e@14:5#1 memberCall recv=e@14:5 callee=takeWhile args=[_:e@14:20] type=kotlin.collections.List<Int> call=kotlin.collections.takeWhile[kind=fun;recv=kotlin.collections.List<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
+expr e@15:5 name(sequence) type=kotlin.sequences.Sequence<Int> ref=probe.$0.sequence[kind=vparam]
 expr e@15:19 int(2) type=Int
-expr e@15:5#1 memberCall recv=e@15:5 callee=take args=[_:e@15:19] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.take targs=[Int]
-expr e@16:5 name(sequence) type=kotlin.sequences.Sequence<Int> ref=probe.$0.sequence
+expr e@15:5#1 memberCall recv=e@15:5 callee=take args=[_:e@15:19] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.take[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=Int;gen=1] targs=[Int]
+expr e@16:5 name(sequence) type=kotlin.sequences.Sequence<Int> ref=probe.$0.sequence[kind=vparam]
 expr e@16:26 name(it) type=Int ref=s-2
 expr e@16:31 int(0) type=Int
 expr e@16:26#1 binary(greaterThan) lhs=e@16:26 rhs=e@16:31 type=Boolean
 expr e@16:24 lambda params=[] body=e@16:26#1 label=takeWhile type=(Int) -> Boolean
-expr e@16:5#1 memberCall recv=e@16:5 callee=takeWhile args=[_:e@16:24] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.takeWhile targs=[Int]
-expr e@17:5 name(range) type=kotlin.ranges.IntRange ref=probe.$0.range
+expr e@16:5#1 memberCall recv=e@16:5 callee=takeWhile args=[_:e@16:24] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.takeWhile[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=fn{p=T0;ret=Boolean};gen=1] targs=[Int]
+expr e@17:5 name(range) type=kotlin.ranges.IntRange ref=probe.$0.range[kind=vparam]
 expr e@17:16 int(2) type=Int
-expr e@17:5#1 memberCall recv=e@17:5 callee=take args=[_:e@17:16] type=kotlin.collections.List<Int> call=kotlin.ranges.take#3
-expr e@18:5 name(text) type=String ref=probe.$0.text
+expr e@17:5#1 memberCall recv=e@17:5 callee=take args=[_:e@17:16] type=kotlin.collections.List<Int> call=kotlin.ranges.take[kind=fun;recv=kotlin.ranges.IntRange;params=Int]
+expr e@18:5 name(text) type=String ref=probe.$0.text[kind=vparam]
 expr e@18:15 int(2) type=Int
-expr e@18:5#1 memberCall recv=e@18:5 callee=take args=[_:e@18:15] type=String call=kotlin.text.take
-expr e@19:5 name(text) type=String ref=probe.$0.text
+expr e@18:5#1 memberCall recv=e@18:5 callee=take args=[_:e@18:15] type=String call=kotlin.text.take[kind=fun;recv=String;params=Int]
+expr e@19:5 name(text) type=String ref=probe.$0.text[kind=vparam]
 expr e@19:22 name(it) type=Char ref=s-3
 expr e@19:27 char(97) type=Char
 expr e@19:22#1 binary(greaterThan) lhs=e@19:22 rhs=e@19:27 type=Boolean
 expr e@19:20 lambda params=[] body=e@19:22#1 label=takeWhile type=(Char) -> Boolean
-expr e@19:5#1 memberCall recv=e@19:5 callee=takeWhile args=[_:e@19:20] type=String call=kotlin.text.takeWhile
-expr e@20:5 name(flow) type=kotlinx.coroutines.flow.Flow<Int> ref=probe.$0.flow
+expr e@19:5#1 memberCall recv=e@19:5 callee=takeWhile args=[_:e@19:20] type=String call=kotlin.text.takeWhile[kind=fun;recv=String;params=fn{p=Char;ret=Boolean}]
+expr e@20:5 name(flow) type=kotlinx.coroutines.flow.Flow<Int> ref=probe.$0.flow[kind=vparam]
 expr e@20:15 int(2) type=Int
-expr e@20:5#1 memberCall recv=e@20:5 callee=take args=[_:e@20:15] type=kotlinx.coroutines.flow.Flow<Int> call=kotlinx.coroutines.flow.take targs=[Int]
+expr e@20:5#1 memberCall recv=e@20:5 callee=take args=[_:e@20:15] type=kotlinx.coroutines.flow.Flow<Int> call=kotlinx.coroutines.flow.take[kind=fun;recv=kotlinx.coroutines.flow.Flow<T0>;params=Int;gen=1] targs=[Int]

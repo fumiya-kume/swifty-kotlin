@@ -436,26 +436,6 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
-        let classFQName = packageFQName + [interner.intern("SweepStatistics")]
-        let classContext = SyntheticStubRegistrationContext(
-            ownerFQName: classFQName,
-            parentSymbol: classSymbol
-        )
-        registerSyntheticConstructorStubs(
-            [SyntheticNativeRefRuntimeSurfaceSpec.sweepStatisticsConstructor],
-            ownerType: SyntheticNativeRefRuntimeSurfaceSpec.sweepStatisticsType,
-            context: classContext,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
-        registerSyntheticPropertyStubs(
-            SyntheticNativeRefRuntimeSurfaceSpec.sweepStatisticsProperties,
-            context: classContext,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
     }
 
     // MARK: - GCInfo class
@@ -516,14 +496,6 @@ extension DataFlowSemaPhase {
             ownerFQName: gcInfoFQName,
             parentSymbol: gcInfoSymbol
         )
-        registerSyntheticConstructorStubs(
-            [SyntheticNativeRefRuntimeSurfaceSpec.gcInfoConstructor],
-            ownerType: SyntheticNativeRefRuntimeSurfaceSpec.gcInfoType,
-            context: gcInfoContext,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
         registerSyntheticPropertyStubs(
             SyntheticNativeRefRuntimeSurfaceSpec.gcInfoProperties,
             context: gcInfoContext,
@@ -535,14 +507,6 @@ extension DataFlowSemaPhase {
         let memoryUsageContext = SyntheticStubRegistrationContext(
             ownerFQName: memoryUsageFQName,
             parentSymbol: memoryUsageSymbol
-        )
-        registerSyntheticConstructorStubs(
-            [SyntheticNativeRefRuntimeSurfaceSpec.memoryUsageConstructor],
-            ownerType: SyntheticNativeRefRuntimeSurfaceSpec.memoryUsageType,
-            context: memoryUsageContext,
-            symbols: symbols,
-            types: types,
-            interner: interner
         )
         registerSyntheticPropertyStubs(
             SyntheticNativeRefRuntimeSurfaceSpec.memoryUsageProperties,

@@ -1,24 +1,23 @@
-symbol fq=__local_0.builder kind=local vis=private flags=_ type=kotlin.text.StringBuilder
-symbol fq=golden.sema.appendLines kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.Appendable] ret=kotlin.text.Appendable
-symbol fq=golden.sema.appendLines.$0.target kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.appendToBuilder kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=__local_0.builder[kind=local] kind=local vis=private flags=_ type=kotlin.text.StringBuilder
+symbol fq=golden.sema.appendLines.$0.target[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.appendLines[kind=fun;params=kotlin.text.Appendable] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.Appendable] ret=kotlin.text.Appendable
+symbol fq=golden.sema.appendToBuilder[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstdlib_kotlin_text_Appendable_n package=golden.sema
-  decl golden.sema.appendLines fun appendLines sym=golden.sema.appendLines
-  decl golden.sema.appendToBuilder fun appendToBuilder sym=golden.sema.appendToBuilder
-expr e@7:5 name(target) type=kotlin.text.Appendable ref=golden.sema.appendLines.$0.target
-expr e@7:5#1 memberCall recv=e@7:5 callee=appendLine args=[] type=kotlin.text.Appendable call=kotlin.text.appendLine#0
-expr e@8:5 name(target) type=kotlin.text.Appendable ref=golden.sema.appendLines.$0.target
+  decl golden.sema.appendLines[kind=fun;params=kotlin.text.Appendable] fun appendLines sym=golden.sema.appendLines[kind=fun;params=kotlin.text.Appendable]
+  decl golden.sema.appendToBuilder[kind=fun;params=] fun appendToBuilder sym=golden.sema.appendToBuilder[kind=fun;params=]
+expr e@7:5 name(target) type=kotlin.text.Appendable ref=golden.sema.appendLines.$0.target[kind=vparam]
+expr e@7:5#1 memberCall recv=e@7:5 callee=appendLine args=[] type=kotlin.text.Appendable call=kotlin.text.appendLine[kind=fun;recv=kotlin.text.Appendable;params=]
+expr e@8:5 name(target) type=kotlin.text.Appendable ref=golden.sema.appendLines.$0.target[kind=vparam]
 expr e@8:23 name(null) type=Nothing?
-expr e@8:5#1 memberCall recv=e@8:5 callee=appendLine args=[_:e@8:23] type=kotlin.text.Appendable call=kotlin.text.appendLine#2
-expr e@9:12 name(target) type=kotlin.text.Appendable ref=golden.sema.appendLines.$0.target
+expr e@8:5#1 memberCall recv=e@8:5 callee=appendLine args=[_:e@8:23] type=kotlin.text.Appendable call=kotlin.text.appendLine[kind=fun;recv=kotlin.text.Appendable;params=kotlin.CharSequence?]
+expr e@9:12 name(target) type=kotlin.text.Appendable ref=golden.sema.appendLines.$0.target[kind=vparam]
 expr e@9:30 char(33) type=Char
-expr e@9:12#1 memberCall recv=e@9:12 callee=appendLine args=[_:e@9:30] type=kotlin.text.Appendable call=kotlin.text.appendLine#1
+expr e@9:12#1 memberCall recv=e@9:12 callee=appendLine args=[_:e@9:30] type=kotlin.text.Appendable call=kotlin.text.appendLine[kind=fun;recv=kotlin.text.Appendable;params=Char]
 expr e@9:5 return value=e@9:12#1 type=Nothing
-expr e@13:19 call callee=e@13:19#1 args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>#0
-expr e@13:5 localDecl builder mutable=0 type=_ init=e@13:19 type=Unit ref=__local_0.builder
-expr e@14:17 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:17] type=kotlin.text.Appendable call=golden.sema.appendLines
-expr e@15:12 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder
-expr e@15:12#1 memberCall recv=e@15:12 callee=toString args=[] type=String call=kotlin.text.StringBuilder.toString
+expr e@13:19 call callee=e@13:19#1 args=[] type=kotlin.text.StringBuilder call=kotlin.text.StringBuilder.<init>[kind=ctor;recv=kotlin.text.StringBuilder;params=]
+expr e@13:5 localDecl builder mutable=0 type=_ init=e@13:19 type=Unit ref=__local_0.builder[kind=local]
+expr e@14:17 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder[kind=local]
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:17] type=kotlin.text.Appendable call=golden.sema.appendLines[kind=fun;params=kotlin.text.Appendable]
+expr e@15:12 name(builder) type=kotlin.text.StringBuilder ref=__local_0.builder[kind=local]
+expr e@15:12#1 memberCall recv=e@15:12 callee=toString args=[] type=String call=kotlin.text.StringBuilder.toString[kind=fun;recv=kotlin.text.StringBuilder;params=]
 expr e@15:5 return value=e@15:12#1 type=Nothing

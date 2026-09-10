@@ -1,15 +1,15 @@
-symbol fq=cumulativeNarrow kind=function vis=public flags=_ sig=recv=_ params=[Int?] ret=Int
-symbol fq=cumulativeNarrow.$0.x kind=valueParameter vis=private flags=_
+symbol fq=cumulativeNarrow.$0.x[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=cumulativeNarrow[kind=fun;params=Int?] kind=function vis=public flags=_ sig=recv=_ params=[Int?] ret=Int
 file fsubject_less_when_cumulative_narrowing package=_
-  decl cumulativeNarrow fun cumulativeNarrow sym=cumulativeNarrow
-expr e@3:9 name(x) type=Int? ref=cumulativeNarrow.$0.x
+  decl cumulativeNarrow[kind=fun;params=Int?] fun cumulativeNarrow sym=cumulativeNarrow[kind=fun;params=Int?]
+expr e@3:9 name(x) type=Int? ref=cumulativeNarrow.$0.x[kind=vparam]
 expr e@3:14 name(null) type=Nothing?
 expr e@3:9#1 binary(equal) lhs=e@3:9 rhs=e@3:14 type=Boolean
 expr e@3:22 int(0) type=Int
-expr e@4:9 name(x) type=Int ref=cumulativeNarrow.$0.x
+expr e@4:9 name(x) type=Int ref=cumulativeNarrow.$0.x[kind=vparam]
 expr e@4:13 int(0) type=Int
 expr e@4:9#1 binary(greaterThan) lhs=e@4:9 rhs=e@4:13 type=Boolean
-expr e@4:18 name(x) type=Int ref=cumulativeNarrow.$0.x
-expr e@5:17 name(x) type=Int ref=cumulativeNarrow.$0.x
+expr e@4:18 name(x) type=Int ref=cumulativeNarrow.$0.x[kind=vparam]
+expr e@5:17 name(x) type=Int ref=cumulativeNarrow.$0.x[kind=vparam]
 expr e@2:12 when subject=_ branches=[e@3:9#1->e@3:22,e@4:9#1->e@4:18] else=e@5:17 type=Int
 expr e@2:5 return value=e@2:12 type=Nothing

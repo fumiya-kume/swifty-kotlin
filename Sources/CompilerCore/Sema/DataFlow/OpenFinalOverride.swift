@@ -257,7 +257,7 @@ extension DataFlowSemaPhase {
     ) {
         for memberDeclID in memberDeclIDs {
             guard let memberDecl = ctx.ast.arena.decl(memberDeclID),
-                  ctx.bindings.declSymbols[memberDeclID] != nil
+                  let memberSymbol = ctx.bindings.declSymbols[memberDeclID]
             else { continue }
 
             let memberMeta = extractMemberMeta(memberDecl, declID: memberDeclID, ctx: ctx)
@@ -298,6 +298,7 @@ extension DataFlowSemaPhase {
                     memberName: memberMeta.name,
                     memberRange: memberMeta.range,
                     ownerSymbol: symbol,
+                    memberSymbol: memberSymbol,
                     ctx: ctx
                 )
             }
@@ -1183,6 +1184,7 @@ extension DataFlowSemaPhase {
         memberName: InternedString,
         memberRange: SourceRange,
         ownerSymbol: SymbolID,
+        memberSymbol: SymbolID,
         ctx: OpenFinalOverrideContext
     ) {
         let name = ctx.interner.resolve(memberName)
@@ -1206,83 +1208,63 @@ extension DataFlowSemaPhase {
 
         guard !overridableParents.isEmpty else { return }
 
-        // BUG-166: kotlin.text.StringBuilder's Appendable/CharSequence
-        // conformance is added retroactively by patchSourceBackedStringBuilderSupertypes
-        // (Phase.swift) — the bundled StringBuilder.kt source itself declares no
-        // supertypes, so its `append` overloads can never be written with an
-        // `override` modifier that would satisfy this check. Requiring one here
-        // would make the bundled source permanently uncompilable once its
-        // synthetic interface conformance is otherwise correctly wired up.
-        if let ownerSym = ctx.symbols.symbol(ownerSymbol),
-           ownerSym.fqName == [
-               ctx.interner.intern("kotlin"), ctx.interner.intern("text"), ctx.interner.intern("StringBuilder"),
-           ]
-        {
-            return
+        // Match the inherited member against the declaration currently being
+        // validated. Looking at every child overload with this name makes an
+        // unrelated overload appear to implement the interface member (for
+        // example, StringBuilder.append(Int) after StringBuilder.append(Char)
+        // is declared as an Appendable override).
+        let matchingParents: [OFOInheritedMember]
+        if let childSignature = ctx.symbols.functionSignature(for: memberSymbol) {
+            matchingParents = overridableParents.filter { parent in
+                guard let parentSignature = ctx.symbols.functionSignature(for: parent.memberID) else {
+                    return false
+                }
+                // Kotlin member overrides require equal parameter types. The
+                // general compatibility helper intentionally accepts
+                // contravariant parameters for other checks, which would
+                // incorrectly classify append(Any?) as Appendable.append(CharSequence?).
+                return childSignature.parameterTypes == parentSignature.parameterTypes
+                    && childSignature.isSuspend == parentSignature.isSuspend
+                    && ctx.types.isSubtype(childSignature.returnType, parentSignature.returnType)
+            }
+        } else if ctx.symbols.symbol(memberSymbol)?.kind == .property {
+            matchingParents = overridableParents.filter { parent in
+                ctx.symbols.symbol(parent.memberID)?.kind == .property
+            }
+        } else {
+            matchingParents = []
         }
+
+        guard !matchingParents.isEmpty else { return }
 
         // Special handling for interface implementations
         if let ownerSym = ctx.symbols.symbol(ownerSymbol), ownerSym.kind == .class {
             // Check if this is implementing an interface method
-            let interfaceParents = overridableParents.filter { $0.ownerIsInterface }
+            let interfaceParents = matchingParents.filter { $0.ownerIsInterface }
             if !interfaceParents.isEmpty {
-                // Check if any interface parent has matching signature
-                let childOverloads = childFunctions(named: memberName, in: ownerSymbol, ctx: ctx)
-                guard !childOverloads.isEmpty else { return }
-
-                let hasMatchingSignature = interfaceParents.contains { parent in
-                    guard ctx.symbols.symbol(parent.memberID) != nil,
-                          let parentSig = ctx.symbols.functionSignature(for: parent.memberID) else {
-                        return false
-                    }
-                    return childOverloads.contains { childID in
-                        guard let childSig = ctx.symbols.functionSignature(for: childID) else { return false }
-                        return signaturesMatch(child: childSig, parent: parentSig, ctx: ctx)
-                    }
-                }
-
-                if hasMatchingSignature {
-                    // For interface implementations with matching signature, require override modifier
-                    ctx.diagnostics.error(
-                        "KSWIFTK-SEMA-OVERRIDE",
-                        "'\(name)' implements interface member and needs 'override' modifier.",
-                        range: memberRange
-                    )
-                    return
-                }
+                // For interface implementations with matching signature, require override modifier.
+                ctx.diagnostics.error(
+                    "KSWIFTK-SEMA-OVERRIDE",
+                    "'\(name)' implements interface member and needs 'override' modifier.",
+                    range: memberRange
+                )
+                return
             }
         }
 
         // For class inheritance, check if this actually overrides a parent member
         // Use improved signature matching to avoid false positives with overloads
         if let ownerSym = ctx.symbols.symbol(ownerSymbol), ownerSym.kind == .class {
-            let classParents = overridableParents.filter { !$0.ownerIsInterface }
+            let classParents = matchingParents.filter { !$0.ownerIsInterface }
             if !classParents.isEmpty {
-                // Check if any class parent has matching signature
-                let childOverloads = childFunctions(named: memberName, in: ownerSymbol, ctx: ctx)
-                guard !childOverloads.isEmpty else { return }
-
-                let hasMatchingSignature = classParents.contains { parent in
-                    guard ctx.symbols.symbol(parent.memberID) != nil,
-                          let parentSig = ctx.symbols.functionSignature(for: parent.memberID) else {
-                        return false
-                    }
-                    return childOverloads.contains { childID in
-                        guard let childSig = ctx.symbols.functionSignature(for: childID) else { return false }
-                        return signaturesMatch(child: childSig, parent: parentSig, ctx: ctx)
-                    }
-                }
-
-                if hasMatchingSignature {
-                    let parentName = ctx.interner.resolve(classParents.first!.ownerName)
-                    ctx.diagnostics.error(
-                        "KSWIFTK-SEMA-OVERRIDE",
-                        "'\(name)' hides member of supertype '\(parentName)' "
-                            + "and needs 'override' modifier.",
-                        range: memberRange
-                    )
-                    return
-                }
+                let parentName = ctx.interner.resolve(classParents.first!.ownerName)
+                ctx.diagnostics.error(
+                    "KSWIFTK-SEMA-OVERRIDE",
+                    "'\(name)' hides member of supertype '\(parentName)' "
+                        + "and needs 'override' modifier.",
+                    range: memberRange
+                )
+                return
             }
         }
     }

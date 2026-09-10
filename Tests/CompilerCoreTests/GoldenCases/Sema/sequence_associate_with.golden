@@ -1,56 +1,50 @@
-symbol fq=__local_0.result kind=local vis=private flags=_ type=kotlin.collections.Map<Int, Int>
-symbol fq=__local_1.result kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=testAssociateWithInts kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=testAssociateWithStrings kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=__local_0.result[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map<Int, Int>
+symbol fq=__local_1.result[kind=local] kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
+symbol fq=testAssociateWithInts[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=testAssociateWithStrings[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fsequence_associate_with package=_
-  decl testAssociateWithInts fun testAssociateWithInts sym=testAssociateWithInts
-  decl testAssociateWithStrings fun testAssociateWithStrings sym=testAssociateWithStrings
+  decl testAssociateWithInts[kind=fun;params=] fun testAssociateWithInts sym=testAssociateWithInts[kind=fun;params=]
+  decl testAssociateWithStrings[kind=fun;params=] fun testAssociateWithStrings sym=testAssociateWithStrings[kind=fun;params=]
 expr e@2:29 int(1) type=Int
 expr e@2:32 int(2) type=Int
 expr e@2:35 int(3) type=Int
-expr e@2:18 call callee=e@2:18#1 args=[_:e@2:29,_:e@2:32,_:e@2:35] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
+expr e@2:18 call callee=e@2:18#1 args=[_:e@2:29,_:e@2:32,_:e@2:35] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[Int]
 expr e@2:54 name(it) type=Int ref=s-0
 expr e@2:59 name(it) type=Int ref=s-0
 expr e@2:54#1 binary(multiply) lhs=e@2:54 rhs=e@2:59 type=Int
 expr e@2:52 lambda params=[] body=e@2:54#1 label=associateWith type=(Int) -> Any
-expr e@2:18#2 memberCall recv=e@2:18 callee=associateWith args=[_:e@2:52] type=kotlin.collections.Map<Int, Int> call=kotlin.collections.associateWith#1 targs=[Int,Int]
-expr e@2:5 localDecl result mutable=0 type=_ init=e@2:18#2 type=Unit ref=__local_0.result
-expr e@3:13 name(result) type=kotlin.collections.Map<Int, Int> ref=__local_0.result
+expr e@2:18#2 memberCall recv=e@2:18 callee=associateWith args=[_:e@2:52] type=kotlin.collections.Map<Int, Int> call=kotlin.collections.associateWith[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[Int,Int]
+expr e@2:5 localDecl result mutable=0 type=_ init=e@2:18#2 type=Unit ref=__local_0.result[kind=local]
+expr e@3:13 name(result) type=kotlin.collections.Map<Int, Int> ref=__local_0.result[kind=local]
 expr e@3:20 int(1) type=Int
-expr e@3:13#1 indexedAccess receiver=e@3:13 indices=[e@3:20] type=Int? call=kotlin.collections.Map.get targs=[Int,Int]
-expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13#1] type=Unit call=kotlin.io.println#1
-expr e@4:13 name(result) type=kotlin.collections.Map<Int, Int> ref=__local_0.result
+expr e@3:13#1 indexedAccess receiver=e@3:13 indices=[e@3:20] type=Int? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] targs=[Int,Int]
+expr e@3:5 call callee=e@3:5#1 args=[_:e@3:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@4:13 name(result) type=kotlin.collections.Map<Int, Int> ref=__local_0.result[kind=local]
 expr e@4:20 int(2) type=Int
-expr e@4:13#1 indexedAccess receiver=e@4:13 indices=[e@4:20] type=Int? call=kotlin.collections.Map.get targs=[Int,Int]
-expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13#1] type=Unit call=kotlin.io.println#1
-expr e@5:13 name(result) type=kotlin.collections.Map<Int, Int> ref=__local_0.result
+expr e@4:13#1 indexedAccess receiver=e@4:13 indices=[e@4:20] type=Int? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] targs=[Int,Int]
+expr e@4:5 call callee=e@4:5#1 args=[_:e@4:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@5:13 name(result) type=kotlin.collections.Map<Int, Int> ref=__local_0.result[kind=local]
 expr e@5:20 int(3) type=Int
-expr e@5:13#1 indexedAccess receiver=e@5:13 indices=[e@5:20] type=Int? call=kotlin.collections.Map.get targs=[Int,Int]
-expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println#1
+expr e@5:13#1 indexedAccess receiver=e@5:13 indices=[e@5:20] type=Int? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] targs=[Int,Int]
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
 expr e@9:29 string(a) type=String
 expr e@9:34 string(bb) type=String
 expr e@9:40 string(ccc) type=String
-expr e@9:18 call callee=e@9:18#1 args=[_:e@9:29,_:e@9:34,_:e@9:40] type=kotlin.sequences.Sequence<String> call=kotlin.sequences.sequenceOf targs=[String]
+expr e@9:18 call callee=e@9:18#1 args=[_:e@9:29,_:e@9:34,_:e@9:40] type=kotlin.sequences.Sequence<String> call=kotlin.sequences.sequenceOf[kind=fun;params=*T0;gen=1] targs=[String]
 expr e@9:63 name(it) type=String ref=s-1
-expr e@9:63#1 memberCall recv=e@9:63 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@9:63#1 memberCall recv=e@9:63 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@9:61 lambda params=[] body=e@9:63#1 label=associateWith type=(String) -> Any
-expr e@9:18#2 memberCall recv=e@9:18 callee=associateWith args=[_:e@9:61] type=kotlin.collections.Map<String, Int> call=kotlin.collections.associateWith#1 targs=[String,String]
-expr e@9:5 localDecl result mutable=0 type=_ init=e@9:18#2 type=Unit ref=__local_1.result
-expr e@10:13 name(result) type=kotlin.collections.Map<String, Int> ref=__local_1.result
+expr e@9:18#2 memberCall recv=e@9:18 callee=associateWith args=[_:e@9:61] type=kotlin.collections.Map<String, Int> call=kotlin.collections.associateWith[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[String,String]
+expr e@9:5 localDecl result mutable=0 type=_ init=e@9:18#2 type=Unit ref=__local_1.result[kind=local]
+expr e@10:13 name(result) type=kotlin.collections.Map<String, Int> ref=__local_1.result[kind=local]
 expr e@10:20 string(a) type=String
-expr e@10:13#1 indexedAccess receiver=e@10:13 indices=[e@10:20] type=Int? call=kotlin.collections.Map.get targs=[String,Int]
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#1
-expr e@11:13 name(result) type=kotlin.collections.Map<String, Int> ref=__local_1.result
+expr e@10:13#1 indexedAccess receiver=e@10:13 indices=[e@10:20] type=Int? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] targs=[String,Int]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@11:13 name(result) type=kotlin.collections.Map<String, Int> ref=__local_1.result[kind=local]
 expr e@11:20 string(bb) type=String
-expr e@11:13#1 indexedAccess receiver=e@11:13 indices=[e@11:20] type=Int? call=kotlin.collections.Map.get targs=[String,Int]
-expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#1
-expr e@12:13 name(result) type=kotlin.collections.Map<String, Int> ref=__local_1.result
+expr e@11:13#1 indexedAccess receiver=e@11:13 indices=[e@11:20] type=Int? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] targs=[String,Int]
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@12:13 name(result) type=kotlin.collections.Map<String, Int> ref=__local_1.result[kind=local]
 expr e@12:20 string(ccc) type=String
-expr e@12:13#1 indexedAccess receiver=e@12:13 indices=[e@12:20] type=Int? call=kotlin.collections.Map.get targs=[String,Int]
-expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
+expr e@12:13#1 indexedAccess receiver=e@12:13 indices=[e@12:20] type=Int? call=kotlin.collections.Map.get[kind=fun;recv=kotlin.collections.Map<T0,out T1>;params=T0;gen=2] targs=[String,Int]
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

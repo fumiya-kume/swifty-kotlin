@@ -31,6 +31,14 @@ extension CallTypeChecker {
         ).isEmpty {
             return nil
         }
+        if !collectArraySourceConversionCandidates(
+            named: calleeName,
+            receiverType: receiverType,
+            sema: sema,
+            interner: interner
+        ).isEmpty {
+            return nil
+        }
         // Defer inference of lambda arguments for collection HOFs so that the
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
@@ -120,6 +128,13 @@ extension CallTypeChecker {
         let isSyntheticSequenceReceiver = receiverClassification.isSyntheticSequenceReceiver
         let isSequenceReceiver = receiverClassification.isSequenceReceiver
         let isSetReceiver = receiverClassification.isSetReceiver
+        let isStringReceiver = sema.types.isSubtype(
+            sema.types.makeNonNullable(receiverType),
+            sema.types.stringType
+        ) || isSyntheticStringLikeType(
+            sema.types.makeNonNullable(receiverType),
+            sema: sema
+        )
         // KSP-979: only the plain Iterable surface and nominal user-defined
         // Iterable subtypes use the new source-backed index family. Concrete
         // collection receivers retain their existing owner-specific paths.
@@ -134,6 +149,14 @@ extension CallTypeChecker {
             sema: sema,
             interner: interner
         ) != nil
+        let isULongProgressionFirstLastCall = MemberRuntimeDispatch.rangeReceiverKind(
+            receiverExpr: receiverID,
+            receiverType: receiverType,
+            sema: sema,
+            interner: interner
+        ) == .ulongProgression
+            && args.isEmpty
+            && ["first", "firstOrNull", "last", "lastOrNull"].contains(interner.resolve(calleeName))
         var activeCollectionHOFNames = collectionHOFNames
         if !isMutableListReceiver {
             activeCollectionHOFNames.subtract(mutableListOnlyCollectionHOFNames)
@@ -190,11 +213,23 @@ extension CallTypeChecker {
                 || isSequenceReceiver
                 || (isIterableIndexFamilyHOF && isIterableIndexReceiver)
                 || (isIterableFilterFamilyHOF && isIterableReceiver)
+                || (calleeStr == "none" && isIterableReceiver)
                 || (calleeStr == "asSequence" && isIterableReceiver)
                 || ((calleeStr == "runningReduce" || calleeStr == "runningReduceIndexed") && isIterableReceiver))
+            && !isULongProgressionFirstLastCall
             && !(calleeStr == "binarySearch"
                 && isArrayReceiver)
 
+        // KSP-957: the generic Iterable/Map on-family declarations are real
+        // source-backed overloads. Let regular overload resolution select
+        // them; the collection fast path only knows the legacy List/Sequence
+        // shapes and would otherwise erase the receiver-preserving return type.
+        let isSourceBackedGenericOnEach = !isSequenceReceiver
+            && !isArrayReceiver
+            && !isListReceiver
+            && !isStringReceiver
+            && (isCollectionReceiver || isIterableReceiver || isMapReceiver)
+            && (calleeStr == "onEach" || calleeStr == "onEachIndexed")
         @discardableResult
         func bindBundledSequenceDestinationSourceFunction(
             typeArguments: [TypeID],
@@ -405,7 +440,8 @@ extension CallTypeChecker {
         ) -> Bool {
             guard !isSequenceReceiver,
                   isCollectionReceiver
-                  || (isIterableReceiver && (calleeStr == "drop"
+                  || (isIterableReceiver && (calleeStr == "none"
+                      || calleeStr == "drop"
                       || calleeStr == "dropWhile"
                       || calleeStr == "runningReduce"
                       || calleeStr == "runningReduceIndexed"
@@ -1074,6 +1110,76 @@ extension CallTypeChecker {
             }
         }
 
+        // KSP-957: onEach/onEachIndexed use the Kotlin self-type form
+        // `<T, C : Iterable<T>> C` and `<K, V, M : Map<out K, V>> M`.
+        // The generic receiver type parameter is not handled by the regular
+        // collection-owner resolver, so bind the source declaration after the
+        // lambda has been contextualized.
+        @discardableResult
+        func bindBundledGenericOnEachSourceFunction(typeArguments: [TypeID]) -> Bool {
+            guard !isSequenceReceiver,
+                  !isArrayReceiver,
+                  args.count == 1,
+                  typeArguments.count == (isMapReceiver ? 3 : 2)
+            else {
+                return false
+            }
+            let ownerName = isMapReceiver ? "Map" : "Iterable"
+            let ownerFQName = [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern(ownerName),
+            ]
+            let sourceFQName = [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                calleeName,
+            ]
+            let sourceCandidates = sema.symbols.lookupAll(fqName: sourceFQName)
+            guard let chosenCallee = sourceCandidates.first(where: { candidate in
+                guard let symbol = sema.symbols.symbol(candidate),
+                      symbol.kind == .function,
+                      sema.symbols.isSourceBackedSymbol(candidate),
+                      let signature = sema.symbols.functionSignature(for: candidate),
+                      signature.parameterTypes.count == args.count,
+                      signature.typeParameterSymbols.count == typeArguments.count,
+                      let signatureReceiver = signature.receiverType,
+                      case let .typeParam(receiverParameter) = sema.types.kind(of: sema.types.makeNonNullable(signatureReceiver)),
+                      signature.typeParameterSymbols.last == receiverParameter.symbol,
+                      case let .typeParam(returnParameter) = sema.types.kind(of: sema.types.makeNonNullable(signature.returnType)),
+                      returnParameter.symbol == receiverParameter.symbol
+                else {
+                    return false
+                }
+                let receiverParameterIndex = signature.typeParameterSymbols.firstIndex(of: receiverParameter.symbol)
+                let signatureUpperBounds = receiverParameterIndex
+                    .flatMap { index in
+                        index < signature.typeParameterUpperBoundsList.count
+                            ? signature.typeParameterUpperBoundsList[index]
+                            : nil
+                    }
+                    ?? []
+                let upperBounds = signatureUpperBounds
+                    + sema.symbols.typeParameterUpperBounds(for: receiverParameter.symbol)
+                        .filter { !signatureUpperBounds.contains($0) }
+                return upperBounds.contains { bound in
+                    guard let (_, boundSymbol) = resolveClassTypeSymbol(bound, sema: sema) else {
+                        return false
+                    }
+                    return boundSymbol.fqName == ownerFQName
+                }
+            }) else {
+                return false
+            }
+            sema.bindings.bindCall(id, binding: CallBinding(
+                chosenCallee: chosenCallee,
+                substitutedTypeArguments: typeArguments,
+                parameterMapping: [0: 0]
+            ))
+            sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+            return true
+        }
+
         /// KSP-1011: Bind `map.iterator()` straight to the bundled
         /// `Map<out K, V>.__kspMapIterator()` source declaration. That
         /// declaration is deliberately *not* named `iterator`: a second
@@ -1705,8 +1811,59 @@ extension CallTypeChecker {
             return finalType
         }
 
+        if isSourceBackedGenericOnEach {
+            guard args.count == 1 else {
+                return nil
+            }
+            let collectionElementType = resolvedCollectionElementType(
+                receiverID: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner,
+                ctx: ctx,
+                locals: &locals
+            )
+            let typeArguments: [TypeID]
+            if isMapReceiver,
+               let mapClassType = resolveClassType(sema.types.makeNonNullable(receiverType), sema: sema),
+               mapClassType.args.count >= 2
+            {
+                typeArguments = [
+                    typeIDFromTypeArg(mapClassType.args[0]),
+                    typeIDFromTypeArg(mapClassType.args[1]),
+                    sema.types.makeNonNullable(receiverType),
+                ]
+            } else if !isMapReceiver {
+                typeArguments = [collectionElementType, sema.types.makeNonNullable(receiverType)]
+            } else {
+                return nil
+            }
+            let lambdaParameterTypes = calleeStr == "onEachIndexed"
+                ? [sema.types.intType, collectionElementType]
+                : [collectionElementType]
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: lambdaParameterTypes,
+                returnType: sema.types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            }
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+            guard bindBundledGenericOnEachSourceFunction(typeArguments: typeArguments) else {
+                return nil
+            }
+            if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                sema.bindings.unmarkCollectionHOFLambdaExpr(args[0].expr)
+            }
+            let finalType = safeCall ? sema.types.makeNullable(receiverType) : receiverType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
         // --- Collection higher-order functions (STDLIB-005) ---
-        if isCollectionHOF {
+        if isCollectionHOF, !isSourceBackedGenericOnEach {
             let collectionElementType = resolvedCollectionElementType(
                 receiverID: receiverID,
                 receiverType: receiverType,
@@ -2189,7 +2346,7 @@ extension CallTypeChecker {
                     _ = bindBundledSequenceDestinationSourceFunction(typeArguments: typeArguments)
                 }
                 if isMapReceiver,
-                   ["mapTo", "mapNotNullTo", "mapKeysTo", "mapValuesTo"].contains(calleeStr)
+                   ["filterTo", "filterNotTo", "mapTo", "mapNotNullTo", "mapKeysTo", "mapValuesTo"].contains(calleeStr)
                 {
                     _ = bindBundledMapSourceFunction()
                 }
@@ -3676,7 +3833,9 @@ extension CallTypeChecker {
                 }
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [collectionElementType],
-                    returnType: sema.types.anyType
+                    returnType: calleeStr == "sortedByDescending"
+                        ? sema.types.nullableAnyType
+                        : sema.types.anyType
                 )))
                 if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
@@ -3792,7 +3951,7 @@ extension CallTypeChecker {
                 let comparatorExpectedType: TypeID? = if let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName) {
                     sema.types.make(.classType(ClassType(
                         classSymbol: comparatorSymbol,
-                        args: [isSequenceReceiver ? .in(collectionElementType) : .invariant(collectionElementType)],
+                        args: [.in(collectionElementType)],
                         nullability: .nonNull
                     )))
                 } else {
@@ -3873,7 +4032,7 @@ extension CallTypeChecker {
                 let comparatorExpectedType: TypeID? = if let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName) {
                     sema.types.make(.classType(ClassType(
                         classSymbol: comparatorSymbol,
-                        args: [isSequenceReceiver ? .in(collectionElementType) : .invariant(collectionElementType)],
+                        args: [.in(collectionElementType)],
                         nullability: .nonNull
                     )))
                 } else {
@@ -4967,18 +5126,33 @@ extension CallTypeChecker {
                     }
                 }
             }
-            // KSP-435: any/all/last/requireNoNulls on a nominal Collection/Iterable
+            // KSP-435/KSP-986: any/all/last/requireNoNulls/none on a nominal Collection/Iterable
             // receiver are bundled Kotlin source (Stdlib/kotlin/collections/Iterables.kt).
             // The name-keyed fast path above only computes a result type, so the call
             // would otherwise stay unresolved and lower to the bare member name.
             if sema.bindings.callBindings[id] == nil,
-               !isSequenceReceiver, isCollectionReceiver,
-               ["any", "all", "last", "requireNoNulls"].contains(calleeStr)
+               !isSequenceReceiver,
+               (isCollectionReceiver || (isIterableReceiver && calleeStr == "none")),
+               ["any", "all", "last", "requireNoNulls", "none"].contains(calleeStr)
             {
                 let iterableSourceTypeArguments = calleeStr == "requireNoNulls"
                     ? [sema.types.makeNonNullable(collectionElementType)]
                     : [collectionElementType]
-                if bindBundledIterableSourceFunction(typeArguments: iterableSourceTypeArguments) {
+                let didBindSource: Bool
+                if calleeStr == "requireNoNulls" {
+                    // Prefer the List-specific overload when the receiver is a
+                    // concrete List; its return type preserves the List contract.
+                    didBindSource = bindBundledListSourceFunction(
+                        typeArguments: iterableSourceTypeArguments
+                    ) || bindBundledIterableSourceFunction(
+                        typeArguments: iterableSourceTypeArguments
+                    )
+                } else {
+                    didBindSource = bindBundledIterableSourceFunction(
+                        typeArguments: iterableSourceTypeArguments
+                    )
+                }
+                if didBindSource {
                     for argument in args
                     where ast.arena.expr(argument.expr)?.isLambdaOrCallableRef == true {
                         sema.bindings.unmarkCollectionHOFLambdaExpr(argument.expr)
